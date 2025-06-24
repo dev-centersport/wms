@@ -30,16 +30,6 @@ cd wms-backend
 yarn install
 ```
 
-Crie um arquivo `.env` baseado no `.env.example` e configure as variáveis de ambiente:
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=seu_usuario
-DB_PASSWORD=sua_senha
-DB_DATABASE=wms_db
-```
-
 ### 3. Configuração do Frontend
 
 ```bash
@@ -118,13 +108,5 @@ Contribuições são bem-vindas! Siga estes passos:
 3. Commit suas alterações (`git commit -m 'Adiciona nova feature'`)
 4. Push para a branch (`git push origin feature/nova-feature`)
 5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## ✉️ Contato
-
-Seu Nome - [@seu_twitter](https://twitter.com/seu_twitter) - seu-email@exemplo.com
 
 Link do Projeto: [https://github.com/seu-usuario/wms-project](https://github.com/seu-usuario/wms-project)
