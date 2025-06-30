@@ -1,3 +1,18 @@
 ### List Products
 
 GET http://localhost:3000/products
+
+###
+
+GET http://localhost:3000/products/1
+
+###
+
+POST http://localhost:3000/products HTTP/1.1
+content-type: application/json
+
+{
+    "name": "tenis adidas",
+    "price": 18,
+    "description": "tenis adidas tamanho 38"
+}

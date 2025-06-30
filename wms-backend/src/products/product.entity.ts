@@ -8,12 +8,9 @@ export class Product {
   @Column()
   name: string;
 
-  @Column()
-  sku: string;
-
   @Column('decimal')
-  quantity: number;
+  price: number;
 
-  @Column()
-  location: string;
+  @Column({ nullable: true })
+  description?: string;
 }
