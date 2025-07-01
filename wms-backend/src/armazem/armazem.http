@@ -1,0 +1,31 @@
+### List Products
+
+GET http://localhost:3000/
+
+###
+
+GET http://localhost:3000/armazem
+
+###
+
+GET http://localhost:3000/armazem/1
+
+###
+
+POST http://localhost:3000/armazem HTTP/1.1
+content-type: application/json
+
+{
+    "nome": "Estudio",
+    "endereco": "Av. Santa Casa"
+}
+
+###
+
+PATCH http://localhost:3000/armazem/1 HTTP/1.1
+content-type: application/json
+
+{
+    "nome": "Frutal",
+    "endereco": "MG"
+}

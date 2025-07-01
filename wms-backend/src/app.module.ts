@@ -3,6 +3,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProductsModule } from './products/products.module';
+import { ArmazemModule } from './armazem/armazem.module';
 
 const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -17,7 +18,7 @@ const typeOrmConfig: TypeOrmModuleOptions = {
 };
 
 @Module({
-  imports: [TypeOrmModule.forRoot(typeOrmConfig), ProductsModule],
+  imports: [TypeOrmModule.forRoot(typeOrmConfig), ProductsModule, ArmazemModule],
   controllers: [AppController],
   providers: [AppService],
 })
