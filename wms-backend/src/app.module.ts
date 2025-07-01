@@ -10,9 +10,9 @@ import { LocalizacaoModule } from './localizacao/localizacao.module';
 const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'postgres',
   host: 'localhost',
-  port: 5433,
-  username: 'admin',
-  password: 'senha123',
+  port: 5432,
+  username: 'wms_user',
+  password: 'center2025',
   database: 'wms_db',
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   autoLoadEntities: true,
