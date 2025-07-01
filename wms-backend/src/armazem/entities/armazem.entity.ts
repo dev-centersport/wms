@@ -1,5 +1,6 @@
 // Importa os decoradores do TypeORM para definir entidades de banco de dados
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 // @Entity() marca a classe como uma entidade do banco de dados
 // Isso fará com que o TypeORM crie uma tabela 'armazem' no banco de dados
@@ -39,4 +40,7 @@ export class Armazem {
    * @Column({ unique: true }) - Garante valores únicos
    * @Column({ name: 'custom_name' }) - Nome personalizado no banco
    */
+
+  @OneToMany(() => Localizacao, (localizacao) => localizacao.armazem)
+  localizacoes: Localizacao[];
 }

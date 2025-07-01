@@ -16,16 +16,14 @@ POST http://localhost:3000/armazem HTTP/1.1
 content-type: application/json
 
 {
-    "nome": "Estudio",
-    "endereco": "Av. Santa Casa"
+    "tipo": "Prateleira"
 }
 
 ###
 
-PATCH http://localhost:3000/armazem/1 HTTP/1.1
+PATCH http://localhost:3000/armazem/2 HTTP/1.1
 content-type: application/json
 
 {
-    "nome": "Frutal",
-    "endereco": "MG"
+    "tipo": "Gaveta"
 }

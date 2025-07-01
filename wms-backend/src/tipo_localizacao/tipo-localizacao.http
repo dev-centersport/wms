@@ -1,0 +1,29 @@
+### List Products
+
+GET http://localhost:3000/
+
+###
+
+GET http://localhost:3000/tipo-localizacao
+
+###
+
+GET http://localhost:3000/tipo-localizacao/1
+
+###
+
+POST http://localhost:3000/tipo-localizacao HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "Prateleira"
+}
+
+###
+
+PATCH http://localhost:3000/tipo-localizacao/2 HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "Gaveta"
+}

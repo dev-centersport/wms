@@ -1,0 +1,33 @@
+### List Products
+
+GET http://localhost:3000/
+
+###
+
+GET http://localhost:3000/localizacao
+
+###
+
+GET http://localhost:3000/localizacao/1
+
+###
+
+POST http://localhost:3000/localizacao HTTP/1.1
+content-type: application/json
+
+{
+    "status": "fechada",
+    "nome": "AB-40",
+    "ean": "7894561237891",
+    "tipo_localizacao_id": 1,
+    "armazem_id": 1
+}
+
+###
+
+# PATCH http://localhost:3000/localizacao/2 HTTP/1.1
+# content-type: application/json
+
+# {
+#     "tipo": "Gaveta"
+# }

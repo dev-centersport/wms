@@ -1,5 +1,13 @@
 // Importa os decoradores e classes necessários do NestJS
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 // Importa o serviço do módulo Armazem
 import { ArmazemService } from './armazem.service';
 // Importa o DTO (Data Transfer Object) para criação de armazém
@@ -42,8 +50,8 @@ export class ArmazemController {
   }
 
   // Endpoint DELETE comentado - pode ser implementado quando necessário
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.armazemService.remove(+id);
-  // }
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.armazemService.remove(+id);
+  }
 }

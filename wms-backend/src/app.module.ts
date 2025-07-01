@@ -4,6 +4,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProductsModule } from './products/products.module';
 import { ArmazemModule } from './armazem/armazem.module';
+import { TipoLocalizacaoModule } from './tipo_localizacao/tipo_localizacao.module';
+import { LocalizacaoModule } from './localizacao/localizacao.module';
 
 const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -13,12 +15,19 @@ const typeOrmConfig: TypeOrmModuleOptions = {
   password: 'senha123',
   database: 'wms_db',
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
+  autoLoadEntities: true,
   synchronize: true, // ATENÇÃO: usar apenas em desenvolvimento
   logging: true,
 };
 
 @Module({
-  imports: [TypeOrmModule.forRoot(typeOrmConfig), ProductsModule, ArmazemModule],
+  imports: [
+    TypeOrmModule.forRoot(typeOrmConfig),
+    ProductsModule,
+    ArmazemModule,
+    TipoLocalizacaoModule,
+    LocalizacaoModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
