@@ -6,8 +6,10 @@ import {
   IsOptional,
   IsString,
   Length,
+  Validate,
 } from 'class-validator';
 import { StatusPrateleira } from '../entities/localizacao.entity';
+import { IsEAN13Valid } from '../validators/ean13.validator';
 
 export class CreateLocalizacaoDto {
   @IsEnum(StatusPrateleira)
@@ -33,10 +35,10 @@ export class CreateLocalizacaoDto {
   @IsOptional()
   comprimento?: number;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @Length(13, 13, { message: 'O EAN deve ter exatamente 13 caracteres' })
-  ean: string;
+  @Validate(IsEAN13Valid, { message: 'EAN13 inválido' })
+  ean?: string;
 
   @IsNumber()
   @IsNotEmpty()
