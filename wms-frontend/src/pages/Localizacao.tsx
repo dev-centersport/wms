@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import JsBarcode from 'jsbarcode';
 import {
   Box,
   Button,
@@ -23,7 +25,8 @@ import {
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
-import { error } from 'console';
+
+
 
 /* -------------------------------------------------------------------------- */
 /* Tipagem de cada linha da tabela                                            */
@@ -37,6 +40,9 @@ interface Localizacao {
   ean: string;
 }
 
+
+
+
 /* -------------------------------------------------------------------------- */
 /* Componente                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -46,6 +52,7 @@ const Localizacao: React.FC = () => {
   const [busca, setBusca] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarFiltro, setMostrarFiltro] = useState(false);
+  const navigate = useNavigate();
 
   /* ---------- Carrega dados reais do backend ---------- */
   useEffect(() => {
@@ -57,12 +64,13 @@ const Localizacao: React.FC = () => {
           tipo: item.tipo?.tipo ?? '',
           armazem: item.armazem?.nome ?? '',
           ean: item.ean ?? '',
-          
+          quantidade: 0, 
+          capacidade: 0,
         }));
         setListaLocalizacoes(dados);
       })
       .catch((err) => {
-        console.log('Erro ao buscar localizações →', err);
+        console.error('Erro ao buscar localizações →', err);
         alert('Falha ao carregar as localizações do servidor.');
       });
   }, []);
@@ -87,12 +95,47 @@ const Localizacao: React.FC = () => {
     setListaLocalizacoes(listaLocalizacoes.filter((_, i) => i !== index));
   };
 
-  const handleImprimir = (localizacao: string) => {
+  const handleImprimir = (localizacao: string, ean: string) => {
     const win = window.open('', '_blank');
-    win?.document.write(`<h1>Impressão – ${localizacao}</h1>`);
-    win?.document.write('<p>Dados adicionais podem ser incluídos aqui.</p>');
-    win?.print();
-  };
+    if (!win) return;
+
+    const html = `
+        <html>
+        <head>
+            <title>Etiqueta – ${localizacao}</title>
+            <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 24px; }
+            h3   { margin: 0 0 16px 0; }
+            </style>
+        </head>
+        <body>
+            <h3>${localizacao}</h3>
+            <svg id="barcode"></svg>
+            <script>
+            window.onload = function () {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
+                script.onload = () => {
+                JsBarcode("#barcode", "${ean}", {
+                    format: "ean13",
+                    height: 80,
+                    displayValue: true,
+                    fontSize: 18
+                });
+                window.print();
+                window.onafterprint = () => window.close();
+                };
+                document.body.appendChild(script);
+            };
+            </script>
+        </body>
+        </html>
+    `;
+
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    };
 
   /* ---------------------------------------------------------------------- */
   /* JSX                                                                    */
@@ -117,12 +160,24 @@ const Localizacao: React.FC = () => {
           Filtros
         </Button>
         <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setMostrarFormulario(!mostrarFormulario)}
-        >
-          Nova
-        </Button>
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/CriarLocalizacao')}
+            sx={{
+                backgroundColor: '#0a8f00',
+                color: '#fff',
+                fontWeight: 'bold',
+                borderRadius: 2,
+                paddingX: 3,
+                textTransform: 'none',
+                '&:hover': {
+                backgroundColor: '#076e00',
+                },
+            }}
+            >
+                 Nova
+            </Button>
+
       </Box>
 
       {/* Placeholder simples para indicar que algo será exibido futuramente */}
@@ -168,7 +223,7 @@ const Localizacao: React.FC = () => {
                     >
                       <ListIcon fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleImprimir(item.localizacao)}>
+                    <IconButton size="small" onClick={() => handleImprimir(item.localizacao, item.ean)}>
                       <PrintIcon fontSize="small" />
                     </IconButton>
                     <IconButton

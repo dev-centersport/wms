@@ -8,6 +8,7 @@ import "./index.css";
 import Armazem from "./pages/Armazem";
 import Login from "./pages/Login";
 import Localizacao from "./pages/Localizacao";
+import CriarLocalizacao from "./pages/CriarLocalizacao";
 import Layout from "./components/Layout";
 import theme from './components/Theme';
 
@@ -30,6 +31,7 @@ root.render(
           {/* Páginas internas com Sidebar */}
           <Route path="/armazem" element={<Layout><Armazem /></Layout>} />
           <Route path="/localizacao" element={<Layout><Localizacao /></Layout>} />
+          <Route path="/CriarLocalizacao" element={<Layout><CriarLocalizacao /></Layout>} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />
