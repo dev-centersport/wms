@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { buscarLocalizacoes, Localizacao} from "../services/API";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();

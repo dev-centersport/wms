@@ -24,69 +24,38 @@ import {
   Add as AddIcon,
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
+import { useLocalizacoes } from '../components/ApiComponents';
 
-
-
-/* -------------------------------------------------------------------------- */
-/* Tipagem de cada linha da tabela                                            */
-/* -------------------------------------------------------------------------- */
-interface Localizacao {
-  localizacao: string;
-  quantidade: number;
-  tipo: string;
-  armazem: string;
-  capacidade: number;
-  ean: string;
-}
-
-
-
-
-/* -------------------------------------------------------------------------- */
-/* Componente                                                                 */
-/* -------------------------------------------------------------------------- */
+/**
+ * Componente principal da página de Localizações.
+ * 
+ * Responsável por:
+ * - Exibir a lista de localizações em tabela
+ * - Permitir busca por nome, tipo, armazém ou EAN
+ * - Mostrar/esconder o formulário de nova localização
+ * - Mostrar/esconder área de filtros
+ * - Realizar ações de impressão, visualização e exclusão de localizações
+ */
 const Localizacao: React.FC = () => {
-  /* ---------- Estados principais ---------- */
-  const [listaLocalizacoes, setListaLocalizacoes] = useState<Localizacao[]>([]);
-  const [busca, setBusca] = useState('');
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [mostrarFiltro, setMostrarFiltro] = useState(false);
-  const navigate = useNavigate();
+  // Hook personalizado que gerencia a lógica de localizações
+  const {
+    listaLocalizacoes,
+    locaisFiltrados,
+    busca,
+    setBusca,
+    mostrarFormulario,
+    setMostrarFormulario,
+    mostrarFiltro,
+    setMostrarFiltro,
+    setListaLocalizacoes,
+  } = useLocalizacoes();
 
-  /* ---------- Carrega dados reais do backend ---------- */
-  useEffect(() => {
-    axios
-      .get('http://151.243.0.78:3001/localizacao')
-      .then((res) => {
-        const dados: Localizacao[] = res.data.map((item: any) => ({
-          localizacao: item.nome ?? '',
-          tipo: item.tipo?.tipo ?? '',
-          armazem: item.armazem?.nome ?? '',
-          ean: item.ean ?? '',
-          quantidade: 0, 
-          capacidade: 0,
-        }));
-        setListaLocalizacoes(dados);
-      })
-      .catch((err) => {
-        console.error('Erro ao buscar localizações →', err);
-        alert('Falha ao carregar as localizações do servidor.');
-      });
-  }, []);
-
-  /* ---------- Filtro de busca ---------- */
-  const locaisFiltrados = listaLocalizacoes.filter((item) => {
-    const texto = busca.toLowerCase();
-    return (
-      item.localizacao.toLowerCase().includes(texto) ||
-      item.tipo.toLowerCase().includes(texto) ||
-      item.armazem.toLowerCase().includes(texto) ||
-      item.ean.toLowerCase().includes(texto)
-    );
-  });
-
-  /* ---------- Ações ---------- */
+  /**
+   * Exclui uma localização da lista, se ela tiver quantidade 0.
+   * Exibe alerta caso haja produtos na localização.
+   * 
+   * @param index Índice da localização na lista
+   */
   const handleExcluir = (index: number) => {
     if (listaLocalizacoes[index].quantidade > 0) {
       alert('Só é possível excluir localizações com quantidade 0.');
@@ -146,7 +115,7 @@ const Localizacao: React.FC = () => {
         Localizações
       </Typography>
 
-      {/* Barra de busca e botões */}
+      {/* Barra de busca e botões de ação */}
       <Box display="flex" gap={2} mb={2}>
         <TextField
           label="Buscar localização, tipo, armazém ou EAN"
@@ -186,13 +155,15 @@ const Localizacao: React.FC = () => {
           Área de filtros em construção…
         </Typography>
       )}
+
+      {/* Formulário de criação (ainda não implementado) */}
       {mostrarFormulario && (
         <Typography variant="body2" color="text.secondary" mb={2}>
           Formulário de nova localização em construção…
         </Typography>
       )}
 
-      {/* Tabela */}
+      {/* Tabela de localizações */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
