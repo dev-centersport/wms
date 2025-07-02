@@ -4,11 +4,11 @@ GET http://localhost:3000/
 
 ###
 
-GET http://localhost:3000/localizacao
+GET http://localhost:3001/localizacao
 
 ###
 
-GET http://localhost:3000/localizacao/1
+GET http://localhost:3001/localizacao/1
 
 ###
 

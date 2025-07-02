@@ -6,6 +6,7 @@ import { ProductsModule } from './products/products.module';
 import { ArmazemModule } from './armazem/armazem.module';
 import { TipoLocalizacaoModule } from './tipo_localizacao/tipo_localizacao.module';
 import { LocalizacaoModule } from './localizacao/localizacao.module';
+import { ProdutoModule } from './produto/produto.module';
 
 const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -27,6 +28,7 @@ const typeOrmConfig: TypeOrmModuleOptions = {
     ArmazemModule,
     TipoLocalizacaoModule,
     LocalizacaoModule,
+    ProdutoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

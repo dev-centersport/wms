@@ -1,22 +1,38 @@
+import { Transform } from 'class-transformer';
 import {
-  IsEnum,
+  IsEAN,
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsPositive,
   IsString,
+  IsUrl,
+  Length,
   Min,
+  Validate,
 } from 'class-validator';
-import { StatusPrateleira } from '../entities/localizacao.entity';
-import { Transform } from 'class-transformer';
+import { IsEAN13Valid } from 'src/localizacao/validators/ean13.validator';
 
-export class CreateLocalizacaoDto {
-  @IsEnum(StatusPrateleira)
+export class CreateProdutoDto {
+  @IsNumber({ maxDecimalPlaces: 0 })
+  @IsPositive()
   @IsNotEmpty()
-  status: StatusPrateleira;
+  id_tiny: number;
 
   @IsString()
   @IsNotEmpty()
-  nome: string;
+  @Length(1, 50)
+  sku: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 255)
+  descricao: string;
+
+  @IsString()
+  @IsUrl() // Para validar urls, mas talvez mude
+  @IsOptional()
+  url_foto?: string;
 
   @IsOptional()
   @Transform(({ value }: { value: string }) => parseFloat(value))
@@ -36,16 +52,10 @@ export class CreateLocalizacaoDto {
   @Min(0)
   comprimento?: number;
 
-  // @IsOptional()
-  // @Length(13, 13, { message: 'O EAN deve ter exatamente 13 caracteres' })
-  // @Validate(IsEAN13Valid, { message: 'EAN13 inválido' })
-  // ean?: string;
-
-  @IsNumber()
+  @Validate(IsEAN13Valid)
+  @IsEAN()
   @IsNotEmpty()
-  tipo_localizacao_id: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  armazem_id: number;
+  @Length(13, 13)
+  @IsOptional() // Torna opcional
+  ean?: string;
 }
