@@ -6,6 +6,7 @@ import { Localizacao } from './entities/localizacao.entity';
 import { Repository } from 'typeorm';
 import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.entity';
 import { Armazem } from 'src/armazem/entities/armazem.entity';
+import { EAN13Generator } from 'src/utils/ean13.generator';
 
 @Injectable()
 export class LocalizacaoService {
@@ -58,10 +59,28 @@ export class LocalizacaoService {
       throw new NotFoundException('Armazém não encontrado');
     }
 
+    // No seu LocalizacaoService
+    const ean = String(
+      createLocalizacaoDto.ean || EAN13Generator.generateRandomEAN13(),
+    );
+
+    // Validação extra
+    if (!/^\d{13}$/.test(ean)) {
+      throw new Error(
+        `ean13 inválido: deve conter exatamente 13 dígitos. Recebido: ${ean}`,
+      );
+    }
+
+    // // Teste com os 12 dígitos que você recebeu
+    // const partial = '532077659963';
+    // const checkDigit = EAN13Generator.calculateCheckDigit(partial);
+    // console.log('EAN completo deveria ser:', partial + checkDigit);
+
     const localizacao = this.LocalizacaoRepository.create({
       ...createLocalizacaoDto,
       tipo,
       armazem,
+      ean,
     });
 
     return await this.LocalizacaoRepository.save(localizacao);

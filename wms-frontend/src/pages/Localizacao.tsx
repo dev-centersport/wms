@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import JsBarcode from 'jsbarcode';
 import {
   Box,
   Button,
@@ -62,18 +64,51 @@ const Localizacao: React.FC = () => {
     setListaLocalizacoes(listaLocalizacoes.filter((_, i) => i !== index));
   };
 
-  /**
-   * Simula impressão dos dados de uma localização em nova aba.
-   * 
-   * @param localizacao Nome da localização a ser impressa
-   */
-  const handleImprimir = (localizacao: string) => {
+  const handleImprimir = (localizacao: string, ean: string) => {
     const win = window.open('', '_blank');
-    win?.document.write(`<h1>Impressão – ${localizacao}</h1>`);
-    win?.document.write('<p>Dados adicionais podem ser incluídos aqui.</p>');
-    win?.print();
-  };
+    if (!win) return;
 
+    const html = `
+        <html>
+        <head>
+            <title>Etiqueta – ${localizacao}</title>
+            <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 24px; }
+            h3   { margin: 0 0 16px 0; }
+            </style>
+        </head>
+        <body>
+            <h3>${localizacao}</h3>
+            <svg id="barcode"></svg>
+            <script>
+            window.onload = function () {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
+                script.onload = () => {
+                JsBarcode("#barcode", "${ean}", {
+                    format: "ean13",
+                    height: 80,
+                    displayValue: true,
+                    fontSize: 18
+                });
+                window.print();
+                window.onafterprint = () => window.close();
+                };
+                document.body.appendChild(script);
+            };
+            </script>
+        </body>
+        </html>
+    `;
+
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    };
+
+  /* ---------------------------------------------------------------------- */
+  /* JSX                                                                    */
+  /* ---------------------------------------------------------------------- */
   return (
     <Container sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
@@ -94,15 +129,27 @@ const Localizacao: React.FC = () => {
           Filtros
         </Button>
         <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setMostrarFormulario(!mostrarFormulario)}
-        >
-          Nova
-        </Button>
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/CriarLocalizacao')}
+            sx={{
+                backgroundColor: '#0a8f00',
+                color: '#fff',
+                fontWeight: 'bold',
+                borderRadius: 2,
+                paddingX: 3,
+                textTransform: 'none',
+                '&:hover': {
+                backgroundColor: '#076e00',
+                },
+            }}
+            >
+                 Nova
+            </Button>
+
       </Box>
 
-      {/* Área de filtros (ainda não implementada) */}
+      {/* Placeholder simples para indicar que algo será exibido futuramente */}
       {mostrarFiltro && (
         <Typography variant="body2" color="text.secondary" mb={2}>
           Área de filtros em construção…
@@ -122,11 +169,9 @@ const Localizacao: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>Localização</TableCell>
-              <TableCell>Quantidade</TableCell>
               <TableCell>Tipo</TableCell>
               <TableCell>Armazém</TableCell>
               <TableCell>EAN</TableCell>
-              <TableCell>Capacidade</TableCell>
               <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
@@ -135,26 +180,19 @@ const Localizacao: React.FC = () => {
               locaisFiltrados.map((item, index) => (
                 <TableRow key={`${item.localizacao}-${index}`}>
                   <TableCell>{item.localizacao}</TableCell>
-                  <TableCell>{item.quantidade}</TableCell>
                   <TableCell>{item.tipo}</TableCell>
                   <TableCell>{item.armazem}</TableCell>
                   <TableCell>{item.ean}</TableCell>
-                  <TableCell>{item.capacidade}</TableCell>
                   <TableCell align="center">
-                    {/* Ação: Ver produtos da localização */}
                     <IconButton
                       size="small"
                       onClick={() => alert(`Ver produtos em ${item.localizacao}`)}
                     >
                       <ListIcon fontSize="small" />
                     </IconButton>
-
-                    {/* Ação: Imprimir localização */}
-                    <IconButton size="small" onClick={() => handleImprimir(item.localizacao)}>
+                    <IconButton size="small" onClick={() => handleImprimir(item.localizacao, item.ean)}>
                       <PrintIcon fontSize="small" />
                     </IconButton>
-
-                    {/* Ação: Excluir localização (se quantidade for 0) */}
                     <IconButton
                       size="small"
                       onClick={() => handleExcluir(index)}

@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: senha123
       POSTGRES_DB: wms_db
     ports:
-      - "5433:5432"  # Mapeia a porta 5432 do container para o host (localhost)
+      - "5433:5432" # Mapeia a porta 5432 do container para o host (localhost)
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

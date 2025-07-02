@@ -17,17 +17,19 @@ content-type: application/json
 
 {
     "status": "fechada",
-    "nome": "AB-40",
-    "ean": "7894561237891",
+    "nome": "JCSS-10",
     "tipo_localizacao_id": 1,
     "armazem_id": 1
 }
 
 ###
 
-# PATCH http://localhost:3000/localizacao/2 HTTP/1.1
-# content-type: application/json
+PATCH http://localhost:3000/localizacao/2 HTTP/1.1
+content-type: application/json
+{
+    "tipo": "Gaveta"
+}
 
-# {
-#     "tipo": "Gaveta"
-# }
+###
+
+DELETE http://localhost:3000/localizacao/5
