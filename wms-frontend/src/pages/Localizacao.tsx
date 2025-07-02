@@ -198,11 +198,9 @@ const Localizacao: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>Localização</TableCell>
-              <TableCell>Quantidade</TableCell>
               <TableCell>Tipo</TableCell>
               <TableCell>Armazém</TableCell>
               <TableCell>EAN</TableCell>
-              <TableCell>Capacidade</TableCell>
               <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
@@ -211,11 +209,9 @@ const Localizacao: React.FC = () => {
               locaisFiltrados.map((item, index) => (
                 <TableRow key={`${item.localizacao}-${index}`}>
                   <TableCell>{item.localizacao}</TableCell>
-                  <TableCell>{item.quantidade}</TableCell>
                   <TableCell>{item.tipo}</TableCell>
                   <TableCell>{item.armazem}</TableCell>
                   <TableCell>{item.ean}</TableCell>
-                  <TableCell>{item.capacidade}</TableCell>
                   <TableCell align="center">
                     <IconButton
                       size="small"
