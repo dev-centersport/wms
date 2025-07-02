@@ -36,6 +36,9 @@ export class Localizacao {
   @Column({ type: 'varchar', length: 13, unique: true })
   ean: string;
 
+  // @BeforeInsert() hooks cannot be async, so ensure EAN is generated before saving the entity.
+  // Remove this method and generate EAN in the service before saving the entity.
+
   @ManyToOne(() => TipoLocalizacao, (tipo) => tipo.localizacoes)
   @JoinColumn()
   tipo: TipoLocalizacao;

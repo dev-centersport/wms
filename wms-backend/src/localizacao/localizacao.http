@@ -17,7 +17,7 @@ content-type: application/json
 
 {
     "status": "fechada",
-    "nome": "JCSS-10",
+    "nome": "CH-10",
     "tipo_localizacao_id": 1,
     "armazem_id": 1
 }
@@ -32,4 +32,4 @@ content-type: application/json
 
 ###
 
-DELETE http://localhost:3000/localizacao/5
+DELETE http://localhost:3000/localizacao/14
