@@ -126,3 +126,31 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
     throw new Error('Falha ao criar nova localização no servidor.');
   }
 };
+
+export interface ExcluirLocalizacao {
+  localizacao_id: number;
+}
+
+export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao): Promise<void> => {
+  try {
+    await axios.delete(`http://151.243.0.78:3001/localizacao/${localizacao_id}`);
+    console.log(`Localização ID ${localizacao_id} excluída com sucesso.`);
+  } catch (err) {
+    console.error('Erro ao excluir localização →', err);
+
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        alert(`Erro ${err.response.status}: ${JSON.stringify(err.response.data)}`);
+      } else if (err.request) {
+        alert('Nenhuma resposta recebida do servidor.');
+      } else {
+        alert('Erro na configuração da requisição.');
+      }
+    } else {
+      alert('Erro inesperado ao excluir localização.');
+    }
+
+    throw new Error('Falha ao excluir a localização.');
+  }
+};
+
