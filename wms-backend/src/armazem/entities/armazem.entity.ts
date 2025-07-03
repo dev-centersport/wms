@@ -20,11 +20,11 @@ export class Armazem {
 
   // @Column() define uma coluna regular na tabela
   // Por padrão, é NOT NULL e o tipo é inferido do TypeScript (string → varchar)
-  @Column()
+  @Column({ type: 'varchar', unique: true })
   nome: string; // Nome da coluna: nome (tipo string/varchar)
 
   // Outra coluna regular
-  @Column()
+  @Column({ type: 'varchar', unique: true })
   endereco: string; // Nome da coluna: endereco (tipo string/varchar)
 
   // Exemplo de coluna opcional (comentada)
