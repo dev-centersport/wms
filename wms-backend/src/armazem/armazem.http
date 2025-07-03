@@ -27,3 +27,6 @@ content-type: application/json
 {
     "nome": "Dib Jorge"
 }
+###
+
+DELETE http://localhost:3001/armazem/1
