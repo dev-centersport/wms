@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -6,45 +6,85 @@ import {
   Paper,
   TextField,
   Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
-import { criarLocalizacao } from '../services/API';
+import {
+  criarLocalizacao,
+  buscarArmazem,
+  buscarTiposDeLocalizacao,
+} from '../services/API';
 
 const TelaTeste: React.FC = () => {
+  // estados dos inputs
   const [localizacao, setLocalizacao] = useState('');
   const [tipo, setTipo] = useState('');
+  const [armazem, setArmazem] = useState('');
   const [altura, setAltura] = useState('');
   const [largura, setLargura] = useState('');
   const [comprimento, setComprimento] = useState('');
-  const [armazem, setArmazem] = useState('');
-  const [endereco, setEndereco] = useState('');
 
+  // listas para os selects
+  const [listaArmazens, setListaArmazens] = useState<
+    { armazem_id: number; nome: string }[]
+  >([]);
+  const [listaTipos, setListaTipos] = useState<
+    { tipo_localizacao_id: number; tipo: string }[]
+  >([]);
+
+  // carrega armazéns e tipos ao montar
+  useEffect(() => {
+    const carregar = async () => {
+      try {
+        const armazens = await buscarArmazem();
+        const tipos = await buscarTiposDeLocalizacao();
+        setListaArmazens(armazens);
+        setListaTipos(tipos);
+      } catch (err) {
+        console.error('Erro ao carregar armazéns ou tipos:', err);
+        alert('Falha ao carregar dados para o formulário.');
+      }
+    };
+    carregar();
+  }, []);
+
+  // envio do formulário
   const handleEnviar = async () => {
-    if (!localizacao || !tipo || !altura || !largura || !comprimento || !armazem || !endereco) {
-      alert('Preencha os campos obrigatórios: nome, tipo, altura, largura, comprimento, armazém e endereço.');
+    if (
+      !localizacao ||
+      !tipo ||
+      !armazem ||
+      !altura ||
+      !largura ||
+      !comprimento
+    ) {
+      alert(
+        'Preencha todos os campos obrigatórios: localização, tipo, armazém, altura, largura e comprimento.'
+      );
       return;
     }
 
     try {
       await criarLocalizacao({
         localizacao,
+        status: 'fechada',
         tipo,
         altura,
         largura,
         comprimento,
-        armazem,
-        endereco,
       });
 
       alert('Localização criada com sucesso!');
 
-      // Limpa os campos após envio
+      // limpa campos
       setLocalizacao('');
       setTipo('');
+      setArmazem('');
       setAltura('');
       setLargura('');
       setComprimento('');
-      setArmazem('');
-      setEndereco('');
     } catch (error: any) {
       alert('Erro ao criar localização: ' + error.message);
     }
@@ -65,54 +105,59 @@ const TelaTeste: React.FC = () => {
           margin="normal"
         />
 
-        <TextField
-          fullWidth
-          label="Tipo de Localização"
-          value={tipo}
-          onChange={(e) => setTipo(e.target.value)}
-          margin="normal"
-        />
+        {/* Select de Tipo de Localização */}
+        <FormControl fullWidth margin="normal" size="small">
+          <InputLabel id="tipo-label">Tipo de Localização</InputLabel>
+          <Select
+            labelId="tipo-label"
+            value={tipo}
+            label="Tipo de Localização"
+            onChange={(e) => setTipo(e.target.value as string)}
+          >
+            {listaTipos.map((t) => (
+              <MenuItem key={t.tipo_localizacao_id} value={t.tipo}>
+                {t.tipo}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Select de Armazém */}
+        <FormControl fullWidth margin="normal" size="small">
+          <InputLabel id="armazem-label">Armazém</InputLabel>
+          <Select
+            labelId="armazem-label"
+            value={armazem}
+            label="Armazém"
+            onChange={(e) => setArmazem(e.target.value as string)}
+          >
+            {listaArmazens.map((a) => (
+              <MenuItem key={a.armazem_id} value={a.nome}>
+                {a.nome}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <TextField
           fullWidth
-          type="number"
           label="Altura (cm)"
           value={altura}
           onChange={(e) => setAltura(e.target.value)}
           margin="normal"
         />
-
         <TextField
           fullWidth
-          type="number"
           label="Largura (cm)"
           value={largura}
           onChange={(e) => setLargura(e.target.value)}
           margin="normal"
         />
-
         <TextField
           fullWidth
-          type="number"
           label="Comprimento (cm)"
           value={comprimento}
           onChange={(e) => setComprimento(e.target.value)}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Nome do Armazém"
-          value={armazem}
-          onChange={(e) => setArmazem(e.target.value)}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Endereço do Armazém"
-          value={endereco}
-          onChange={(e) => setEndereco(e.target.value)}
           margin="normal"
         />
 

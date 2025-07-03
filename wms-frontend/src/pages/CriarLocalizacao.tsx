@@ -11,11 +11,7 @@ import {
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import prateleira from "../img/7102305.png"
-
-
-
-
-
+import { buscarArmazem } from '../services/API';
 
 interface Tipo {
   id: number;
