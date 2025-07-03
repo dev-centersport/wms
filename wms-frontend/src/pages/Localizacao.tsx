@@ -1,105 +1,159 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import JsBarcode from 'jsbarcode';
+
 import {
-  Box,
-  Button,
-  Container,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
+    Divider,
+    Box,
+    Button,
+    Container,
+    IconButton,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography,
+    Checkbox,
+    Pagination,
+    PaginationItem,
+    Tooltip,
 } from '@mui/material';
+
 import {
-  Search as SearchIcon,
-  Delete as DeleteIcon,
-  Print as PrintIcon,
-  List as ListIcon,
-  Add as AddIcon,
-  FilterList as FilterListIcon,
+    Search as SearchIcon,
+    Delete as DeleteIcon,
+    Print as PrintIcon,
+    List as ListIcon,
+    Add as AddIcon,
+    FilterList as FilterListIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
+import { useLocalizacoes } from '../components/ApiComponents';
+import { excluirLocalizacao } from '../services/API';
 
-
-
-/* -------------------------------------------------------------------------- */
-/* Tipagem de cada linha da tabela                                            */
-/* -------------------------------------------------------------------------- */
-interface Localizacao {
-  localizacao: string;
-  quantidade: number;
-  tipo: string;
-  armazem: string;
-  capacidade: number;
-  ean: string;
-}
-
-
-
-
-/* -------------------------------------------------------------------------- */
-/* Componente                                                                 */
-/* -------------------------------------------------------------------------- */
+/**
+ * Componente principal da página de Localizações.
+ * 
+ * Responsável por:
+ * - Exibir a lista de localizações em tabela
+ * - Permitir busca por nome, tipo, armazém ou EAN
+ * - Mostrar/esconder o formulário de nova localização
+ * - Mostrar/esconder área de filtros
+ * - Realizar ações de impressão, visualização e exclusão de localizações
+ * - Permitir seleção múltipla de itens
+ */
 const Localizacao: React.FC = () => {
-  /* ---------- Estados principais ---------- */
-  const [listaLocalizacoes, setListaLocalizacoes] = useState<Localizacao[]>([]);
-  const [busca, setBusca] = useState('');
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [mostrarFiltro, setMostrarFiltro] = useState(false);
-  const navigate = useNavigate();
+    // Hook personalizado que gerencia a lógica de localizações
+    const {
+        listaLocalizacoes,
+        locaisFiltrados,
+        busca,
+        setBusca,
+        mostrarFormulario,
+        setMostrarFormulario,
+        mostrarFiltro,
+        setMostrarFiltro,
+        setListaLocalizacoes,
+    } = useLocalizacoes();
 
-  /* ---------- Carrega dados reais do backend ---------- */
-  useEffect(() => {
-    axios
-      .get('http://151.243.0.78:3001/localizacao')
-      .then((res) => {
-        const dados: Localizacao[] = res.data.map((item: any) => ({
-          localizacao: item.nome ?? '',
-          tipo: item.tipo?.tipo ?? '',
-          armazem: item.armazem?.nome ?? '',
-          ean: item.ean ?? '',
-          quantidade: 0, 
-          capacidade: 0,
-        }));
-        setListaLocalizacoes(dados);
-      })
-      .catch((err) => {
-        console.error('Erro ao buscar localizações →', err);
-        alert('Falha ao carregar as localizações do servidor.');
-      });
-  }, []);
+    const navigate = useNavigate();
 
-  /* ---------- Filtro de busca ---------- */
-  const locaisFiltrados = listaLocalizacoes.filter((item) => {
-    const texto = busca.toLowerCase();
-    return (
-      item.localizacao.toLowerCase().includes(texto) ||
-      item.tipo.toLowerCase().includes(texto) ||
-      item.armazem.toLowerCase().includes(texto) ||
-      item.ean.toLowerCase().includes(texto)
-    );
-  });
+    // Estados para seleção múltipla
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectAll, setSelectAll] = useState(false);
 
-  /* ---------- Ações ---------- */
-  const handleExcluir = (index: number) => {
-    if (listaLocalizacoes[index].quantidade > 0) {
-      alert('Só é possível excluir localizações com quantidade 0.');
-      return;
-    }
-    setListaLocalizacoes(listaLocalizacoes.filter((_, i) => i !== index));
-  };
+    // Estados para paginação
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
-  const handleImprimir = (localizacao: string, ean: string) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
+    // Calcular itens da página atual
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = locaisFiltrados.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(locaisFiltrados.length / itemsPerPage);
 
-    const html = `
+    // Função para selecionar/deselecionar todos os itens
+    const handleSelectAll = (checked: boolean) => {
+        setSelectAll(checked);
+        if (checked) {
+            setSelectedItems(currentItems.map((_, index) => startIndex + index));
+        } else {
+            setSelectedItems([]);
+        }
+    };
+
+    // Função para selecionar/deselecionar um item específico
+    const handleSelectItem = (index: number, checked: boolean) => {
+        if (checked) {
+            setSelectedItems([...selectedItems, index]);
+        } else {
+            setSelectedItems(selectedItems.filter(item => item !== index));
+            setSelectAll(false);
+        }
+    };
+
+    // Atualizar selectAll quando todos os itens da página estão selecionados
+    useEffect(() => {
+        const currentPageIndices = currentItems.map((_, index) => startIndex + index);
+        const allCurrentSelected = currentPageIndices.every(index => selectedItems.includes(index));
+        setSelectAll(allCurrentSelected && currentPageIndices.length > 0);
+    }, [selectedItems, currentItems, startIndex]);
+
+    /**
+     * Exclui uma localização da lista, se ela tiver quantidade 0.
+     * Exibe alerta caso haja produtos na localização.
+     * 
+     * @param index Índice da localização na lista
+     */
+    const handleExcluir = async (id: number, nome: string, quantidade: number) => {
+        if (quantidade > 0) {
+            alert('Só é possível excluir localizações com quantidade 0.');
+            return;
+        }
+
+        const confirmar = window.confirm(`Deseja excluir a localização "${nome}"?`);
+        if (!confirmar) return;
+
+        try {
+            await excluirLocalizacao({ localizacao_id: id });
+            alert(`Localização "${nome}" excluída com sucesso!`);
+
+            const atualizadas = listaLocalizacoes.filter(loc => loc.localizacao_id !== id);
+            setListaLocalizacoes(atualizadas);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+
+    // Função para excluir itens selecionados
+    const handleExcluirSelecionados = () => {
+        const itemsToDelete = selectedItems.filter(index => listaLocalizacoes[index].quantidade === 0);
+
+        if (itemsToDelete.length === 0) {
+            alert('Só é possível excluir localizações com quantidade 0.');
+            return;
+        }
+
+        if (itemsToDelete.length !== selectedItems.length) {
+            alert('Algumas localizações não podem ser excluídas pois possuem produtos.');
+        }
+
+        const newList = listaLocalizacoes.filter((_, index) => !itemsToDelete.includes(index));
+        setListaLocalizacoes(newList);
+        setSelectedItems([]);
+        setSelectAll(false);
+    };
+
+    const handleImprimir = (localizacao: string, ean: string) => {
+        const win = window.open('', '_blank');
+        if (!win) return;
+
+        const html = `
         <html>
         <head>
             <title>Etiqueta – ${localizacao}</title>
@@ -132,118 +186,278 @@ const Localizacao: React.FC = () => {
         </html>
     `;
 
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* JSX                                                                    */
-  /* ---------------------------------------------------------------------- */
-  return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Localizações
-      </Typography>
+    // Função para imprimir itens selecionados
+    const handleImprimirSelecionados = () => {
+        if (selectedItems.length === 0) {
+            alert('Selecione pelo menos um item para imprimir.');
+            return;
+        }
 
-      {/* Barra de busca e botões */}
-      <Box display="flex" gap={2} mb={2}>
-        <TextField
-          label="Buscar localização, tipo, armazém ou EAN"
-          variant="outlined"
-          fullWidth
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          InputProps={{ endAdornment: <SearchIcon /> }}
-        />
-        <Button startIcon={<FilterListIcon />} onClick={() => setMostrarFiltro(!mostrarFiltro)}>
-          Filtros
-        </Button>
-        <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/CriarLocalizacao')}
-            sx={{
-                backgroundColor: '#0a8f00',
-                color: '#fff',
-                fontWeight: 'bold',
-                borderRadius: 2,
-                paddingX: 3,
-                textTransform: 'none',
-                '&:hover': {
-                backgroundColor: '#076e00',
-                },
-            }}
-            >
-                 Nova
-            </Button>
+        selectedItems.forEach(index => {
+            const item = listaLocalizacoes[index];
+            setTimeout(() => handleImprimir(item.nome, item.ean), 100);
+        });
+    };
 
-      </Box>
+    /* ---------------------------------------------------------------------- */
+    /* JSX                                                                    */
+    /* ---------------------------------------------------------------------- */
+    return (
+        <Container maxWidth="xl" sx={{ mt: 4, px: 3 }}>
+            <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+                Localização
+            </Typography>
 
-      {/* Placeholder simples para indicar que algo será exibido futuramente */}
-      {mostrarFiltro && (
-        <Typography variant="body2" color="text.secondary" mb={2}>
-          Área de filtros em construção…
-        </Typography>
-      )}
-      {mostrarFormulario && (
-        <Typography variant="body2" color="text.secondary" mb={2}>
-          Formulário de nova localização em construção…
-        </Typography>
-      )}
+            {/* Barra de busca e botões de ação */}
+            <Box display="flex" gap={2} mb={3} alignItems="center">
+                <TextField
+                    placeholder="Buscar Localização, tipo, armazém ou EAN"
+                    variant="outlined"
+                    fullWidth
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    InputProps={{
+                        startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    }}
+                    sx={{ maxWidth: 400 }}
+                />
 
-      {/* Tabela */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Localização</TableCell>
-              <TableCell>Tipo</TableCell>
-              <TableCell>Armazém</TableCell>
-              <TableCell>EAN</TableCell>
-              <TableCell align="center">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {locaisFiltrados.length ? (
-              locaisFiltrados.map((item, index) => (
-                <TableRow key={`${item.localizacao}-${index}`}>
-                  <TableCell>{item.localizacao}</TableCell>
-                  <TableCell>{item.tipo}</TableCell>
-                  <TableCell>{item.armazem}</TableCell>
-                  <TableCell>{item.ean}</TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={() => alert(`Ver produtos em ${item.localizacao}`)}
+                <Button
+                    variant="outlined"
+                    startIcon={<FilterListIcon />}
+                    onClick={() => setMostrarFiltro(!mostrarFiltro)}
+                    sx={{ minWidth: 100 }}
+                >
+                    Filtro
+                </Button>
+
+                {/* Renderização condicional dos botões */}
+                {selectedItems.length > 0 ? (
+                    <>
+                        <Button
+                            variant="contained"
+                            startIcon={<PrintIcon />}
+                            onClick={handleImprimirSelecionados}
+                            sx={{
+                                backgroundColor: '#61de27',
+                                color: '#000',
+                                fontWeight: 'bold',
+                                minWidth: 180,
+                                '&:hover': { backgroundColor: '#48c307' }
+                            }}
+                        >
+                            Imprimir Selecionados
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            startIcon={<DeleteIcon />}
+                            onClick={handleExcluirSelecionados}
+                            sx={{
+                                borderColor: '#d32f2f',
+                                color: '#d32f2f',
+                                fontWeight: 'bold',
+                                minWidth: 170,
+                                '&:hover': {
+                                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                                    borderColor: '#d32f2f'
+                                }
+                            }}
+                        >
+                            Excluir Selecionados
+                        </Button>
+                    </>
+                ) : (
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/CriarLocalizacao')}
+                        sx={{
+                            backgroundColor: '#61de27',
+                            color: '#000',
+                            fontWeight: 'bold',
+                            minWidth: 150,
+                            '&:hover': { backgroundColor: '#48c307' }
+                        }}
                     >
-                      <ListIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleImprimir(item.localizacao, item.ean)}>
-                      <PrintIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleExcluir(index)}
-                      disabled={item.quantidade > 0}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  Nenhuma localização encontrada.
-                </TableCell>
-              </TableRow>
+                        Nova Localização
+                    </Button>
+                )}
+            </Box>
+
+            {/* Placeholder simples para indicar que algo será exibido futuramente */}
+            {mostrarFiltro && (
+                <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Área de filtros em construção…
+                    </Typography>
+                </Paper>
             )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Container>
-  );
+
+            {/* Formulário de criação (ainda não implementado) */}
+            {mostrarFormulario && (
+                <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Formulário de nova localização em construção…
+                    </Typography>
+                </Paper>
+            )}
+
+            {/* Tabela de localizações */}
+            <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell padding="checkbox">
+                                <Checkbox
+                                    checked={selectAll}
+                                    onChange={(e) => handleSelectAll(e.target.checked)}
+                                    indeterminate={selectedItems.length > 0 && !selectAll}
+                                />
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Ean</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {currentItems.length ? (
+                            currentItems.map((item, index) => {
+                                const globalIndex = startIndex + index;
+                                const isSelected = selectedItems.includes(globalIndex);
+
+                                return (
+                                    <TableRow
+                                        key={`${item.nome}-${globalIndex}`}
+                                        selected={isSelected}
+                                        hover
+                                    >
+                                        <TableCell padding="checkbox">
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onChange={(e) => handleSelectItem(globalIndex, e.target.checked)}
+                                            />
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>{item.nome}</TableCell>
+                                        <TableCell>{item.tipo}</TableCell>
+                                        <TableCell>{item.armazem}</TableCell>
+                                        <TableCell>{item.ean}</TableCell>
+                                        <TableCell>{item.quantidade}</TableCell>
+                                        <TableCell align="center">
+                                            <Box display="flex" justifyContent="center" gap={1}>
+                                                <Tooltip title="Ver produtos">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => alert(`Ver produtos em ${item.nome}`)}
+                                                    >
+                                                        <ListIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+
+                                                <Tooltip title="Imprimir etiqueta">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => handleImprimir(item.nome, item.ean)}
+                                                    >
+                                                        <PrintIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+
+                                                <Tooltip title="Excluir localização">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => handleExcluir(item.localizacao_id, item.nome, item.quantidade ?? 0)}
+                                                        disabled={item.quantidade > 0}
+                                                        sx={{
+                                                            color: item.quantidade > 0 ? 'text.disabled' : 'error.main',
+                                                            '&:hover': {
+                                                                backgroundColor: item.quantidade > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                    <Typography variant="body1" color="text.secondary">
+                                        Nenhuma localização encontrada.
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <Divider sx={{ mt: 4, mb: 0, marginTop: 10 }} />
+            {/* Paginação */}
+            {totalPages > 1 && (
+                <Box display="flex" justifyContent="center" mt={3}
+                    sx={{
+                        right: 980,
+                        position: 'fixed',
+                        bottom: 0,
+                        width: '30%',
+                        textAlign: 'center',
+                        py: 1,
+
+                    }}
+                >
+                    <Pagination
+                        count={totalPages}
+                        page={currentPage}
+                        onChange={(_, page) => setCurrentPage(page)}
+                        renderItem={(item) => {
+                            if (item.type === 'next') {
+                                return (
+                                    <PaginationItem
+                                        {...item}
+                                        components={{ next: ArrowRightAltIcon }}
+                                    />
+
+                                );
+                            }
+
+                            if (item.type === 'previous') {
+                                return null; // remove seta da esquerda
+                            }
+
+                            return (
+                                <PaginationItem
+                                    {...item}
+                                    sx={{
+                                        fontWeight: item.page === currentPage ? 'bold' : 'normal',
+                                        fontFamily: 'monospace',
+                                        fontSize: 14,
+                                        borderRadius: 0,
+                                        minWidth: 36,
+                                        height: 36,
+                                        mx: 0.5,
+                                    }}
+                                />
+                            );
+                        }}
+                    />
+                </Box>
+            )}
+
+        </Container>
+    );
 };
 
 export default Localizacao;
+

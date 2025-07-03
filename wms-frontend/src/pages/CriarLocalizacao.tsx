@@ -4,170 +4,212 @@ import {
   Button,
   Container,
   MenuItem,
-  Paper,
   TextField,
   Typography,
   Divider,
 } from '@mui/material';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-interface Tipo {
-  id: number;
+// Serviços centralizados de API
+import {
+  criarLocalizacao as criarLocalizacaoAPI,
+  buscarArmazem,
+  buscarTiposDeLocalizacao,
+} from '../services/API';
+
+import prateleira from '../img/7102305.png';
+
+// Tipagens vindas (ou equivalentes) do serviço ---------------------------
+interface TipoLocalizacao {
+  tipo_localizacao_id: number;
   tipo: string;
 }
 
 interface Armazem {
-  id: number;
+  armazem_id: number;
   nome: string;
 }
+//--------------------------------------------------------------------------
 
 const CriarLocalizacao: React.FC = () => {
   const navigate = useNavigate();
 
-  const [tipos, setTipos] = useState<Tipo[]>([]);
+  const [tipos, setTipos] = useState<TipoLocalizacao[]>([]);
   const [armazens, setArmazens] = useState<Armazem[]>([]);
 
   const [formData, setFormData] = useState({
     nome: '',
-    tipoId: '',
-    armazemId: '',
+    tipo: '', // agora armazenamos o texto do tipo, não o ID
+    armazemId: '', // permanece para UI, mas não é enviado no serviço (o serviço usa o primeiro armazém)
     largura: '',
     altura: '',
     comprimento: '',
   });
 
+  //------------------------------------------------------------------
+  // Carregar listas de tipos e armazéns via serviços reutilizáveis
+  //------------------------------------------------------------------
   useEffect(() => {
-    axios.get('http://151.243.0.78:3001/tipo-localizacao').then(res => setTipos(res.data));
-    axios.get('http://151.243.0.78:3001/armazem').then(res => setArmazens(res.data));
+    const carregarDados = async () => {
+      try {
+        const [listaTipos, listaArmazens] = await Promise.all([
+          buscarTiposDeLocalizacao(),
+          buscarArmazem(),
+        ]);
+
+        setTipos(listaTipos);
+        setArmazens(listaArmazens);
+      } catch (err) {
+        alert('Erro ao carregar tipos ou armazéns');
+        console.error(err);
+      }
+    };
+
+    carregarDados();
   }, []);
 
+  //------------------------------------------------------------------
+  // Helpers
+  //------------------------------------------------------------------
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSalvar = () => {
-    axios
-      .post('http://151.243.0.78:3001/localizacao', {
+  const validarCampos = (): boolean => {
+    if (!formData.nome || !formData.tipo) {
+      alert('Preencha o nome e selecione o tipo de localização.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSalvar = async () => {
+    if (!validarCampos()) return;
+
+    try {
+      await criarLocalizacaoAPI({
         nome: formData.nome,
-        tipoLocalizacaoId: formData.tipoId,
-        armazemId: formData.armazemId,
-        largura: parseFloat(formData.largura),
-        altura: parseFloat(formData.altura),
-        comprimento: parseFloat(formData.comprimento),
-      })
-      .then(() => {
-        alert('Localização criada com sucesso!');
-        navigate('/localizacao');
-      })
-      .catch(() => alert('Erro ao salvar localização'));
+        status: 'fechada',
+        tipo: formData.tipo,
+        altura: formData.altura,
+        largura: formData.largura,
+        comprimento: formData.comprimento,
+      });
+
+      alert('Localização criada com sucesso!');
+      navigate('/localizacao');
+    } catch (err) {
+      console.error(err);
+      // a própria API já trata e exibe alerts detalhados
+    }
   };
 
+  //------------------------------------------------------------------
+  // Render
+  //------------------------------------------------------------------
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pb: 10 }}>
+    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 80 }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
         Nova Localização
       </Typography>
 
-      <Paper sx={{ p: 4 }}>
-        <Box display="flex" gap={3} mb={2}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            Dados Gerais
-          </Typography>
-          <Typography variant="subtitle1" color="text.disabled">
-            Guia
-          </Typography>
-          <Typography variant="subtitle1" color="text.disabled">
-            Guia
-          </Typography>
-        </Box>
+      <Divider sx={{ mb: 3 }} />
 
-        <Divider sx={{ mb: 3 }} />
+      <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
+        <TextField
+          label="Nome Localização"
+          fullWidth
+          value={formData.nome}
+          onChange={(e) => handleChange('nome', e.target.value)}
+        />
 
-        <Box display="flex" flexDirection="column" gap={2}>
+        <Box display="flex" gap={2} flexWrap="wrap" width="100%">
+          {/* Seleção de Tipo */}
           <TextField
-            label="Nome Localização"
+            select
+            label="Tipo"
             fullWidth
-            value={formData.nome}
-            onChange={(e) => handleChange('nome', e.target.value)}
-          />
-
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <TextField
-              select
-              label="Tipo"
-              fullWidth
-              sx={{ flex: 1 }}
-              value={formData.tipoId}
-              onChange={(e) => handleChange('tipoId', e.target.value)}
-            >
-              {tipos.map((tipo) => (
-                <MenuItem key={tipo.id} value={tipo.id}>
+            sx={{ flex: 1 }}
+            value={formData.tipo}
+            onChange={(e) => handleChange('tipo', e.target.value)}
+          >
+            {tipos.length > 0 ? (
+              tipos.map((tipo) => (
+                <MenuItem key={tipo.tipo_localizacao_id} value={tipo.tipo}>
                   {tipo.tipo}
                 </MenuItem>
-              ))}
-            </TextField>
+              ))
+            ) : (
+              <MenuItem disabled>Nenhum tipo encontrado</MenuItem>
+            )}
+          </TextField>
 
-            <TextField
-              select
-              label="Armazém"
-              fullWidth
-              sx={{ flex: 1 }}
-              value={formData.armazemId}
-              onChange={(e) => handleChange('armazemId', e.target.value)}
-            >
-              {armazens.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nome}
+          {/* Seleção de Armazém (opcional / informativo) */}
+          <TextField
+            select
+            label="Armazém"
+            fullWidth
+            sx={{ flex: 1 }}
+            value={formData.armazemId}
+            onChange={(e) => handleChange('armazemId', e.target.value)}
+          >
+            {armazens.length > 0 ? (
+              armazens.map((ar) => (
+                <MenuItem key={ar.armazem_id} value={String(ar.armazem_id)}>
+                  {ar.nome}
                 </MenuItem>
-              ))}
-            </TextField>
-          </Box>
+              ))
+            ) : (
+              <MenuItem disabled>Nenhum armazém encontrado</MenuItem>
+            )}
+          </TextField>
         </Box>
 
         <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
           Dimensões
         </Typography>
 
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Largura"
-            type="number"
-            fullWidth
-            InputProps={{ endAdornment: <span>cm</span> }}
-            value={formData.largura}
-            onChange={(e) => handleChange('largura', e.target.value)}
-            sx={{ flex: 1 }}
-          />
-          <TextField
-            label="Altura"
-            type="number"
-            fullWidth
-            InputProps={{ endAdornment: <span>cm</span> }}
-            value={formData.altura}
-            onChange={(e) => handleChange('altura', e.target.value)}
-            sx={{ flex: 1 }}
-          />
-          <TextField
-            label="Comprimento"
-            type="number"
-            fullWidth
-            InputProps={{ endAdornment: <span>cm</span> }}
-            value={formData.comprimento}
-            onChange={(e) => handleChange('comprimento', e.target.value)}
-            sx={{ flex: 1 }}
-          />
+        <Box display="flex" alignItems="center" gap={3}>
+          <Box display="flex" gap={2}>
+            {['largura', 'altura', 'comprimento'].map((field, idx) => (
+              <TextField
+                key={field}
+                label={field.charAt(0).toUpperCase() + field.slice(1)}
+                type="number"
+                value={(formData as any)[field]}
+                onChange={(e) => handleChange(field, e.target.value)}
+                InputProps={{
+                  endAdornment: <span>cm</span>,
+                  inputProps: { inputMode: 'numeric', pattern: '[0-9]*' },
+                }}
+                sx={{
+                  width: 130 + (idx === 2 ? 40 : 0), // comprimento um pouco maior
+                  '& input[type=number]': {
+                    MozAppearance: 'textfield',
+                  },
+                  '& input[type=number]::-webkit-outer-spin-button': {
+                    WebkitAppearance: 'none',
+                    margin: 0,
+                  },
+                  '& input[type=number]::-webkit-inner-spin-button': {
+                    WebkitAppearance: 'none',
+                    margin: 0,
+                  },
+                }}
+              />
+            ))}
+          </Box>
+          <Box display="flex" alignItems="center" justifyContent="flex-start">
+            <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
+          </Box>
         </Box>
+      </Box>
 
-        <Box display="flex" justifyContent="center" mt={3}>
-          <img src="/dimensao.png" alt="Dimensão" style={{ width: 100 }} />
-        </Box>
-      </Paper>
+      <Divider sx={{ mt: 20, mb: 3 }} />
 
-      {/* Botões Fixos */}
       <Box
         sx={{
-          position: 'fixed',
+          marginRight: 30,
           bottom: 20,
           left: 0,
           right: 0,
