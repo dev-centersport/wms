@@ -17,7 +17,7 @@ const Armazem: React.FC = () => {
     <TableBody>
       {locaisFiltrados.length ? (
         locaisFiltrados.map((item, index) => (
-          <TableRow key={`${item.localizacao}-${index}`}>
+          <TableRow key={`${item.nome}-${index}`}>
             <TableCell>{item.armazem}</TableCell>
             <TableCell>{item.capacidade}</TableCell>
             <TableCell>{item.endereco}</TableCell>
