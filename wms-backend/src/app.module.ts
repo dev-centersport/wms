@@ -9,6 +9,7 @@ import { LocalizacaoModule } from './localizacao/localizacao.module';
 import { ProdutoModule } from './produto/produto.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
+import { ProdutoEstoqueModule } from './produto_estoque/produto_estoque.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -66,6 +67,7 @@ import { join } from 'path';
     TipoLocalizacaoModule,
     LocalizacaoModule,
     ProdutoModule,
+    ProdutoEstoqueModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,36 +1,61 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateLocalizacaoDto } from './create-localizacao.dto';
 import {
-  IsDecimal,
+  IsDefined,
   IsEnum,
-  IsNotEmpty,
+  IsNumber,
+  IsOptional,
   IsString,
   Length,
+  Min,
 } from 'class-validator';
 import { StatusPrateleira } from '../entities/localizacao.entity';
+import { Transform } from 'class-transformer';
 
 export class UpdateLocalizacaoDto extends PartialType(CreateLocalizacaoDto) {
+  @IsOptional()
+  @IsDefined()
   @IsEnum(StatusPrateleira)
-  @IsNotEmpty()
   status?: StatusPrateleira = StatusPrateleira.FECHADA;
 
+  @IsOptional()
+  @IsDefined()
   @IsString()
-  @IsNotEmpty()
   nome?: string;
 
-  @IsDecimal()
-  @IsNotEmpty()
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
   altura?: number = 0;
 
-  @IsDecimal()
-  @IsNotEmpty()
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
   largura?: number = 0;
 
-  @IsDecimal()
-  @IsNotEmpty()
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
   comprimento?: number = 0;
 
+  @IsOptional()
+  @IsDefined()
   @IsString()
-  @Length(13, 13, { message: 'O EAN deve ter entre 8 e 13 caracteres' })
-  ean: string;
+  @Length(13, 13, { message: 'O EAN deve ter 13 caracteres' })
+  ean?: string;
+
+  @IsOptional()
+  @IsDefined()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseInt(value, 10))
+  tipo_localizacao_id?: number;
+
+  @IsOptional()
+  @IsDefined()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseInt(value, 10))
+  armazem_id?: number;
 }

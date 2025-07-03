@@ -92,7 +92,29 @@ export class LocalizacaoService {
   ): Promise<Localizacao> {
     const localizacao = await this.findOne(localizacao_id);
 
-    this.LocalizacaoRepository.merge(localizacao, updateLocalizacaoDto);
+    if (!localizacao) throw new NotFoundException('Localizção não encontrada!');
+
+    if (updateLocalizacaoDto.armazem_id !== undefined) {
+      const armazem = await this.armazemRepository.findOneBy({
+        armazem_id: updateLocalizacaoDto.armazem_id,
+      });
+      if (!armazem) throw new NotFoundException('Armazém não encontrado');
+      localizacao.armazem = armazem;
+    }
+    if (updateLocalizacaoDto.tipo_localizacao_id !== undefined) {
+      const tipo_localizacao = await this.tipoLocalizacaoRepository.findOneBy({
+        tipo_localizacao_id: updateLocalizacaoDto.tipo_localizacao_id,
+      });
+      if (!tipo_localizacao)
+        throw new NotFoundException('Tipo de localização não encontrado');
+      localizacao.tipo = tipo_localizacao;
+    }
+
+    // this.LocalizacaoRepository.merge(localizacao, updateLocalizacaoDto);
+    const { armazem_id, tipo_localizacao_id, ...camposSimples } =
+      updateLocalizacaoDto;
+
+    Object.assign(localizacao, camposSimples);
 
     return await this.LocalizacaoRepository.save(localizacao);
   }
