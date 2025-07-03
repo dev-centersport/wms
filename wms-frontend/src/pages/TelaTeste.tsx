@@ -19,7 +19,7 @@ import {
 
 const TelaTeste: React.FC = () => {
   // estados dos inputs
-  const [localizacao, setLocalizacao] = useState('');
+  const [nome, setLocalizacao] = useState('');
   const [tipo, setTipo] = useState('');
   const [armazem, setArmazem] = useState('');
   const [altura, setAltura] = useState('');
@@ -53,7 +53,7 @@ const TelaTeste: React.FC = () => {
   // envio do formulário
   const handleEnviar = async () => {
     if (
-      !localizacao ||
+      !nome ||
       !tipo ||
       !armazem ||
       !altura ||
@@ -68,7 +68,7 @@ const TelaTeste: React.FC = () => {
 
     try {
       await criarLocalizacao({
-        localizacao,
+        nome,
         status: 'fechada',
         tipo,
         altura,
@@ -100,7 +100,7 @@ const TelaTeste: React.FC = () => {
         <TextField
           fullWidth
           label="Nome da Localização"
-          value={localizacao}
+          value={nome}
           onChange={(e) => setLocalizacao(e.target.value)}
           margin="normal"
         />

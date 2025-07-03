@@ -69,7 +69,7 @@ export const useLocalizacoes = () => {
   const locaisFiltrados = listaLocalizacoes.filter((item) => {
     const texto = busca.toLowerCase();
     return (
-      item.localizacao.toLowerCase().includes(texto) ||
+      item.nome.toLowerCase().includes(texto) ||
       item.tipo.toLowerCase().includes(texto) ||
       item.armazem.toLowerCase().includes(texto) ||
       item.ean.toLowerCase().includes(texto)

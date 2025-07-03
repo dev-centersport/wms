@@ -1,20 +1,8 @@
-import axios, { AxiosError } from 'axios';
-
-export interface ApiLocalizacao {
-  localizacao_id: number;
-  nome: string;
-  ean: string;
-  tipo: {
-    tipo: string;
-  };
-  armazem: {
-    nome: string;
-    endereco: string;
-  };
-}
+import axios from 'axios'
 
 export interface Localizacao {
-  localizacao: string;
+  localizacao_id: number;
+  nome: string;
   tipo: string;
   armazem: string;
   ean: string;
@@ -23,22 +11,24 @@ export interface Localizacao {
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
-    const res = await axios.get<ApiLocalizacao[]>('http://151.243.0.78:3001/localizacao');
+    const res = await axios.get<any[]>('http://151.243.0.78:3001/localizacao');
 
-    const dadosLocalizacao: Localizacao[] = res.data.map((item) => ({
-      localizacao: item.nome ?? '',
+    const dados: Localizacao[] = res.data.map((item) => ({
+      localizacao_id: item.localizacao_id,
+      nome: item.nome,
       tipo: item.tipo?.tipo ?? '',
       armazem: item.armazem?.nome ?? '',
       ean: item.ean ?? '',
-      endereco: item.armazem.endereco ?? '',
+      endereco: item.armazem?.endereco ?? '',
     }));
 
-    return dadosLocalizacao;
+    return dados;
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
+
 
 export interface Armazem {
   armazem_id: number;
@@ -74,7 +64,7 @@ export const buscarTiposDeLocalizacao = async (): Promise<TipoLocalizacao[]> => 
 };
 
 export interface criarLocalizacao {
-  localizacao: string;
+  nome: string;
   status: string;
   tipo: string;
   altura: string;
@@ -104,7 +94,7 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
     }
 
     await axios.post('http://151.243.0.78:3001/localizacao', {
-      nome: criarLocalizacao.localizacao,
+      nome: criarLocalizacao.nome,
       status: 'fechada',
       altura: criarLocalizacao.altura,
       largura: criarLocalizacao.largura,
@@ -136,3 +126,31 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
     throw new Error('Falha ao criar nova localização no servidor.');
   }
 };
+
+export interface ExcluirLocalizacao {
+  localizacao_id: number;
+}
+
+export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao): Promise<void> => {
+  try {
+    await axios.delete(`http://151.243.0.78:3001/localizacao/${localizacao_id}`);
+    console.log(`Localização ID ${localizacao_id} excluída com sucesso.`);
+  } catch (err) {
+    console.error('Erro ao excluir localização →', err);
+
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        alert(`Erro ${err.response.status}: ${JSON.stringify(err.response.data)}`);
+      } else if (err.request) {
+        alert('Nenhuma resposta recebida do servidor.');
+      } else {
+        alert('Erro na configuração da requisição.');
+      }
+    } else {
+      alert('Erro inesperado ao excluir localização.');
+    }
+
+    throw new Error('Falha ao excluir a localização.');
+  }
+};
+
