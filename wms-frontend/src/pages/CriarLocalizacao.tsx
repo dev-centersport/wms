@@ -10,8 +10,9 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import prateleira from "../img/7102305.png"
-import { buscarArmazem } from '../services/API';
+
+import prateleira from '../img/7102305.png';
+
 
 interface Tipo {
   id: number;
@@ -84,7 +85,7 @@ const CriarLocalizacao: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 2, marginRight: 40  }}>
+    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight:80 }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
         Nova Localização
       </Typography>
@@ -145,45 +146,48 @@ const CriarLocalizacao: React.FC = () => {
 
         <Box display="flex" alignItems="center" gap={3}>
           <Box display="flex" gap={2}>
-            <TextField
-              label="Largura"
-              type="number"
-              InputProps={{ endAdornment: <span>cm</span> }}
-              value={formData.largura}
-              onChange={(e) => handleChange('largura', e.target.value)}
-              sx={{ width: 130 }}
-            />
-            <TextField
-              label="Altura"
-              type="number"
-              InputProps={{ endAdornment: <span>cm</span> }}
-              value={formData.altura}
-              onChange={(e) => handleChange('altura', e.target.value)}
-              sx={{ width: 130 }}
-            />
-            <TextField
-              label="Comprimento"
-              type="number"
-              InputProps={{ endAdornment: <span>cm</span> }}
-              value={formData.comprimento}
-              onChange={(e) => handleChange('comprimento', e.target.value)}
-              sx={{ width: 170 }}
-            />
-          </Box>
+              {['largura', 'altura', 'comprimento'].map((field, idx) => (
+                <TextField
+                  key={field}
+                  label={field.charAt(0).toUpperCase() + field.slice(1)}
+                  type="number"
+                  value={(formData as any)[field]}
+                  onChange={(e) => handleChange(field, e.target.value)}
+                  InputProps={{
+                    endAdornment: <span>cm</span>,
+                    inputProps: { inputMode: 'numeric', pattern: '[0-9]*' },
+                  }}
+                  sx={{
+                    width: 130 + (idx === 2 ? 40 : 0), // comprimento um pouco maior
+                    '& input[type=number]': {
+                      MozAppearance: 'textfield',
+                    },
+                    '& input[type=number]::-webkit-outer-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                    '& input[type=number]::-webkit-inner-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  }}
+                />
+              ))}
+            </Box>
           <Box display="flex" alignItems="center" justifyContent="flex-start" >
             <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
-         </Box> 
-
+         </Box>  
         </Box>
-      </Box>  
-      <Divider sx={{ mt: 43, mb: 3 }} />
+      </Box>
+
+      <Divider sx={{ mt: 20, mb: 3 }} />
 
       <Box
         sx={{
-          position: 'fixed',
-          bottom: 80,
+          marginRight:30,
+          bottom: 20,
           left: 0,
-          right: 400,
+          right: 0,
           display: 'flex',
           justifyContent: 'center',
           gap: 2,
