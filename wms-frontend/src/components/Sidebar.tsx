@@ -42,7 +42,7 @@ const Sidebar: React.FC = () => {
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: 200,
-          backgroundColor: '#59e60d',
+          backgroundColor: '#61de27',
           boxSizing: 'border-box',
           paddingTop: 2,
           borderRight: 'none',
@@ -51,13 +51,15 @@ const Sidebar: React.FC = () => {
     >
       {/* Logo e nome WMS */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-        <Box
-          component="img"
-          src="image.png" // atualize o caminho
-          alt="Logo"
-          sx={{ width: 80, height: 80, mb: 1 }}
-        />
-        <Box sx={{ fontWeight: 'bold', fontSize: 18, color: '#000' }}>WMS</Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+          <Box
+            component="img"
+            src={image}
+            alt="Logo"
+            sx={{ width: 170, height: 140,marginTop: 2 , }}
+          />
+      </Box>
+
       </Box>
 
       {/* Menu com barra lateral no ativo */}
@@ -90,7 +92,7 @@ const Sidebar: React.FC = () => {
                   fontWeight: 'bold',
                 },
                 '&:hover': {
-                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  backgroundColor: 'rgba(238, 0, 0, 0.05)',
                 },
               }}
             >

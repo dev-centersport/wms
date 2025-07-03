@@ -4,13 +4,18 @@ import {
   Button,
   Container,
   MenuItem,
-  Paper,
   TextField,
   Typography,
   Divider,
 } from '@mui/material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import prateleira from "../img/7102305.png"
+
+
+
+
+
 
 interface Tipo {
   id: number;
@@ -38,23 +43,42 @@ const CriarLocalizacao: React.FC = () => {
   });
 
   useEffect(() => {
-    axios.get('http://151.243.0.78:3001/tipo-localizacao').then(res => setTipos(res.data));
-    axios.get('http://151.243.0.78:3001/armazem').then(res => setArmazens(res.data));
+    axios
+      .get('http://151.243.0.78:3001/tipo-localizacao')
+      .then((res) => {
+        const adaptado = res.data.map((t: any) => ({
+          id: t.tipo_localizacao_id ?? t.id,
+          tipo: t.tipo,
+        }));
+        setTipos(adaptado);
+      })
+      .catch(() => alert('Erro ao carregar tipos'));
+
+    axios
+      .get('http://151.243.0.78:3001/armazem')
+      .then((res) => {
+        const adaptado = res.data.map((a: any) => ({
+          id: a.armazem_id ?? a.id,
+          nome: a.nome,
+        }));
+        setArmazens(adaptado);
+      })
+      .catch(() => alert('Erro ao carregar armazéns'));
   }, []);
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSalvar = () => {
     axios
       .post('http://151.243.0.78:3001/localizacao', {
         nome: formData.nome,
-        tipoLocalizacaoId: formData.tipoId,
-        armazemId: formData.armazemId,
-        largura: parseFloat(formData.largura),
-        altura: parseFloat(formData.altura),
-        comprimento: parseFloat(formData.comprimento),
+        tipoLocalizacaoId: Number(formData.tipoId),
+        armazemId: Number(formData.armazemId),
+        largura: Number(formData.largura) || 0,
+        altura: Number(formData.altura) || 0,
+        comprimento: Number(formData.comprimento) || 0,
       })
       .then(() => {
         alert('Localização criada com sucesso!');
@@ -64,113 +88,106 @@ const CriarLocalizacao: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pb: 10 }}>
+    <Container maxWidth="md" sx={{ mt: 2, marginRight: 40  }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
         Nova Localização
       </Typography>
 
-      <Paper sx={{ p: 4 }}>
-        <Box display="flex" gap={3} mb={2}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            Dados Gerais
-          </Typography>
-          <Typography variant="subtitle1" color="text.disabled">
-            Guia
-          </Typography>
-          <Typography variant="subtitle1" color="text.disabled">
-            Guia
-          </Typography>
-        </Box>
+      <Divider sx={{ mb: 3 }} />
 
-        <Divider sx={{ mb: 3 }} />
+      <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
+        <TextField
+          label="Nome Localização"
+          fullWidth
+          value={formData.nome}
+          onChange={(e) => handleChange('nome', e.target.value)}
+        />
 
-        <Box display="flex" flexDirection="column" gap={2}>
+        <Box display="flex" gap={2} flexWrap="wrap" width="100%">
           <TextField
-            label="Nome Localização"
+            select
+            label="Tipo"
             fullWidth
-            value={formData.nome}
-            onChange={(e) => handleChange('nome', e.target.value)}
-          />
-
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <TextField
-              select
-              label="Tipo"
-              fullWidth
-              sx={{ flex: 1 }}
-              value={formData.tipoId}
-              onChange={(e) => handleChange('tipoId', e.target.value)}
-            >
-              {tipos.map((tipo) => (
-                <MenuItem key={tipo.id} value={tipo.id}>
+            sx={{ flex: 1 }}
+            value={formData.tipoId}
+            onChange={(e) => handleChange('tipoId', e.target.value)}
+          >
+            {tipos.length > 0 ? (
+              tipos.map((tipo) => (
+                <MenuItem key={tipo.id} value={String(tipo.id)}>
                   {tipo.tipo}
                 </MenuItem>
-              ))}
-            </TextField>
+              ))
+            ) : (
+              <MenuItem disabled>Nenhum tipo encontrado</MenuItem>
+            )}
+          </TextField>
 
-            <TextField
-              select
-              label="Armazém"
-              fullWidth
-              sx={{ flex: 1 }}
-              value={formData.armazemId}
-              onChange={(e) => handleChange('armazemId', e.target.value)}
-            >
-              {armazens.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nome}
+          <TextField
+            select
+            label="Armazém"
+            fullWidth
+            sx={{ flex: 1 }}
+            value={formData.armazemId}
+            onChange={(e) => handleChange('armazemId', e.target.value)}
+          >
+            {armazens.length > 0 ? (
+              armazens.map((ar) => (
+                <MenuItem key={ar.id} value={String(ar.id)}>
+                  {ar.nome}
                 </MenuItem>
-              ))}
-            </TextField>
-          </Box>
+              ))
+            ) : (
+              <MenuItem disabled>Nenhum armazém encontrado</MenuItem>
+            )}
+          </TextField>
         </Box>
 
         <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
           Dimensões
         </Typography>
 
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Largura"
-            type="number"
-            fullWidth
-            InputProps={{ endAdornment: <span>cm</span> }}
-            value={formData.largura}
-            onChange={(e) => handleChange('largura', e.target.value)}
-            sx={{ flex: 1 }}
-          />
-          <TextField
-            label="Altura"
-            type="number"
-            fullWidth
-            InputProps={{ endAdornment: <span>cm</span> }}
-            value={formData.altura}
-            onChange={(e) => handleChange('altura', e.target.value)}
-            sx={{ flex: 1 }}
-          />
-          <TextField
-            label="Comprimento"
-            type="number"
-            fullWidth
-            InputProps={{ endAdornment: <span>cm</span> }}
-            value={formData.comprimento}
-            onChange={(e) => handleChange('comprimento', e.target.value)}
-            sx={{ flex: 1 }}
-          />
-        </Box>
+        <Box display="flex" alignItems="center" gap={3}>
+          <Box display="flex" gap={2}>
+            <TextField
+              label="Largura"
+              type="number"
+              InputProps={{ endAdornment: <span>cm</span> }}
+              value={formData.largura}
+              onChange={(e) => handleChange('largura', e.target.value)}
+              sx={{ width: 130 }}
+            />
+            <TextField
+              label="Altura"
+              type="number"
+              InputProps={{ endAdornment: <span>cm</span> }}
+              value={formData.altura}
+              onChange={(e) => handleChange('altura', e.target.value)}
+              sx={{ width: 130 }}
+            />
+            <TextField
+              label="Comprimento"
+              type="number"
+              InputProps={{ endAdornment: <span>cm</span> }}
+              value={formData.comprimento}
+              onChange={(e) => handleChange('comprimento', e.target.value)}
+              sx={{ width: 170 }}
+            />
+          </Box>
+          <Box display="flex" alignItems="center" justifyContent="flex-start" >
+            <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
+         </Box> 
 
-        <Box display="flex" justifyContent="center" mt={3}>
-          <img src="/dimensao.png" alt="Dimensão" style={{ width: 100 }} />
         </Box>
-      </Paper>
+      </Box>  
+      <Divider sx={{ mt: 43, mb: 3 }} />
 
-      {/* Botões Fixos */}
       <Box
         sx={{
           position: 'fixed',
-          bottom: 20,
+          bottom: 80,
           left: 0,
-          right: 0,
+          right: 400,
           display: 'flex',
           justifyContent: 'center',
           gap: 2,

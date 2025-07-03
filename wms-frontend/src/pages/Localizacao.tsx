@@ -49,6 +49,8 @@ const Localizacao: React.FC = () => {
     setMostrarFiltro,
     setListaLocalizacoes,
   } = useLocalizacoes();
+  const navigate = useNavigate();
+
 
   /**
    * Exclui uma localização da lista, se ela tiver quantidade 0.
@@ -133,15 +135,13 @@ const Localizacao: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => navigate('/CriarLocalizacao')}
             sx={{
-                backgroundColor: '#0a8f00',
-                color: '#fff',
+                backgroundColor: '#59e60d',
+                color: '#000',
                 fontWeight: 'bold',
                 borderRadius: 2,
                 paddingX: 3,
                 textTransform: 'none',
-                '&:hover': {
-                backgroundColor: '#076e00',
-                },
+                '&:hover': { backgroundColor: '#48c307' },
             }}
             >
                  Nova

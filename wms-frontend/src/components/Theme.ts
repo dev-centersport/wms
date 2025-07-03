@@ -3,11 +3,11 @@ import { createTheme } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#0f8d4e', // Verde CenterSport
+      main: '#61de27', // Verde CenterSport
       contrastText: '#fff',
     },
     secondary: {
-      main: '#1e1e1e', // Cinza-escuro padrão
+      main: '#d2d2d2', // Cinza-escuro padrão
     },
     error: {
       main: '#d32f2f',
