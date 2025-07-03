@@ -9,10 +9,12 @@ import "./index.css";
 
 import Armazem from "./pages/Armazem";
 import Login from "./pages/Login";
+
 import Localizacao from "./pages/Localizacao";
 import CriarLocalizacao from "./pages/CriarLocalizacao";
 import Layout from "./components/Layout";
 import theme from './components/Theme';
+
 
 const container = document.getElementById("root");
 if (!container) {
@@ -22,6 +24,7 @@ if (!container) {
 const root = createRoot(container);
 
 root.render(
+
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -41,4 +44,6 @@ root.render(
       </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>
+
+  
 );
