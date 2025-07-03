@@ -18,19 +18,23 @@ export class Localizacao {
   @PrimaryGeneratedColumn()
   localizacao_id: number;
 
-  @Column('enum', { enum: StatusPrateleira, default: StatusPrateleira.ABERTA })
+  @Column({
+    type: 'enum',
+    enum: StatusPrateleira,
+    default: StatusPrateleira.ABERTA,
+  })
   status: StatusPrateleira;
 
-  @Column({ length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   nome: string;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   altura: number;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   largura: number;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   comprimento: number;
 
   @Column({ type: 'varchar', length: 13, unique: true })
