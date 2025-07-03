@@ -13,6 +13,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  Collapse,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -24,18 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useLocalizacoes } from '../components/ApiComponents';
 
-/**
- * Componente principal da página de Localizações.
- * 
- * Responsável por:
- * - Exibir a lista de localizações em tabela
- * - Permitir busca por nome, tipo, armazém ou EAN
- * - Mostrar/esconder o formulário de nova localização
- * - Mostrar/esconder área de filtros
- * - Realizar ações de impressão, visualização e exclusão de localizações
- */
-const Localizacao: React.FC = () => {
-  // Hook personalizado que gerencia a lógica de localizações
+const Armazem: React.FC = () => {
   const {
     listaLocalizacoes,
     locaisFiltrados,
@@ -48,73 +38,61 @@ const Localizacao: React.FC = () => {
     setListaLocalizacoes,
   } = useLocalizacoes();
 
-  /**
-   * Exclui uma localização da lista, se ela tiver quantidade 0.
-   * Exibe alerta caso haja produtos na localização.
-   * 
-   * @param index Índice da localização na lista
-   */
-  const handleExcluir = (index: number) => {
-    if (listaLocalizacoes[index].quantidade > 0) {
-      alert('Só é possível excluir localizações com quantidade 0.');
-      return;
-    }
-    setListaLocalizacoes(listaLocalizacoes.filter((_, i) => i !== index));
-  };
-
-  /**
-   * Simula impressão dos dados de uma localização em nova aba.
-   * 
-   * @param localizacao Nome da localização a ser impressa
-   */
-  const handleImprimir = (localizacao: string) => {
-    const win = window.open('', '_blank');
-    win?.document.write(`<h1>Impressão – ${localizacao}</h1>`);
-    win?.document.write('<p>Dados adicionais podem ser incluídos aqui.</p>');
-    win?.print();
-  };
-
   return (
-    <Container sx={{ mt: 4 }}>
+    <Container>
       <Typography variant="h4" gutterBottom>
-        Localizações
+        Localizações de Armazém
       </Typography>
 
-      {/* Barra de busca e botões de ação */}
-      <Box display="flex" gap={2} mb={2}>
+      <Box display="flex" gap={2} alignItems="center" mb={2}>
         <TextField
-          label="Buscar localização, tipo, armazém ou EAN"
+          label="Buscar localização"
           variant="outlined"
-          fullWidth
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          InputProps={{ endAdornment: <SearchIcon /> }}
+          size="small"
         />
-        <Button startIcon={<FilterListIcon />} onClick={() => setMostrarFiltro(!mostrarFiltro)}>
-          Filtros
-        </Button>
+        <IconButton onClick={() => setMostrarFiltro(!mostrarFiltro)}>
+          <FilterListIcon />
+        </IconButton>
         <Button
           variant="contained"
+          color="primary"
           startIcon={<AddIcon />}
           onClick={() => setMostrarFormulario(!mostrarFormulario)}
         >
-          Nova
+          Nova Localização
         </Button>
       </Box>
 
-      {/* Área de filtros (ainda não implementada) */}
-      {mostrarFiltro && (
-        <Typography variant="body2" color="text.secondary" mb={2}>
-          Área de filtros em construção…
-        </Typography>
-      )}
+      {/* Filtro expandido */}
+      <Collapse in={mostrarFiltro}>
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography variant="subtitle1">Filtros adicionais</Typography>
+          {/* Aqui você pode colocar filtros por tipo, armazém, status etc */}
+          <TextField label="Filtrar por tipo" variant="outlined" size="small" sx={{ mr: 2 }} />
+          <TextField label="Filtrar por armazém" variant="outlined" size="small" />
+        </Paper>
+      </Collapse>
 
-      {/* Formulário de criação (ainda não implementado) */}
-      {mostrarFormulario && (
-        <Typography variant="body2" color="text.secondary" mb={2}>
-          Formulário de nova localização em construção…
-        </Typography>
-      )}
+      {/* Formulário para nova localização */}
+      <Collapse in={mostrarFormulario}>
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography variant="h6" gutterBottom>Nova Localização</Typography>
+          {/* Formulário completo aqui (campos de nome, tipo, armazém, dimensões etc) */}
+          <Box display="flex" gap={2} flexWrap="wrap">
+            <TextField label="Nome" variant="outlined" size="small" />
+            <TextField label="Altura" variant="outlined" size="small" />
+            <TextField label="Largura" variant="outlined" size="small" />
+            <TextField label="Comprimento" variant="outlined" size="small" />
+            <TextField label="Tipo" variant="outlined" size="small" />
+            <TextField label="Armazém" variant="outlined" size="small" />
+          </Box>
+          <Box mt={2}>
+            <Button variant="contained" color="success">Salvar</Button>
+          </Box>
+        </Paper>
+      </Collapse>
 
       {/* Tabela de localizações */}
       <TableContainer component={Paper}>
@@ -122,12 +100,11 @@ const Localizacao: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>Localização</TableCell>
-              <TableCell>Quantidade</TableCell>
               <TableCell>Tipo</TableCell>
               <TableCell>Armazém</TableCell>
+              <TableCell>Endereço</TableCell>
               <TableCell>EAN</TableCell>
-              <TableCell>Capacidade</TableCell>
-              <TableCell align="center">Ações</TableCell>
+              <TableCell align="right">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -135,40 +112,27 @@ const Localizacao: React.FC = () => {
               locaisFiltrados.map((item, index) => (
                 <TableRow key={`${item.localizacao}-${index}`}>
                   <TableCell>{item.localizacao}</TableCell>
-                  <TableCell>{item.quantidade}</TableCell>
                   <TableCell>{item.tipo}</TableCell>
                   <TableCell>{item.armazem}</TableCell>
+                  <TableCell>{item.endereco}</TableCell>
                   <TableCell>{item.ean}</TableCell>
-                  <TableCell>{item.capacidade}</TableCell>
-                  <TableCell align="center">
-                    {/* Ação: Ver produtos da localização */}
-                    <IconButton
-                      size="small"
-                      onClick={() => alert(`Ver produtos em ${item.localizacao}`)}
-                    >
-                      <ListIcon fontSize="small" />
+                  <TableCell align="right">
+                    <IconButton color="error">
+                      <DeleteIcon />
                     </IconButton>
-
-                    {/* Ação: Imprimir localização */}
-                    <IconButton size="small" onClick={() => handleImprimir(item.localizacao)}>
-                      <PrintIcon fontSize="small" />
+                    <IconButton color="primary">
+                      <PrintIcon />
                     </IconButton>
-
-                    {/* Ação: Excluir localização (se quantidade for 0) */}
-                    <IconButton
-                      size="small"
-                      onClick={() => handleExcluir(index)}
-                      disabled={item.quantidade > 0}
-                    >
-                      <DeleteIcon fontSize="small" />
+                    <IconButton color="secondary">
+                      <ListIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  Nenhuma localização encontrada.
+                <TableCell colSpan={6} align="center">
+                  Nenhum resultado encontrado.
                 </TableCell>
               </TableRow>
             )}
@@ -179,4 +143,4 @@ const Localizacao: React.FC = () => {
   );
 };
 
-export default Localizacao;
+export default Armazem;

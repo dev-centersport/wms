@@ -9,6 +9,8 @@ import "./index.css";
 import Armazem from "./pages/Armazem";
 import Login from "./pages/Login";
 import Localizacao from "./pages/Localizacao"
+import TelaTeste from "./pages/TelaTeste"
+
 
 const container = document.getElementById("root");
 
@@ -25,6 +27,7 @@ root.render(
         <Route path="/armazem" element={<Armazem />} />
         <Route path="/login" element={<Login />} />
         <Route path="/localizacao" element={<Localizacao />} />
+        <Route path="/telateste" element={<TelaTeste />} />
         <Route path="*" element={<Login />} />
       </Routes>
     </BrowserRouter>
