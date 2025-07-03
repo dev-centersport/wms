@@ -10,7 +10,9 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
 import prateleira from '../img/7102305.png';
+
 
 interface Tipo {
   id: number;
