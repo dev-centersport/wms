@@ -1,4 +1,3 @@
-import { Transform } from 'class-transformer';
 import {
   IsEAN,
   IsNotEmpty,
@@ -8,10 +7,10 @@ import {
   IsString,
   IsUrl,
   Length,
-  Min,
   Validate,
 } from 'class-validator';
 import { IsEAN13Valid } from 'src/localizacao/validators/ean13.validator';
+import { MedidaInsercao } from 'src/utils/decorator.medidas';
 
 export class CreateProdutoDto {
   @IsNumber({ maxDecimalPlaces: 0 })
@@ -34,22 +33,13 @@ export class CreateProdutoDto {
   @IsOptional()
   url_foto?: string;
 
-  @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @MedidaInsercao()
   altura?: number;
 
-  @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @MedidaInsercao()
   largura?: number;
 
-  @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @MedidaInsercao()
   comprimento?: number;
 
   @Validate(IsEAN13Valid)
