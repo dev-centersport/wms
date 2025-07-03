@@ -17,9 +17,7 @@ content-type: application/json
 
 {
     "status": "fechada",
-    "nome": "WH-120",
-    "altura": "10",
-    "largura": 10,
+    "nome": "HADF-120",
     "tipo_localizacao_id": 1,
     "armazem_id": 1
 }

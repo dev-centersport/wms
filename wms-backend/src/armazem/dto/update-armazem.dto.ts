@@ -3,7 +3,7 @@ import { PartialType } from '@nestjs/mapped-types';
 // Importa o DTO de criação que será estendido
 import { CreateArmazemDto } from './create-armazem.dto';
 // Importa validadores do class-validator
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 // Define o DTO para atualização de armazém
 export class UpdateArmazemDto extends PartialType(CreateArmazemDto) {
@@ -17,11 +17,12 @@ export class UpdateArmazemDto extends PartialType(CreateArmazemDto) {
   // @IsString() garante que, se fornecido, o valor seja string
   // @IsNotEmpty() garante que, se fornecido, não seja vazio
   // O '?' torna o campo opcional (herdado do PartialType)
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   nome?: string; // Opcional mas com validação quando fornecido
 
   // Outro campo opcional com validação
+  @IsOptional()
   @IsString()
   endereco?: string; // Opcional mas deve ser string se fornecido
 
