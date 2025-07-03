@@ -12,12 +12,14 @@ GET http://localhost:3001/localizacao/1
 
 ###
 
-POST http://localhost:3000/localizacao HTTP/1.1
+POST http://localhost:3001/localizacao HTTP/1.1
 content-type: application/json
 
 {
     "status": "fechada",
-    "nome": "CH-10",
+    "nome": "WH-120",
+    "altura": "10",
+    "largura": 10,
     "tipo_localizacao_id": 1,
     "armazem_id": 1
 }
