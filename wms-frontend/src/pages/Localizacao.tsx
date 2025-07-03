@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import JsBarcode from 'jsbarcode';
 import {
   Box,
   Button,
@@ -37,7 +39,69 @@ const Armazem: React.FC = () => {
     setMostrarFiltro,
     setListaLocalizacoes,
   } = useLocalizacoes();
+  const navigate = useNavigate();
 
+
+
+  /**
+   * Exclui uma localização da lista, se ela tiver quantidade 0.
+   * Exibe alerta caso haja produtos na localização.
+   * 
+   * @param index Índice da localização na lista
+   */
+  const handleExcluir = (index: number) => {
+    if (listaLocalizacoes[index].quantidade > 0) {
+      alert('Só é possível excluir localizações com quantidade 0.');
+      return;
+    }
+    setListaLocalizacoes(listaLocalizacoes.filter((_, i) => i !== index));
+  };
+
+  const handleImprimir = (localizacao: string, ean: string) => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    const html = `
+        <html>
+        <head>
+            <title>Etiqueta – ${localizacao}</title>
+            <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 24px; }
+            h3   { margin: 0 0 16px 0; }
+            </style>
+        </head>
+        <body>
+            <h3>${localizacao}</h3>
+            <svg id="barcode"></svg>
+            <script>
+            window.onload = function () {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
+                script.onload = () => {
+                JsBarcode("#barcode", "${ean}", {
+                    format: "ean13",
+                    height: 80,
+                    displayValue: true,
+                    fontSize: 18
+                });
+                window.print();
+                window.onafterprint = () => window.close();
+                };
+                document.body.appendChild(script);
+            };
+            </script>
+        </body>
+        </html>
+    `;
+
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    };
+
+  /* ---------------------------------------------------------------------- */
+  /* JSX                                                                    */
+  /* ---------------------------------------------------------------------- */
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
@@ -56,24 +120,31 @@ const Armazem: React.FC = () => {
           <FilterListIcon />
         </IconButton>
         <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => setMostrarFormulario(!mostrarFormulario)}
-        >
-          Nova Localização
-        </Button>
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/CriarLocalizacao')}
+            sx={{
+                backgroundColor: '#59e60d',
+                color: '#000',
+                fontWeight: 'bold',
+                borderRadius: 2,
+                paddingX: 3,
+                textTransform: 'none',
+                '&:hover': { backgroundColor: '#48c307' },
+            }}
+            >
+                 Nova
+            </Button>
+
       </Box>
 
-      {/* Filtro expandido */}
-      <Collapse in={mostrarFiltro}>
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Typography variant="subtitle1">Filtros adicionais</Typography>
-          {/* Aqui você pode colocar filtros por tipo, armazém, status etc */}
-          <TextField label="Filtrar por tipo" variant="outlined" size="small" sx={{ mr: 2 }} />
-          <TextField label="Filtrar por armazém" variant="outlined" size="small" />
-        </Paper>
-      </Collapse>
+      {/* Placeholder simples para indicar que algo será exibido futuramente */}
+      {mostrarFiltro && (
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          Área de filtros em construção…
+        </Typography>
+      )}
+
 
       {/* Formulário para nova localização */}
       <Collapse in={mostrarFormulario}>
@@ -104,7 +175,8 @@ const Armazem: React.FC = () => {
               <TableCell>Armazém</TableCell>
               <TableCell>Endereço</TableCell>
               <TableCell>EAN</TableCell>
-              <TableCell align="right">Ações</TableCell>
+              <TableCell align="center">Ações</TableCell>
+
             </TableRow>
           </TableHead>
           <TableBody>
@@ -116,15 +188,23 @@ const Armazem: React.FC = () => {
                   <TableCell>{item.armazem}</TableCell>
                   <TableCell>{item.endereco}</TableCell>
                   <TableCell>{item.ean}</TableCell>
-                  <TableCell align="right">
-                    <IconButton color="error">
-                      <DeleteIcon />
+
+                  <TableCell align="center">
+                    <IconButton
+                      size="small"
+                      onClick={() => alert(`Ver produtos em ${item.localizacao}`)}
+                    >
+                      <ListIcon fontSize="small" />
                     </IconButton>
-                    <IconButton color="primary">
-                      <PrintIcon />
+                    <IconButton size="small" onClick={() => handleImprimir(item.localizacao, item.ean)}>
+                      <PrintIcon fontSize="small" />
                     </IconButton>
-                    <IconButton color="secondary">
-                      <ListIcon />
+                    <IconButton
+                      size="small"
+                      onClick={() => handleExcluir(index)}
+                      disabled={item.quantidade > 0}
+                    >
+                      <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
                 </TableRow>

@@ -1,70 +1,69 @@
-// src/components/Sidebar.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import image from '../img/image.png'
 import {
   Box,
   Drawer,
   List,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListItemButton, // ⬅️ substitui ListItem
 } from '@mui/material';
 
-import DashboardIcon from '@mui/icons-material/BarChart';
-import WarehouseIcon from '@mui/icons-material/Warehouse';
-import InventoryIcon from '@mui/icons-material/Inventory2';
+import SpeedIcon from '@mui/icons-material/Speed';
+import HomeIcon from '@mui/icons-material/Home';
 import RoomIcon from '@mui/icons-material/Room';
-import MapIcon from '@mui/icons-material/Map';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import InventoryIcon from '@mui/icons-material/Inventory2';
 import SearchIcon from '@mui/icons-material/Search';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
-import SecurityIcon from '@mui/icons-material/Security';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import WorkspacesIcon from '@mui/icons-material/Workspaces'; // substituto para movimentação visualmente próximo
 
+const menuItems = [
+  { label: 'Dashboard',     icon: <SpeedIcon />,         path: '/dashboard' },
+  { label: 'Armazém',       icon: <HomeIcon />,          path: '/armazem' },
+  { label: 'Localização',   icon: <RoomIcon />,          path: '/localizacao' },
+  { label: 'Produto',       icon: <InventoryIcon />,     path: '/produto' },
+  { label: 'Consulta',      icon: <SearchIcon />,        path: '/consulta' },
+  { label: 'Movimentação',  icon: <WorkspacesIcon />,    path: '/movimentacao' },
+  { label: 'Ocorrência',    icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  { label: 'Auditoria',     icon: <ThumbUpIcon />,       path: '/auditoria' },
+];
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
-
-  const menuItems = [
-    { label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { label: 'Armazém', icon: <WarehouseIcon />, path: '/armazem' },
-    { label: 'Produto', icon: <InventoryIcon />, path: '/produto' },
-    { label: 'Localização', icon: <RoomIcon />, path: '/localizacao' },
-    { label: 'Tipo de Localização', icon: <MapIcon />, path: '/tipo-localizacao' },
-    { label: 'Movimentação', icon: <CompareArrowsIcon />, path: '/movimentacao' },
-    { label: 'Consulta', icon: <SearchIcon />, path: '/consulta' },
-    { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
-    { label: 'Ocorrências', icon: <ReportProblemIcon />, path: '/ocorrencias' },
-    { label: 'Auditoria', icon: <SecurityIcon />, path: '/auditoria' },
-  ];
 
   return (
     <Drawer
       variant="permanent"
       anchor="left"
       sx={{
-        width: 240,
+        width: 200,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: 240,
+          width: 200,
+          backgroundColor: '#61de27',
           boxSizing: 'border-box',
-          backgroundColor: '#59e60d',
+          paddingTop: 2,
+          borderRight: 'none',
         },
       }}
-      className="sidebar"
     >
-      {/* Logo */}
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
-        <Box
-          component="img"
-          
-          alt="Logo CenterSport"
-          sx={{ width: '80%', maxWidth: 140 }}
-        />
+      {/* Logo e nome WMS */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+          <Box
+            component="img"
+            src={image}
+            alt="Logo"
+            sx={{ width: 170, height: 140,marginTop: 2 , }}
+          />
       </Box>
 
-      {/* Itens de menu */}
-      <List>
+      </Box>
+
+      {/* Menu com barra lateral no ativo */}
+      <List disablePadding>
         {menuItems.map(({ label, icon, path }) => {
           const isActive = location.pathname.startsWith(path);
           return (
@@ -73,9 +72,35 @@ const Sidebar: React.FC = () => {
               component={Link}
               to={path}
               selected={isActive}
+              sx={{
+                px: 3,
+                py: 1,
+                position: 'relative',
+                '&.Mui-selected::before': {
+                  content: '""',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 2,
+                  backgroundColor: '#000',
+                  borderTopRightRadius: 4,
+                  borderBottomRightRadius: 4,
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'transparent',
+                  fontWeight: 'bold',
+                },
+                '&:hover': {
+                  backgroundColor: 'rgba(238, 0, 0, 0.05)',
+                },
+              }}
             >
-              <ListItemIcon>{icon}</ListItemIcon>
-              <ListItemText primary={`${label}${isActive ? ' ●' : ''}`} />
+              <ListItemIcon sx={{ minWidth: 32, color: '#000' }}>{icon}</ListItemIcon>
+              <ListItemText
+                primary={label}
+                primaryTypographyProps={{ sx: { color: '#000', fontSize: 14 } }}
+              />
             </ListItemButton>
           );
         })}
