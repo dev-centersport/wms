@@ -1,4 +1,5 @@
 import axios from 'axios'
+const BASE_URL = 'http://151.243.0.78:3001';
 
 export interface Localizacao {
   localizacao_id: number;
@@ -27,6 +28,18 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
     console.error('Erro ao buscar localizações →', err);
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
+};
+
+export const criarArmazem = async (dados: {
+  nome: string;
+  endereco: string;
+  cidade: string;
+  largura: string;
+  altura: string;
+  comprimento: string;
+}) => {
+  const response = await axios.post(`${BASE_URL}/armazem`, dados);
+  return response.data;
 };
 
 

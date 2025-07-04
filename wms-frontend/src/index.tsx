@@ -15,6 +15,7 @@ import CriarLocalizacao from "./pages/CriarLocalizacao";
 import Layout from "./components/Layout";
 import theme from './components/Theme';
 import TelaTeste from "./pages/TelaTeste";
+import CriarArmazem from "./pages/CriarArmazem";
 
 
 const container = document.getElementById("root");
@@ -39,6 +40,7 @@ root.render(
           <Route path="/armazem" element={<Layout><Armazem /></Layout>} />
           <Route path="/localizacao" element={<Localizacao />} />
           <Route path="/CriarLocalizacao" element={<Layout><CriarLocalizacao /></Layout>} />
+          <Route path="/CriarArmazem" element={<Layout><CriarArmazem /></Layout>} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

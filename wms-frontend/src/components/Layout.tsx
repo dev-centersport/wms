@@ -49,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
       <Sidebar />
-      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' , marginLeft: -10}}>
+      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1, p: 3 }}>{children}</Box>
 
         {totalPages > 1 && (
@@ -66,8 +66,7 @@ const Layout: React.FC<LayoutProps> = ({
                 page={currentPage}
                 siblingCount={1}
                 boundaryCount={1}
-                showFirstButton
-                showLastButton
+                
                 onChange={(_, page) => onPageChange(page)}
                 renderItem={(item) => {
                   if (item.type === 'next') {

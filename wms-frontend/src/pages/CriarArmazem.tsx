@@ -3,47 +3,83 @@ import {
   Box,
   Button,
   Container,
-  MenuItem,
   TextField,
   Typography,
   Divider,
+  MenuItem,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { criarArmazem as criarArmazemAPI } from '../services/API';
+import caixa from '../img/7102305.png';
 
-// Tipagem do armazém
-interface ArmazemForm {
+interface Estado {
+  id: number;
   nome: string;
-  endereco: string;
-  cidade: string;
-  largura: string;
-  altura: string;
-  comprimento: string;
+  sigla: string;
 }
 
 const CriarArmazem: React.FC = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState<ArmazemForm>({
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [cidades, setCidades] = useState<string[]>([]);
+
+  const [formData, setFormData] = useState({
     nome: '',
     endereco: '',
-    cidade: 'Penápolis',
+    estado: '',
+    cidade: '',
     largura: '',
     altura: '',
     comprimento: '',
   });
 
-  const handleChange = (field: keyof ArmazemForm, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  // Carrega estados do IBGE
+  useEffect(() => {
+    const carregarEstados = async () => {
+      try {
+        const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados');
+        const data = await response.json();
+        const ordenados = data.sort((a: Estado, b: Estado) => a.nome.localeCompare(b.nome));
+        setEstados(ordenados);
+      } catch (error) {
+        console.error('Erro ao carregar estados:', error);
+      }
+    };
+    carregarEstados();
+  }, []);
+
+  // Carrega cidades do estado selecionado
+  useEffect(() => {
+    if (formData.estado) {
+      const carregarCidades = async () => {
+        try {
+          const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${formData.estado}/municipios`);
+          const data = await response.json();
+          const nomes = data.map((cidade: any) => cidade.nome);
+          setCidades(nomes);
+        } catch (error) {
+          console.error('Erro ao carregar cidades:', error);
+        }
+      };
+      carregarCidades();
+    } else {
+      setCidades([]);
+    }
+  }, [formData.estado]);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === 'estado' ? { cidade: '' } : {}), // limpa cidade ao trocar estado
+    }));
   };
 
   const validarCampos = (): boolean => {
-    const obrigatorios = ['nome', 'endereco', 'cidade'];
-    for (const campo of obrigatorios) {
-      if (!formData[campo as keyof ArmazemForm]) {
-        alert('Preencha todos os campos obrigatórios.');
-        return false;
-      }
+    if (!formData.nome || !formData.endereco || !formData.estado || !formData.cidade) {
+      alert('Preencha todos os campos obrigatórios.');
+      return false;
     }
     return true;
   };
@@ -52,20 +88,20 @@ const CriarArmazem: React.FC = () => {
     if (!validarCampos()) return;
 
     try {
-      await axios.post('http://151.243.0.78:3001/armazem', {
+      await criarArmazemAPI({
         nome: formData.nome,
         endereco: formData.endereco,
-        cidade: formData.cidade,
-        largura: Number(formData.largura),
-        altura: Number(formData.altura),
-        comprimento: Number(formData.comprimento),
+        cidade: `${formData.cidade}/${formData.estado}`,
+        largura: formData.largura,
+        altura: formData.altura,
+        comprimento: formData.comprimento,
       });
 
       alert('Armazém criado com sucesso!');
       navigate('/armazem');
     } catch (err) {
-      console.error('Erro ao criar armazém:', err);
-      alert('Erro ao criar armazém. Verifique os dados e tente novamente.');
+      console.error(err);
+      alert('Erro ao criar armazém.');
     }
   };
 
@@ -92,12 +128,40 @@ const CriarArmazem: React.FC = () => {
           onChange={(e) => handleChange('endereco', e.target.value)}
         />
 
-        <TextField
-          label="Cidade"
-          fullWidth
-          value={formData.cidade}
-          onChange={(e) => handleChange('cidade', e.target.value)}
-        />
+        <Box display="flex" gap={2} width="100%">
+          <TextField
+            select
+            label="Estado"
+            fullWidth
+            value={formData.estado}
+            onChange={(e) => handleChange('estado', e.target.value)}
+          >
+            {estados.map((estado) => (
+              <MenuItem key={estado.id} value={estado.sigla}>
+                {estado.nome} ({estado.sigla})
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            select
+            label="Cidade"
+            fullWidth
+            value={formData.cidade}
+            onChange={(e) => handleChange('cidade', e.target.value)}
+            disabled={!formData.estado}
+          >
+            {cidades.length > 0 ? (
+              cidades.map((cidade, index) => (
+                <MenuItem key={index} value={cidade}>
+                  {cidade}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>Nenhuma cidade encontrada</MenuItem>
+            )}
+          </TextField>
+        </Box>
 
         <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
           Dimensões
@@ -114,7 +178,7 @@ const CriarArmazem: React.FC = () => {
                 onChange={(e) => {
                   const valor = e.target.value;
                   if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
-                    handleChange(field as keyof ArmazemForm, valor);
+                    handleChange(field, valor);
                   }
                 }}
                 inputProps={{
@@ -141,6 +205,9 @@ const CriarArmazem: React.FC = () => {
                 }}
               />
             ))}
+          </Box>
+          <Box display="flex" alignItems="center" justifyContent="flex-start">
+            <img src={caixa} alt="Caixa" style={{ width: 90, height: 'auto' }} />
           </Box>
         </Box>
       </Box>
@@ -171,7 +238,6 @@ const CriarArmazem: React.FC = () => {
         >
           SALVAR
         </Button>
-
         <Button
           variant="outlined"
           onClick={() => navigate('/armazem')}
