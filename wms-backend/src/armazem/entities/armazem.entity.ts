@@ -27,6 +27,21 @@ export class Armazem {
   @Column({ type: 'varchar', unique: true })
   endereco: string; // Nome da coluna: endereco (tipo string/varchar)
 
+  @Column({ type: 'varchar' })
+  cidade: string;
+
+  @Column({ type: 'varchar' })
+  estado: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  altura: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  largura: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  comprimento: number;
+
   // Exemplo de coluna opcional (comentada)
   // @Column({ nullable: true }) permite valores NULL no banco
   // O '?' no TypeScript indica que o campo é opcional
