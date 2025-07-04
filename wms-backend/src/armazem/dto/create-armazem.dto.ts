@@ -1,5 +1,5 @@
 // Importa os decoradores de validação do pacote class-validator
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength } from 'class-validator';
 import { MedidaInsercao } from 'src/utils/decorator.medidas';
 
 // Define o Data Transfer Object (DTO) para criação de armazéns
@@ -14,20 +14,24 @@ export class CreateArmazemDto {
   // Validação para o campo 'nome'
   @IsString({ message: 'O nome deve ser uma string' }) // Valida o tipo
   @IsNotEmpty({ message: 'O nome não pode estar vazio' }) // Valida se não está vazio
+  @MaxLength(150)
   nome: string; // Campo obrigatório do tipo string
 
   // Validação para o campo 'endereco'
   @IsString({ message: 'O endereço deve ser uma string' })
   @IsNotEmpty({ message: 'O endereço não pode estar vazio' })
+  @MaxLength(200)
   endereco: string; // Campo obrigatório do tipo string
 
   @IsString()
   @IsNotEmpty()
-  estado: string;
+  @MaxLength(100)
+  cidade: string;
 
   @IsString()
   @IsNotEmpty()
-  cidade: string;
+  @MaxLength(2)
+  estado: string;
 
   @MedidaInsercao()
   altura?: number = 0;

@@ -7,6 +7,7 @@ import {
   IsString,
   IsUrl,
   Length,
+  MaxLength,
   Validate,
 } from 'class-validator';
 import { IsEAN13Valid } from 'src/localizacao/validators/ean13.validator';
@@ -20,17 +21,17 @@ export class CreateProdutoDto {
 
   @IsString()
   @IsNotEmpty()
-  @Length(1, 50)
+  @MaxLength(50)
   sku: string;
 
   @IsString()
   @IsNotEmpty()
-  @Length(1, 255)
   descricao: string;
 
   @IsString()
   @IsUrl() // Para validar urls, mas talvez mude
   @IsOptional()
+  @MaxLength(255)
   url_foto?: string;
 
   @MedidaInsercao()

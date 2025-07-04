@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { StatusPrateleira } from '../entities/localizacao.entity';
 import { MedidaInsercao } from 'src/utils/decorator.medidas';
 import { idRelations } from 'src/utils/decorator.id.relations';
@@ -10,6 +16,7 @@ export class CreateLocalizacaoDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   nome: string;
 
   @MedidaInsercao()
