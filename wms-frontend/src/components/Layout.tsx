@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({
   children,
   totalPages = 1,
   currentPage = 1,
-  onPageChange = () => { },
+  onPageChange = () => {},
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [pageInput, setPageInput] = useState('');
@@ -49,22 +49,16 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
       <Sidebar />
-      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' , marginLeft: -10}}>
         <Box sx={{ flexGrow: 1, p: 3 }}>{children}</Box>
 
         {totalPages > 1 && (
           <>
             <Divider />
             <Box
-              display="flex"
-              justifyContent="flex-start"
-              alignItems="center"
+              
               sx={{
-                py: 2,
-                px: 0, // Removido o padding lateral
-                pl: 3, // Se quiser um leve afastamento da lateral esquerda
-                backgroundColor: '#f9f9f9',
-                mt: 'auto',
+              
               }}
             >
               <Pagination
@@ -132,7 +126,6 @@ const Layout: React.FC<LayoutProps> = ({
             </Box>
           </>
         )}
-
       </Box>
     </Box>
   );

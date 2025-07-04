@@ -33,19 +33,7 @@ import Layout from '../components/Layout';
 import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 
-/**
- * Componente principal da página de Localizações.
- *
- * Responsável por:
- * - Exibir a lista de localizações em tabela
- * - Permitir busca por nome, tipo, armazém ou EAN
- * - Mostrar/esconder o formulário de nova localização
- * - Mostrar/esconder área de filtros
- * - Realizar ações de impressão, visualização e exclusão de localizações
- * - Permitir seleção múltipla de itens
- */
 const Localizacao: React.FC = () => {
-  // Hook personalizado que gerencia a lógica de localizações
   const {
     listaLocalizacoes,
     locaisFiltrados,
@@ -60,21 +48,17 @@ const Localizacao: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // Estados para seleção múltipla
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Estados para paginação
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Calcular itens da página atual
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = locaisFiltrados.slice(startIndex, endIndex);
   const totalPages = Math.ceil(locaisFiltrados.length / itemsPerPage);
 
-  // Função para selecionar/deselecionar todos os itens
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
@@ -84,7 +68,6 @@ const Localizacao: React.FC = () => {
     }
   };
 
-  // Função para selecionar/deselecionar um item específico
   const handleSelectItem = (index: number, checked: boolean) => {
     if (checked) {
       setSelectedItems([...selectedItems, index]);
@@ -94,17 +77,12 @@ const Localizacao: React.FC = () => {
     }
   };
 
-  // Atualizar selectAll quando todos os itens da página estão selecionados
   useEffect(() => {
     const currentPageIndices = currentItems.map((_, index) => startIndex + index);
     const allCurrentSelected = currentPageIndices.every(index => selectedItems.includes(index));
     setSelectAll(allCurrentSelected && currentPageIndices.length > 0);
   }, [selectedItems, currentItems, startIndex]);
 
-  /**
-   * Exclui uma localização da lista, se ela tiver quantidade 0.
-   * Exibe alerta caso haja produtos na localização.
-   */
   const handleExcluir = async (id: number, nome: string, quantidade: number) => {
     if (quantidade > 0) {
       alert('Só é possível excluir localizações com quantidade 0.');
@@ -125,24 +103,63 @@ const Localizacao: React.FC = () => {
     }
   };
 
-  // Função para excluir itens selecionados
-  const handleExcluirSelecionados = () => {
-    const itemsToDelete = selectedItems.filter(index => listaLocalizacoes[index].quantidade === 0);
-
-    if (itemsToDelete.length === 0) {
-      alert('Só é possível excluir localizações com quantidade 0.');
+  const handleExcluirSelecionados = async () => {
+    if (selectedItems.length === 0) {
+      alert('Selecione pelo menos uma localização.');
       return;
     }
 
-    if (itemsToDelete.length !== selectedItems.length) {
-      alert('Algumas localizações não podem ser excluídas pois possuem produtos.');
+    // Separa os itens com e sem produtos
+    const permitidos = selectedItems.filter(index => listaLocalizacoes[index].quantidade === 0);
+    const bloqueados = selectedItems.filter(index => listaLocalizacoes[index].quantidade > 0);
+
+    if (permitidos.length === 0) {
+      alert('Nenhuma das localizações selecionadas pode ser excluída (quantidade > 0).');
+      return;
     }
 
-    const newList = listaLocalizacoes.filter((_, index) => !itemsToDelete.includes(index));
-    setListaLocalizacoes(newList);
+    const nomesPermitidos = permitidos.map(index => listaLocalizacoes[index].nome);
+    const nomesBloqueados = bloqueados.map(index => listaLocalizacoes[index].nome);
+
+    const confirmar = window.confirm(
+      `Tem certeza que deseja excluir as seguintes localizações?\n\n${nomesPermitidos.join(', ')}`
+    );
+
+    if (!confirmar) return;
+
+    const erros: string[] = [];
+
+    for (const index of permitidos) {
+      const item = listaLocalizacoes[index];
+      try {
+        await excluirLocalizacao({ localizacao_id: item.localizacao_id });
+      } catch (err) {
+        console.error(`Erro ao excluir ${item.nome}:`, err);
+        erros.push(item.nome);
+      }
+    }
+
+    // Atualiza a lista local após exclusões bem-sucedidas
+    const novaLista = listaLocalizacoes.filter((_, index) =>
+      !permitidos.includes(index) || erros.includes(listaLocalizacoes[index].nome)
+    );
+
+    setListaLocalizacoes(novaLista);
     setSelectedItems([]);
     setSelectAll(false);
+
+    // Mensagens finais
+    if (erros.length === 0) {
+      alert('Localizações excluídas com sucesso!');
+    } else {
+      alert(`Algumas localizações não foram excluídas: ${erros.join(', ')}`);
+    }
+
+    if (nomesBloqueados.length > 0) {
+      alert(`As seguintes localizações não puderam ser excluídas por conterem produtos:\n\n${nomesBloqueados.join(', ')}`);
+    }
   };
+
 
   const handleImprimir = (localizacao: string, ean: string) => {
     const win = window.open('', '_blank');
@@ -186,7 +203,6 @@ const Localizacao: React.FC = () => {
     win.document.close();
   };
 
-  // Função para imprimir itens selecionados
   const handleImprimirSelecionados = () => {
     if (selectedItems.length === 0) {
       alert('Selecione pelo menos um item para imprimir.');
@@ -199,17 +215,13 @@ const Localizacao: React.FC = () => {
     });
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* JSX                                                                    */
-  /* ---------------------------------------------------------------------- */
   return (
     <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
-      <Container maxWidth="xl" sx={{ mt: 4, px: 3 }}>
+      <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
         <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
           Localização
         </Typography>
 
-        {/* Barra de busca e botões de ação */}
         <Box display="flex" gap={2} mb={3} alignItems="center">
           <TextField
             placeholder="Buscar Localização, tipo, armazém ou EAN"
@@ -232,7 +244,6 @@ const Localizacao: React.FC = () => {
             Filtro
           </Button>
 
-          {/* Renderização condicional dos botões */}
           {selectedItems.length > 0 ? (
             <>
               <Button
@@ -286,7 +297,6 @@ const Localizacao: React.FC = () => {
           )}
         </Box>
 
-        {/* Placeholder simples para indicar que algo será exibido futuramente */}
         {mostrarFiltro && (
           <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
             <Typography variant="body2" color="text.secondary">
@@ -295,7 +305,6 @@ const Localizacao: React.FC = () => {
           </Paper>
         )}
 
-        {/* Formulário de criação (ainda não implementado) */}
         {mostrarFormulario && (
           <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
             <Typography variant="body2" color="text.secondary">
@@ -304,7 +313,6 @@ const Localizacao: React.FC = () => {
           </Paper>
         )}
 
-        {/* Tabela de localizações */}
         <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <Table>
             <TableHead>
