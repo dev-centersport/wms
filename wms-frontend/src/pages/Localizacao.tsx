@@ -51,6 +51,9 @@ const Localizacao: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   /* ------------------------------ filtragem ------------------------------ */
+  const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
+  const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState<string>('');
+
   const filteredIndices = useMemo(() => {
     return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
       const termo = busca.trim().toLowerCase();
@@ -60,13 +63,13 @@ const Localizacao: React.FC = () => {
           .filter(Boolean)
           .some((campo) => campo.toString().toLowerCase().includes(termo));
 
-      const matchTipo = !filtroTipo || loc.tipo === filtroTipo;
-      const matchArmazem = !filtroArmazem || loc.armazem === filtroArmazem;
+      const matchTipo = !appliedFiltroTipo || loc.tipo === appliedFiltroTipo;
+      const matchArmazem = !appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem;
 
       if (matchBusca && matchTipo && matchArmazem) acc.push(idx);
       return acc;
     }, []);
-  }, [listaLocalizacoes, busca, filtroTipo, filtroArmazem]);
+  }, [listaLocalizacoes, busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
   /* ---------------------------- paginação ---------------------------- */
   const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
@@ -82,7 +85,7 @@ const Localizacao: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [busca, filtroTipo, filtroArmazem]);
+  }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
   useEffect(() => {
     const allCurrentSelected =
@@ -110,9 +113,9 @@ const Localizacao: React.FC = () => {
     const isCaixa = tipo.toLowerCase().includes('caixa');
     const largura = isCaixa ? '10cm' : '5cm';
     const altura = isCaixa ? '15cm' : '10cm';
-    const fontNome = isCaixa ? '120px' : '120px';
-    const barHeight = isCaixa ? 90 : 60;
-    const barFont = isCaixa ? 22 : 14;
+    const fontNome = isCaixa ? '120px' : '80px';  // Menor para prateleira
+    const barHeight = isCaixa ? 90 : 50;  // Menor para prateleira
+    const barFont = isCaixa ? 22 : 12;  // Menor para prateleira
 
     w.document.write(`
       <html>
@@ -136,6 +139,7 @@ const Localizacao: React.FC = () => {
         </body>
       </html>
     `);
+
     w.document.close();
   };
 
@@ -144,11 +148,70 @@ const Localizacao: React.FC = () => {
       alert('Selecione pelo menos um item para imprimir.');
       return;
     }
+
+    // Abrir uma janela única para todas as impressões
+    const w = window.open('', '_blank');
+    if (!w) {
+      alert('Não foi possível abrir a janela de impressão.');
+      return;
+    }
+
+    // Adiciona o conteúdo HTML inicial à nova janela
+    w.document.write(`
+    <html>
+      <head>
+        <title>Impressão de Etiquetas</title>
+        <style>
+          body { font-family: Arial, sans-serif; }
+          .etiqueta { margin-bottom: 20px; page-break-after: always; }
+          h3 { margin: 0; font-size: 120px; font-weight: bold; }
+          #barcode { width: 100%; }
+        </style>
+      </head>
+      <body>
+  `);
+
+    // Loop através dos itens selecionados e adicionar cada um ao conteúdo da janela
     selectedItems.forEach((idx, i) => {
-      const it = listaLocalizacoes[idx];
-      setTimeout(() => handleImprimir(it.nome, it.ean, it.tipo), i * 300);
+      const item = listaLocalizacoes[idx];
+      const isCaixa = item.tipo.toLowerCase().includes('caixa');
+      const largura = isCaixa ? '10cm' : '5cm';
+      const altura = isCaixa ? '15cm' : '10cm';
+      const fontNome = isCaixa ? '120px' : '80px';
+      const barHeight = isCaixa ? 90 : 50;
+      const barFont = isCaixa ? 22 : 12;
+
+      // Adicionar cada etiqueta à página
+      w.document.write(`
+      <div class="etiqueta" style="width: ${largura}; height: ${altura};">
+        <h3>${item.nome}</h3>
+        <svg id="barcode"></svg>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script>
+          JsBarcode('#barcode', '${item.ean}', { format:'ean13', height:${barHeight}, displayValue:true, fontSize:${barFont} });
+        </script>
+      </div>
+    `);
     });
+
+    // Finaliza o conteúdo HTML da janela
+    w.document.write(`
+      </body>
+    </html>
+  `);
+
+    // Espera o carregamento da janela antes de imprimir
+    w.document.close();
+
+    // Espera que o conteúdo da página seja renderizado antes de chamar o print
+    w.onload = () => {
+      w.print();
+      w.onafterprint = () => {
+        w.close();  // Fecha a janela após a impressão
+      };
+    };
   };
+
 
   /* ------------------------- exclusão ------------------------- */
   const handleExcluir = async (id: number, nome: string, quantidade: number) => {
@@ -225,10 +288,19 @@ const Localizacao: React.FC = () => {
   /* --------------------------- handlers menu --------------------------- */
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
+
   const handleLimparFiltros = () => {
     setFiltroTipo('');
     setFiltroArmazem('');
     setBusca('');
+    setAppliedFiltroTipo('');
+    setAppliedFiltroArmazem('');
+    handleMenuClose();
+  };
+
+  const handleAplicarFiltro = () => {
+    setAppliedFiltroTipo(filtroTipo);
+    setAppliedFiltroArmazem(filtroArmazem);
     handleMenuClose();
   };
 
@@ -294,6 +366,14 @@ const Localizacao: React.FC = () => {
                   </MenuItem>
                 ))}
               </TextField>
+
+              <Button
+                variant="outlined"
+                onClick={handleAplicarFiltro}
+                sx={{ mt: 2, width: '100%' }}
+              >
+                Aplicar Filtro
+              </Button>
 
               {filtroTipo || filtroArmazem ? (
                 <Button
@@ -383,14 +463,12 @@ const Localizacao: React.FC = () => {
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Nome</TableCell> {/* Cor do Nome */}
-                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Tipo</TableCell> {/* Cor do Tipo */}
-                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Armazém</TableCell> {/* Cor do Armazém */}
-                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>EAN</TableCell> {/* Cor do EAN */}
-                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Quantidade</TableCell> {/* Cor da Quantidade */}
-                <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                  Ações
-                </TableCell> {/* Cor das Ações */}
+                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Nome</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Tipo</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Armazém</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>EAN</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Quantidade</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Ações</TableCell>
               </TableRow>
             </TableHead>
 
