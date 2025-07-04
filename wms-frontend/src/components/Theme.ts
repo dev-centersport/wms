@@ -57,8 +57,8 @@ const theme = createTheme({
           },
         },
         outlined: {
-          borderColor: '#61de27',
-          color: '#61de27',
+          borderColor: '#000',
+          color: '#000',
           '&:hover': {
             backgroundColor: 'rgba(97, 222, 39, 0.1)',
             borderColor: '#48c307',
