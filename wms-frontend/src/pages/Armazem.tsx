@@ -1,11 +1,14 @@
 import React from 'react';
 import {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   TableBody,
   TableCell,
   TableRow,
 } from '@mui/material';
 =======
+=======
+>>>>>>> Stashed changes
   Box,
   Button,
   Container,
@@ -28,6 +31,9 @@ import {
   Add as AddIcon,
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 import { useLocalizacoes } from '../components/ApiComponents';
 
@@ -36,8 +42,11 @@ const Armazem: React.FC = () => {
   // Hook personalizado que gerencia a lógica de localizações
   const {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     locaisFiltrados,
 =======
+=======
+>>>>>>> Stashed changes
     listaLocalizacoes,
     locaisFiltrados,
     busca,
@@ -47,6 +56,9 @@ const Armazem: React.FC = () => {
     mostrarFiltro,
     setMostrarFiltro,
     setListaLocalizacoes,
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   } = useLocalizacoes();
 
@@ -55,7 +67,11 @@ const Armazem: React.FC = () => {
       {locaisFiltrados.length ? (
         locaisFiltrados.map((item, index) => (
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           <TableRow key={`${item.nome}-${index}`}>
+=======
+          <TableRow key={`${item.localizacao}-${index}`}>
+>>>>>>> Stashed changes
 =======
           <TableRow key={`${item.localizacao}-${index}`}>
 >>>>>>> Stashed changes
