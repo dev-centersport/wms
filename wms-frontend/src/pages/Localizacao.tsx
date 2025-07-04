@@ -324,11 +324,11 @@ const Localizacao: React.FC = () => {
                     indeterminate={selectedItems.length > 0 && !selectAll}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Ean</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Nome</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Tipo</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Armazém</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Ean</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Quantidade</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
               </TableRow>
             </TableHead>
@@ -350,11 +350,11 @@ const Localizacao: React.FC = () => {
                           onChange={(e) => handleSelectItem(globalIndex, e.target.checked)}
                         />
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 500 }}>{item.nome}</TableCell>
-                      <TableCell>{item.tipo}</TableCell>
-                      <TableCell>{item.armazem}</TableCell>
-                      <TableCell>{item.ean}</TableCell>
-                      <TableCell>{item.quantidade}</TableCell>
+                      <TableCell sx={{ fontWeight: 500, textAlign: 'center' }}>{item.nome}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.tipo}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.armazem}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.ean}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.quantidade}</TableCell>
                       <TableCell align="center">
                         <Box display="flex" justifyContent="center" gap={1}>
                           <Tooltip title="Ver produtos">

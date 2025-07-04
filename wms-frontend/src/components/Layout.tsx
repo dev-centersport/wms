@@ -49,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
       <Sidebar />
-      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' , marginLeft: -10}}>
+      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
         <Box sx={{ flexGrow: 1, p: 3 }}>{children}</Box>
 
         {totalPages > 1 && (
@@ -58,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({
             <Box
               
               sx={{
-              
+                marginY: 3
               }}
             >
               <Pagination
