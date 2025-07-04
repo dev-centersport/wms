@@ -1,4 +1,11 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Produto {
@@ -29,4 +36,7 @@ export class Produto {
 
   @Column({ type: 'varchar', length: 13, unique: true, nullable: true })
   ean: string | null;
+
+  @OneToMany(() => ProdutoEstoque, (produto_estoque) => produto_estoque.produto)
+  produtos_estoque: ProdutoEstoque[];
 }

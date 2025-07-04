@@ -1,10 +1,12 @@
 import { Armazem } from 'src/armazem/entities/armazem.entity';
+import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -50,4 +52,10 @@ export class Localizacao {
   @ManyToOne(() => Armazem, (armazem) => armazem.localizacoes)
   @JoinColumn()
   armazem: Armazem;
+
+  @OneToMany(
+    () => ProdutoEstoque,
+    (produto_estoque) => produto_estoque.localizacao,
+  )
+  produtos_estoque: ProdutoEstoque[];
 }

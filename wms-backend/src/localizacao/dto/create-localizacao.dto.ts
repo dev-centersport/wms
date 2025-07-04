@@ -1,13 +1,6 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { StatusPrateleira } from '../entities/localizacao.entity';
-import { Transform } from 'class-transformer';
+import { MedidaInsercao } from 'src/utils/decorator.medidas';
 
 export class CreateLocalizacaoDto {
   @IsEnum(StatusPrateleira)
@@ -18,22 +11,13 @@ export class CreateLocalizacaoDto {
   @IsNotEmpty()
   nome: string;
 
-  @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @MedidaInsercao()
   altura?: number;
 
-  @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @MedidaInsercao()
   largura?: number;
 
-  @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @MedidaInsercao()
   comprimento?: number;
 
   // @IsOptional()
