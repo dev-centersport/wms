@@ -118,99 +118,186 @@ const Localizacao: React.FC = () => {
     const barFont = isCaixa ? 22 : 12;  // Menor para prateleira
 
     w.document.write(`
-      <html>
+        <html>
         <head>
-          <title>Etiqueta – ${localizacao}</title>
-          <style>
-            @page { size: ${largura} ${altura}; margin: 0; }
-            body { width:${largura}; height:${altura}; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:Arial, sans-serif; }
-            h3 { margin:0 0 12px 0; font-size:${fontNome}; font-weight:bold; }
-            #barcode { width:100%; }
-          </style>
+            <title>Etiqueta – ${localizacao}</title>
+            <style>
+            @page {
+                size: 150mm 100mm;
+                margin: 0;
+            }
+            body {
+                width: 150mm;
+                height: 100mm;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                font-family: Arial, sans-serif;
+                overflow: hidden;
+            }
+            #nome {
+                margin: 0;
+                line-height: 1;
+                font-weight: bold;
+                width: 100%;
+                text-align: center;
+                word-break: break-word;
+            }
+            #barcode {
+                width: 90%;
+                margin-top: 4mm;
+            }
+            </style>
         </head>
         <body>
-          <h3>${localizacao}</h3>
-          <svg id="barcode"></svg>
-          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-          <script>
-            JsBarcode('#barcode', '${ean}', { format:'ean13', height:${barHeight}, displayValue:true, fontSize:${barFont} });
-            window.onload = () => { window.print(); window.onafterprint = () => window.close(); };
-          </script>
+            <h1 id="nome">${localizacao}</h1>
+            <svg id="barcode"></svg>
+
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <script>
+            // Ajusta o tamanho da fonte conforme o comprimento do texto
+            const nome = document.getElementById('nome');
+            const texto = '${localizacao}';
+            let tamanhoFonte = 190;
+
+            if (texto.length > 10) {
+                tamanhoFonte = 70;
+            } else if (texto.length > 8) {
+                tamanhoFonte = 85;
+            }
+
+            nome.style.fontSize = tamanhoFonte + 'px';
+
+            // Gera o código de barras
+            JsBarcode('#barcode', '${ean}', {
+                format: 'ean13',
+                height: 60,
+                displayValue: true,
+                fontSize: 18
+            });
+
+            window.onload = () => {
+                window.print();
+                window.onafterprint = () => window.close();
+            };
+            </script>
         </body>
-      </html>
+        </html>
     `);
 
     w.document.close();
-  };
+    };  
 
-  const handleImprimirSelecionados = () => {
+    const handleImprimirSelecionados = () => {
     if (!selectedItems.length) {
-      alert('Selecione pelo menos um item para imprimir.');
-      return;
+        alert('Selecione pelo menos um item para imprimir.');
+        return;
     }
 
-    // Abrir uma janela única para todas as impressões
+
     const w = window.open('', '_blank');
-    if (!w) {
-      alert('Não foi possível abrir a janela de impressão.');
-      return;
-    }
+    if (!w) return;
 
-    // Adiciona o conteúdo HTML inicial à nova janela
+    // 1. Cabeçalho + estilos
     w.document.write(`
-    <html>
-      <head>
-        <title>Impressão de Etiquetas</title>
+        <html>
+        <head>
+        <title>Etiquetas</title>
         <style>
-          body { font-family: Arial, sans-serif; }
-          .etiqueta { margin-bottom: 20px; page-break-after: always; }
-          h3 { margin: 0; font-size: 120px; font-weight: bold; }
-          #barcode { width: 100%; }
+            @page {
+            size: 150mm 100mm;
+            margin: 0;
+            }
+            body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            }
+            .etiqueta {
+            width: 150mm;
+            height: 100mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            page-break-after: always;
+            }
+            .nome {
+            margin: 0;
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            width: 100%;
+            word-break: break-word;
+            }
+            .barcode {
+            width: 90%;
+            margin-top: 4mm;
+            }
         </style>
-      </head>
-      <body>
-  `);
-
-    // Loop através dos itens selecionados e adicionar cada um ao conteúdo da janela
-    selectedItems.forEach((idx, i) => {
-      const item = listaLocalizacoes[idx];
-      const isCaixa = item.tipo.toLowerCase().includes('caixa');
-      const largura = isCaixa ? '10cm' : '5cm';
-      const altura = isCaixa ? '15cm' : '10cm';
-      const fontNome = isCaixa ? '120px' : '80px';
-      const barHeight = isCaixa ? 90 : 50;
-      const barFont = isCaixa ? 22 : 12;
-
-      // Adicionar cada etiqueta à página
-      w.document.write(`
-      <div class="etiqueta" style="width: ${largura}; height: ${altura};">
-        <h3>${item.nome}</h3>
-        <svg id="barcode"></svg>
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-        <script>
-          JsBarcode('#barcode', '${item.ean}', { format:'ean13', height:${barHeight}, displayValue:true, fontSize:${barFont} });
-        </script>
-      </div>
+        </head>
+        <body>
     `);
+
+    // 2. Conteúdo das etiquetas
+    selectedItems.forEach((idx, i) => {
+        const item = listaLocalizacoes[idx];
+        const nome = item.nome.replace(/'/g, "\\'"); // evitar problemas com aspas
+
+        w.document.write(`
+        <div class="etiqueta" data-ean="${item.ean}" data-nome="${nome}">
+            <h1 class="nome" id="nome-${i}">${nome}</h1>
+            <svg class="barcode" id="barcode-${i}"></svg>
+        </div>
+        `);
     });
 
-    // Finaliza o conteúdo HTML da janela
+    // 3. Script para ajustar tamanho da fonte e gerar os códigos
     w.document.write(`
-      </body>
-    </html>
-  `);
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script>
+        window.onload = () => {
+            const etiquetas = document.querySelectorAll('.etiqueta');
 
-    // Espera o carregamento da janela antes de imprimir
+            etiquetas.forEach((etq, index) => {
+            const nome = etq.dataset.nome;
+            const ean = etq.dataset.ean;
+
+            let tamanhoFonte = 190;
+            if (nome.length > 10) {
+                tamanhoFonte = 70;
+            } else if (nome.length > 6) {
+                tamanhoFonte = 85;
+            }
+
+            const nomeEl = document.getElementById('nome-' + index);
+            nomeEl.style.fontSize = tamanhoFonte + 'px';
+
+            const barcodeEl = document.getElementById('barcode-' + index);
+            JsBarcode(barcodeEl, ean, {
+                format: 'ean13',
+                height: 60,
+                displayValue: true,
+                fontSize: 18
+            });
+            });
+
+            window.print();
+            window.onafterprint = () => window.close();
+        };
+        </script>
+        </body>
+        </html>
+    `);
+
     w.document.close();
-
-    // Espera que o conteúdo da página seja renderizado antes de chamar o print
-    w.onload = () => {
-      w.print();
-      w.onafterprint = () => {
-        w.close();  // Fecha a janela após a impressão
-      };
     };
-  };
+
+
+
 
 
   /* ------------------------- exclusão ------------------------- */
