@@ -1,8 +1,15 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreatePerfilDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   nome: string;
 
   @IsOptional()

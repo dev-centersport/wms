@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Usuario } from 'src/usuario/entities/usuario.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Perfil {
@@ -22,4 +23,7 @@ export class Perfil {
 
   @Column({ type: 'boolean', default: false })
   pode_delete: boolean;
+
+  @OneToMany(() => Usuario, (usuario) => usuario.perfil)
+  usuarios: Usuario[];
 }
