@@ -1,15 +1,14 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
+import { idRelations } from 'src/utils/decorator.id.relations';
 
 export class CreateProdutoEstoqueDto {
   @IsNumber()
   @IsNotEmpty()
   quantidade: number;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @idRelations()
   produto_id: number;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @idRelations()
   localizacao_id: number;
 }

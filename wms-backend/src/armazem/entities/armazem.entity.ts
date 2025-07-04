@@ -20,17 +20,17 @@ export class Armazem {
 
   // @Column() define uma coluna regular na tabela
   // Por padrão, é NOT NULL e o tipo é inferido do TypeScript (string → varchar)
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar', length: 150, unique: true })
   nome: string; // Nome da coluna: nome (tipo string/varchar)
 
   // Outra coluna regular
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar', length: 200, unique: true })
   endereco: string; // Nome da coluna: endereco (tipo string/varchar)
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 100 })
   cidade: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 2 })
   estado: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
