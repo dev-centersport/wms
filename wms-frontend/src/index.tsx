@@ -37,7 +37,7 @@ root.render(
 
           {/* Páginas internas com Sidebar */}
           <Route path="/armazem" element={<Layout><Armazem /></Layout>} />
-          <Route path="/localizacao" element={<Layout><Localizacao /></Layout>} />
+          <Route path="/localizacao" element={<Localizacao />} />
           <Route path="/CriarLocalizacao" element={<Layout><CriarLocalizacao /></Layout>} />
 
           {/* Rota padrão redireciona para login */}
