@@ -25,34 +25,32 @@ import Layout from '../components/Layout';
 import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 
+/* -------------------------------------------------------------------------- */
 const itemsPerPage = 5;
+/* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
+  /* ------------------------- estados globais do hook ------------------------ */
   const {
     listaLocalizacoes,
     busca,
     setBusca,
-    mostrarFormulario,
-    mostrarFiltro,
-    setMostrarFormulario,
-    setMostrarFiltro,
     setListaLocalizacoes,
   } = useLocalizacoes();
 
   const navigate = useNavigate();
 
-  // Filtros avançados
+  /* ---------------------------- estados locais ----------------------------- */
   const [filtroTipo, setFiltroTipo] = useState<string>('');
   const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
-  // Seleção / paginação
-  const [selectedItems, setSelectedItems] = useState<number[]>([]); // índices na lista original
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // State do menu de filtro
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  /* ------------------------------ filtragem ------------------------------ */
   const filteredIndices = useMemo(() => {
     return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
       const termo = busca.trim().toLowerCase();
@@ -70,12 +68,14 @@ const Localizacao: React.FC = () => {
     }, []);
   }, [listaLocalizacoes, busca, filtroTipo, filtroArmazem]);
 
+  /* ---------------------------- paginação ---------------------------- */
   const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentIndices = filteredIndices.slice(startIndex, endIndex);
   const currentItems = currentIndices.map((i) => listaLocalizacoes[i]);
 
+  /* ------------------------- efeitos auxiliares ------------------------ */
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages]);
@@ -84,49 +84,89 @@ const Localizacao: React.FC = () => {
     setCurrentPage(1);
   }, [busca, filtroTipo, filtroArmazem]);
 
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    if (checked) {
-      setSelectedItems(currentIndices);
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
-  const handleSelectItem = (originalIndex: number, checked: boolean) => {
-    if (checked) {
-      setSelectedItems((prev) => [...prev, originalIndex]);
-    } else {
-      setSelectedItems((prev) => prev.filter((idx) => idx !== originalIndex));
-      setSelectAll(false);
-    }
-  };
-
   useEffect(() => {
     const allCurrentSelected =
       currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
     setSelectAll(allCurrentSelected);
   }, [selectedItems, currentIndices]);
 
+  /* --------------------------- seleção tabela -------------------------- */
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    setSelectedItems(checked ? currentIndices : []);
+  };
+
+  const handleSelectItem = (originalIndex: number, checked: boolean) => {
+    setSelectedItems((prev) =>
+      checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
+    );
+  };
+
+  /* --------------------------- impressão --------------------------- */
+  const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
+    const w = window.open('', '_blank');
+    if (!w) return;
+
+    const isCaixa = tipo.toLowerCase().includes('caixa');
+    const largura = isCaixa ? '10cm' : '5cm';
+    const altura = isCaixa ? '15cm' : '10cm';
+    const fontNome = isCaixa ? '120px' : '120px';
+    const barHeight = isCaixa ? 90 : 60;
+    const barFont = isCaixa ? 22 : 14;
+
+    w.document.write(`
+      <html>
+        <head>
+          <title>Etiqueta – ${localizacao}</title>
+          <style>
+            @page { size: ${largura} ${altura}; margin: 0; }
+            body { width:${largura}; height:${altura}; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:Arial, sans-serif; }
+            h3 { margin:0 0 12px 0; font-size:${fontNome}; font-weight:bold; }
+            #barcode { width:100%; }
+          </style>
+        </head>
+        <body>
+          <h3>${localizacao}</h3>
+          <svg id="barcode"></svg>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+          <script>
+            JsBarcode('#barcode', '${ean}', { format:'ean13', height:${barHeight}, displayValue:true, fontSize:${barFont} });
+            window.onload = () => { window.print(); window.onafterprint = () => window.close(); };
+          </script>
+        </body>
+      </html>
+    `);
+    w.document.close();
+  };
+
+  const handleImprimirSelecionados = () => {
+    if (!selectedItems.length) {
+      alert('Selecione pelo menos um item para imprimir.');
+      return;
+    }
+    selectedItems.forEach((idx, i) => {
+      const it = listaLocalizacoes[idx];
+      setTimeout(() => handleImprimir(it.nome, it.ean, it.tipo), i * 300);
+    });
+  };
+
+  /* ------------------------- exclusão ------------------------- */
   const handleExcluir = async (id: number, nome: string, quantidade: number) => {
     if (quantidade > 0) {
       alert('Só é possível excluir localizações com quantidade 0.');
       return;
     }
-
     if (!window.confirm(`Deseja excluir a localização "${nome}"?`)) return;
-
     try {
       await excluirLocalizacao({ localizacao_id: id });
-      alert(`Localização "${nome}" excluída com sucesso!`);
-      setListaLocalizacoes((prev) => prev.filter((loc) => loc.localizacao_id !== id));
+      setListaLocalizacoes((prev) => prev.filter((l) => l.localizacao_id !== id));
     } catch (err) {
       console.error(err);
     }
   };
 
   const handleExcluirSelecionados = async () => {
-    if (selectedItems.length === 0) {
+    if (!selectedItems.length) {
       alert('Selecione pelo menos uma localização.');
       return;
     }
@@ -134,142 +174,57 @@ const Localizacao: React.FC = () => {
     const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade === 0);
     const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade > 0);
 
-    if (permitidos.length === 0) {
+    if (!permitidos.length) {
       alert('Nenhuma das localizações selecionadas pode ser excluída (quantidade > 0).');
       return;
     }
 
     const nomesPermitidos = permitidos.map((idx) => listaLocalizacoes[idx].nome);
-    const nomesBloqueados = bloqueados.map((idx) => listaLocalizacoes[idx].nome);
-
-    if (
-      !window.confirm(
-        `Tem certeza que deseja excluir as seguintes localizações?\n\n${nomesPermitidos.join(', ')}`,
-      )
-    )
-      return;
+    if (!window.confirm(`Tem certeza que deseja excluir:\n\n${nomesPermitidos.join(', ')}`)) return;
 
     const erros: string[] = [];
-
     for (const idx of permitidos) {
       const loc = listaLocalizacoes[idx];
       try {
         await excluirLocalizacao({ localizacao_id: loc.localizacao_id });
       } catch (err) {
-        console.error(`Erro ao excluir ${loc.nome}:`, err);
+        console.error(err);
         erros.push(loc.nome);
       }
     }
 
     setListaLocalizacoes((prev) =>
-      prev.filter((_, idx) => !permitidos.includes(idx) || erros.includes(prev[idx].nome)),
+      prev.filter((_, idx) => !permitidos.includes(idx) || erros.includes(prev[idx].nome))
     );
 
     setSelectedItems([]);
     setSelectAll(false);
 
-    if (erros.length === 0) {
-      alert('Localizações excluídas com sucesso!');
-    } else {
+    if (erros.length) {
       alert(`Algumas localizações não foram excluídas: ${erros.join(', ')}`);
+    } else {
+      alert('Localizações excluídas com sucesso!');
     }
 
-    if (nomesBloqueados.length > 0) {
-      alert(
-        `As seguintes localizações não puderam ser excluídas por conterem produtos:\n\n${nomesBloqueados.join(', ')}`,
-      );
+    if (bloqueados.length) {
+      const nomesBloq = bloqueados.map((idx) => listaLocalizacoes[idx].nome);
+      alert(`Estas localizações não puderam ser excluídas por conter produtos:\n\n${nomesBloq.join(', ')}`);
     }
   };
 
-  const handleImprimir = (localizacao: string, ean: string) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-
-    const html = `
-    <html>
-      <head>
-        <title>Etiqueta – ${localizacao}</title>
-        <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            margin: 0; 
-            padding: 24px;
-            width: 10cm; /* Largura 10cm */
-            height: 15cm; /* Altura 15cm */
-            box-sizing: border-box;
-          }
-          h3 { 
-            margin: 0 0 16px 0; 
-            font-size: 30px; /* Aumenta o tamanho da fonte do título */
-            font-weight: bold;
-          }
-          #barcode { 
-            margin: 0 auto; 
-            width: 100%; /* Garante que o código de barras ocupe toda a largura disponível */
-          }
-        </style>
-      </head>
-      <body>
-        <h3>${localizacao}</h3>
-        <svg id="barcode"></svg>
-        <script>
-          window.onload = function () {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
-            script.onload = () => {
-              JsBarcode('#barcode', '${ean}', {
-                format: 'ean13',
-                height: 120, /* Aumenta a altura do código de barras */
-                displayValue: true,
-                fontSize: 24 /* Aumenta o tamanho da fonte do valor do código de barras */
-              });
-              window.print();
-              window.onafterprint = () => window.close();
-            };
-            document.body.appendChild(script);
-          };
-        </script>
-      </body>
-    </html>`;
-
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-  };
-
-
-
-  const handleImprimirSelecionados = () => {
-    if (selectedItems.length === 0) {
-      alert('Selecione pelo menos um item para imprimir.');
-      return;
-    }
-
-    selectedItems.forEach((idx, i) => {
-      const item = listaLocalizacoes[idx];
-      setTimeout(() => handleImprimir(item.nome, item.ean), i * 200); // delay evita sobreposição de janelas
-    });
-  };
-
+  /* ---------------------- valores únicos para filtros --------------------- */
   const tipos = useMemo(
     () => Array.from(new Set(listaLocalizacoes.map((l) => l.tipo).filter(Boolean))).sort(),
-    [listaLocalizacoes],
+    [listaLocalizacoes]
   );
   const armazens = useMemo(
     () => Array.from(new Set(listaLocalizacoes.map((l) => l.armazem).filter(Boolean))).sort(),
-    [listaLocalizacoes],
+    [listaLocalizacoes]
   );
 
-  // Controle do menu de filtro
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
+  /* --------------------------- handlers menu --------------------------- */
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
   const handleLimparFiltros = () => {
     setFiltroTipo('');
     setFiltroArmazem('');
@@ -467,7 +422,7 @@ const Localizacao: React.FC = () => {
                           </Tooltip>
 
                           <Tooltip title="Imprimir etiqueta">
-                            <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean)}>
+                            <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
                               <PrintIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>

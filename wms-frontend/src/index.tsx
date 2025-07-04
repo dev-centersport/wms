@@ -14,7 +14,6 @@ import Localizacao from "./pages/Localizacao";
 import CriarLocalizacao from "./pages/CriarLocalizacao";
 import Layout from "./components/Layout";
 import theme from './components/Theme';
-import TelaTeste from "./pages/TelaTeste";
 import CriarArmazem from "./pages/CriarArmazem";
 
 
@@ -34,8 +33,6 @@ root.render(
         <Routes>
           {/* Login sem menu lateral */}
           <Route path="/login" element={<Login />} />
-          <Route path="/telateste" element={<TelaTeste />} />
-
           {/* Páginas internas com Sidebar */}
           <Route path="/armazem" element={<Layout><Armazem /></Layout>} />
           <Route path="/localizacao" element={<Localizacao />} />

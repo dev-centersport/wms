@@ -9,41 +9,76 @@ import {
   Divider,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
-// Tipagem do armazém
-interface ArmazemForm {
-  nome: string;
-  endereco: string;
-  cidade: string;
-  largura: string;
-  altura: string;
-  comprimento: string;
+// Serviços centralizados de API
+import {
+  criarLocalizacao as criarLocalizacaoAPI,
+  buscarArmazem,
+  buscarTiposDeLocalizacao,
+} from '../services/API';
+
+import prateleira from '../img/7102305.png';
+
+// Tipagens vindas (ou equivalentes) do serviço ---------------------------
+interface TipoLocalizacao {
+  tipo_localizacao_id: number;
+  tipo: string;
 }
 
-const CriarArmazem: React.FC = () => {
+interface Armazem {
+  armazem_id: number;
+  nome: string;
+}
+//--------------------------------------------------------------------------
+
+const CriarLocalizacao: React.FC = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState<ArmazemForm>({
+  const [tipos, setTipos] = useState<TipoLocalizacao[]>([]);
+  const [armazens, setArmazens] = useState<Armazem[]>([]);
+
+  const [formData, setFormData] = useState({
     nome: '',
-    endereco: '',
-    cidade: 'Penápolis',
+    tipo: '', // agora armazenamos o texto do tipo, não o ID
+    armazemId: '', // permanece para UI, mas não é enviado no serviço (o serviço usa o primeiro armazém)
     largura: '',
     altura: '',
     comprimento: '',
   });
 
-  const handleChange = (field: keyof ArmazemForm, value: string) => {
+  //------------------------------------------------------------------
+  // Carregar listas de tipos e armazéns via serviços reutilizáveis
+  //------------------------------------------------------------------
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        const [listaTipos, listaArmazens] = await Promise.all([
+          buscarTiposDeLocalizacao(),
+          buscarArmazem(),
+        ]);
+
+        setTipos(listaTipos);
+        setArmazens(listaArmazens);
+      } catch (err) {
+        alert('Erro ao carregar tipos ou armazéns');
+        console.error(err);
+      }
+    };
+
+    carregarDados();
+  }, []);
+
+  //------------------------------------------------------------------
+  // Helpers
+  //------------------------------------------------------------------
+  const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const validarCampos = (): boolean => {
-    const obrigatorios = ['nome', 'endereco', 'cidade'];
-    for (const campo of obrigatorios) {
-      if (!formData[campo as keyof ArmazemForm]) {
-        alert('Preencha todos os campos obrigatórios.');
-        return false;
-      }
+    if (!formData.nome || !formData.tipo) {
+      alert('Preencha o nome e selecione o tipo de localização.');
+      return false;
     }
     return true;
   };
@@ -52,52 +87,83 @@ const CriarArmazem: React.FC = () => {
     if (!validarCampos()) return;
 
     try {
-      await axios.post('http://151.243.0.78:3001/armazem', {
+      await criarLocalizacaoAPI({
         nome: formData.nome,
-        endereco: formData.endereco,
-        cidade: formData.cidade,
-        largura: Number(formData.largura),
-        altura: Number(formData.altura),
-        comprimento: Number(formData.comprimento),
+        status: 'fechada',
+        tipo: formData.tipo,
+        altura: formData.altura,
+        largura: formData.largura,
+        comprimento: formData.comprimento,
       });
 
-      alert('Armazém criado com sucesso!');
-      navigate('/armazem');
+      alert('Localização criada com sucesso!');
+      navigate('/localizacao');
     } catch (err) {
-      console.error('Erro ao criar armazém:', err);
-      alert('Erro ao criar armazém. Verifique os dados e tente novamente.');
+      console.error(err);
+      // a própria API já trata e exibe alerts detalhados
     }
   };
 
+  //------------------------------------------------------------------
+  // Render
+  //------------------------------------------------------------------
   return (
     <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 80 }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Novo Armazém
+        Nova Localização
       </Typography>
 
       <Divider sx={{ mb: 3 }} />
 
       <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
         <TextField
-          label="Nome Armazém"
+          label="Nome Localização"
           fullWidth
           value={formData.nome}
           onChange={(e) => handleChange('nome', e.target.value)}
         />
 
-        <TextField
-          label="Endereço"
-          fullWidth
-          value={formData.endereco}
-          onChange={(e) => handleChange('endereco', e.target.value)}
-        />
+        <Box display="flex" gap={2} flexWrap="wrap" width="100%">
+          {/* Seleção de Tipo */}
+          <TextField
+            select
+            label="Tipo"
+            fullWidth
+            sx={{ flex: 1 }}
+            value={formData.tipo}
+            onChange={(e) => handleChange('tipo', e.target.value)}
+          >
+            {tipos.length > 0 ? (
+              tipos.map((tipo) => (
+                <MenuItem key={tipo.tipo_localizacao_id} value={tipo.tipo}>
+                  {tipo.tipo}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>Nenhum tipo encontrado</MenuItem>
+            )}
+          </TextField>
 
-        <TextField
-          label="Cidade"
-          fullWidth
-          value={formData.cidade}
-          onChange={(e) => handleChange('cidade', e.target.value)}
-        />
+          {/* Seleção de Armazém (opcional / informativo) */}
+          <TextField
+            select
+            label="Armazém"
+            fullWidth
+            sx={{ flex: 1 }}
+            value={formData.armazemId}
+            onChange={(e) => handleChange('armazemId', e.target.value)}
+          >
+            {armazens.length > 0 ? (
+              armazens.map((ar) => (
+                <MenuItem key={ar.armazem_id} value={String(ar.armazem_id)}>
+                  {ar.nome}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>Nenhum armazém encontrado</MenuItem>
+            )}
+          </TextField>
+        </Box>
 
         <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
           Dimensões
@@ -113,10 +179,12 @@ const CriarArmazem: React.FC = () => {
                 value={(formData as any)[field]}
                 onChange={(e) => {
                   const valor = e.target.value;
+                  // Bloqueia hífen e caracteres não numéricos (exceto ponto)
                   if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
-                    handleChange(field as keyof ArmazemForm, valor);
+                    handleChange(field, valor);
                   }
                 }}
+
                 inputProps={{
                   min: 0,
                   step: 'any',
@@ -141,6 +209,11 @@ const CriarArmazem: React.FC = () => {
                 }}
               />
             ))}
+
+
+          </Box>
+          <Box display="flex" alignItems="center" justifyContent="flex-start">
+            <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
           </Box>
         </Box>
       </Box>
@@ -171,10 +244,9 @@ const CriarArmazem: React.FC = () => {
         >
           SALVAR
         </Button>
-
         <Button
           variant="outlined"
-          onClick={() => navigate('/armazem')}
+          onClick={() => navigate('/localizacao')}
           sx={{
             backgroundColor: '#f2f2f2',
             fontWeight: 'bold',
@@ -189,4 +261,4 @@ const CriarArmazem: React.FC = () => {
   );
 };
 
-export default CriarArmazem;
+export default CriarLocalizacao;
