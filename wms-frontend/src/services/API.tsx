@@ -1,6 +1,12 @@
 import axios from 'axios'
 const BASE_URL = 'http://151.243.0.78:3001';
 
+const api = axios.create({
+  baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
+});
+
+export default api;
+
 export interface Localizacao {
   localizacao_id: number;
   nome: string;
@@ -9,6 +15,7 @@ export interface Localizacao {
   ean: string;
   endereco: string;
 }
+
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
@@ -29,6 +36,18 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
+// Novo: busca uma localização individual
+export const buscarLocalizacao = async (id: number) => {
+  const resp = await api.get(`/localizacao/${id}`);
+  return resp.data;           // { nome, tipo, altura, largura, comprimento, … }
+};
+
+// Novo: atualiza localização
+// services/API.ts
+export const atualizarLocalizacao = async (id: number, payload: any) => {
+  await api.patch(`/localizacao/${id}`, payload);
+};
+
 
 export const criarArmazem = async (dados: {
   nome: string;
