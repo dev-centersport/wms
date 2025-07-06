@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import {
   Box,
@@ -13,10 +14,15 @@ import {
 } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+=======
+import React from 'react';
+import { Box } from '@mui/material';
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 import Sidebar from './Sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
+<<<<<<< HEAD
   totalPages?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
@@ -50,9 +56,15 @@ const Layout: React.FC<LayoutProps> = ({
     handleClosePopover();
   };
 
+=======
+}
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
+    <Box sx={{ display: 'flex' }}>
       <Sidebar />
+<<<<<<< HEAD
       <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1, p: 3 }}>
           <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
@@ -136,6 +148,10 @@ const Layout: React.FC<LayoutProps> = ({
             </Box>
           </>
         )}
+=======
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        {children}
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
       </Box>
     </Box>
   );

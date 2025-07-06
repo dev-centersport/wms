@@ -174,24 +174,13 @@ const CriarLocalizacao: React.FC = () => {
                 label={field.charAt(0).toUpperCase() + field.slice(1)}
                 type="number"
                 value={(formData as any)[field]}
-                onChange={(e) => {
-                  const valor = e.target.value;
-                  // Bloqueia hífen e caracteres não numéricos (exceto ponto)
-                  if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
-                    handleChange(field, valor);
-                  }
-                }}
-
-                inputProps={{
-                  min: 0,
-                  step: 'any',
-                  inputMode: 'decimal',
-                }}
+                onChange={(e) => handleChange(field, e.target.value)}
                 InputProps={{
                   endAdornment: <span>cm</span>,
+                  inputProps: { inputMode: 'numeric', pattern: '[0-9]*' },
                 }}
                 sx={{
-                  width: 130 + (idx === 2 ? 40 : 0),
+                  width: 130 + (idx === 2 ? 40 : 0), // comprimento um pouco maior
                   '& input[type=number]': {
                     MozAppearance: 'textfield',
                   },
@@ -206,8 +195,6 @@ const CriarLocalizacao: React.FC = () => {
                 }}
               />
             ))}
-
-
           </Box>
           <Box display="flex" alignItems="center" justifyContent="flex-start">
             <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
