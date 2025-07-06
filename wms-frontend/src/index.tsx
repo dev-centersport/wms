@@ -36,11 +36,11 @@ root.render(
           {/* Login sem menu lateral */}
           <Route path="/login" element={<Login />} />
           {/* Páginas internas com Sidebar */}
-          <Route path="/armazem" element={<Layout><Armazem /></Layout>} />
+          <Route path="/armazem" element={<Armazem />} />
           <Route path="/localizacao" element={<Localizacao />} />
-          <Route path="/CriarLocalizacao" element={<Layout><CriarLocalizacao /></Layout>} />
+          <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
           <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
-          <Route path="/CriarArmazem" element={<Layout><CriarArmazem /></Layout>} />
+          <Route path="/CriarArmazem" element={<CriarArmazem />} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

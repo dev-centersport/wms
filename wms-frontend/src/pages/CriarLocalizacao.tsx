@@ -18,6 +18,7 @@ import {
 } from '../services/API';
 
 import prateleira from '../img/7102305.png';
+import Layout from '../components/Layout';
 
 // Tipagens vindas (ou equivalentes) do serviço ---------------------------
 interface TipoLocalizacao {
@@ -108,11 +109,7 @@ const CriarLocalizacao: React.FC = () => {
   // Render
   //------------------------------------------------------------------
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 80 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Nova Localização
-      </Typography>
-
+    <Layout>
       <Divider sx={{ mb: 3 }} />
 
       <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
@@ -257,7 +254,7 @@ const CriarLocalizacao: React.FC = () => {
           CANCELAR
         </Button>
       </Box>
-    </Container>
+    </Layout>
   );
 };
 
