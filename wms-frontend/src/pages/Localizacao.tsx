@@ -187,282 +187,180 @@ const Localizacao: React.FC = () => {
             </script>
         </body>
         </html>
-    `);
+    `;
 
-        w.document.close();
-    };
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  };
 
-    const handleImprimirSelecionados = () => {
-        if (!selectedItems.length) {
-            alert('Selecione pelo menos um item para imprimir.');
-            return;
-        }
+  const handleImprimirSelecionados = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecione pelo menos um item para imprimir.');
+      return;
+    }
 
+    selectedItems.forEach(index => {
+      const item = listaLocalizacoes[index];
+      setTimeout(() => handleImprimir(item.nome, item.ean), 100);
+    });
+  };
 
-        const w = window.open('', '_blank');
-        if (!w) return;
+  return (
+    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+      <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          Localização
+        </Typography>
 
-        // 1. Cabeçalho + estilos
-        w.document.write(`
-        <html>
-        <head>
-        <title>Etiquetas</title>
-        <style>
-            @page {
-            size: 150mm 100mm;
-            margin: 0;
-            }
-            body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            }
-            .etiqueta {
-            width: 150mm;
-            height: 100mm;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            page-break-after: always;
-            }
-            .nome {
-            margin: 0;
-            font-weight: bold;
-            line-height: 1;
-            text-align: center;
-            width: 100%;
-            word-break: break-word;
-            }
-            .barcode {
-            width: 90%;
-            margin-top: 4mm;
-            }
-        </style>
-        </head>
-        <body>
-    `);
+        <Box display="flex" gap={2} mb={3} alignItems="center">
+          <TextField
+            placeholder="Buscar Localização, tipo, armazém ou EAN"
+            variant="outlined"
+            fullWidth
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            InputProps={{
+              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+            }}
+            sx={{ maxWidth: 400 }}
+          />
 
-        // 2. Conteúdo das etiquetas
-        selectedItems.forEach((idx, i) => {
-            const item = listaLocalizacoes[idx];
-            const nome = item.nome.replace(/'/g, "\\'"); // evitar problemas com aspas
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            onClick={() => setMostrarFiltro(!mostrarFiltro)}
+            sx={{ minWidth: 100 }}
+          >
+            Filtro
+          </Button>
 
-            w.document.write(`
-        <div class="etiqueta" data-ean="${item.ean}" data-nome="${nome}">
-            <h1 class="nome" id="nome-${i}">${nome}</h1>
-            <svg class="barcode" id="barcode-${i}"></svg>
-        </div>
-        `);
-        });
+          {selectedItems.length > 0 ? (
+            <>
+              <Button
+                variant="contained"
+                startIcon={<PrintIcon />}
+                onClick={handleImprimirSelecionados}
+                sx={{
+                  backgroundColor: '#61de27',
+                  color: '#000',
+                  fontWeight: 'bold',
+                  minWidth: 180,
+                  '&:hover': { backgroundColor: '#48c307' }
+                }}
+              >
+                Imprimir Selecionados
+              </Button>
 
-        // 3. Script para ajustar tamanho da fonte e gerar os códigos
-        w.document.write(`
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-        <script>
-        window.onload = () => {
-            const etiquetas = document.querySelectorAll('.etiqueta');
+              <Button
+                variant="outlined"
+                startIcon={<DeleteIcon />}
+                onClick={handleExcluirSelecionados}
+                sx={{
+                  borderColor: '#d32f2f',
+                  color: '#d32f2f',
+                  fontWeight: 'bold',
+                  minWidth: 170,
+                  '&:hover': {
+                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                    borderColor: '#d32f2f'
+                  }
+                }}
+              >
+                Excluir Selecionados
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/CriarLocalizacao')}
+              sx={{
+                backgroundColor: '#61de27',
+                color: '#000',
+                fontWeight: 'bold',
+                minWidth: 150,
+                '&:hover': { backgroundColor: '#48c307' }
+              }}
+            >
+              Nova Localização
+            </Button>
+          )}
+        </Box>
 
-            etiquetas.forEach((etq, index) => {
-            const nome = etq.dataset.nome;
-            const ean = etq.dataset.ean;
+        {mostrarFiltro && (
+          <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
+            <Typography variant="body2" color="text.secondary">
+              Área de filtros em construção…
+            </Typography>
+          </Paper>
+        )}
 
-            let tamanhoFonte = 190;
-            if (nome.length > 10) {
-                tamanhoFonte = 70;
-            } else if (nome.length > 6) {
-                tamanhoFonte = 85;
-            }
+        {mostrarFormulario && (
+          <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
+            <Typography variant="body2" color="text.secondary">
+              Formulário de nova localização em construção…
+            </Typography>
+          </Paper>
+        )}
 
-            const nomeEl = document.getElementById('nome-' + index);
-            nomeEl.style.fontSize = tamanhoFonte + 'px';
+        <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={selectAll}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    indeterminate={selectedItems.length > 0 && !selectAll}
+                  />
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Nome</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Tipo</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Armazém</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Ean</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Quantidade</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {currentItems.length ? (
+                currentItems.map((item, index) => {
+                  const globalIndex = startIndex + index;
+                  const isSelected = selectedItems.includes(globalIndex);
 
-            const barcodeEl = document.getElementById('barcode-' + index);
-            JsBarcode(barcodeEl, ean, {
-                format: 'ean13',
-                height: 60,
-                displayValue: true,
-                fontSize: 18
-            });
-            });
+                  return (
+                    <TableRow
+                      key={`${item.nome}-${globalIndex}`}
+                      selected={isSelected}
+                      hover
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={(e) => handleSelectItem(globalIndex, e.target.checked)}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500, textAlign: 'center' }}>{item.nome}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.tipo}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.armazem}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.ean}</TableCell>
+                      <TableCell sx={{ textAlign: 'center'}}>{item.quantidade}</TableCell>
+                      <TableCell align="center">
+                        <Box display="flex" justifyContent="center" gap={1}>
+                          <Tooltip title="Ver produtos">
+                            <IconButton
+                              size="small"
+                              onClick={() => alert(`Ver produtos em ${item.nome}`)}
+                            >
+                              <ListIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
 
-            window.print();
-            window.onafterprint = () => window.close();
-        };
-        </script>
-        </body>
-        </html>
-    `);
-
-        w.document.close();
-    };
-
-
-
-
-
-    /* ------------------------- exclusão ------------------------- */
-    const handleExcluir = async (id: number, nome: string, quantidade: number) => {
-        if (quantidade > 0) {
-            alert('Só é possível excluir localizações com quantidade 0.');
-            return;
-        }
-        if (!window.confirm(`Deseja excluir a localização "${nome}"?`)) return;
-        try {
-            await excluirLocalizacao({ localizacao_id: id });
-            setListaLocalizacoes((prev) => prev.filter((l) => l.localizacao_id !== id));
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const handleExcluirSelecionados = async () => {
-        if (!selectedItems.length) {
-            alert('Selecione pelo menos uma localização.');
-            return;
-        }
-
-        const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade === 0);
-        const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade > 0);
-
-        if (!permitidos.length) {
-            alert('Nenhuma das localizações selecionadas pode ser excluída (quantidade > 0).');
-            return;
-        }
-
-        const nomesPermitidos = permitidos.map((idx) => listaLocalizacoes[idx].nome);
-        if (!window.confirm(`Tem certeza que deseja excluir:\n\n${nomesPermitidos.join(', ')}`)) return;
-
-        const erros: string[] = [];
-        for (const idx of permitidos) {
-            const loc = listaLocalizacoes[idx];
-            try {
-                await excluirLocalizacao({ localizacao_id: loc.localizacao_id });
-            } catch (err) {
-                console.error(err);
-                erros.push(loc.nome);
-            }
-        }
-
-        setListaLocalizacoes((prev) =>
-            prev.filter((_, idx) => !permitidos.includes(idx) || erros.includes(prev[idx].nome))
-        );
-
-        setSelectedItems([]);
-        setSelectAll(false);
-
-        if (erros.length) {
-            alert(`Algumas localizações não foram excluídas: ${erros.join(', ')}`);
-        } else {
-            alert('Localizações excluídas com sucesso!');
-        }
-
-        if (bloqueados.length) {
-            const nomesBloq = bloqueados.map((idx) => listaLocalizacoes[idx].nome);
-            alert(`Estas localizações não puderam ser excluídas por conter produtos:\n\n${nomesBloq.join(', ')}`);
-        }
-    };
-
-    /* ---------------------- valores únicos para filtros --------------------- */
-    const tipos = useMemo(
-        () => Array.from(new Set(listaLocalizacoes.map((l) => l.tipo).filter(Boolean))).sort(),
-        [listaLocalizacoes]
-    );
-    const armazens = useMemo(
-        () => Array.from(new Set(listaLocalizacoes.map((l) => l.armazem).filter(Boolean))).sort(),
-        [listaLocalizacoes]
-    );
-
-    /* --------------------------- handlers menu --------------------------- */
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
-    const handleMenuClose = () => setAnchorEl(null);
-
-    const handleLimparFiltros = () => {
-        setFiltroTipo('');
-        setFiltroArmazem('');
-        setBusca('');
-        setAppliedFiltroTipo('');
-        setAppliedFiltroArmazem('');
-        handleMenuClose();
-    };
-
-    const handleAplicarFiltro = () => {
-        setAppliedFiltroTipo(filtroTipo);
-        setAppliedFiltroArmazem(filtroArmazem);
-        handleMenuClose();
-    };
-
-    return (
-        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} pageTitle='Localização'>
-            {/* Barra de ações */}
-            <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
-                <TextField
-                    placeholder="Buscar Localização, tipo, armazém ou EAN"
-                    variant="outlined"
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
-                    sx={{ maxWidth: 480, width: 380 }}
-                />
-
-                <Button
-                    variant="outlined"
-                    startIcon={<FilterListIcon />}
-                    onClick={handleMenuOpen}
-                    sx={{ minWidth: 110 }}
-                >
-                    Filtro
-                </Button>
-
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleMenuClose}
-                >
-                    <Box sx={{ p: 2, width: 300 }}>
-                        <TextField
-                            select
-                            label="Tipo"
-                            value={filtroTipo}
-                            onChange={(e) => setFiltroTipo(e.target.value)}
-                            sx={{ minWidth: '100%' }}
-                        >
-                            <MenuItem value="">Todos</MenuItem>
-                            {tipos.map((t) => (
-                                <MenuItem key={t} value={t}>
-                                    {t}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-
-                        <TextField
-                            select
-                            label="Armazém"
-                            value={filtroArmazem}
-                            onChange={(e) => setFiltroArmazem(e.target.value)}
-                            sx={{ minWidth: '100%', mt: 2 }}
-                        >
-                            <MenuItem value="">Todos</MenuItem>
-                            {armazens.map((a) => (
-                                <MenuItem key={a} value={a}>
-                                    {a}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-
-                        <Button
-                            variant="outlined"
-                            onClick={handleAplicarFiltro}
-                            sx={{ mt: 2, width: '100%' }}
-                        >
-                            Aplicar Filtro
-                        </Button>
-
-                        {filtroTipo || filtroArmazem ? (
-                            <Button
-                                variant="outlined"
-                                onClick={handleLimparFiltros}
-                                sx={{ mt: 2, width: '100%' }}
+                          <Tooltip title="Imprimir etiqueta">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleImprimir(item.nome, item.ean)}
                             >
                                 Limpar filtros
                             </Button>

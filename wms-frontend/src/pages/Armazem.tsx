@@ -5,6 +5,8 @@ import {
   TextField,
   Table,
   TableHead,
+  TableBody,
+  TableCell,
   TableRow,
   TableCell,
   TableBody,
@@ -45,6 +47,7 @@ const ArmazemPage: React.FC = () => {
         alert(error.message);
       }
     };
+import { useLocalizacoes } from '../components/ApiComponents';
 
     carregar();
   }, []);
@@ -135,6 +138,36 @@ const ArmazemPage: React.FC = () => {
           </Table>
         </Paper>
     </Layout>
+  // Hook personalizado que gerencia a lógica de localizações
+  const {
+    locaisFiltrados,
+    listaLocalizacoes,
+    locaisFiltrados,
+    busca,
+    setBusca,
+    mostrarFormulario,
+    setMostrarFormulario,
+    mostrarFiltro,
+    setMostrarFiltro,
+    setListaLocalizacoes,
+  } = useLocalizacoes();
+
+  return (
+    <TableBody>
+      {locaisFiltrados.length ? (
+        locaisFiltrados.map((item, index) => (
+          <TableRow key={`${item.nome}-${index}`}>
+            <TableCell>{item.armazem}</TableCell>
+            <TableCell>{item.capacidade}</TableCell>
+            <TableCell>{item.endereco}</TableCell>
+          </TableRow>
+        ))
+      ) : (
+        <TableRow>
+          <TableCell colSpan={6}>Nenhum resultado encontrado.</TableCell>
+        </TableRow>
+      )}
+    </TableBody>
   );
 };
 

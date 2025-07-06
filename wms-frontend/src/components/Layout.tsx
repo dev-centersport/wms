@@ -67,7 +67,12 @@ const Layout: React.FC<LayoutProps> = ({
         {totalPages > 1 && (
           <>
             <Divider />
-            <Box>
+            <Box
+              
+              sx={{
+                marginY: 3
+              }}
+            >
               <Pagination
                 count={totalPages}
                 page={currentPage}
