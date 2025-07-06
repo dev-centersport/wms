@@ -51,7 +51,7 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
       <Sidebar />
       <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1, p: 3 }}>
@@ -64,7 +64,7 @@ const Layout: React.FC<LayoutProps> = ({
         </Box>
 
         {totalPages > 1 && (
-          <Box position='relative' bottom={0}>
+          <>
             <Divider />
             <Box sx={{ marginY: 3 }}>
               <Pagination
@@ -128,7 +128,7 @@ const Layout: React.FC<LayoutProps> = ({
                 </Box>
               </Popover>
             </Box>
-          </Box>
+          </>
         )}
       </Box>
     </Box>
