@@ -3,82 +3,83 @@ import {
   Box,
   Button,
   Container,
-  MenuItem,
   TextField,
   Typography,
   Divider,
+  MenuItem,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
-// Serviços centralizados de API
-import {
-  criarLocalizacao as criarLocalizacaoAPI,
-  buscarArmazem,
-  buscarTiposDeLocalizacao,
-} from '../services/API';
-
-import prateleira from '../img/7102305.png';
+import { criarArmazem as criarArmazemAPI } from '../services/API';
+import caixa from '../img/7102305.png';
 import Layout from '../components/Layout';
 
-// Tipagens vindas (ou equivalentes) do serviço ---------------------------
-interface TipoLocalizacao {
-  tipo_localizacao_id: number;
-  tipo: string;
-}
-
-interface Armazem {
-  armazem_id: number;
+interface Estado {
+  id: number;
   nome: string;
+  sigla: string;
 }
-//--------------------------------------------------------------------------
 
-const CriarLocalizacao: React.FC = () => {
+const CriarArmazem: React.FC = () => {
   const navigate = useNavigate();
 
-  const [tipos, setTipos] = useState<TipoLocalizacao[]>([]);
-  const [armazens, setArmazens] = useState<Armazem[]>([]);
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [cidades, setCidades] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     nome: '',
-    tipo: '', // agora armazenamos o texto do tipo, não o ID
-    armazemId: '', // permanece para UI, mas não é enviado no serviço (o serviço usa o primeiro armazém)
+    endereco: '',
+    estado: '',
+    cidade: '',
     largura: '',
     altura: '',
     comprimento: '',
   });
 
-  //------------------------------------------------------------------
-  // Carregar listas de tipos e armazéns via serviços reutilizáveis
-  //------------------------------------------------------------------
+  // Carrega estados do IBGE
   useEffect(() => {
-    const carregarDados = async () => {
+    const carregarEstados = async () => {
       try {
-        const [listaTipos, listaArmazens] = await Promise.all([
-          buscarTiposDeLocalizacao(),
-          buscarArmazem(),
-        ]);
-
-        setTipos(listaTipos);
-        setArmazens(listaArmazens);
-      } catch (err) {
-        alert('Erro ao carregar tipos ou armazéns');
-        console.error(err);
+        const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados');
+        const data = await response.json();
+        const ordenados = data.sort((a: Estado, b: Estado) => a.nome.localeCompare(b.nome));
+        setEstados(ordenados);
+      } catch (error) {
+        console.error('Erro ao carregar estados:', error);
       }
     };
-
-    carregarDados();
+    carregarEstados();
   }, []);
 
-  //------------------------------------------------------------------
-  // Helpers
-  //------------------------------------------------------------------
+  // Carrega cidades do estado selecionado
+  useEffect(() => {
+    if (formData.estado) {
+      const carregarCidades = async () => {
+        try {
+          const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${formData.estado}/municipios`);
+          const data = await response.json();
+          const nomes = data.map((cidade: any) => cidade.nome);
+          setCidades(nomes);
+        } catch (error) {
+          console.error('Erro ao carregar cidades:', error);
+        }
+      };
+      carregarCidades();
+    } else {
+      setCidades([]);
+    }
+  }, [formData.estado]);
+
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === 'estado' ? { cidade: '' } : {}), // limpa cidade ao trocar estado
+    }));
   };
 
   const validarCampos = (): boolean => {
-    if (!formData.nome || !formData.tipo) {
-      alert('Preencha o nome e selecione o tipo de localização.');
+    if (!formData.nome || !formData.endereco || !formData.estado || !formData.cidade) {
+      alert('Preencha todos os campos obrigatórios.');
       return false;
     }
     return true;
@@ -88,76 +89,73 @@ const CriarLocalizacao: React.FC = () => {
     if (!validarCampos()) return;
 
     try {
-      await criarLocalizacaoAPI({
+      await criarArmazemAPI({
         nome: formData.nome,
-        status: 'fechada',
-        tipo: formData.tipo,
-        altura: formData.altura,
+        endereco: formData.endereco,
+        cidade: `${formData.cidade}/${formData.estado}`,
         largura: formData.largura,
+        altura: formData.altura,
         comprimento: formData.comprimento,
       });
 
-      alert('Localização criada com sucesso!');
-      navigate('/localizacao');
+      alert('Armazém criado com sucesso!');
+      navigate('/armazem');
     } catch (err) {
       console.error(err);
-      // a própria API já trata e exibe alerts detalhados
+      alert('Erro ao criar armazém.');
     }
   };
 
-  //------------------------------------------------------------------
-  // Render
-  //------------------------------------------------------------------
   return (
-    <Layout>
+    <Layout pageTitle='Novo Armazém'>
       <Divider sx={{ mb: 3 }} />
 
       <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
         <TextField
-          label="Nome Localização"
+          label="Nome Armazém"
           fullWidth
           value={formData.nome}
           onChange={(e) => handleChange('nome', e.target.value)}
         />
 
-        <Box display="flex" gap={2} flexWrap="wrap" width="100%">
-          {/* Seleção de Tipo */}
+        <TextField
+          label="Endereço"
+          fullWidth
+          value={formData.endereco}
+          onChange={(e) => handleChange('endereco', e.target.value)}
+        />
+
+        <Box display="flex" gap={2} width="100%">
           <TextField
             select
-            label="Tipo"
+            label="Estado"
             fullWidth
-            sx={{ flex: 1 }}
-            value={formData.tipo}
-            onChange={(e) => handleChange('tipo', e.target.value)}
+            value={formData.estado}
+            onChange={(e) => handleChange('estado', e.target.value)}
           >
-            {tipos.length > 0 ? (
-              tipos.map((tipo) => (
-                <MenuItem key={tipo.tipo_localizacao_id} value={tipo.tipo}>
-                  {tipo.tipo}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>Nenhum tipo encontrado</MenuItem>
-            )}
+            {estados.map((estado) => (
+              <MenuItem key={estado.id} value={estado.sigla}>
+                {estado.nome} ({estado.sigla})
+              </MenuItem>
+            ))}
           </TextField>
 
-          {/* Seleção de Armazém (opcional / informativo) */}
           <TextField
             select
-            label="Armazém"
+            label="Cidade"
             fullWidth
-            sx={{ flex: 1 }}
-            value={formData.armazemId}
-            onChange={(e) => handleChange('armazemId', e.target.value)}
+            value={formData.cidade}
+            onChange={(e) => handleChange('cidade', e.target.value)}
+            disabled={!formData.estado}
           >
-            {armazens.length > 0 ? (
-              armazens.map((ar) => (
-                <MenuItem key={ar.armazem_id} value={String(ar.armazem_id)}>
-                  {ar.nome}
+            {cidades.length > 0 ? (
+              cidades.map((cidade, index) => (
+                <MenuItem key={index} value={cidade}>
+                  {cidade}
                 </MenuItem>
               ))
             ) : (
-              <MenuItem disabled>Nenhum armazém encontrado</MenuItem>
+              <MenuItem disabled>Nenhuma cidade encontrada</MenuItem>
             )}
           </TextField>
         </Box>
@@ -176,12 +174,10 @@ const CriarLocalizacao: React.FC = () => {
                 value={(formData as any)[field]}
                 onChange={(e) => {
                   const valor = e.target.value;
-                  // Bloqueia hífen e caracteres não numéricos (exceto ponto)
                   if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
                     handleChange(field, valor);
                   }
                 }}
-
                 inputProps={{
                   min: 0,
                   step: 'any',
@@ -206,11 +202,9 @@ const CriarLocalizacao: React.FC = () => {
                 }}
               />
             ))}
-
-
           </Box>
           <Box display="flex" alignItems="center" justifyContent="flex-start">
-            <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
+            <img src={caixa} alt="Caixa" style={{ width: 90, height: 'auto' }} />
           </Box>
         </Box>
       </Box>
@@ -219,7 +213,6 @@ const CriarLocalizacao: React.FC = () => {
 
       <Box
         sx={{
-          marginRight: 30,
           bottom: 20,
           left: 0,
           right: 0,
@@ -243,7 +236,7 @@ const CriarLocalizacao: React.FC = () => {
         </Button>
         <Button
           variant="outlined"
-          onClick={() => navigate('/localizacao')}
+          onClick={() => navigate('/armazem')}
           sx={{
             backgroundColor: '#f2f2f2',
             fontWeight: 'bold',
@@ -258,4 +251,4 @@ const CriarLocalizacao: React.FC = () => {
   );
 };
 
-export default CriarLocalizacao;
+export default CriarArmazem;

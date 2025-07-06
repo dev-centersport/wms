@@ -1,52 +1,146 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@mui/material';
-=======
-=======
->>>>>>> Stashed changes
   Box,
-  Button,
-  Container,
-  IconButton,
   Paper,
+  TextField,
   Table,
+  TableHead,
   TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
-  TextField,
+  TableCell,
+  TableBody,
+  Checkbox,
+  IconButton,
+  Button,
   Typography,
+  Container,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Delete as DeleteIcon,
-  Print as PrintIcon,
-  List as ListIcon,
-  Add as AddIcon,
-  FilterList as FilterListIcon,
-} from '@mui/icons-material';
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import Layout from '../components/Layout';
+import { buscarArmazem, Armazem as ArmazemAPI } from '../services/API';
+import { useNavigate } from 'react-router-dom';
+
+// Se o backend já retornar capacidade, adicione no tipo abaixo; caso contrário, ficará opcional
+interface Armazem extends ArmazemAPI {
+  capacidade?: number;
+}
+
+const ArmazemPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  // Estado principal
+  const [armazens, setArmazens] = useState<Armazem[]>([]);
+  const [busca, setBusca] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // Carrega lista de armazéns direto do serviço
+  useEffect(() => {
+    const carregar = async () => {
+      try {
+        const dados = await buscarArmazem();
+        setArmazens(dados);
+      } catch (error: any) {
+        alert(error.message);
+      }
+    };
 import { useLocalizacoes } from '../components/ApiComponents';
 
+    carregar();
+  }, []);
 
-const Armazem: React.FC = () => {
+  // Filtro por texto digitado
+  const filtrados = useMemo(() => {
+    const texto = busca.toLowerCase();
+    return armazens.filter(
+      (a) =>
+        a.nome.toLowerCase().includes(texto) ||
+        a.endereco.toLowerCase().includes(texto)
+    );
+  }, [armazens, busca]);
+
+  // Paginação
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtrados.slice(start, start + itemsPerPage);
+  }, [filtrados, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filtrados.length / itemsPerPage));
+
+  return (
+    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} pageTitle='Armazém'>
+        {/* Barra superior: busca + botão */}
+        <Box display="flex" gap={2} mb={3} flexWrap="wrap" alignItems="center">
+          <TextField
+            placeholder="Busca"
+            size="small"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            sx={{ width: 300 }}
+          />
+
+          <Button
+            variant="contained"
+            onClick={() => navigate('/CriarArmazem')}
+            sx={{ backgroundColor: '#59e60d', color: '#000', fontWeight: 'bold' }}
+            startIcon={<AddIcon />}
+          >
+            Novo Armazém
+          </Button>
+        </Box>
+
+        {/* Tabela de Armazéns */}
+        <Paper>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox"></TableCell>
+                <TableCell>Armazém</TableCell>
+                <TableCell>Capacidade</TableCell>
+                <TableCell>Endereço</TableCell>
+                <TableCell align="right">Ações</TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {paginatedData.length ? (
+                paginatedData.map((item) => (
+                  <TableRow key={item.armazem_id}>
+                    <TableCell padding="checkbox">
+                      <Checkbox />
+                    </TableCell>
+
+                    <TableCell>{item.nome}</TableCell>
+                    <TableCell>{item.capacidade ?? '-'}</TableCell>
+                    <TableCell>{item.endereco}</TableCell>
+
+                    <TableCell align="right">
+                      <IconButton>
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton>
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    Nenhum resultado encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Paper>
+    </Layout>
   // Hook personalizado que gerencia a lógica de localizações
   const {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     locaisFiltrados,
-=======
-=======
->>>>>>> Stashed changes
     listaLocalizacoes,
     locaisFiltrados,
     busca,
@@ -56,25 +150,13 @@ const Armazem: React.FC = () => {
     mostrarFiltro,
     setMostrarFiltro,
     setListaLocalizacoes,
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   } = useLocalizacoes();
 
   return (
     <TableBody>
       {locaisFiltrados.length ? (
         locaisFiltrados.map((item, index) => (
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
           <TableRow key={`${item.nome}-${index}`}>
-=======
-          <TableRow key={`${item.localizacao}-${index}`}>
->>>>>>> Stashed changes
-=======
-          <TableRow key={`${item.localizacao}-${index}`}>
->>>>>>> Stashed changes
             <TableCell>{item.armazem}</TableCell>
             <TableCell>{item.capacidade}</TableCell>
             <TableCell>{item.endereco}</TableCell>
@@ -87,6 +169,6 @@ const Armazem: React.FC = () => {
       )}
     </TableBody>
   );
-}
+};
 
-  export default Armazem;
+export default ArmazemPage;

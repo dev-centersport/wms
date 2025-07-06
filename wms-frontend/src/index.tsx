@@ -14,7 +14,9 @@ import Localizacao from "./pages/Localizacao";
 import CriarLocalizacao from "./pages/CriarLocalizacao";
 import Layout from "./components/Layout";
 import theme from './components/Theme';
-import TelaTeste from "./pages/TelaTeste";
+import CriarArmazem from "./pages/CriarArmazem";
+import EditarLocalizacao from "./pages/EditarLocalizacao"
+
 
 
 const container = document.getElementById("root");
@@ -33,12 +35,12 @@ root.render(
         <Routes>
           {/* Login sem menu lateral */}
           <Route path="/login" element={<Login />} />
-          <Route path="/telateste" element={<TelaTeste />} />
-
           {/* Páginas internas com Sidebar */}
-          <Route path="/armazem" element={<Layout><Armazem /></Layout>} />
+          <Route path="/armazem" element={<Armazem />} />
           <Route path="/localizacao" element={<Localizacao />} />
-          <Route path="/CriarLocalizacao" element={<Layout><CriarLocalizacao /></Layout>} />
+          <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
+          <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
+          <Route path="/CriarArmazem" element={<CriarArmazem />} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />
