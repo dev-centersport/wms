@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import {
   Box,
@@ -18,10 +19,15 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import React from 'react';
 import { Box } from '@mui/material';
 >>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
+=======
+import React from 'react';
+import { Box } from '@mui/material';
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 import Sidebar from './Sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
+<<<<<<< HEAD
 <<<<<<< HEAD
   totalPages?: number;
   currentPage?: number;
@@ -149,6 +155,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </>
         )}
 =======
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        {children}
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
+=======
+}
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <Sidebar />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         {children}
 >>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)

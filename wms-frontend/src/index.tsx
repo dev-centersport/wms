@@ -37,12 +37,15 @@ root.render(
           <Route path="/login" element={<Login />} />
           {/* Páginas internas com Sidebar */}
 <<<<<<< HEAD
+<<<<<<< HEAD
           <Route path="/armazem" element={<Armazem />} />
           <Route path="/localizacao" element={<Localizacao />} />
           <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
           <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
           <Route path="/CriarArmazem" element={<CriarArmazem />} />
 =======
+=======
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
           <Route path="/armazem" element={<Layout><Armazem /></Layout>} />
           <Route path="/localizacao" element={<Layout><Localizacao /></Layout>} />
           <Route path="/CriarLocalizacao" element={<Layout><CriarLocalizacao /></Layout>} />

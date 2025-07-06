@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 import {
     Box,
@@ -29,6 +30,12 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import JsBarcode from 'jsbarcode';
 
 import {
+=======
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
+import JsBarcode from 'jsbarcode';
+
+import {
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
   Divider,
   Box,
   Button,
@@ -57,6 +64,7 @@ import {
   Add as AddIcon,
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
+<<<<<<< HEAD
 >>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 import { useLocalizacoes } from '../components/ApiComponents';
 
@@ -64,8 +72,23 @@ import { useLocalizacoes } from '../components/ApiComponents';
 /* -------------------------------------------------------------------------- */
 const itemsPerPage = 5;
 /* -------------------------------------------------------------------------- */
+=======
+import { useLocalizacoes } from '../components/ApiComponents';
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 
+/**
+ * Componente principal da página de Localizações.
+ * 
+ * Responsável por:
+ * - Exibir a lista de localizações em tabela
+ * - Permitir busca por nome, tipo, armazém ou EAN
+ * - Mostrar/esconder o formulário de nova localização
+ * - Mostrar/esconder área de filtros
+ * - Realizar ações de impressão, visualização e exclusão de localizações
+ * - Permitir seleção múltipla de itens
+ */
 const Localizacao: React.FC = () => {
+<<<<<<< HEAD
     /* ------------------------- estados globais do hook ------------------------ */
     const {
         listaLocalizacoes,
@@ -167,6 +190,8 @@ const Localizacao: React.FC = () => {
  * - Permitir seleção múltipla de itens
  */
 const Localizacao: React.FC = () => {
+=======
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
   // Hook personalizado que gerencia a lógica de localizações
   const {
     listaLocalizacoes,
@@ -581,6 +606,7 @@ const Localizacao: React.FC = () => {
                     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
                           <Tooltip title="Imprimir etiqueta">
                             <IconButton
                               size="small"
@@ -763,6 +789,12 @@ const Localizacao: React.FC = () => {
                     return null; // remove seta da esquerda
                     }
 
+=======
+                    if (item.type === 'previous') {
+                    return null; // remove seta da esquerda
+                    }
+
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
                     return (
                     <PaginationItem
                         {...item}
