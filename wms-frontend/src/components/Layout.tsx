@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 import React, { useState } from 'react';
 import {
   Box,
@@ -16,25 +13,10 @@ import {
 } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-=======
-import React from 'react';
-import { Box } from '@mui/material';
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
-=======
-import React from 'react';
-import { Box } from '@mui/material';
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
-=======
-import React from 'react';
-import { Box } from '@mui/material';
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 import Sidebar from './Sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   totalPages?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
@@ -68,35 +50,23 @@ const Layout: React.FC<LayoutProps> = ({
     handleClosePopover();
   };
 
-=======
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
   return (
     <Box sx={{ display: 'flex' }}>
       <Sidebar />
-<<<<<<< HEAD
       <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1, p: 3 }}>
           <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-              {pageTitle} {/* Usando a prop aqui */}
+              {pageTitle}
             </Typography>
-              {children}
+            {children}
           </Container>
         </Box>
 
-        {/* Restante do código permanece igual */}
         {totalPages > 1 && (
-          <>
+          <Box position='relative' bottom={0}>
             <Divider />
-            <Box
-              
-              sx={{
-                marginY: 3
-              }}
-            >
+            <Box sx={{ marginY: 3 }}>
               <Pagination
                 count={totalPages}
                 page={currentPage}
@@ -105,7 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onChange={(_, page) => onPageChange(page)}
                 renderItem={(item) => {
                   if (item.type === 'next') {
-                    return <PaginationItem {...item} components={{ next: ArrowRightAltIcon }} />;
+                    return <PaginationItem {...item} slots={{ next: ArrowRightAltIcon }} />;
                   }
                   if (item.type === 'previous') {
                     return null;
@@ -149,7 +119,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     size="small"
                     value={pageInput}
                     onChange={(e) => setPageInput(e.target.value)}
-                    InputProps={{ inputProps: { min: 1, max: totalPages } }}
+                    inputProps={{ min: 1, max: totalPages }}
                     sx={{ width: 100 }}
                   />
                   <Button variant="contained" onClick={handleGoToPage}>
@@ -158,29 +128,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Box>
               </Popover>
             </Box>
-          </>
+          </Box>
         )}
-=======
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        {children}
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
-=======
-}
-
-=======
-}
-
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
-const Layout: React.FC<LayoutProps> = ({ children }) => {
-  return (
-    <Box sx={{ display: 'flex' }}>
-      <Sidebar />
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        {children}
-<<<<<<< HEAD
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
-=======
->>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
       </Box>
     </Box>
   );

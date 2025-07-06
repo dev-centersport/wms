@@ -8,13 +8,9 @@ import {
   TableBody,
   TableCell,
   TableRow,
-  TableCell,
-  TableBody,
   Checkbox,
   IconButton,
   Button,
-  Typography,
-  Container,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -47,7 +43,6 @@ const ArmazemPage: React.FC = () => {
         alert(error.message);
       }
     };
-import { useLocalizacoes } from '../components/ApiComponents';
 
     carregar();
   }, []);
@@ -72,102 +67,72 @@ import { useLocalizacoes } from '../components/ApiComponents';
 
   return (
     <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} pageTitle='Armazém'>
-        {/* Barra superior: busca + botão */}
-        <Box display="flex" gap={2} mb={3} flexWrap="wrap" alignItems="center">
-          <TextField
-            placeholder="Busca"
-            size="small"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            sx={{ width: 300 }}
-          />
+      {/* Barra superior: busca + botão */}
+      <Box display="flex" gap={2} mb={3} flexWrap="wrap" alignItems="center">
+        <TextField
+          placeholder="Busca"
+          size="small"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          sx={{ width: 300 }}
+        />
 
-          <Button
-            variant="contained"
-            onClick={() => navigate('/CriarArmazem')}
-            sx={{ backgroundColor: '#59e60d', color: '#000', fontWeight: 'bold' }}
-            startIcon={<AddIcon />}
-          >
-            Novo Armazém
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          onClick={() => navigate('/CriarArmazem')}
+          sx={{ backgroundColor: '#59e60d', color: '#000', fontWeight: 'bold' }}
+          startIcon={<AddIcon />}
+        >
+          Novo Armazém
+        </Button>
+      </Box>
 
-        {/* Tabela de Armazéns */}
-        <Paper>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox"></TableCell>
-                <TableCell>Armazém</TableCell>
-                <TableCell>Capacidade</TableCell>
-                <TableCell>Endereço</TableCell>
-                <TableCell align="right">Ações</TableCell>
-              </TableRow>
-            </TableHead>
+      {/* Tabela de Armazéns */}
+      <Paper>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell padding="checkbox"></TableCell>
+              <TableCell>Armazém</TableCell>
+              <TableCell>Capacidade</TableCell>
+              <TableCell>Endereço</TableCell>
+              <TableCell align="right">Ações</TableCell>
+            </TableRow>
+          </TableHead>
 
-            <TableBody>
-              {paginatedData.length ? (
-                paginatedData.map((item) => (
-                  <TableRow key={item.armazem_id}>
-                    <TableCell padding="checkbox">
-                      <Checkbox />
-                    </TableCell>
+          <TableBody>
+            {paginatedData.length ? (
+              paginatedData.map((item) => (
+                <TableRow key={item.armazem_id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox />
+                  </TableCell>
 
-                    <TableCell>{item.nome}</TableCell>
-                    <TableCell>{item.capacidade ?? '-'}</TableCell>
-                    <TableCell>{item.endereco}</TableCell>
+                  <TableCell>{item.nome}</TableCell>
+                  <TableCell>{item.capacidade ?? '-'}</TableCell>
+                  <TableCell>{item.endereco}</TableCell>
 
-                    <TableCell align="right">
-                      <IconButton>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    Nenhum resultado encontrado.
+                  <TableCell align="right">
+                    <IconButton>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton>
+                      <DeleteIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Paper>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  Nenhum resultado encontrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
     </Layout>
-  // Hook personalizado que gerencia a lógica de localizações
-  const {
-    locaisFiltrados,
-    listaLocalizacoes,
-    locaisFiltrados,
-    busca,
-    setBusca,
-    mostrarFormulario,
-    setMostrarFormulario,
-    mostrarFiltro,
-    setMostrarFiltro,
-    setListaLocalizacoes,
-  } = useLocalizacoes();
-
-  return (
-    <TableBody>
-      {locaisFiltrados.length ? (
-        locaisFiltrados.map((item, index) => (
-          <TableRow key={`${item.nome}-${index}`}>
-            <TableCell>{item.armazem}</TableCell>
-            <TableCell>{item.capacidade}</TableCell>
-            <TableCell>{item.endereco}</TableCell>
-          </TableRow>
-        ))
-      ) : (
-        <TableRow>
-          <TableCell colSpan={6}>Nenhum resultado encontrado.</TableCell>
-        </TableRow>
-      )}
-    </TableBody>
   );
 };
 
