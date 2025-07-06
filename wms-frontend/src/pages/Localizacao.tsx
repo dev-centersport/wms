@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 import {
     Box,
@@ -30,6 +31,12 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import JsBarcode from 'jsbarcode';
 
 import {
+=======
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
+import JsBarcode from 'jsbarcode';
+
+import {
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 =======
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import JsBarcode from 'jsbarcode';
@@ -65,6 +72,7 @@ import {
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 import { useLocalizacoes } from '../components/ApiComponents';
 
@@ -76,6 +84,10 @@ const itemsPerPage = 5;
 import { useLocalizacoes } from '../components/ApiComponents';
 >>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 
+=======
+import { useLocalizacoes } from '../components/ApiComponents';
+
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 /**
  * Componente principal da página de Localizações.
  * 
@@ -88,6 +100,7 @@ import { useLocalizacoes } from '../components/ApiComponents';
  * - Permitir seleção múltipla de itens
  */
 const Localizacao: React.FC = () => {
+<<<<<<< HEAD
 <<<<<<< HEAD
     /* ------------------------- estados globais do hook ------------------------ */
     const {
@@ -190,6 +203,8 @@ const Localizacao: React.FC = () => {
  * - Permitir seleção múltipla de itens
  */
 const Localizacao: React.FC = () => {
+=======
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 =======
 >>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
   // Hook personalizado que gerencia a lógica de localizações
@@ -607,6 +622,7 @@ const Localizacao: React.FC = () => {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                           <Tooltip title="Imprimir etiqueta">
                             <IconButton
                               size="small"
@@ -789,6 +805,12 @@ const Localizacao: React.FC = () => {
                     return null; // remove seta da esquerda
                     }
 
+=======
+                    if (item.type === 'previous') {
+                    return null; // remove seta da esquerda
+                    }
+
+>>>>>>> parent of d8ec4f5 (Merge pull request #16 from dev-centersport/estilizacao)
 =======
                     if (item.type === 'previous') {
                     return null; // remove seta da esquerda
