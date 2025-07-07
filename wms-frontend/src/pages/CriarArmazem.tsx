@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { criarArmazem as criarArmazemAPI } from '../services/API';
 import caixa from '../img/7102305.png';
+import Layout from '../components/Layout';
 
 interface Estado {
   id: number;
@@ -106,11 +107,7 @@ const CriarArmazem: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 80 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Novo Armazém
-      </Typography>
-
+    <Layout pageTitle='Novo Armazém'>
       <Divider sx={{ mb: 3 }} />
 
       <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
@@ -216,7 +213,6 @@ const CriarArmazem: React.FC = () => {
 
       <Box
         sx={{
-          marginRight: 30,
           bottom: 20,
           left: 0,
           right: 0,
@@ -251,7 +247,7 @@ const CriarArmazem: React.FC = () => {
           CANCELAR
         </Button>
       </Box>
-    </Container>
+    </Layout>
   );
 };
 

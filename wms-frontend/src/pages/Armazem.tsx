@@ -5,9 +5,9 @@ import {
   TextField,
   Table,
   TableHead,
-  TableRow,
-  TableCell,
   TableBody,
+  TableCell,
+  TableRow,
   Checkbox,
   IconButton,
   Button,
@@ -66,9 +66,9 @@ const ArmazemPage: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(filtrados.length / itemsPerPage));
 
   return (
-    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} pageTitle='Armazém'>
       {/* Barra superior: busca + botão */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" gap={2} mb={3} flexWrap="wrap" alignItems="center">
         <TextField
           placeholder="Busca"
           size="small"

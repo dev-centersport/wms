@@ -121,126 +121,117 @@ const EditarLocalizacao: React.FC = () => {
 
     /* render --------------------------------------------------- */
     return (
-        <Layout>
-            <Container maxWidth="md" sx={{
-                mt: 4, pb: 12, mr: 10,
-                marginRight: 90,
-            }}>
-                <Typography variant="h5" fontWeight="bold" gutterBottom>
-                    Editar Localização
+        <Layout pageTitle='Editar Localização'>
+            <Divider sx={{ mb: 3 }} />
+
+            {/* --- formulário principal -------------------------- */}
+            <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
+                <TextField
+                    label="Nome Localização"
+                    fullWidth
+                    value={formData.nome}
+                    onChange={(e) => handleChange('nome', e.target.value)}
+                />
+
+                <Box display="flex" gap={2} flexWrap="wrap" width="100%">
+                    {/* tipo (somente leitura) */}
+                    <TextField
+                        select
+                        label="Tipo"
+                        fullWidth
+                        sx={{ flex: 1 }}
+                        value={formData.tipo_id}
+                        disabled
+                    >
+                        {tipos.length ? (
+                            tipos.map((t) => (
+                                <MenuItem key={t.tipo_localizacao_id} value={t.tipo_localizacao_id}>
+                                    {t.tipo}
+                                </MenuItem>
+                            ))
+                        ) : (
+                            <MenuItem value={0} disabled>
+                                Carregando...
+                            </MenuItem>
+                        )}
+                    </TextField>
+
+                    {/* armazém (somente leitura) */}
+                    <TextField
+                        select
+                        label="Armazém"
+                        fullWidth
+                        sx={{ flex: 1 }}
+                        value={formData.armazem_id}
+                        disabled
+                    >
+                        {armazens.length ? (
+                            armazens.map((a) => (
+                                <MenuItem key={a.armazem_id} value={a.armazem_id}>
+                                    {a.nome}
+                                </MenuItem>
+                            ))
+                        ) : (
+                            <MenuItem value={0} disabled>
+                                Carregando...
+                            </MenuItem>
+                        )}
+                    </TextField>
+                </Box>
+
+                <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
+                    Dimensões
                 </Typography>
 
-                <Divider sx={{ mb: 3 }} />
-
-                {/* --- formulário principal -------------------------- */}
-                <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
-                    <TextField
-                        label="Nome Localização"
-                        fullWidth
-                        value={formData.nome}
-                        onChange={(e) => handleChange('nome', e.target.value)}
-                    />
-
-                    <Box display="flex" gap={2} flexWrap="wrap" width="100%">
-                        {/* tipo (somente leitura) */}
-                        <TextField
-                            select
-                            label="Tipo"
-                            fullWidth
-                            sx={{ flex: 1 }}
-                            value={formData.tipo_id}
-                            disabled
-                        >
-                            {tipos.length ? (
-                                tipos.map((t) => (
-                                    <MenuItem key={t.tipo_localizacao_id} value={t.tipo_localizacao_id}>
-                                        {t.tipo}
-                                    </MenuItem>
-                                ))
-                            ) : (
-                                <MenuItem value={0} disabled>
-                                    Carregando...
-                                </MenuItem>
-                            )}
-                        </TextField>
-
-                        {/* armazém (somente leitura) */}
-                        <TextField
-                            select
-                            label="Armazém"
-                            fullWidth
-                            sx={{ flex: 1 }}
-                            value={formData.armazem_id}
-                            disabled
-                        >
-                            {armazens.length ? (
-                                armazens.map((a) => (
-                                    <MenuItem key={a.armazem_id} value={a.armazem_id}>
-                                        {a.nome}
-                                    </MenuItem>
-                                ))
-                            ) : (
-                                <MenuItem value={0} disabled>
-                                    Carregando...
-                                </MenuItem>
-                            )}
-                        </TextField>
+                <Box display="flex" alignItems="center" gap={3}>
+                    <Box display="flex" gap={2}>
+                        {(['largura', 'altura', 'comprimento'] as const).map((field) => (
+                            <TextField
+                                key={field}
+                                label={field.charAt(0).toUpperCase() + field.slice(1)}
+                                type="number"
+                                value={formData[field]}
+                                onChange={(e) => handleChange(field, e.target.value)}
+                                inputProps={{ min: 0, step: 'any' }}
+                                InputProps={{ endAdornment: <span>cm</span> }}
+                                sx={{ width: 130 }}
+                            />
+                        ))}
                     </Box>
-
-                    <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
-                        Dimensões
-                    </Typography>
-
-                    <Box display="flex" alignItems="center" gap={3}>
-                        <Box display="flex" gap={2}>
-                            {(['largura', 'altura', 'comprimento'] as const).map((field) => (
-                                <TextField
-                                    key={field}
-                                    label={field.charAt(0).toUpperCase() + field.slice(1)}
-                                    type="number"
-                                    value={formData[field]}
-                                    onChange={(e) => handleChange(field, e.target.value)}
-                                    inputProps={{ min: 0, step: 'any' }}
-                                    InputProps={{ endAdornment: <span>cm</span> }}
-                                    sx={{ width: 130 }}
-                                />
-                            ))}
-                        </Box>
-                        <img src={prateleira} alt="Medição" style={{ width: 90 }} />
-                    </Box>
+                    <img src={prateleira} alt="Medição" style={{ width: 90 }} />
                 </Box>
+            </Box>
 
-                <Divider sx={{ mt: 10, mb: 3 }} />
+            <Divider sx={{ mt: 10, mb: 3 }} />
 
-                {/* botões ------------------------------------------- */}
-                <Box display="flex" justifyContent="center" gap={2}>
-                    <Button
-                        variant="contained"
-                        onClick={handleSalvar}
-                        sx={{
-                            backgroundColor: '#59e60d',
-                            color: '#000',
-                            fontWeight: 'bold',
-                            px: 6,
-                            '&:hover': { backgroundColor: '#48c307' },
-                        }}
-                    >
-                        SALVAR
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        onClick={() => navigate('/localizacao')}
-                        sx={{
-                            backgroundColor: '#f2f2f2',
-                            fontWeight: 'bold',
-                            color: '#333',
-                            px: 6,
-                        }}
-                    >
-                        CANCELAR
-                    </Button>
-                </Box>
-            </Container>
+            {/* botões ------------------------------------------- */}
+            <Box display="flex" justifyContent="center" gap={2}>
+                <Button
+                    variant="contained"
+                    onClick={handleSalvar}
+                    sx={{
+                        backgroundColor: '#59e60d',
+                        color: '#000',
+                        fontWeight: 'bold',
+                        px: 6,
+                        '&:hover': { backgroundColor: '#48c307' },
+                    }}
+                >
+                    SALVAR
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => navigate('/localizacao')}
+                    sx={{
+                        backgroundColor: '#f2f2f2',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        px: 6,
+                    }}
+                >
+                    CANCELAR
+                </Button>
+            </Box>
         </Layout>
     );
 };

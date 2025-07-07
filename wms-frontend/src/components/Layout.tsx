@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Divider,
@@ -8,6 +8,8 @@ import {
   Popover,
   TextField,
   Button,
+  Container,
+  Typography,
 } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -18,6 +20,7 @@ interface LayoutProps {
   totalPages?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
+  pageTitle?: string; // Nova prop para o título da página
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -25,6 +28,7 @@ const Layout: React.FC<LayoutProps> = ({
   totalPages = 1,
   currentPage = 1,
   onPageChange = () => {},
+  pageTitle = "Tema da página", // Valor padrão
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [pageInput, setPageInput] = useState('');
@@ -50,27 +54,28 @@ const Layout: React.FC<LayoutProps> = ({
     <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
       <Sidebar />
       <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ flexGrow: 1, p: 3 }}>{children}</Box>
+        <Box sx={{ flexGrow: 1, p: 3 }}>
+          <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
+            <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+              {pageTitle}
+            </Typography>
+            {children}
+          </Container>
+        </Box>
 
         {totalPages > 1 && (
           <>
             <Divider />
-            <Box
-              
-              sx={{
-              
-              }}
-            >
+            <Box sx={{ marginY: 3 }}>
               <Pagination
                 count={totalPages}
                 page={currentPage}
                 siblingCount={1}
                 boundaryCount={1}
-                
                 onChange={(_, page) => onPageChange(page)}
                 renderItem={(item) => {
                   if (item.type === 'next') {
-                    return <PaginationItem {...item} components={{ next: ArrowRightAltIcon }} />;
+                    return <PaginationItem {...item} slots={{ next: ArrowRightAltIcon }} />;
                   }
                   if (item.type === 'previous') {
                     return null;
@@ -114,7 +119,7 @@ const Layout: React.FC<LayoutProps> = ({
                     size="small"
                     value={pageInput}
                     onChange={(e) => setPageInput(e.target.value)}
-                    InputProps={{ inputProps: { min: 1, max: totalPages } }}
+                    inputProps={{ min: 1, max: totalPages }}
                     sx={{ width: 100 }}
                   />
                   <Button variant="contained" onClick={handleGoToPage}>
