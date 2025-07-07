@@ -4,10 +4,6 @@ import { TipoLocalizacao } from './entities/tipo_localizacao.entity';
 import { Repository } from 'typeorm';
 import { CreateTipoLocalizacaoDto } from './dto/create-tipo_localizacao.dto';
 import { UpdateTipoLocalizacaoDto } from './dto/update-tipo_localizacao.dto';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { TipoLocalizacao } from './entities/tipo_localizacao.entity';
-// import { CreateTipoLocalizacaoDto } from './dto/create-tipo_localizacao.dto';
-// import { UpdateTipoLocalizacaoDto } from './dto/update-tipo_localizacao.dto';
 
 @Injectable()
 export class TipoLocalizacaoService {

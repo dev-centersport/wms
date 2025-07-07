@@ -1,0 +1,34 @@
+### List Products
+
+GET http://localhost:3001/
+
+###
+
+GET http://localhost:3001/produto-estoque
+
+###
+
+GET http://localhost:3001/produto-estoque/2
+
+###
+
+POST http://localhost:3001/produto-estoque HTTP/1.1
+content-type: application/json
+
+{
+    "quantidade": 20,
+    "produto_id": 5,
+    "localizacao_id": 1
+}
+
+###
+
+PATCH http://localhost:3001/produto-estoque/2 HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "Gaveta"
+}
+###
+
+DELETE http://localhost:3001/produto-estoque/4
