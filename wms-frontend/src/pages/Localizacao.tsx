@@ -38,278 +38,390 @@ import Layout from '../components/Layout';
 const itemsPerPage = 5;
 
 const Localizacao: React.FC = () => {
-  const {
-    listaLocalizacoes,
-    busca,
-    setBusca,
-    setListaLocalizacoes,
-  } = useLocalizacoes();
+    /* ------------------------- estados globais do hook ------------------------ */
+    const {
+        listaLocalizacoes,
+        busca,
+        setBusca,
+        setListaLocalizacoes,
+    } = useLocalizacoes();
 
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [mostrarFiltro, setMostrarFiltro] = useState(false);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    /* ---------------------------- estados locais ----------------------------- */
+    const [filtroTipo, setFiltroTipo] = useState<string>('');
+    const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
-  const filteredIndices = React.useMemo(() => {
-    return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
-      const termo = busca.trim().toLowerCase();
-      const matchBusca =
-        termo === '' ||
-        [loc.nome, loc.tipo, loc.armazem, loc.ean]
-          .filter(Boolean)
-          .some((campo) => campo.toString().toLowerCase().includes(termo));
-      if (matchBusca) acc.push(idx);
-      return acc;
-    }, []);
-  }, [listaLocalizacoes, busca]);
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectAll, setSelectAll] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentIndices = filteredIndices.slice(startIndex, endIndex);
-  const currentItems = currentIndices.map((i) => listaLocalizacoes[i]);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages]);
+    /* ------------------------------ filtragem ------------------------------ */
+    const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
+    const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState<string>('');
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [busca]);
+    const filteredIndices = useMemo(() => {
+        return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
+            const termo = busca.trim().toLowerCase();
+            const matchBusca =
+                termo === '' ||
+                [loc.nome, loc.tipo, loc.armazem, loc.ean]
+                    .filter(Boolean)
+                    .some((campo) => campo.toString().toLowerCase().includes(termo));
 
-  useEffect(() => {
-    const allCurrentSelected =
-      currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
-    setSelectAll(allCurrentSelected);
-  }, [selectedItems, currentIndices]);
+            const matchTipo = !appliedFiltroTipo || loc.tipo === appliedFiltroTipo;
+            const matchArmazem = !appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem;
 
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    setSelectedItems(checked ? currentIndices : []);
-  };
+            if (matchBusca && matchTipo && matchArmazem) acc.push(idx);
+            return acc;
+        }, []);
+    }, [listaLocalizacoes, busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
-  const handleSelectItem = (originalIndex: number, checked: boolean) => {
-    setSelectedItems((prev) =>
-      checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
-    );
-  };
+    /* ---------------------------- paginação ---------------------------- */
+    const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentIndices = filteredIndices.slice(startIndex, endIndex);
+    const currentItems = currentIndices.map((i) => listaLocalizacoes[i]);
 
-  const handleExcluir = (index: number) => {
-    if (listaLocalizacoes[index].quantidade > 0) {
-      alert('Só é possível excluir localizações com quantidade 0.');
-      return;
-    }
-    setListaLocalizacoes(listaLocalizacoes.filter((_, i) => i !== index));
-    setSelectedItems(selectedItems.filter(item => item !== index));
-  };
+    /* ------------------------- efeitos auxiliares ------------------------ */
+    useEffect(() => {
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages]);
 
-  const handleExcluirSelecionados = () => {
-    const itemsToDelete = selectedItems.filter(index => listaLocalizacoes[index].quantidade === 0);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
-    if (itemsToDelete.length === 0) {
-      alert('Só é possível excluir localizações com quantidade 0.');
-      return;
-    }
+    useEffect(() => {
+        const allCurrentSelected =
+            currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
+        setSelectAll(allCurrentSelected);
+    }, [selectedItems, currentIndices]);
 
-    if (itemsToDelete.length !== selectedItems.length) {
-      alert('Algumas localizações não podem ser excluídas pois possuem produtos.');
-    }
+    /* --------------------------- seleção tabela -------------------------- */
+    const handleSelectAll = (checked: boolean) => {
+        setSelectAll(checked);
+        setSelectedItems(checked ? currentIndices : []);
+    };
 
-    const newList = listaLocalizacoes.filter((_, index) => !itemsToDelete.includes(index));
-    setListaLocalizacoes(newList);
-    setSelectedItems([]);
-    setSelectAll(false);
-  };
+    const handleSelectItem = (originalIndex: number, checked: boolean) => {
+        setSelectedItems((prev) =>
+            checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
+        );
+    };
 
-  const handleImprimir = (localizacao: string, ean: string) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
+    /* --------------------------- impressão --------------------------- */
+    const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
+        const w = window.open('', '_blank');
+        if (!w) return;
 
-    const html = `
-      <html>
-      <head>
-        <title>Etiqueta – ${localizacao}</title>
-        <style>
-          @page {
-            size: 150mm 100mm;
-            margin: 0;
-          }
-          body {
-            width: 150mm;
-            height: 100mm;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-          }
-          #nome {
-            margin: 0;
-            line-height: 1;
-            font-weight: bold;
-            width: 100%;
-            text-align: center;
-            word-break: break-word;
-          }
-          #barcode {
-            width: 90%;
-            margin-top: 4mm;
-          }
-        </style>
-      </head>
-      <body>
-        <h1 id="nome">${localizacao}</h1>
-        <svg id="barcode"></svg>
+        const tipoLower = tipo.toLowerCase();
+        const isCaixa = tipoLower.includes('caixa');
+        const isPrateleira = tipoLower.includes('prateleira');
 
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-        <script>
-          const nome = document.getElementById('nome');
-          const texto = '${localizacao}';
-          let tamanhoFonte = 190;
+        // Dimensões e estilos específicos
+        const largura = isCaixa ? '10cm' : isPrateleira ? '10cm' : '5cm';
+        const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-          if (texto.length > 10) {
-            tamanhoFonte = 70;
-          } else if (texto.length > 8) {
-            tamanhoFonte = 85;
-          }
+        const fontNome = isCaixa ? '120px' : isPrateleira ? '120px' : '120px';
+        const barHeight = isCaixa ? 90 : isPrateleira ? 20 : 20;
+        const barFont = isCaixa ? 22 : isPrateleira ? 10 : 10;
 
-          nome.style.fontSize = tamanhoFonte + 'px';
+        // Ajuste do nome impresso para tipo Prateleira
+        const nomeImpresso = isPrateleira
+        ? localizacao.replace(/^.*A/, 'A')
+        : localizacao;
 
-          JsBarcode('#barcode', '${ean}', {
-            format: 'ean13',
-            height: 60,
-            displayValue: true,
-            fontSize: 18
-          });
 
-          window.addEventListener('load', () => {
-            setTimeout(() => {
-              window.print();
-              window.addEventListener('afterprint', () => window.close());
-            }, 100);
-          });
-        </script>
-      </body>
-      </html>
-    `;
 
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-  };
 
-  const handleImprimirSelecionados = () => {
-    selectedItems.forEach(index => {
-      const item = listaLocalizacoes[index];
-      setTimeout(() => handleImprimir(item.nome, item.ean), 100);
-    });
-  };
+        w.document.write(`
+        <html>
+        <head>
+            <title>Etiqueta – ${localizacao}</title>
+            <style>
+            @page {
+                size: ${largura} ${altura};
+                margin: 0;
+            }
+            body {
+                width: ${largura};
+                height: ${altura};
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                font-family: Arial, sans-serif;
+                overflow: hidden;
+            }
+            #nome {
+                margin: 0;
+                line-height: 1;
+                font-weight: bold;
+                width: 100%;
+                text-align: center;
+                word-break: break-word;
+            }
+            #barcode {
+                width: 90%;
+                margin-top: 4mm;
+            }
+            </style>
+        </head>
+        <body>
+            <h1 id="nome">${nomeImpresso}</h1>
+            <svg id="barcode"></svg>
 
-  return (
-    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} pageTitle='Localização'>
-        <Box display="flex" gap={2} mb={3} alignItems="center">
-            <TextField
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            InputProps={{ 
-                startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-            }}
-            sx={{ maxWidth: 400 }}
-            />
-            
-            <Button 
-            variant="outlined"
-            startIcon={<FilterListIcon />} 
-            onClick={() => setMostrarFiltro(!mostrarFiltro)}
-            sx={{ minWidth: 100 }}
-            >
-            Filtro
-            </Button>
-            
-            {selectedItems.length > 0 ? (
-            <>
-                <Button
-                variant="contained"
-                startIcon={<PrintIcon />}
-                onClick={handleImprimirSelecionados}
-                sx={{ 
-                    backgroundColor: '#61de27',
-                    color: '#000',
-                    fontWeight: 'bold',
-                    minWidth: 180,
-                    '&:hover': { backgroundColor: '#48c307' }
-                }}
-                >
-                Imprimir Selecionados
-                </Button>
-                
-                <Button
-                variant="outlined"
-                startIcon={<DeleteIcon />}
-                onClick={handleExcluirSelecionados}
-                sx={{ 
-                    borderColor: '#d32f2f',
-                    color: '#d32f2f',
-                    fontWeight: 'bold',
-                    minWidth: 170,
-                    '&:hover': { 
-                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                    borderColor: '#d32f2f'
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <script>
+            const nome = document.getElementById('nome');
+            const texto = '${nomeImpresso}';
+            let tamanhoFonte = ${fontNome.replace('px', '')};
+
+            if (texto.length > 8) {
+                tamanhoFonte = 50;
+            } else if (texto.length > 6) {
+                tamanhoFonte = 75;
+            }
+
+            nome.style.fontSize = tamanhoFonte + 'px';
+
+            JsBarcode('#barcode', '${ean}', {
+                format: 'ean13',
+                height: ${barHeight},
+                displayValue: true,
+                fontSize: ${barFont}
+            });
+
+            window.onload = () => {
+                window.print();
+                window.onafterprint = () => window.close();
+            };
+            </script>
+        </body>
+        </html>
+        `);
+
+        w.document.close();
+    };
+
+
+
+        const handleImprimirSelecionados = () => {
+        if (!selectedItems.length) {
+            alert('Selecione pelo menos uma localização.');
+            return;
+        }
+
+        /* --------- 1. verifica se todos os selecionados têm o MESMO tipo ---------- */
+        const tiposSelecionados = selectedItems.map(
+            (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+        );
+        const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
+        if (!tipoUnico) {
+            alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+            return;
+        }
+
+        const tipoAtual = tiposSelecionados[0];
+        const isCaixa = tipoAtual.includes('caixa');
+        const isPrateleira = tipoAtual.includes('prateleira');
+
+        /* ---- 2. dimensões gerais da página (uma para todas, cabe duas de 5 cm) --- */
+        const pageWidth  = '150mm';   // 15 cm
+        const pageHeight = '100mm';   // 10 cm
+
+        const w = window.open('', '_blank');
+        if (!w) return;
+
+        /* --------------------------- cabeçalho + estilos -------------------------- */
+        w.document.write(`
+            <html>
+            <head>
+                <title>Etiquetas</title>
+                <style>
+                    @page { size: ${pageWidth} ${pageHeight}; margin: 0; }
+                    body   { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+                    .etiqueta {
+                        width: ${pageWidth};
+                        height: ${isCaixa ? pageHeight : '50mm'}; /* prateleira = 5 cm */
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
                     }
-                }}
-                >
-                Excluir Selecionados
-                </Button>
-            </>
-            ) : (
-            <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/CriarLocalizacao')}
-                sx={{ 
-                backgroundColor: '#61de27',
-                color: '#000',
-                fontWeight: 'bold',
-                minWidth: 150,
-                '&:hover': { backgroundColor: '#48c307' }
-                }}
-            >
-                Nova Localização
-            </Button>
-            )}
-        </Box>
+                    .nome     { margin: 0; font-weight: bold; line-height: 1; text-align: center; width: 100%; }
+                    .barcode  { width: 90%; margin-top: 4mm; }
+                </style>
+            </head>
+            <body>
+        `);
 
-        {mostrarFiltro && (
-            <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
-            <Typography variant="body2" color="text.secondary">
-                Área de filtros em construção…
-            </Typography>
-            </Paper>
-        )}
+        /* ----------------------------- conteúdo ---------------------------------- */
+        selectedItems.forEach((idx, i) => {
+            const item = listaLocalizacoes[idx];
+            const nomeEscapado = item.nome.replace(/'/g, "\\'"); // evita quebrar string
 
-        {mostrarFormulario && (
-            <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
-            <Typography variant="body2" color="text.secondary">
-                Formulário de nova localização em construção…
-            </Typography>
-            </Paper>
-        )}
+            w.document.write(`
+                <div class="etiqueta" data-ean="${item.ean}" data-nome="${nomeEscapado}"
+                    style="${isCaixa ? 'page-break-after: always;' : ''}">
+                    <h1 class="nome" id="nome-${i}">${nomeEscapado}</h1>
+                    <svg class="barcode" id="barcode-${i}"></svg>
+                </div>
+            `);
+        });
 
-        <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-            <Table>
-            <TableHead>
-                <TableRow>
-                <TableCell padding="checkbox">
-                    <Checkbox
-                    checked={selectAll}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    indeterminate={selectedItems.length > 0 && !selectAll}
+        /* ------------------- gera códigos + ajusta tamanhos ---------------------- */
+        w.document.write(`
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <script>
+                window.onload = () => {
+                    document.querySelectorAll('.etiqueta').forEach((div, index) => {
+                        const nome = div.dataset.nome;
+                        const ean  = div.dataset.ean;
+
+                        /* fonte adaptativa simples */
+                        let tamanho = 120;
+                        if (nome.length > 10) tamanho = 50;
+                        else if (nome.length > 6) tamanho = 75;
+                        document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+
+                        JsBarcode('#barcode-' + index, ean, {
+                            format: 'ean13',
+                            height: ${isCaixa ? 90 : 20},
+                            displayValue: true,
+                            fontSize: ${isCaixa ? 22 : 10}
+                        });
+                    });
+
+                    window.print();
+                    window.onafterprint = () => window.close();
+                };
+            </script>
+            </body>
+            </html>
+        `);
+
+        w.document.close();
+    };
+
+
+
+
+
+
+    /* ------------------------- exclusão ------------------------- */
+    const handleExcluir = async (id: number, nome: string, quantidade: number) => {
+        if (quantidade > 0) {
+            alert('Só é possível excluir localizações com quantidade 0.');
+            return;
+        }
+        if (!window.confirm(`Deseja excluir a localização "${nome}"?`)) return;
+        try {
+            await excluirLocalizacao({ localizacao_id: id });
+            setListaLocalizacoes((prev) => prev.filter((l) => l.localizacao_id !== id));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleExcluirSelecionados = async () => {
+        if (!selectedItems.length) {
+            alert('Selecione pelo menos uma localização.');
+            return;
+        }
+
+        const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade === 0);
+        const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade > 0);
+
+        if (!permitidos.length) {
+            alert('Nenhuma das localizações selecionadas pode ser excluída (quantidade > 0).');
+            return;
+        }
+
+        const nomesPermitidos = permitidos.map((idx) => listaLocalizacoes[idx].nome);
+        if (!window.confirm(`Tem certeza que deseja excluir:\n\n${nomesPermitidos.join(', ')}`)) return;
+
+        const erros: string[] = [];
+        for (const idx of permitidos) {
+            const loc = listaLocalizacoes[idx];
+            try {
+                await excluirLocalizacao({ localizacao_id: loc.localizacao_id });
+            } catch (err) {
+                console.error(err);
+                erros.push(loc.nome);
+            }
+        }
+
+        setListaLocalizacoes((prev) =>
+            prev.filter((_, idx) => !permitidos.includes(idx) || erros.includes(prev[idx].nome))
+        );
+
+        setSelectedItems([]);
+        setSelectAll(false);
+
+        if (erros.length) {
+            alert(`Algumas localizações não foram excluídas: ${erros.join(', ')}`);
+        } else {
+            alert('Localizações excluídas com sucesso!');
+        }
+
+        if (bloqueados.length) {
+            const nomesBloq = bloqueados.map((idx) => listaLocalizacoes[idx].nome);
+            alert(`Estas localizações não puderam ser excluídas por conter produtos:\n\n${nomesBloq.join(', ')}`);
+        }
+    };
+
+    /* ---------------------- valores únicos para filtros --------------------- */
+    const tipos = useMemo(
+        () => Array.from(new Set(listaLocalizacoes.map((l) => l.tipo).filter(Boolean))).sort(),
+        [listaLocalizacoes]
+    );
+    const armazens = useMemo(
+        () => Array.from(new Set(listaLocalizacoes.map((l) => l.armazem).filter(Boolean))).sort(),
+        [listaLocalizacoes]
+    );
+
+    /* --------------------------- handlers menu --------------------------- */
+    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+    const handleMenuClose = () => setAnchorEl(null);
+
+    const handleLimparFiltros = () => {
+        setFiltroTipo('');
+        setFiltroArmazem('');
+        setBusca('');
+        setAppliedFiltroTipo('');
+        setAppliedFiltroArmazem('');
+        handleMenuClose();
+    };
+
+    const handleAplicarFiltro = () => {
+        setAppliedFiltroTipo(filtroTipo);
+        setAppliedFiltroArmazem(filtroArmazem);
+        handleMenuClose();
+    };
+
+    return (
+        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+            <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
+                <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+                    Localização
+                </Typography>
+
+                {/* Barra de ações */}
+                <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
+                    <TextField
+                        placeholder="Buscar Localização, tipo, armazém ou EAN"
+                        variant="outlined"
+                        value={busca}
+                        onChange={(e) => setBusca(e.target.value)}
+                        InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
+                        sx={{ maxWidth: 480, width: 380 }}
                     />
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
