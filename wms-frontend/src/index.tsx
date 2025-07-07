@@ -50,7 +50,7 @@ root.render(
           {/* Páginas de Armazém */}
           <Route path="/armazem" element={<Armazem />} />
           <Route path="/CriarArmazem" element={<CriarArmazem />} />
-          <Route path="/EditarArmazem/:id" element={<Sidebar><EditarArmazem /></Sidebar>} />
+          <Route path="/EditarArmazem/:id" element={<EditarArmazem />} />
 
           {/* Páginas de Tipo de localização */}
           <Route path="/TipoLocalizacao" element={<TipoLocalizacao />}/>
