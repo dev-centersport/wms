@@ -204,6 +204,7 @@ export interface criarLocalizacao {
   nome: string;
   status: string;
   tipo: string;
+  armazem: string
   altura: string;
   largura: string;
   comprimento: string;
@@ -215,10 +216,17 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
     const armazens = await buscarArmazem();
     const tipos = await buscarTiposDeLocalizacao();
 
-    const armazemSelecionado = armazens[0];
+    // const armazemSelecionado = armazens[0];
+
+    // if (!armazemSelecionado?.armazem_id) {
+    //   throw new Error('Nenhum armazém válido encontrado.');
+    // }
+    const armazemSelecionado = armazens.find(
+      (a) => a.nome.toLowerCase() === criarLocalizacao.armazem.toLowerCase()
+    );
 
     if (!armazemSelecionado?.armazem_id) {
-      throw new Error('Nenhum armazém válido encontrado.');
+      throw new Error(`Armazém "${criarLocalizacao.armazem}" não encontrado."${criarLocalizacao.tipo.toLowerCase()}"`);
     }
 
     // Buscar o tipo_localizacao_id correspondente ao texto vindo do form
