@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Layout from '../components/Layout';
 import { buscarArmazem, Armazem as ArmazemAPI } from '../services/API';
 import { useNavigate } from 'react-router-dom';
+import { excluirArmazem } from '../services/API';
 
 // Se o backend já retornar capacidade, adicione no tipo abaixo; caso contrário, ficará opcional
 interface Armazem extends ArmazemAPI {
@@ -26,6 +27,7 @@ interface Armazem extends ArmazemAPI {
 
 const ArmazemPage: React.FC = () => {
   const navigate = useNavigate();
+
 
   // Estado principal
   const [armazens, setArmazens] = useState<Armazem[]>([]);
@@ -46,6 +48,18 @@ const ArmazemPage: React.FC = () => {
 
     carregar();
   }, []);
+  const handleExcluir = async (id: number) => {
+  const confirmar = window.confirm('Tem certeza que deseja excluir este armazém?');
+  if (!confirmar) return;
+
+  try {
+    await excluirArmazem(id);
+    setArmazens((prev) => prev.filter((a) => a.armazem_id !== id));
+    alert('Armazém excluído com sucesso!');
+  } catch (err: any) {
+    alert(err.message ?? 'Erro ao excluir armazém.');
+  }
+};
 
   // Filtro por texto digitado
   const filtrados = useMemo(() => {
@@ -117,7 +131,7 @@ const ArmazemPage: React.FC = () => {
                       <EditIcon />
                     </IconButton>
                     <IconButton>
-                      <DeleteIcon />
+                      <DeleteIcon onClick={() => handleExcluir(item.armazem_id)} />
                     </IconButton>
                   </TableCell>
                 </TableRow>

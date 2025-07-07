@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import { criarArmazem as criarArmazemAPI } from '../services/API';
 import caixa from '../img/7102305.png';
 
+
+
 interface Estado {
   id: number;
   nome: string;
@@ -75,6 +77,28 @@ const CriarArmazem: React.FC = () => {
       ...(field === 'estado' ? { cidade: '' } : {}), // limpa cidade ao trocar estado
     }));
   };
+ const handleSalvar = async () => {
+  if (!validarCampos()) return;
+
+  try {
+    await criarArmazemAPI({
+      nome: formData.nome,
+      endereco: formData.endereco,
+      estado: formData.estado,
+      cidade: formData.cidade,
+      largura: Number(formData.largura) || undefined,
+      altura:  Number(formData.altura)  || undefined,
+      comprimento: Number(formData.comprimento) || undefined,
+    });
+
+    alert('Armazém criado com sucesso!');
+    navigate('/armazem');
+  } catch (err: any) {
+    alert(err.message ?? 'Erro ao criar armazém.');
+  }
+};
+
+
 
   const validarCampos = (): boolean => {
     if (!formData.nome || !formData.endereco || !formData.estado || !formData.cidade) {
@@ -82,27 +106,6 @@ const CriarArmazem: React.FC = () => {
       return false;
     }
     return true;
-  };
-
-  const handleSalvar = async () => {
-    if (!validarCampos()) return;
-
-    try {
-      await criarArmazemAPI({
-        nome: formData.nome,
-        endereco: formData.endereco,
-        cidade: `${formData.cidade}/${formData.estado}`,
-        largura: formData.largura,
-        altura: formData.altura,
-        comprimento: formData.comprimento,
-      });
-
-      alert('Armazém criado com sucesso!');
-      navigate('/armazem');
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao criar armazém.');
-    }
   };
 
   return (

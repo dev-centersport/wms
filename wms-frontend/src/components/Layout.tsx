@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import Sidebar from './Sidebar';
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({
   children,
   totalPages = 1,
   currentPage = 1,
-  onPageChange = () => {},
+  onPageChange = () => { },
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [pageInput, setPageInput] = useState('');
@@ -48,83 +48,80 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
-      <Sidebar />
       <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1, p: 3 }}>{children}</Box>
 
-        {totalPages > 1 && (
-          <>
-            <Divider />
-            <Box
-              
-              sx={{
-              
-              }}
-            >
-              <Pagination
-                count={totalPages}
-                page={currentPage}
-                siblingCount={1}
-                boundaryCount={1}
-                
-                onChange={(_, page) => onPageChange(page)}
-                renderItem={(item) => {
-                  if (item.type === 'next') {
-                    return <PaginationItem {...item} components={{ next: ArrowRightAltIcon }} />;
-                  }
-                  if (item.type === 'previous') {
-                    return null;
-                  }
-                  if (item.type === 'start-ellipsis' || item.type === 'end-ellipsis') {
-                    return (
-                      <IconButton onClick={handleOpenPopover}>
-                        <MoreHorizIcon />
-                      </IconButton>
-                    );
-                  }
+        <>
+          <Divider />
+          <Box
 
+            sx={{
+
+            }}
+          >
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              siblingCount={1}
+              boundaryCount={1}
+
+              onChange={(_, page) => onPageChange(page)}
+              renderItem={(item) => {
+                if (item.type === 'next') {
+                  return <PaginationItem {...item} components={{ next: ArrowRightAltIcon }} />;
+                }
+                if (item.type === 'previous') {
+                  return null;
+                }
+                if (item.type === 'start-ellipsis' || item.type === 'end-ellipsis') {
                   return (
-                    <PaginationItem
-                      {...item}
-                      sx={{
-                        fontWeight: item.page === currentPage ? 'bold' : 'normal',
-                        fontFamily: 'monospace',
-                        fontSize: 14,
-                        borderRadius: 0,
-                        minWidth: 36,
-                        height: 36,
-                        mx: 0.5,
-                      }}
-                    />
+                    <IconButton onClick={handleOpenPopover}>
+                      <MoreHorizIcon />
+                    </IconButton>
                   );
-                }}
-              />
+                }
 
-              <Popover
-                open={popoverOpen}
-                anchorEl={anchorEl}
-                onClose={handleClosePopover}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-              >
-                <Box p={2} display="flex" alignItems="center" gap={1}>
-                  <TextField
-                    label="Página"
-                    type="number"
-                    size="small"
-                    value={pageInput}
-                    onChange={(e) => setPageInput(e.target.value)}
-                    InputProps={{ inputProps: { min: 1, max: totalPages } }}
-                    sx={{ width: 100 }}
+                return (
+                  <PaginationItem
+                    {...item}
+                    sx={{
+                      fontWeight: item.page === currentPage ? 'bold' : 'normal',
+                      fontFamily: 'monospace',
+                      fontSize: 14,
+                      borderRadius: 0,
+                      minWidth: 36,
+                      height: 36,
+                      mx: 0.5,
+                    }}
                   />
-                  <Button variant="contained" onClick={handleGoToPage}>
-                    Ir
-                  </Button>
-                </Box>
-              </Popover>
-            </Box>
-          </>
-        )}
+                );
+              }}
+            />
+
+            <Popover
+              open={popoverOpen}
+              anchorEl={anchorEl}
+              onClose={handleClosePopover}
+              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+              transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+              <Box p={2} display="flex" alignItems="center" gap={1}>
+                <TextField
+                  label="Página"
+                  type="number"
+                  size="small"
+                  value={pageInput}
+                  onChange={(e) => setPageInput(e.target.value)}
+                  InputProps={{ inputProps: { min: 1, max: totalPages } }}
+                  sx={{ width: 100 }}
+                />
+                <Button variant="contained" onClick={handleGoToPage}>
+                  Ir
+                </Button>
+              </Box>
+            </Popover>
+          </Box>
+        </>
       </Box>
     </Box>
   );

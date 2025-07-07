@@ -1,4 +1,5 @@
 import axios from 'axios'
+
 const BASE_URL = 'http://151.243.0.78:3001';
 
 const api = axios.create({
@@ -6,6 +7,59 @@ const api = axios.create({
 });
 
 export default api;
+
+// ---------- TIPOS ----------
+export interface Armazem {
+  armazem_id: number;
+  nome: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  altura?: number;
+  largura?: number;
+  comprimento?: number;
+}
+
+// ---------- POST /armazem ----------
+export interface CriarArmazemPayload {
+  nome: string;
+  endereco: string;
+  cidade: string;
+  estado: string;      // ex.: "SP"
+  largura?: number;    // cm
+  altura?: number;     // cm
+  comprimento?: number;// cm
+}
+
+/**
+ * Cria um novo armazém.
+ * Converte dimensões para número e lança erros detalhados.
+ */
+export const criarArmazem = async (
+  dados: CriarArmazemPayload,
+): Promise<Armazem> => {
+  try {
+    // Garantir que dimensões sejam numéricas ou undefined
+    const payload = {
+      ...dados,
+      largura: dados.largura ? Number(dados.largura) : undefined,
+      altura: dados.altura ? Number(dados.altura) : undefined,
+      comprimento: dados.comprimento ? Number(dados.comprimento) : undefined,
+    };
+
+    const { data } = await api.post<Armazem>('/armazem', payload);
+    return data;
+  } catch (err: any) {
+    console.error('Erro ao criar armazém →', err);
+
+    if (axios.isAxiosError(err) && err.response) {
+      throw new Error(
+        `Erro ${err.response.status}: ${JSON.stringify(err.response.data)}`,
+      );
+    }
+    throw new Error('Falha ao criar o armazém no servidor.');
+  }
+};
 
 export interface Localizacao {
   localizacao_id: number;
@@ -49,19 +103,6 @@ export const atualizarLocalizacao = async (id: number, payload: any) => {
 };
 
 
-export const criarArmazem = async (dados: {
-  nome: string;
-  endereco: string;
-  cidade: string;
-  largura: string;
-  altura: string;
-  comprimento: string;
-}) => {
-  const response = await axios.post(`${BASE_URL}/armazem`, dados);
-  return response.data;
-};
-
-
 export interface Armazem {
   armazem_id: number;
   nome: string;
@@ -77,6 +118,17 @@ export const buscarArmazem = async (): Promise<Armazem[]> => {
     throw new Error('Falha ao carregar os armazéns do servidor.');
   }
 };
+// services/API.ts
+export const excluirArmazem = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/armazem/${id}`);
+    console.log(`Armazém ID ${id} excluído com sucesso.`);
+  } catch (err: any) {
+    console.error('Erro ao excluir armazém →', err);
+    throw new Error('Falha ao excluir o armazém.');
+  }
+};
+
 
 
 export interface TipoLocalizacao {

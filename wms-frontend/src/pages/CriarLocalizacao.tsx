@@ -108,7 +108,7 @@ const CriarLocalizacao: React.FC = () => {
   // Render
   //------------------------------------------------------------------
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 80 }}>
+    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 150 }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
         Nova Localização
       </Typography>

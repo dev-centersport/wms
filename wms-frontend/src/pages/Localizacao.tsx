@@ -27,11 +27,12 @@ import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 
 /* -------------------------------------------------------------------------- */
-const itemsPerPage = 5;
+// Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
+const itemsPerPage = 50;
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
-    /* ------------------------- estados globais do hook ------------------------ */
+    /* ------------------------- estados globais do hook --F---------------------- */
     const {
         listaLocalizacoes,
         busca,
@@ -106,106 +107,120 @@ const Localizacao: React.FC = () => {
         );
     };
 
-    /* --------------------------- impressão --------------------------- */
     const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
         const w = window.open('', '_blank');
         if (!w) return;
 
+        /* ------------------------------------------------------------------ */
+        /* 1. Identificação do tipo                                           */
+        /* ------------------------------------------------------------------ */
         const tipoLower = tipo.toLowerCase();
         const isCaixa = tipoLower.includes('caixa');
         const isPrateleira = tipoLower.includes('prateleira');
 
-        // Dimensões e estilos específicos
-        const largura = isCaixa ? '10cm' : isPrateleira ? '10cm' : '5cm';
+        /* ------------------------------------------------------------------ */
+        /* 2. Dimensões, fontes e código de barras                            */
+        /* ------------------------------------------------------------------ */
+        const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
         const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-        const fontNome = isCaixa ? '120px' : isPrateleira ? '120px' : '120px';
-        const barHeight = isCaixa ? 90 : isPrateleira ? 20 : 20;
-        const barFont = isCaixa ? 22 : isPrateleira ? 10 : 10;
+        const fontNome = '120px';                   // tamanho base
+        const barHeight = isCaixa ? 90 : 20;        // altura barra
+        const barFont = isCaixa ? 22 : 10;        // fonte barra
 
-        // Ajuste do nome impresso para tipo Prateleira
+        /* ------------------------------------------------------------------ */
+        /* 3. Transformação do nome para Prateleira                           */
+        /* ------------------------------------------------------------------ */
         const nomeImpresso = isPrateleira
-        ? localizacao.replace(/^.*A/, 'A')
-        : localizacao;
+            ? localizacao.replace(/^.*?A/, 'A')       // elimina tudo antes do 'A'
+            : localizacao;
 
+        /* ------------------------------------------------------------------ */
+        /* 4. Estilos condicionais                                            */
+        /* ------------------------------------------------------------------ */
+        const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
+        const nomeMarginTop = isPrateleira ? '-3mm' : '0';      // só prateleira sobe
 
-
-
+        /* ------------------------------------------------------------------ */
+        /* 5. HTML completo                                                   */
+        /* ------------------------------------------------------------------ */
         w.document.write(`
+        <!DOCTYPE html>
         <html>
         <head>
             <title>Etiqueta – ${localizacao}</title>
             <style>
-            @page {
-                size: ${largura} ${altura};
-                margin: 0;
-            }
-            body {
-                width: ${largura};
-                height: ${altura};
-                margin: 0;
-                padding: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                font-family: Arial, sans-serif;
-                overflow: hidden;
-            }
-            #nome {
-                margin: 0;
-                line-height: 1;
-                font-weight: bold;
-                width: 100%;
-                text-align: center;
-                word-break: break-word;
-            }
-            #barcode {
-                width: 90%;
-                margin-top: 4mm;
-            }
+                @page {
+                    size: ${largura} ${altura};
+                    margin: 0;
+                }
+                body {
+                    width: ${largura};
+                    height: ${altura};
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: ${bodyJustify};
+                    font-family: Arial, sans-serif;
+                    overflow: hidden;
+                }
+                #nome {
+                    font-weight: bold;
+                    font-size: ${fontNome};
+                    margin: ${nomeMarginTop} 0 0 0;
+                    padding: 0;
+                    line-height: 1;
+                    width: 100%;
+                    text-align: center;
+                    word-break: break-word;
+                }
+                #barcode {
+                    width: 90%;
+                    margin: 0;                /* zero espaço entre nome e código */
+                    padding: 0;
+                }
             </style>
         </head>
         <body>
-            <h1 id="nome">${nomeImpresso}</h1>
+            <div id="nome">${nomeImpresso}</div>
             <svg id="barcode"></svg>
 
             <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
             <script>
-            const nome = document.getElementById('nome');
-            const texto = '${nomeImpresso}';
-            let tamanhoFonte = ${fontNome.replace('px', '')};
+                /* ---------- ajuste dinâmico de fonte conforme tamanho do texto -------- */
+                const nomeEl  = document.getElementById('nome');
+                const texto   = '${nomeImpresso}';
+                let tamanho   = ${fontNome.replace('px', '')};
 
-            if (texto.length > 8) {
-                tamanhoFonte = 50;
-            } else if (texto.length > 6) {
-                tamanhoFonte = 75;
-            }
+                if (texto.length > 8)      tamanho = 50;
+                else if (texto.length > 6) tamanho = 65;
 
-            nome.style.fontSize = tamanhoFonte + 'px';
+                nomeEl.style.fontSize = tamanho + 'px';
 
-            JsBarcode('#barcode', '${ean}', {
-                format: 'ean13',
-                height: ${barHeight},
-                displayValue: true,
-                fontSize: ${barFont}
-            });
+                /* ------------------- geração do código de barras ----------------------- */
+                JsBarcode('#barcode', '${ean}', {
+                    format: 'ean13',
+                    height: ${barHeight},
+                    displayValue: true,
+                    fontSize: ${barFont}
+                });
 
-            window.onload = () => {
-                window.print();
-                window.onafterprint = () => window.close();
-            };
+                window.onload = () => {
+                    window.print();
+                    window.onafterprint = () => window.close();
+                };
             </script>
         </body>
         </html>
-        `);
+            `);
 
         w.document.close();
     };
 
 
-
-        const handleImprimirSelecionados = () => {
+    const handleImprimirSelecionados = () => {
         if (!selectedItems.length) {
             alert('Selecione pelo menos uma localização.');
             return;
@@ -226,7 +241,7 @@ const Localizacao: React.FC = () => {
         const isPrateleira = tipoAtual.includes('prateleira');
 
         /* ---- 2. dimensões gerais da página (uma para todas, cabe duas de 5 cm) --- */
-        const pageWidth  = '150mm';   // 15 cm
+        const pageWidth = '150mm';   // 15 cm
         const pageHeight = '100mm';   // 10 cm
 
         const w = window.open('', '_blank');
@@ -302,10 +317,6 @@ const Localizacao: React.FC = () => {
 
         w.document.close();
     };
-
-
-
-
 
 
     /* ------------------------- exclusão ------------------------- */
@@ -547,8 +558,8 @@ const Localizacao: React.FC = () => {
                 </Box>
 
                 {/* Tabela principal */}
-                <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-                    <Table>
+                <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
+                    <Table stickyHeader>
                         <TableHead>
                             <TableRow>
                                 <TableCell padding="checkbox">
@@ -566,14 +577,11 @@ const Localizacao: React.FC = () => {
                                 <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Ações</TableCell>
                             </TableRow>
                         </TableHead>
-
-
                         <TableBody>
                             {currentItems.length ? (
                                 currentItems.map((item, idx) => {
                                     const originalIndex = currentIndices[idx];
                                     const isSelected = selectedItems.includes(originalIndex);
-
                                     return (
                                         <TableRow key={`${item.nome}-${originalIndex}`} selected={isSelected} hover>
                                             <TableCell padding="checkbox">
@@ -583,22 +591,15 @@ const Localizacao: React.FC = () => {
                                                 />
                                             </TableCell>
                                             <TableCell
-                                                sx={{
-                                                    fontWeight: 500,
-                                                    cursor: 'pointer',
-                                                }}
+                                                sx={{ fontWeight: 500, cursor: 'pointer' }}
                                                 onClick={() => navigate(`/localizacao/${item.localizacao_id}/editar`)}
-
                                             >
                                                 {item.nome}
                                             </TableCell>
                                             <TableCell>{item.tipo}</TableCell>
-
-
                                             <TableCell>{item.armazem}</TableCell>
                                             <TableCell align="center">{item.ean}</TableCell>
                                             <TableCell align="center">{item.quantidade}</TableCell>
-
                                             <TableCell align="center">
                                                 <Box display="flex" justifyContent="center" gap={1}>
                                                     <Tooltip title="Ver produtos">
@@ -606,13 +607,11 @@ const Localizacao: React.FC = () => {
                                                             <ListIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-
                                                     <Tooltip title="Imprimir etiqueta">
                                                         <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
                                                             <PrintIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-
                                                     <Tooltip title="Excluir localização">
                                                         <IconButton
                                                             size="small"
