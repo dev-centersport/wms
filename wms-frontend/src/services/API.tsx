@@ -30,6 +30,21 @@ export interface CriarArmazemPayload {
   altura?: number;     // cm
   comprimento?: number;// cm
 }
+export const atualizarArmazem = async (id: number, dados: {
+  nome: string;
+  endereco: string;
+  largura?: number;
+  altura?: number;
+  comprimento?: number;
+}) => {
+  try {
+    await api.patch(`/armazem/${id}`, dados);
+  } catch (err: any) {
+    console.error('Erro ao atualizar armazém:', err);
+    throw new Error('Falha ao atualizar armazém.');
+  }
+};
+
 
 /**
  * Cria um novo armazém.

@@ -132,9 +132,10 @@ const ArmazemPage: React.FC = () => {
                   <TableCell>{item.endereco}</TableCell>
 
                   <TableCell align="right">
-                    <IconButton>
+                    <IconButton onClick={() => navigate(`/EditarArmazem/${item.armazem_id}`)}>
                       <EditIcon />
                     </IconButton>
+
                     <IconButton>
                       <DeleteIcon onClick={() => handleExcluir(item.armazem_id)} />
                     </IconButton>
