@@ -170,7 +170,7 @@ const Localizacao: React.FC = () => {
             }
             #barcode {
                 width: 90%;
-                margin-top: 4mm;
+                margin-top: 1mm;
             }
             </style>
         </head>
