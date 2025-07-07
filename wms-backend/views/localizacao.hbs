@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Localização - CenterSport</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar-expanded sidebar">
+        <img class="img-fluid" src="/static/logo.png" alt="Logo CenterSport" class="logo">
+
+        <a href="/Armazem"         class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-house-fill pe-2 fs-3"></i> Armazém</div></a>
+        <a href="/Produto"         class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-box-fill pe-2 fs-3"></i> Produto</div></a>
+        <a href="/Localizacao"     class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-pin-fill pe-2 fs-3"></i> Localização ●</div></a>
+        <a href="/TipoLocalizacao" class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-map-fill pe-2 fs-3"></i> Tipo de Localização</div></a>
+        <a href="/Movimentacao"    class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-arrows-move pe-2 fs-3"></i> Movimentação</div></a>
+        <a href="/Consulta"        class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-search pe-2 fs-3"></i> Consulta</div></a>
+        <a href="/Separacao"       class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-truck pe-2 fs-3"></i> Separação</div></a>
+        <a href="/Ocorrencias"     class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-patch-exclamation-fill pe-2 fs-3"></i> Ocorrências</div></a>
+        <a href="/Auditoria"       class="navbar-brand text-dark fw-bold"><div class="container-fluid"><i class="bi bi-shield-fill-check pe-2 fs-3"></i> Auditoria</div></a>
+    </nav>
+
+    <div class="w-100 h-100 content" style="background-color:#fff;">
+        <div class="topbar">
+            <div>Localização</div>
+            <div>
+                Início | Tipo de Localização | Minha Conta
+                <img src="/static/logo.png" alt="Logo" style="width:24px;vertical-align:middle;">
+            </div>
+        </div>
+
+        <div class="container pt-4">
+            <div class="mb-3 d-flex flex-row gap-2">
+                <div class="col">
+                    <input class="form-control" type="text" id="filtroTexto" placeholder="Digite localização, tipo, armazém">
+                </div>
+                <button class="btn btn-dark" id="toggleFiltro"><i class="bi bi-funnel"></i> Filtro</button>
+                <button class="btn btn-primary" id="addBtn"><i class="bi bi-plus"></i> Nova Localização</button>
+            </div>
+
+            <!-- formulário -->
+            <div id="formulario" style="display:none;width:100%;margin:auto;border:1px solid #ccc;border-radius:12px;margin-bottom:10px;padding:10px;">
+                <form method="POST" action="/Localizacao">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Nome da Localização</label>
+                            <input class="form-control" type="text" name="localizacao" placeholder="Digite o nome da localização" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo de Localização</label>
+                            <select class="form-control" name="tipo" required>
+                                <option value="">Selecione</option>
+                                {{#each tipos}}
+                                    <option value="{{tipo}}">{{tipo}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Quantidade</label>
+                            <input class="form-control" type="number" name="quantidade" value="0" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Armazém</label>
+                            <select class="form-control" name="armazem" required>
+                                <option value="">Selecione</option>
+                                {{#each armazens}}
+                                    <option value="{{armazemID}}">{{nome}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center mb-3">
+                        <button class="btn btn-success w-50" type="submit">Salvar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- filtros -->
+            <div id="filtroForm" style="display:none;">
+                <div class="row mb-3">
+                    <div class="col">
+                        <select class="form-control" id="filtroTipo">
+                            <option value="">Todos os Tipos</option>
+                            {{#each tipos}}
+                                <option value="{{tipo}}">{{tipo}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select class="form-control" id="filtroArmazem">
+                            <option value="">Todos os Armazéns</option>
+                            {{#each armazens}}
+                                <option value="{{nome}}">{{nome}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- tabela -->
+            <div class="table-container" style="max-height:70vh;overflow-y:auto;border:1px solid #dee2e6;">
+                <table class="table table-hover table-sm text-center align-middle" id="tabelaLocalizacoes">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Localização</th>
+                            <th>Tipo</th>
+                            <th>Armazém</th>
+                            <th>Quantidade</th>
+                            <th>EAN</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each localizacoes}}
+                        <tr>
+                            <td>{{localizacao}}</td>
+                            <td>{{tipo}}</td>
+                            <td>{{armazem}}</td>
+                            <td>{{quantidade}}</td>
+                            <td>{{codigoBarras}}</td>
+                            <td>
+                                <button class="btn btn-primary me-1 btn-ver-produtos" data-id="{{localizacaoID}}" data-nome="{{localizacao}}">
+                                    Ver produtos
+                                </button>
+                                <a href="/imprimir-localizacao/{{localizacaoID}}" class="btn btn-primary no-print" target="_blank">
+                                    <i class="bi bi-printer"></i> Imprimir Localização
+                                </a>
+                                <form method="POST" action="/deletar-localizacao" class="d-inline">
+                                    <input type="hidden" name="id" value="{{localizacaoID}}">
+                                    <button type="submit" class="btn btn-sm btn-danger" data-nome="{{localizacao}}">
+                                        <i class="bi bi-trash-fill"></i> Excluir
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modalProdutos" tabindex="-1" aria-labelledby="produtosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="produtosLabel">Produtos na localização</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead><tr><th>Descrição</th><th>EAN</th><th>Quantidade</th></tr></thead>
+                        <tbody id="produtosCorpo"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        /* scripts originais preservados */
+        const btnAdd     = document.getElementById('addBtn');
+        const btnFiltro  = document.getElementById('toggleFiltro');
+        const formCad    = document.getElementById('formulario');
+        const formFiltro = document.getElementById('filtroForm');
+        const inputTexto = document.getElementById('filtroTexto');
+        const selectTipo = document.getElementById('filtroTipo');
+        const selectArm  = document.getElementById('filtroArmazem');
+        const tabela     = document.getElementById('tabelaLocalizacoes');
+
+        btnAdd.addEventListener('click', () => {
+            const vis = formCad.style.display === 'block';
+            formCad.style.display = vis ? 'none' : 'block';
+            if (!vis) formFiltro.style.display = 'none';
+        });
+
+        btnFiltro.addEventListener('click', () => {
+            const vis = formFiltro.style.display === 'block';
+            formFiltro.style.display = vis ? 'none' : 'block';
+            if (!vis) formCad.style.display = 'none';
+        });
+
+        document.querySelectorAll(".btn-excluir").forEach(btn => {
+            btn.addEventListener("click", e => {
+                const nome = btn.getAttribute("data-nome");
+                if (!confirm(`Tem certeza que deseja excluir a localização "${nome}"?`)) e.preventDefault();
+            });
+        });
+
+        function aplicarFiltro() {
+            const txt   = inputTexto.value.toLowerCase();
+            const tipo  = selectTipo.value.toLowerCase();
+            const arm   = selectArm.value.toLowerCase();
+
+            Array.from(tabela.tBodies[0].rows).forEach(r => {
+                const [cLoc,cTipo,cArm] = [r.cells[0], r.cells[1], r.cells[2]];
+                const okTxt  = cLoc.textContent.toLowerCase().includes(txt);
+                const okTipo = !tipo || cTipo.textContent.toLowerCase() === tipo;
+                const okArm  = !arm  || cArm.textContent.toLowerCase() === arm;
+                r.style.display = okTxt && okTipo && okArm ? '' : 'none';
+            });
+        }
+
+        inputTexto.addEventListener('input', aplicarFiltro);
+        selectTipo.addEventListener('change', aplicarFiltro);
+        selectArm.addEventListener('change', aplicarFiltro);
+
+        document.querySelectorAll('.btn-ver-produtos').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id   = btn.dataset.id;
+                const nome = btn.dataset.nome;
+                const res  = await fetch(`/localizacao/${id}/produtos`);
+                const prods = await res.json();
+
+                document.getElementById('produtosLabel').textContent = `Produtos em ${nome}`;
+                const corpo = document.getElementById('produtosCorpo');
+                corpo.innerHTML = prods.length
+                    ? prods.map(p => `<tr><td>${p.descricao}</td><td>${p.ean}</td><td>${p.quantidade}</td></tr>`).join('')
+                    : '<tr><td colspan="3" class="text-center">Nenhum produto nesta localização.</td></tr>';
+
+                new bootstrap.Modal(document.getElementById('modalProdutos')).show();
+            });
+        });
+    </script>
+</body>
+</html>
