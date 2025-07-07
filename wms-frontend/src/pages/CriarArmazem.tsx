@@ -210,7 +210,7 @@ const CriarArmazem: React.FC = () => {
               ))}
             </Box>
             <Box display="flex" alignItems="center" justifyContent="flex-start">
-              <img src={armazem} alt="armazem" style={{ width: 90, height: 'auto' }} />
+              <img src={armazem} alt="Armazém" style={{ width: 90, height: 'auto', marginBottom: 20, marginLeft: 10 }} />
             </Box>
           </Box>
         </Box>
