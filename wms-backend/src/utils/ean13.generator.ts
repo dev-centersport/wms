@@ -1,23 +1,57 @@
-export class EAN13Generator {
-  static generateRandomEAN13(): string {
-    // Garante que todos os dígitos sejam strings
-    const systemDigit = String(Math.floor(Math.random() * 10));
+import { Repository } from 'typeorm';
+import { Localizacao } from '../localizacao/entities/localizacao.entity';
 
-    let partialEan = systemDigit;
-    for (let i = 0; i < 11; i++) {
-      partialEan += String(Math.floor(Math.random() * 10));
+export class EAN13Generator {
+  private static readonly MAX_ATTEMPTS = 5;
+
+  static async generateUniqueEAN(
+    armazemId: number,
+    tipoId: number,
+    repository: Repository<Localizacao>,
+  ): Promise<string> {
+    let attempts = 0;
+
+    while (attempts < this.MAX_ATTEMPTS) {
+      const ean = this.generateFromIds(armazemId, tipoId);
+
+      // Verifica se o EAN já existe
+      const exists = await repository.findOne({ where: { ean } });
+      if (!exists) return ean;
+
+      attempts++;
     }
 
-    const checkDigit = this.calculateCheckDigit(partialEan);
-    const fullEan = partialEan + checkDigit;
+    throw new Error(
+      `Não foi possível gerar um EAN único após ${this.MAX_ATTEMPTS} tentativas`,
+    );
+  }
 
-    // Garante que o retorno seja string com 13 caracteres
-    return String(fullEan).padStart(13, '0');
+  static generateFromIds(armazem_id: number, tipo_id: number): string {
+    // Formate os IDs para com os prefixos
+    // dois digitos
+    const armazemCodigo = (20 + (armazem_id % 10)).toString().padStart(2, '0');
+    console.log(armazemCodigo);
+    // dois
+    const tipoCodigo = tipo_id.toString().padStart(2, '0');
+    console.log(tipoCodigo);
+
+    // Gera 9 dígitos aleatórios
+    let randomPart = '';
+    for (let i = 0; i < 8; i++) {
+      randomPart += Math.floor(Math.random() * 10);
+    }
+    console.log(randomPart);
+
+    const partialEan = armazemCodigo + tipoCodigo + randomPart;
+    console.log(partialEan);
+    const checkDigit = this.calculateCheckDigit(partialEan);
+
+    return partialEan + checkDigit;
   }
 
   public static calculateCheckDigit(partialEan: string): string {
     if (partialEan.length !== 12) {
-      throw new Error('Partial EAN-13 must be 12 digits');
+      throw new Error('Partial EAN-13 tem que possuir 12 digitos');
     }
 
     let sum = 0;

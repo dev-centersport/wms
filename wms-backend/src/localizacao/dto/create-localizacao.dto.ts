@@ -1,50 +1,41 @@
 import {
-  IsDecimal,
   IsEnum,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
-  Length,
-  Validate,
+  MaxLength,
 } from 'class-validator';
 import { StatusPrateleira } from '../entities/localizacao.entity';
-import { IsEAN13Valid } from '../validators/ean13.validator';
+import { MedidaInsercao } from 'src/utils/decorator.medidas';
+import { idRelations } from 'src/utils/decorator.id.relations';
 
 export class CreateLocalizacaoDto {
+  @IsOptional()
   @IsEnum(StatusPrateleira)
-  @IsNotEmpty()
-  status: StatusPrateleira;
+  status?: StatusPrateleira = StatusPrateleira.FECHADA;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   nome: string;
 
-  @IsDecimal()
-  @IsNotEmpty()
-  @IsOptional()
-  altura?: number;
+  @MedidaInsercao()
+  altura?: number = 0;
 
-  @IsDecimal()
-  @IsNotEmpty()
-  @IsOptional()
-  largura?: number;
+  @MedidaInsercao()
+  largura?: number = 0;
 
-  @IsDecimal()
-  @IsNotEmpty()
-  @IsOptional()
-  comprimento?: number;
+  @MedidaInsercao()
+  comprimento?: number = 0;
 
-  @IsOptional()
-  @Length(13, 13, { message: 'O EAN deve ter exatamente 13 caracteres' })
-  @Validate(IsEAN13Valid, { message: 'EAN13 inválido' })
-  ean?: string;
+  // @IsOptional()
+  // @Length(13, 13, { message: 'O EAN deve ter exatamente 13 caracteres' })
+  // @Validate(IsEAN13Valid, { message: 'EAN13 inválido' })
+  // ean?: string;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @idRelations()
   tipo_localizacao_id: number;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @idRelations()
   armazem_id: number;
 }

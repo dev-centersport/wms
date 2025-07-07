@@ -1,0 +1,35 @@
+### List Products
+
+GET http://localhost:3001/
+
+###
+
+GET http://localhost:3001/produto
+
+###
+
+GET http://localhost:3001/produto/2
+
+###
+
+POST http://localhost:3001/produto HTTP/1.1
+content-type: application/json
+
+{
+    "id_tiny": 484456,
+    "sku": "54545646",
+    "descricao": "Tênis Nike",
+    "ean": "5466846854569"
+}
+
+###
+
+PATCH http://localhost:3001/produto/2 HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "Gaveta"
+}
+###
+
+DELETE http://localhost:3001/produto/4

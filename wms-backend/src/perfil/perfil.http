@@ -1,0 +1,37 @@
+### List Products
+
+GET http://localhost:3001/
+
+###
+
+GET http://localhost:3001/perfil
+
+###
+
+GET http://localhost:3001/perfil/2
+
+###
+
+POST http://localhost:3001/perfil HTTP/1.1
+content-type: application/json
+
+{
+    "nome": "Administrador",
+    "descricao": "Vai gerenciar tudo do projeto e fazer mais coisas e bla bla bla",
+    "pode_ver": true,
+    "pode_add": true,
+    "pode_edit": true,
+    "pode_delete": true
+}
+
+###
+
+PATCH http://localhost:3001/perfil/2 HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "Gaveta"
+}
+###
+
+DELETE http://localhost:3001/perfil/4

@@ -6,7 +6,7 @@ export class TipoLocalizacao {
   @PrimaryGeneratedColumn()
   tipo_localizacao_id: number;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: 'varchar', length: 50, unique: true })
   tipo: string;
 
   @OneToMany(() => Localizacao, (localizacao) => localizacao.tipo)

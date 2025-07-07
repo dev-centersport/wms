@@ -1,0 +1,37 @@
+### List Products
+
+GET http://localhost:3001/
+
+###
+
+GET http://localhost:3001/usuario
+
+###
+
+GET http://localhost:3001/usuario/2
+
+###
+
+POST http://localhost:3001/usuario HTTP/1.1
+content-type: application/json
+
+{
+    "responsavel": "Zé do churrasco",
+    "usuario": "zezinho",
+    "senha": "456",
+    "nivel": 2,
+    "cpf": "12344678912",
+    "perfil_id": 1
+}
+
+###
+
+PATCH http://localhost:3001/usuario/2 HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "Gaveta"
+}
+###
+
+DELETE http://localhost:3001/usuario/4
