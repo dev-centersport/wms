@@ -64,7 +64,7 @@ const CriarTipo: React.FC = () => {
           >
             SALVAR
           </Button>
-
+          
           <Button
             variant="outlined"
             onClick={() => navigate('/TipoLocalizacao')}

@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { criarArmazem as criarArmazemAPI } from '../services/API';
 import caixa from '../img/7102305.png';
 import { excluirArmazem } from '../services/API';
+import Layout from '../components/Layout';
 
 
 interface Estado {
@@ -77,26 +78,26 @@ const CriarArmazem: React.FC = () => {
       ...(field === 'estado' ? { cidade: '' } : {}), // limpa cidade ao trocar estado
     }));
   };
- const handleSalvar = async () => {
-  if (!validarCampos()) return;
+  const handleSalvar = async () => {
+    if (!validarCampos()) return;
 
-  try {
-    await criarArmazemAPI({
-      nome: formData.nome,
-      endereco: formData.endereco,
-      estado: formData.estado,
-      cidade: formData.cidade,
-      largura: Number(formData.largura) || undefined,
-      altura:  Number(formData.altura)  || undefined,
-      comprimento: Number(formData.comprimento) || undefined,
-    });
+    try {
+      await criarArmazemAPI({
+        nome: formData.nome,
+        endereco: formData.endereco,
+        estado: formData.estado,
+        cidade: formData.cidade,
+        largura: Number(formData.largura) || undefined,
+        altura: Number(formData.altura) || undefined,
+        comprimento: Number(formData.comprimento) || undefined,
+      });
 
-    alert('Armazém criado com sucesso!');
-    navigate('/armazem');
-  } catch (err: any) {
-    alert(err.message ?? 'Erro ao criar armazém.');
-  }
-};
+      alert('Armazém criado com sucesso!');
+      navigate('/armazem');
+    } catch (err: any) {
+      alert(err.message ?? 'Erro ao criar armazém.');
+    }
+  };
 
 
 
@@ -109,153 +110,151 @@ const CriarArmazem: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 80 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Novo Armazém
-      </Typography>
-
-      <Divider sx={{ mb: 3 }} />
-
-      <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
-        <TextField
-          label="Nome Armazém"
-          fullWidth
-          value={formData.nome}
-          onChange={(e) => handleChange('nome', e.target.value)}
-        />
-
-        <TextField
-          label="Endereço"
-          fullWidth
-          value={formData.endereco}
-          onChange={(e) => handleChange('endereco', e.target.value)}
-        />
-
-        <Box display="flex" gap={2} width="100%">
-          <TextField
-            select
-            label="Estado"
-            fullWidth
-            value={formData.estado}
-            onChange={(e) => handleChange('estado', e.target.value)}
-          >
-            {estados.map((estado) => (
-              <MenuItem key={estado.id} value={estado.sigla}>
-                {estado.nome} ({estado.sigla})
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            select
-            label="Cidade"
-            fullWidth
-            value={formData.cidade}
-            onChange={(e) => handleChange('cidade', e.target.value)}
-            disabled={!formData.estado}
-          >
-            {cidades.length > 0 ? (
-              cidades.map((cidade, index) => (
-                <MenuItem key={index} value={cidade}>
-                  {cidade}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>Nenhuma cidade encontrada</MenuItem>
-            )}
-          </TextField>
-        </Box>
-
-        <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
-          Dimensões
+    <Layout>
+      <Container>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          Criar Armazém
         </Typography>
 
-        <Box display="flex" alignItems="center" gap={3}>
-          <Box display="flex" gap={2}>
-            {['largura', 'altura', 'comprimento'].map((field, idx) => (
-              <TextField
-                key={field}
-                label={field.charAt(0).toUpperCase() + field.slice(1)}
-                type="number"
-                value={(formData as any)[field]}
-                onChange={(e) => {
-                  const valor = e.target.value;
-                  if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
-                    handleChange(field, valor);
-                  }
-                }}
-                inputProps={{
-                  min: 0,
-                  step: 'any',
-                  inputMode: 'decimal',
-                }}
-                InputProps={{
-                  endAdornment: <span>cm</span>,
-                }}
-                sx={{
-                  width: 130 + (idx === 2 ? 40 : 0),
-                  '& input[type=number]': {
-                    MozAppearance: 'textfield',
-                  },
-                  '& input[type=number]::-webkit-outer-spin-button': {
-                    WebkitAppearance: 'none',
-                    margin: 0,
-                  },
-                  '& input[type=number]::-webkit-inner-spin-button': {
-                    WebkitAppearance: 'none',
-                    margin: 0,
-                  },
-                }}
-              />
-            ))}
+        <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
+          <TextField
+            label="Nome Armazém"
+            fullWidth
+            value={formData.nome}
+            onChange={(e) => handleChange('nome', e.target.value)}
+          />
+
+          <TextField
+            label="Endereço"
+            fullWidth
+            value={formData.endereco}
+            onChange={(e) => handleChange('endereco', e.target.value)}
+          />
+
+          <Box display="flex" gap={2} width="100%">
+            <TextField
+              select
+              label="Estado"
+              fullWidth
+              value={formData.estado}
+              onChange={(e) => handleChange('estado', e.target.value)}
+            >
+              {estados.map((estado) => (
+                <MenuItem key={estado.id} value={estado.sigla}>
+                  {estado.nome} ({estado.sigla})
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              label="Cidade"
+              fullWidth
+              value={formData.cidade}
+              onChange={(e) => handleChange('cidade', e.target.value)}
+              disabled={!formData.estado}
+            >
+              {cidades.length > 0 ? (
+                cidades.map((cidade, index) => (
+                  <MenuItem key={index} value={cidade}>
+                    {cidade}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>Nenhuma cidade encontrada</MenuItem>
+              )}
+            </TextField>
           </Box>
-          <Box display="flex" alignItems="center" justifyContent="flex-start">
-            <img src={caixa} alt="Caixa" style={{ width: 90, height: 'auto' }} />
+
+          <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
+            Dimensões
+          </Typography>
+
+          <Box display="flex" alignItems="center" gap={3}>
+            <Box display="flex" gap={2}>
+              {['largura', 'altura', 'comprimento'].map((field, idx) => (
+                <TextField
+                  key={field}
+                  label={field.charAt(0).toUpperCase() + field.slice(1)}
+                  placeholder='0'
+                  type="number"
+                  value={(formData as any)[field]}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
+                      handleChange(field, valor);
+                    }
+                  }}
+                  inputProps={{
+                    min: 0,
+                    step: 'any',
+                    inputMode: 'decimal',
+                  }}
+                  InputProps={{
+                    endAdornment: <span>m</span>,
+                  }}
+                  sx={{
+                    width: 130 + (idx === 2 ? 40 : 0),
+                    '& input[type=number]': {
+                      MozAppearance: 'textfield',
+                    },
+                    '& input[type=number]::-webkit-outer-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                    '& input[type=number]::-webkit-inner-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+            <Box display="flex" alignItems="center" justifyContent="flex-start">
+              <img src={caixa} alt="Caixa" style={{ width: 90, height: 'auto' }} />
+            </Box>
           </Box>
         </Box>
-      </Box>
 
-      <Divider sx={{ mt: 20, mb: 3 }} />
+        <Divider sx={{ mt: 20, mb: 3 }} />
 
-      <Box
-        sx={{
-          marginRight: 30,
-          bottom: 20,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 2,
-        }}
-      >
-        <Button
-          variant="contained"
-          onClick={handleSalvar}
+        <Box
           sx={{
-            backgroundColor: '#59e60d',
-            color: '#000',
-            fontWeight: 'bold',
-            px: 6,
-            '&:hover': { backgroundColor: '#48c307' },
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 2,
           }}
         >
-          SALVAR
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => navigate('/armazem')}
-          sx={{
-            backgroundColor: '#f2f2f2',
-            fontWeight: 'bold',
-            color: '#333',
-            px: 6,
-          }}
-        >
-          CANCELAR
-        </Button>
-      </Box>
-    </Container>
+          <Button
+            variant="contained"
+            onClick={handleSalvar}
+            sx={{
+              backgroundColor: '#59e60d',
+              color: '#000',
+              fontWeight: 'bold',
+              px: 6,
+              '&:hover': { backgroundColor: '#48c307' },
+            }}
+          >
+            SALVAR
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/armazem')}
+            sx={{
+              backgroundColor: '#f2f2f2',
+              fontWeight: 'bold',
+              color: '#333',
+              px: 6,
+            }}
+          >
+            CANCELAR
+          </Button>
+        </Box>
+      </Container>
+    </Layout>
   );
+
 };
 
 export default CriarArmazem;
