@@ -45,7 +45,7 @@ import { UsuarioModule } from './usuario/usuario.module';
       isGlobal: true,
       envFilePath: join(
         __dirname,
-        '../../.env.' + (process.env.NODE_ENV || 'development'),
+        '../.env.' + (process.env.NODE_ENV || 'development'),
       ),
     }),
     TypeOrmModule.forRootAsync({
