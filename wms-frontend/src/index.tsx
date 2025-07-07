@@ -16,6 +16,7 @@ import Layout from "./components/Layout";
 import theme from './components/Theme';
 import CriarArmazem from "./pages/CriarArmazem";
 import EditarLocalizacao from "./pages/EditarLocalizacao"
+import EditarArmazem from "./pages/EditarArmazem"
 import Sidebar from "./components/Sidebar";
 
 
@@ -39,6 +40,8 @@ root.render(
           {/* Páginas internas com Sidebar */}
           <Route path="/armazem" element={<Sidebar><Armazem /></Sidebar>} />
           <Route path="/localizacao" element={<Sidebar><Localizacao /></Sidebar>} />
+          <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
+          <Route path="/EditarArmazem/:id" element={<Sidebar><EditarArmazem /></Sidebar>} />
           <Route path="/CriarLocalizacao" element={<Sidebar><CriarLocalizacao /></Sidebar>} />
           <Route path="/localizacao/:id/editar" element={<Sidebar><EditarLocalizacao /></Sidebar>} />
           <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
