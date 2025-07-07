@@ -27,11 +27,12 @@ import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 
 /* -------------------------------------------------------------------------- */
-const itemsPerPage = 5;
+// Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
+const itemsPerPage = 50;
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
-    /* ------------------------- estados globais do hook ------------------------ */
+    /* ------------------------- estados globais do hook --F---------------------- */
     const {
         listaLocalizacoes,
         busca,
@@ -107,43 +108,43 @@ const Localizacao: React.FC = () => {
     };
 
     const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
-            const w = window.open('', '_blank');
-            if (!w) return;
+        const w = window.open('', '_blank');
+        if (!w) return;
 
-            /* ------------------------------------------------------------------ */
-            /* 1. Identificação do tipo                                           */
-            /* ------------------------------------------------------------------ */
-            const tipoLower = tipo.toLowerCase();
-            const isCaixa       = tipoLower.includes('caixa');
-            const isPrateleira  = tipoLower.includes('prateleira');
+        /* ------------------------------------------------------------------ */
+        /* 1. Identificação do tipo                                           */
+        /* ------------------------------------------------------------------ */
+        const tipoLower = tipo.toLowerCase();
+        const isCaixa = tipoLower.includes('caixa');
+        const isPrateleira = tipoLower.includes('prateleira');
 
-            /* ------------------------------------------------------------------ */
-            /* 2. Dimensões, fontes e código de barras                            */
-            /* ------------------------------------------------------------------ */
-            const largura    = isCaixa || isPrateleira ? '10cm' : '5cm';
-            const altura     = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+        /* ------------------------------------------------------------------ */
+        /* 2. Dimensões, fontes e código de barras                            */
+        /* ------------------------------------------------------------------ */
+        const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+        const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-            const fontNome   = '120px';                   // tamanho base
-            const barHeight  = isCaixa ? 90  : 20;        // altura barra
-            const barFont    = isCaixa ? 22  : 10;        // fonte barra
+        const fontNome = '120px';                   // tamanho base
+        const barHeight = isCaixa ? 90 : 20;        // altura barra
+        const barFont = isCaixa ? 22 : 10;        // fonte barra
 
-            /* ------------------------------------------------------------------ */
-            /* 3. Transformação do nome para Prateleira                           */
-            /* ------------------------------------------------------------------ */
-            const nomeImpresso = isPrateleira
-                ? localizacao.replace(/^.*?A/, 'A')       // elimina tudo antes do 'A'
-                : localizacao;
+        /* ------------------------------------------------------------------ */
+        /* 3. Transformação do nome para Prateleira                           */
+        /* ------------------------------------------------------------------ */
+        const nomeImpresso = isPrateleira
+            ? localizacao.replace(/^.*?A/, 'A')       // elimina tudo antes do 'A'
+            : localizacao;
 
-            /* ------------------------------------------------------------------ */
-            /* 4. Estilos condicionais                                            */
-            /* ------------------------------------------------------------------ */
-            const bodyJustify    = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
-            const nomeMarginTop  = isPrateleira ? '-3mm'       : '0';      // só prateleira sobe
+        /* ------------------------------------------------------------------ */
+        /* 4. Estilos condicionais                                            */
+        /* ------------------------------------------------------------------ */
+        const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
+        const nomeMarginTop = isPrateleira ? '-3mm' : '0';      // só prateleira sobe
 
-            /* ------------------------------------------------------------------ */
-            /* 5. HTML completo                                                   */
-            /* ------------------------------------------------------------------ */
-            w.document.write(`
+        /* ------------------------------------------------------------------ */
+        /* 5. HTML completo                                                   */
+        /* ------------------------------------------------------------------ */
+        w.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -215,13 +216,11 @@ const Localizacao: React.FC = () => {
         </html>
             `);
 
-            w.document.close();
-        };
+        w.document.close();
+    };
 
 
-
-
-        const handleImprimirSelecionados = () => {
+    const handleImprimirSelecionados = () => {
         if (!selectedItems.length) {
             alert('Selecione pelo menos uma localização.');
             return;
@@ -242,7 +241,7 @@ const Localizacao: React.FC = () => {
         const isPrateleira = tipoAtual.includes('prateleira');
 
         /* ---- 2. dimensões gerais da página (uma para todas, cabe duas de 5 cm) --- */
-        const pageWidth  = '150mm';   // 15 cm
+        const pageWidth = '150mm';   // 15 cm
         const pageHeight = '100mm';   // 10 cm
 
         const w = window.open('', '_blank');
@@ -318,10 +317,6 @@ const Localizacao: React.FC = () => {
 
         w.document.close();
     };
-
-
-
-
 
 
     /* ------------------------- exclusão ------------------------- */
@@ -563,8 +558,8 @@ const Localizacao: React.FC = () => {
                 </Box>
 
                 {/* Tabela principal */}
-                <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-                    <Table>
+                <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
+                    <Table stickyHeader>
                         <TableHead>
                             <TableRow>
                                 <TableCell padding="checkbox">
@@ -582,14 +577,11 @@ const Localizacao: React.FC = () => {
                                 <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Ações</TableCell>
                             </TableRow>
                         </TableHead>
-
-
                         <TableBody>
                             {currentItems.length ? (
                                 currentItems.map((item, idx) => {
                                     const originalIndex = currentIndices[idx];
                                     const isSelected = selectedItems.includes(originalIndex);
-
                                     return (
                                         <TableRow key={`${item.nome}-${originalIndex}`} selected={isSelected} hover>
                                             <TableCell padding="checkbox">
@@ -599,22 +591,15 @@ const Localizacao: React.FC = () => {
                                                 />
                                             </TableCell>
                                             <TableCell
-                                                sx={{
-                                                    fontWeight: 500,
-                                                    cursor: 'pointer',
-                                                }}
+                                                sx={{ fontWeight: 500, cursor: 'pointer' }}
                                                 onClick={() => navigate(`/localizacao/${item.localizacao_id}/editar`)}
-
                                             >
                                                 {item.nome}
                                             </TableCell>
                                             <TableCell>{item.tipo}</TableCell>
-
-
                                             <TableCell>{item.armazem}</TableCell>
                                             <TableCell align="center">{item.ean}</TableCell>
                                             <TableCell align="center">{item.quantidade}</TableCell>
-
                                             <TableCell align="center">
                                                 <Box display="flex" justifyContent="center" gap={1}>
                                                     <Tooltip title="Ver produtos">
@@ -622,13 +607,11 @@ const Localizacao: React.FC = () => {
                                                             <ListIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-
                                                     <Tooltip title="Imprimir etiqueta">
                                                         <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
                                                             <PrintIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-
                                                     <Tooltip title="Excluir localização">
                                                         <IconButton
                                                             size="small"
