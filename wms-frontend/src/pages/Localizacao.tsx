@@ -412,240 +412,239 @@ const Localizacao: React.FC = () => {
 
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
-            <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
-                <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-                    Localização
-                </Typography>
+            <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+                Localização
+            </Typography>
 
-                {/* Barra de ações */}
-                <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
-                    <TextField
-                        placeholder="Buscar Localização, tipo, armazém ou EAN"
-                        variant="outlined"
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
-                        sx={{ maxWidth: 480, width: 380 }}
-                    />
+            {/* Barra de ações */}
+            <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
+                <TextField
+                    placeholder="Buscar Localização, tipo, armazém ou EAN"
+                    variant="outlined"
+                    size='small'
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
+                    sx={{ maxWidth: 480, width: 380 }}
+                />
 
-                    <Button
-                        variant="outlined"
-                        startIcon={<FilterListIcon />}
-                        onClick={handleMenuOpen}
-                        sx={{ minWidth: 110 }}
-                    >
-                        Filtro
-                    </Button>
+                <Button
+                    variant="outlined"
+                    startIcon={<FilterListIcon />}
+                    onClick={handleMenuOpen}
+                    sx={{ minWidth: 110 }}
+                >
+                    Filtro
+                </Button>
 
-                    <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                    >
-                        <Box sx={{ p: 2, width: 300 }}>
-                            <TextField
-                                select
-                                label="Tipo"
-                                value={filtroTipo}
-                                onChange={(e) => setFiltroTipo(e.target.value)}
-                                sx={{ minWidth: '100%' }}
-                            >
-                                <MenuItem value="">Todos</MenuItem>
-                                {tipos.map((t) => (
-                                    <MenuItem key={t} value={t}>
-                                        {t}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                >
+                    <Box sx={{ p: 2, width: 300 }}>
+                        <TextField
+                            select
+                            label="Tipo"
+                            value={filtroTipo}
+                            onChange={(e) => setFiltroTipo(e.target.value)}
+                            sx={{ minWidth: '100%' }}
+                        >
+                            <MenuItem value="">Todos</MenuItem>
+                            {tipos.map((t) => (
+                                <MenuItem key={t} value={t}>
+                                    {t}
+                                </MenuItem>
+                            ))}
+                        </TextField>
 
-                            <TextField
-                                select
-                                label="Armazém"
-                                value={filtroArmazem}
-                                onChange={(e) => setFiltroArmazem(e.target.value)}
-                                sx={{ minWidth: '100%', mt: 2 }}
-                            >
-                                <MenuItem value="">Todos</MenuItem>
-                                {armazens.map((a) => (
-                                    <MenuItem key={a} value={a}>
-                                        {a}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
+                        <TextField
+                            select
+                            label="Armazém"
+                            value={filtroArmazem}
+                            onChange={(e) => setFiltroArmazem(e.target.value)}
+                            sx={{ minWidth: '100%', mt: 2 }}
+                        >
+                            <MenuItem value="">Todos</MenuItem>
+                            {armazens.map((a) => (
+                                <MenuItem key={a} value={a}>
+                                    {a}
+                                </MenuItem>
+                            ))}
+                        </TextField>
 
-                            <Button
-                                variant="outlined"
-                                onClick={handleAplicarFiltro}
-                                sx={{ mt: 2, width: '100%' }}
-                            >
-                                Aplicar Filtro
-                            </Button>
-
-                            {filtroTipo || filtroArmazem ? (
-                                <Button
-                                    variant="outlined"
-                                    onClick={handleLimparFiltros}
-                                    sx={{ mt: 2, width: '100%' }}
-                                >
-                                    Limpar filtros
-                                </Button>
-                            ) : null}
-                        </Box>
-                    </Menu>
-
-                    {/* Novo botão Limpar Filtros ao lado do botão Filtro */}
-                    {(filtroTipo || filtroArmazem) && (
                         <Button
                             variant="outlined"
-                            onClick={handleLimparFiltros}
-                            sx={{ minWidth: 130, ml: 1 }}
+                            onClick={handleAplicarFiltro}
+                            sx={{ mt: 2, width: '100%' }}
                         >
-                            Limpar Filtros
+                            Aplicar Filtro
                         </Button>
-                    )}
 
-                    {selectedItems.length > 0 ? (
-                        <>
-                            <Button
-                                variant="contained"
-                                startIcon={<PrintIcon />}
-                                onClick={handleImprimirSelecionados}
-                                sx={{
-                                    backgroundColor: '#61de27',
-                                    color: '#000',
-                                    fontWeight: 'bold',
-                                    minWidth: 195,
-                                    '&:hover': { backgroundColor: '#48c307' },
-                                }}
-                            >
-                                Imprimir Selecionados
-                            </Button>
-
+                        {filtroTipo || filtroArmazem ? (
                             <Button
                                 variant="outlined"
-                                startIcon={<DeleteIcon />}
-                                onClick={handleExcluirSelecionados}
-                                sx={{
-                                    borderColor: '#d32f2f',
-                                    color: '#d32f2f',
-                                    fontWeight: 'bold',
-                                    minWidth: 185,
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                                        borderColor: '#d32f2f',
-                                    },
-                                }}
+                                onClick={handleLimparFiltros}
+                                sx={{ mt: 2, width: '100%' }}
                             >
-                                Excluir Selecionados
+                                Limpar filtros
                             </Button>
-                        </>
-                    ) : (
+                        ) : null}
+                    </Box>
+                </Menu>
+
+                {/* Novo botão Limpar Filtros ao lado do botão Filtro */}
+                {(filtroTipo || filtroArmazem) && (
+                    <Button
+                        variant="outlined"
+                        onClick={handleLimparFiltros}
+                        sx={{ minWidth: 130, ml: 1 }}
+                    >
+                        Limpar Filtros
+                    </Button>
+                )}
+
+                {selectedItems.length > 0 ? (
+                    <>
                         <Button
                             variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => navigate('/CriarLocalizacao')}
+                            startIcon={<PrintIcon />}
+                            onClick={handleImprimirSelecionados}
                             sx={{
                                 backgroundColor: '#61de27',
                                 color: '#000',
                                 fontWeight: 'bold',
-                                minWidth: 165,
+                                minWidth: 195,
                                 '&:hover': { backgroundColor: '#48c307' },
                             }}
                         >
-                            Nova Localização
+                            Imprimir Selecionados
                         </Button>
-                    )}
-                </Box>
 
-                {/* Tabela principal */}
-                <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
-                    <Table stickyHeader>
-                        <TableHead>
+                        <Button
+                            variant="outlined"
+                            startIcon={<DeleteIcon />}
+                            onClick={handleExcluirSelecionados}
+                            sx={{
+                                borderColor: '#d32f2f',
+                                color: '#d32f2f',
+                                fontWeight: 'bold',
+                                minWidth: 185,
+                                '&:hover': {
+                                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                                    borderColor: '#d32f2f',
+                                },
+                            }}
+                        >
+                            Excluir Selecionados
+                        </Button>
+                    </>
+                ) : (
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/CriarLocalizacao')}
+                        sx={{
+                            backgroundColor: '#61de27',
+                            color: '#000',
+                            fontWeight: 'bold',
+                            minWidth: 165,
+                            '&:hover': { backgroundColor: '#48c307' },
+                        }}
+                    >
+                        Nova Localização
+                    </Button>
+                )}
+            </Box>
+
+            {/* Tabela principal */}
+            <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
+                <Table stickyHeader>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell padding="checkbox">
+                                <Checkbox
+                                    checked={selectAll}
+                                    indeterminate={selectedItems.length > 0 && !selectAll}
+                                    onChange={(e) => handleSelectAll(e.target.checked)}
+                                />
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>EAN</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {currentItems.length ? (
+                            currentItems.map((item, idx) => {
+                                const originalIndex = currentIndices[idx];
+                                const isSelected = selectedItems.includes(originalIndex);
+                                return (
+                                    <TableRow key={`${item.nome}-${originalIndex}`} selected={isSelected} hover>
+                                        <TableCell padding="checkbox">
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
+                                            />
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{ fontWeight: 500, cursor: 'pointer' }}
+                                            onClick={() => navigate(`/localizacao/${item.localizacao_id}/editar`)}
+                                        >
+                                            {item.nome}
+                                        </TableCell>
+                                        <TableCell>{item.tipo}</TableCell>
+                                        <TableCell>{item.armazem}</TableCell>
+                                        <TableCell align="center">{item.ean}</TableCell>
+                                        <TableCell align="center">{item.quantidade}</TableCell>
+                                        <TableCell align="center">
+                                            <Box display="flex" justifyContent="center" gap={1}>
+                                                <Tooltip title="Ver produtos">
+                                                    <IconButton size="small" onClick={() => alert(`Ver produtos em ${item.nome}`)}>
+                                                        <ListIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Imprimir etiqueta">
+                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
+                                                        <PrintIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Excluir localização">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => handleExcluir(item.localizacao_id, item.nome, item.quantidade ?? 0)}
+                                                        disabled={item.quantidade > 0}
+                                                        sx={{
+                                                            color: item.quantidade > 0 ? 'text.disabled' : 'error.main',
+                                                            '&:hover': {
+                                                                backgroundColor:
+                                                                    item.quantidade > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
+                                                            },
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        ) : (
                             <TableRow>
-                                <TableCell padding="checkbox">
-                                    <Checkbox
-                                        checked={selectAll}
-                                        indeterminate={selectedItems.length > 0 && !selectAll}
-                                        onChange={(e) => handleSelectAll(e.target.checked)}
-                                    />
+                                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                    <Typography variant="body1" color="text.secondary">
+                                        Nenhuma localização encontrada.
+                                    </Typography>
                                 </TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Nome</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Tipo</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Armazém</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>EAN</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Quantidade</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Ações</TableCell>
                             </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {currentItems.length ? (
-                                currentItems.map((item, idx) => {
-                                    const originalIndex = currentIndices[idx];
-                                    const isSelected = selectedItems.includes(originalIndex);
-                                    return (
-                                        <TableRow key={`${item.nome}-${originalIndex}`} selected={isSelected} hover>
-                                            <TableCell padding="checkbox">
-                                                <Checkbox
-                                                    checked={isSelected}
-                                                    onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
-                                                />
-                                            </TableCell>
-                                            <TableCell
-                                                sx={{ fontWeight: 500, cursor: 'pointer' }}
-                                                onClick={() => navigate(`/localizacao/${item.localizacao_id}/editar`)}
-                                            >
-                                                {item.nome}
-                                            </TableCell>
-                                            <TableCell>{item.tipo}</TableCell>
-                                            <TableCell>{item.armazem}</TableCell>
-                                            <TableCell align="center">{item.ean}</TableCell>
-                                            <TableCell align="center">{item.quantidade}</TableCell>
-                                            <TableCell align="center">
-                                                <Box display="flex" justifyContent="center" gap={1}>
-                                                    <Tooltip title="Ver produtos">
-                                                        <IconButton size="small" onClick={() => alert(`Ver produtos em ${item.nome}`)}>
-                                                            <ListIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Imprimir etiqueta">
-                                                        <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
-                                                            <PrintIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Excluir localização">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleExcluir(item.localizacao_id, item.nome, item.quantidade ?? 0)}
-                                                            disabled={item.quantidade > 0}
-                                                            sx={{
-                                                                color: item.quantidade > 0 ? 'text.disabled' : 'error.main',
-                                                                '&:hover': {
-                                                                    backgroundColor:
-                                                                        item.quantidade > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                                        <Typography variant="body1" color="text.secondary">
-                                            Nenhuma localização encontrada.
-                                        </Typography>
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Container>
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
         </Layout>
     );
 };

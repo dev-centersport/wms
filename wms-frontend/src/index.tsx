@@ -12,10 +12,15 @@ import Login from "./pages/Login";
 
 import Localizacao from "./pages/Localizacao";
 import CriarLocalizacao from "./pages/CriarLocalizacao";
-import Layout from "./components/Layout";
+// import Layout from "./components/Layout";
 import theme from './components/Theme';
 import CriarArmazem from "./pages/CriarArmazem";
 import EditarLocalizacao from "./pages/EditarLocalizacao"
+import EditarArmazem from "./pages/EditarArmazem"
+import  TipoLocalizacao  from "./pages/TipoLocalizacao";
+import CriarTipoLocalizacao from "./pages/CriarTipoLocalizacao";
+import EditarTipoLocalizacao from "./pages/EditarTipoLocalizacao";
+
 import Sidebar from "./components/Sidebar";
 
 
@@ -37,11 +42,20 @@ root.render(
           {/* Login sem menu lateral */}
           <Route path="/login" element={<Login />} />
           {/* Páginas internas com Sidebar */}
-          <Route path="/armazem" element={<Sidebar><Armazem /></Sidebar>} />
-          <Route path="/localizacao" element={<Sidebar><Localizacao /></Sidebar>} />
-          <Route path="/CriarLocalizacao" element={<Sidebar><CriarLocalizacao /></Sidebar>} />
-          <Route path="/localizacao/:id/editar" element={<Sidebar><EditarLocalizacao /></Sidebar>} />
-          <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
+          {/* Páginas de localização */}
+          <Route path="/localizacao" element={<Localizacao />} />
+          <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
+          <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
+
+          {/* Páginas de Armazém */}
+          <Route path="/armazem" element={<Armazem />} />
+          <Route path="/CriarArmazem" element={<CriarArmazem />} />
+          <Route path="/EditarArmazem/:id" element={<EditarArmazem />} />
+
+          {/* Páginas de Tipo de localização */}
+          <Route path="/TipoLocalizacao" element={<TipoLocalizacao />}/>
+          <Route path="/tipo-localizacao/:id/editar" element={<EditarTipoLocalizacao />} />
+          <Route path="/CriarTipoLocalizacao" element={<CriarTipoLocalizacao />} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

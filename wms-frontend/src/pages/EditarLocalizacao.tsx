@@ -125,14 +125,10 @@ const EditarLocalizacao: React.FC = () => {
     /* render --------------------------------------------------- */
     return (
         <Layout>
-            <Container maxWidth="md" sx={{
-                mt: 4, pb: 12, marginRight: 150
-            }}>
-                <Typography variant="h5" fontWeight="bold" gutterBottom>
+            <Container>
+                <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                     Editar Localização
                 </Typography>
-
-                <Divider sx={{ mb: 3 }} />
 
                 {/* --- formulário principal -------------------------- */}
                 <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
@@ -212,10 +208,15 @@ const EditarLocalizacao: React.FC = () => {
                     </Box>
                 </Box>
 
-                <Divider sx={{ mt: 10, mb: 3 }} />
+                <Divider sx={{ mt: 20, mb: 3 }} />
 
                 {/* botões ------------------------------------------- */}
-                <Box display="flex" justifyContent="center" gap={2}>
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 2,
+                }}
+                >
                     <Button
                         variant="contained"
                         onClick={handleSalvar}

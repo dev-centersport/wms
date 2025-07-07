@@ -30,6 +30,21 @@ export interface CriarArmazemPayload {
   altura?: number;     // cm
   comprimento?: number;// cm
 }
+export const atualizarArmazem = async (id: number, dados: {
+  nome: string;
+  endereco: string;
+  largura?: number;
+  altura?: number;
+  comprimento?: number;
+}) => {
+  try {
+    await api.patch(`/armazem/${id}`, dados);
+  } catch (err: any) {
+    console.error('Erro ao atualizar armazém:', err);
+    throw new Error('Falha ao atualizar armazém.');
+  }
+};
+
 
 /**
  * Cria um novo armazém.
@@ -69,6 +84,44 @@ export interface Localizacao {
   ean: string;
   endereco: string;
 }
+export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/tipo-localizacao/${id}`);
+  } catch (err) {
+    console.error('Erro ao excluir tipo de localização:', err);
+    throw new Error('Falha ao excluir o tipo de localização.');
+  }
+};
+
+export const buscarTipoLocalizacao = async (id: number): Promise<TipoLocalizacao> => {
+  try {
+    const { data } = await api.get(`/tipo-localizacao/${id}`);
+    return data;
+  } catch (err) {
+    console.error('Erro ao buscar tipo de localização:', err);
+    throw new Error('Falha ao carregar o tipo de localização.');
+  }
+};
+export const atualizarTipoLocalizacao = async (id: number, payload: { tipo: string }): Promise<void> => {
+  try {
+    await api.patch(`/tipo-localizacao/${id}`, payload);
+  } catch (err) {
+    console.error('Erro ao atualizar tipo de localização:', err);
+    throw new Error('Falha ao atualizar tipo de localização.');
+  }
+};
+export const criarTipoLocalizacao = async (payload: { tipo: string }): Promise<void> => {
+  try {
+    await api.post(`/tipo-localizacao`, payload);
+  } catch (err) {
+    console.error('Erro ao criar tipo de localização:', err);
+    throw new Error('Falha ao criar tipo de localização.');
+  }
+};
+
+
+
+
 
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
@@ -151,6 +204,7 @@ export interface criarLocalizacao {
   nome: string;
   status: string;
   tipo: string;
+  armazem: string
   altura: string;
   largura: string;
   comprimento: string;
@@ -162,10 +216,17 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
     const armazens = await buscarArmazem();
     const tipos = await buscarTiposDeLocalizacao();
 
-    const armazemSelecionado = armazens[0];
+    // const armazemSelecionado = armazens[0];
+
+    // if (!armazemSelecionado?.armazem_id) {
+    //   throw new Error('Nenhum armazém válido encontrado.');
+    // }
+    const armazemSelecionado = armazens.find(
+      (a) => a.nome.toLowerCase() === criarLocalizacao.armazem.toLowerCase()
+    );
 
     if (!armazemSelecionado?.armazem_id) {
-      throw new Error('Nenhum armazém válido encontrado.');
+      throw new Error(`Armazém "${criarLocalizacao.armazem}" não encontrado."${criarLocalizacao.tipo.toLowerCase()}"`);
     }
 
     // Buscar o tipo_localizacao_id correspondente ao texto vindo do form
