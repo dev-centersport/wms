@@ -86,12 +86,12 @@ const TipoLocalizacaoPage: React.FC = () => {
       </Box>
 
       <Paper>
-        <Table>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox"><Checkbox disabled /></TableCell>
               <TableCell>Nome</TableCell>
-              <TableCell align="right">Ações</TableCell>
+              <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -100,7 +100,7 @@ const TipoLocalizacaoPage: React.FC = () => {
                 <TableRow key={tipo.tipo_localizacao_id}>
                   <TableCell padding="checkbox"><Checkbox /></TableCell>
                   <TableCell>{tipo.tipo}</TableCell>
-                  <TableCell align="right">
+                  <TableCell align="center">
                     <IconButton onClick={() => navigate(`/tipo-localizacao/${tipo.tipo_localizacao_id}/editar`)}>
                       <EditIcon />
                     </IconButton>
