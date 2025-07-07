@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import Sidebar from './Sidebar';
 
 
 interface LayoutProps {
@@ -47,18 +48,19 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
-      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+    <Sidebar>
+      <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
         <Box sx={{ flexGrow: 1, p: 3 }}>{children}</Box>
 
         <>
-          <Divider />
           <Box
-
             sx={{
-
+              position:"absolute",
+              bottom:0,
+              width: "calc(100vw - 200px)"
             }}
           >
+            <Divider />
             <Pagination
               count={totalPages}
               page={currentPage}
@@ -123,7 +125,7 @@ const Layout: React.FC<LayoutProps> = ({
           </Box>
         </>
       </Box>
-    </Box>
+    </Sidebar>
   );
 };
 
