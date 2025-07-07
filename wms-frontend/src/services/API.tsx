@@ -44,7 +44,7 @@ export const atualizarArmazem = async (id: number, dados: {
     throw new Error('Falha ao atualizar armazém.');
   }
 };
-//ale
+
 
 /**
  * Cria um novo armazém.
