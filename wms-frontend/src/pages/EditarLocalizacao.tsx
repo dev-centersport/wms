@@ -126,8 +126,7 @@ const EditarLocalizacao: React.FC = () => {
     return (
         <Layout>
             <Container maxWidth="md" sx={{
-                mt: 4, pb: 12, mr: 10,
-                marginRight: 90,
+                mt: 4, pb: 12, marginRight: 150
             }}>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
                     Editar Localização
