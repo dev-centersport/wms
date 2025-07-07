@@ -13,6 +13,7 @@ import {
   buscarTipoLocalizacao,
   atualizarTipoLocalizacao,
 } from '../services/API';
+import Layout from '../components/Layout';
 
 const EditarTipoLocalizacao: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +26,7 @@ const EditarTipoLocalizacao: React.FC = () => {
       try {
         if (!id) {
           alert('ID inválido.');
-          navigate('/tipo-localizacao');
+          navigate('/TipoLocalizacao');
           return;
         }
 
@@ -33,7 +34,7 @@ const EditarTipoLocalizacao: React.FC = () => {
         setTipo(dados.tipo ?? '');
       } catch (err) {
         alert('Erro ao carregar tipo de localização.');
-        navigate('/tipo-localizacao');
+        navigate('/TipoLocalizacao');
       }
     };
 
@@ -44,57 +45,57 @@ const EditarTipoLocalizacao: React.FC = () => {
     try {
       await atualizarTipoLocalizacao(Number(id), { tipo });
       alert('Tipo de localização atualizado com sucesso!');
-      navigate('/tipo-localizacao');
+      navigate('/TipoLocalizacao');
     } catch (err: any) {
       alert(err.message || 'Erro ao atualizar tipo de localização.');
     }
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4, pb: 8 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Editar Tipo de Localização
-      </Typography>
+    <Layout>
+      <Container>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+            Editar Localização
+        </Typography>
 
-      <Divider sx={{ mb: 3 }} />
+        <TextField
+          label="Tipo"
+          fullWidth
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value)}
+          sx={{ mb: 3 }}
+        />
 
-      <TextField
-        label="Tipo"
-        fullWidth
-        value={tipo}
-        onChange={(e) => setTipo(e.target.value)}
-        sx={{ mb: 3 }}
-      />
+        <Box display="flex" justifyContent="center" gap={2}>
+          <Button
+            variant="contained"
+            onClick={handleSalvar}
+            sx={{
+              backgroundColor: '#59e60d',
+              color: '#000',
+              fontWeight: 'bold',
+              px: 6,
+              '&:hover': { backgroundColor: '#48c307' },
+            }}
+          >
+            SALVAR
+          </Button>
 
-      <Box display="flex" justifyContent="center" gap={2}>
-        <Button
-          variant="contained"
-          onClick={handleSalvar}
-          sx={{
-            backgroundColor: '#59e60d',
-            color: '#000',
-            fontWeight: 'bold',
-            px: 6,
-            '&:hover': { backgroundColor: '#48c307' },
-          }}
-        >
-          SALVAR
-        </Button>
-
-        <Button
-          variant="outlined"
-          onClick={() => navigate('/tipolocalizacao')}
-          sx={{
-            backgroundColor: '#f2f2f2',
-            fontWeight: 'bold',
-            color: '#333',
-            px: 6,
-          }}
-        >
-          CANCELAR
-        </Button>
-      </Box>
-    </Container>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/TipoLocalizacao')}
+            sx={{
+              backgroundColor: '#f2f2f2',
+              fontWeight: 'bold',
+              color: '#333',
+              px: 6,
+            }}
+          >
+            CANCELAR
+          </Button>
+        </Box>
+      </Container>
+    </Layout>
   );
 };
 

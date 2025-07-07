@@ -215,7 +215,8 @@ const EditarLocalizacao: React.FC = () => {
                     display: 'flex',
                     justifyContent: 'center',
                     gap: 2,
-                }}>
+                }}
+                >
                     <Button
                         variant="contained"
                         onClick={handleSalvar}
