@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -34,6 +34,7 @@ import {
 
 import { useLocalizacoes } from '../components/ApiComponents';
 import Layout from '../components/Layout';
+import { excluirLocalizacao } from '../services/API';
 
 const itemsPerPage = 5;
 
@@ -408,106 +409,121 @@ const Localizacao: React.FC = () => {
 
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
-            <Container maxWidth="xl" sx={{ marginLeft: '10px' }}>
-                <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-                    Localização
-                </Typography>
+    {/* Barra de ações */}
+    <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
+        <TextField
+            placeholder="Buscar Localização, tipo, armazém ou EAN"
+            variant="outlined"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            InputProps={{
+                startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+            }}
+            sx={{ maxWidth: 480, width: 380 }}
+        />
+    </Box>
 
-                {/* Barra de ações */}
-                <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
-                    <TextField
-                        placeholder="Buscar Localização, tipo, armazém ou EAN"
-                        variant="outlined"
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
-                        sx={{ maxWidth: 480, width: 380 }}
-                    />
-                </TableCell>
+    <Table>
+        <TableHead>
+            <TableRow>
+                <TableCell />
                 <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>EAN</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Quantidade</TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="center">Ações</TableCell>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                {currentItems.length ? (
+            </TableRow>
+        </TableHead>
+
+        <TableBody>
+            {currentItems.length ? (
                 currentItems.map((item, index) => {
                     const globalIndex = startIndex + index;
                     const isSelected = selectedItems.includes(globalIndex);
 
                     return (
-                    <TableRow
-                        key={`${item.nome}-${globalIndex}`}
-                        selected={isSelected}
-                        hover
-                    >
-                        <TableCell padding="checkbox">
-                        <Checkbox
-                            checked={isSelected}
-                            onChange={(e) => handleSelectItem(globalIndex, e.target.checked)}
-                        />
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 500 }}>{item.nome}</TableCell>
-                        <TableCell>{item.tipo}</TableCell>
-                        <TableCell>{item.armazem}</TableCell>
-                        <TableCell>{item.ean}</TableCell>
-                        <TableCell>{item.quantidade}</TableCell>
-                        <TableCell align="center">
-                        <Box display="flex" justifyContent="center" gap={1}>
-                            <Tooltip title="Ver produtos">
-                            <IconButton
-                                size="small"
-                                onClick={() => alert(`Ver produtos em ${item.nome}`)}
-                            >
-                                <ListIcon fontSize="small" />
-                            </IconButton>
-                            </Tooltip>
+                        <TableRow
+                            key={`${item.nome}-${globalIndex}`}
+                            selected={isSelected}
+                            hover
+                        >
+                            <TableCell padding="checkbox">
+                                <Checkbox
+                                    checked={isSelected}
+                                    onChange={(e) =>
+                                        handleSelectItem(globalIndex, e.target.checked)
+                                    }
+                                />
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>{item.nome}</TableCell>
+                            <TableCell>{item.tipo}</TableCell>
+                            <TableCell>{item.armazem}</TableCell>
+                            <TableCell>{item.ean}</TableCell>
+                            <TableCell>{item.quantidade}</TableCell>
+                            <TableCell align="center">
+                                <Box display="flex" justifyContent="center" gap={1}>
+                                    <Tooltip title="Ver produtos">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                                alert(`Ver produtos em ${item.nome}`)
+                                            }
+                                        >
+                                            <ListIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
 
-                            <Tooltip title="Imprimir etiqueta">
-                            <IconButton
-                                size="small"
-                                onClick={() => handleImprimir(item.nome, item.ean)}
-                            >
-                                <PrintIcon fontSize="small" />
-                            </IconButton>
-                            </Tooltip>
+                                    <Tooltip title="Imprimir etiqueta">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                                handleImprimir(item.nome, item.ean, item.tipo)
+                                            }
+                                        >
+                                            <PrintIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
 
-                            <Tooltip title="Excluir localização">
-                            <IconButton
-                                size="small"
-                                onClick={() => handleExcluir(globalIndex)}
-                                disabled={item.quantidade > 0}
-                                sx={{
-                                color: item.quantidade > 0 ? 'text.disabled' : 'error.main',
-                                '&:hover': {
-                                    backgroundColor: item.quantidade > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)'
-                                }
-                                }}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                            </Tooltip>
-                        </Box>
-                        </TableCell>
-                    </TableRow>
+                                    <Tooltip title="Excluir localização">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => handleExcluir(item.localizacao_id, item.nome, item.quantidade)}
+                                            disabled={item.quantidade > 0}
+                                            sx={{
+                                                color:
+                                                    item.quantidade > 0
+                                                        ? 'text.disabled'
+                                                        : 'error.main',
+                                                '&:hover': {
+                                                    backgroundColor:
+                                                        item.quantidade > 0
+                                                            ? 'transparent'
+                                                            : 'rgba(211, 47, 47, 0.1)'
+                                                }
+                                            }}
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>
+                            </TableCell>
+                        </TableRow>
                     );
                 })
-                ) : (
+            ) : (
                 <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body1" color="text.secondary">
-                        Nenhuma localização encontrada.
-                    </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            Nenhuma localização encontrada.
+                        </Typography>
                     </TableCell>
                 </TableRow>
-                )}
-            </TableBody>
-            </Table>
-        </TableContainer>
-    </Layout>
+            )}
+        </TableBody>
+    </Table>
+</Layout>
+
   );
 };
 
