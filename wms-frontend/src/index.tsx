@@ -12,7 +12,7 @@ import Login from "./pages/Login";
 
 import Localizacao from "./pages/Localizacao";
 import CriarLocalizacao from "./pages/CriarLocalizacao";
-import Layout from "./components/Layout";
+// import Layout from "./components/Layout";
 import theme from './components/Theme';
 import CriarArmazem from "./pages/CriarArmazem";
 import EditarLocalizacao from "./pages/EditarLocalizacao"
@@ -38,13 +38,14 @@ root.render(
           {/* Login sem menu lateral */}
           <Route path="/login" element={<Login />} />
           {/* Páginas internas com Sidebar */}
+          {/* Páginas de localização */}
+          <Route path="/localizacao" element={<Localizacao />} />
+          <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
+          <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
+
           <Route path="/armazem" element={<Sidebar><Armazem /></Sidebar>} />
-          <Route path="/localizacao" element={<Sidebar><Localizacao /></Sidebar>} />
           <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
           <Route path="/EditarArmazem/:id" element={<Sidebar><EditarArmazem /></Sidebar>} />
-          <Route path="/CriarLocalizacao" element={<Sidebar><CriarLocalizacao /></Sidebar>} />
-          <Route path="/localizacao/:id/editar" element={<Sidebar><EditarLocalizacao /></Sidebar>} />
-          <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

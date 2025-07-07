@@ -18,6 +18,7 @@ import {
 } from '../services/API';
 
 import prateleira from '../img/7102305.png';
+import Layout from '../components/Layout';
 
 // Tipagens vindas (ou equivalentes) do serviço ---------------------------
 interface TipoLocalizacao {
@@ -108,156 +109,152 @@ const CriarLocalizacao: React.FC = () => {
   // Render
   //------------------------------------------------------------------
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pb: 12, marginRight: 150 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Nova Localização
-      </Typography>
-
-      <Divider sx={{ mb: 3 }} />
-
-      <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
-        <TextField
-          label="Nome Localização"
-          fullWidth
-          value={formData.nome}
-          onChange={(e) => handleChange('nome', e.target.value)}
-        />
-
-        <Box display="flex" gap={2} flexWrap="wrap" width="100%">
-          {/* Seleção de Tipo */}
-          <TextField
-            select
-            label="Tipo"
-            fullWidth
-            sx={{ flex: 1 }}
-            value={formData.tipo}
-            onChange={(e) => handleChange('tipo', e.target.value)}
-          >
-            {tipos.length > 0 ? (
-              tipos.map((tipo) => (
-                <MenuItem key={tipo.tipo_localizacao_id} value={tipo.tipo}>
-                  {tipo.tipo}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>Nenhum tipo encontrado</MenuItem>
-            )}
-          </TextField>
-
-          {/* Seleção de Armazém (opcional / informativo) */}
-          <TextField
-            select
-            label="Armazém"
-            fullWidth
-            sx={{ flex: 1 }}
-            value={formData.armazemId}
-            onChange={(e) => handleChange('armazemId', e.target.value)}
-          >
-            {armazens.length > 0 ? (
-              armazens.map((ar) => (
-                <MenuItem key={ar.armazem_id} value={String(ar.armazem_id)}>
-                  {ar.nome}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>Nenhum armazém encontrado</MenuItem>
-            )}
-          </TextField>
-        </Box>
-
-        <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
-          Dimensões
+    <Layout>
+      <Container>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+            Criar Localização
         </Typography>
 
-        <Box display="flex" alignItems="center" gap={3}>
-          <Box display="flex" gap={2}>
-            {['largura', 'altura', 'comprimento'].map((field, idx) => (
-              <TextField
-                key={field}
-                label={field.charAt(0).toUpperCase() + field.slice(1)}
-                type="number"
-                value={(formData as any)[field]}
-                onChange={(e) => {
-                  const valor = e.target.value;
-                  // Bloqueia hífen e caracteres não numéricos (exceto ponto)
-                  if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
-                    handleChange(field, valor);
-                  }
-                }}
+        <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
+          <TextField
+            label="Nome Localização"
+            fullWidth
+            value={formData.nome}
+            onChange={(e) => handleChange('nome', e.target.value)}
+          />
 
-                inputProps={{
-                  min: 0,
-                  step: 'any',
-                  inputMode: 'decimal',
-                }}
-                InputProps={{
-                  endAdornment: <span>cm</span>,
-                }}
-                sx={{
-                  width: 130 + (idx === 2 ? 40 : 0),
-                  '& input[type=number]': {
-                    MozAppearance: 'textfield',
-                  },
-                  '& input[type=number]::-webkit-outer-spin-button': {
-                    WebkitAppearance: 'none',
-                    margin: 0,
-                  },
-                  '& input[type=number]::-webkit-inner-spin-button': {
-                    WebkitAppearance: 'none',
-                    margin: 0,
-                  },
-                }}
-              />
-            ))}
+          <Box display="flex" gap={2} flexWrap="wrap" width="100%">
+            {/* Seleção de Tipo */}
+            <TextField
+              select
+              label="Tipo"
+              fullWidth
+              sx={{ flex: 1 }}
+              value={formData.tipo}
+              onChange={(e) => handleChange('tipo', e.target.value)}
+            >
+              {tipos.length > 0 ? (
+                tipos.map((tipo) => (
+                  <MenuItem key={tipo.tipo_localizacao_id} value={tipo.tipo}>
+                    {tipo.tipo}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>Nenhum tipo encontrado</MenuItem>
+              )}
+            </TextField>
 
-
+            {/* Seleção de Armazém (opcional / informativo) */}
+            <TextField
+              select
+              label="Armazém"
+              fullWidth
+              sx={{ flex: 1 }}
+              value={formData.armazemId}
+              onChange={(e) => handleChange('armazemId', e.target.value)}
+            >
+              {armazens.length > 0 ? (
+                armazens.map((ar) => (
+                  <MenuItem key={ar.armazem_id} value={String(ar.armazem_id)}>
+                    {ar.nome}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>Nenhum armazém encontrado</MenuItem>
+              )}
+            </TextField>
           </Box>
-          <Box display="flex" alignItems="center" justifyContent="flex-start">
-            <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
+
+          <Typography variant="subtitle1" mt={4} mb={2} fontWeight="bold">
+            Dimensões
+          </Typography>
+
+          <Box display="flex" alignItems="center" gap={3}>
+            <Box display="flex" gap={2}>
+              {['largura', 'altura', 'comprimento'].map((field, idx) => (
+                <TextField
+                  key={field}
+                  label={field.charAt(0).toUpperCase() + field.slice(1)}
+                  type="number"
+                  value={(formData as any)[field]}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    // Bloqueia hífen e caracteres não numéricos (exceto ponto)
+                    if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
+                      handleChange(field, valor);
+                    }
+                  }}
+
+                  inputProps={{
+                    min: 0,
+                    step: 'any',
+                    inputMode: 'decimal',
+                  }}
+                  InputProps={{
+                    endAdornment: <span>cm</span>,
+                  }}
+                  sx={{
+                    width: 130 + (idx === 2 ? 40 : 0),
+                    '& input[type=number]': {
+                      MozAppearance: 'textfield',
+                    },
+                    '& input[type=number]::-webkit-outer-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                    '& input[type=number]::-webkit-inner-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                  }}
+                />
+              ))}
+
+
+            </Box>
+            <Box display="flex" alignItems="center" justifyContent="flex-start">
+              <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
+            </Box>
           </Box>
         </Box>
-      </Box>
 
-      <Divider sx={{ mt: 20, mb: 3 }} />
+        <Divider sx={{ mt: 20, mb: 3 }} />
 
-      <Box
-        sx={{
-          marginRight: 30,
-          bottom: 20,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 2,
-        }}
-      >
-        <Button
-          variant="contained"
-          onClick={handleSalvar}
+        <Box
           sx={{
-            backgroundColor: '#59e60d',
-            color: '#000',
-            fontWeight: 'bold',
-            px: 6,
-            '&:hover': { backgroundColor: '#48c307' },
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 2,
           }}
         >
-          SALVAR
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => navigate('/localizacao')}
-          sx={{
-            backgroundColor: '#f2f2f2',
-            fontWeight: 'bold',
-            color: '#333',
-            px: 6,
-          }}
-        >
-          CANCELAR
-        </Button>
-      </Box>
-    </Container>
+          <Button
+            variant="contained"
+            onClick={handleSalvar}
+            sx={{
+              backgroundColor: '#59e60d',
+              color: '#000',
+              fontWeight: 'bold',
+              px: 6,
+              '&:hover': { backgroundColor: '#48c307' },
+            }}
+          >
+            SALVAR
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/localizacao')}
+            sx={{
+              backgroundColor: '#f2f2f2',
+              fontWeight: 'bold',
+              color: '#333',
+              px: 6,
+            }}
+          >
+            CANCELAR
+          </Button>
+        </Box>
+      </Container>
+    </Layout>
   );
 };
 
