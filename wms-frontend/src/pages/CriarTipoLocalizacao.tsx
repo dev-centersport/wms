@@ -67,7 +67,7 @@ const CriarTipo: React.FC = () => {
 
         <Button
           variant="outlined"
-          onClick={() => navigate('/tipo-localizacao')}
+          onClick={() => navigate('/TipoLocalizacao')}
           sx={{
             backgroundColor: '#f2f2f2',
             fontWeight: 'bold',

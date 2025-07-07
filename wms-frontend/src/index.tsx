@@ -48,8 +48,8 @@ root.render(
           <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
 
           {/* Páginas de Armazém */}
-          <Route path="/armazem" element={<Sidebar><Armazem /></Sidebar>} />
-          <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
+          <Route path="/armazem" element={<Armazem />} />
+          <Route path="/CriarArmazem" element={<CriarArmazem />} />
           <Route path="/EditarArmazem/:id" element={<Sidebar><EditarArmazem /></Sidebar>} />
 
           {/* Páginas de Tipo de localização */}

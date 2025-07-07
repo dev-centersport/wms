@@ -134,60 +134,120 @@ const ArmazemPage: React.FC = () => {
 
   return (
     <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+      {/* Título principal */}
+      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+        Armazém
+      </Typography>
+
+      {/* Barra de ações */}
       <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
         <TextField
           placeholder="Buscar Armazém ou Endereço"
           variant="outlined"
+          size="small"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
+          }}
           sx={{ maxWidth: 480, width: 380 }}
         />
 
-        <Button variant="outlined" startIcon={<FilterListIcon />} sx={{ minWidth: 110 }} onClick={handleMenuOpen}>
+        <Button
+          variant="outlined"
+          startIcon={<FilterListIcon />}
+          sx={{ minWidth: 110 }}
+          onClick={handleMenuOpen}
+        >
           Filtro
         </Button>
 
+        {/* Menu de filtros */}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <Box sx={{ p: 2, width: 300 }}>
-            <TextField select label="Armazém" value={filtroNome} onChange={(e) => setFiltroNome(e.target.value)} sx={{ minWidth: '100%' }}>
+            <TextField
+              select
+              label="Armazém"
+              value={filtroNome}
+              onChange={(e) => setFiltroNome(e.target.value)}
+              sx={{ minWidth: "100%" }}
+            >
               <MenuItem value="">Todos</MenuItem>
               {nomes.map((n) => (
-                <MenuItem key={n} value={n}>{n}</MenuItem>
+                <MenuItem key={n} value={n}>
+                  {n}
+                </MenuItem>
               ))}
             </TextField>
 
-            <TextField select label="Endereço" value={filtroEndereco} onChange={(e) => setFiltroEndereco(e.target.value)} sx={{ minWidth: '100%', mt: 2 }}>
+            <TextField
+              select
+              label="Endereço"
+              value={filtroEndereco}
+              onChange={(e) => setFiltroEndereco(e.target.value)}
+              sx={{ minWidth: "100%", mt: 2 }}
+            >
               <MenuItem value="">Todos</MenuItem>
               {enderecos.map((e) => (
-                <MenuItem key={e} value={e}>{e}</MenuItem>
+                <MenuItem key={e} value={e}>
+                  {e}
+                </MenuItem>
               ))}
             </TextField>
 
-            <Button variant="outlined" onClick={handleAplicarFiltro} sx={{ mt: 2, width: '100%' }}>Aplicar Filtro</Button>
+            <Button
+              variant="outlined"
+              onClick={handleAplicarFiltro}
+              sx={{ mt: 2, width: "100%" }}
+            >
+              Aplicar Filtro
+            </Button>
+
             {(filtroEndereco || filtroNome) && (
-              <Button variant="outlined" onClick={handleLimparFiltros} sx={{ mt: 2, width: '100%' }}>Limpar filtros</Button>
+              <Button
+                variant="outlined"
+                onClick={handleLimparFiltros}
+                sx={{ mt: 2, width: "100%" }}
+              >
+                Limpar filtros
+              </Button>
             )}
           </Box>
         </Menu>
 
+        {/* Botão limpar filtros fora do menu */}
         {(filtroEndereco || filtroNome) && (
-          <Button variant="outlined" onClick={handleLimparFiltros} sx={{ minWidth: 130, ml: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={handleLimparFiltros}
+            sx={{ minWidth: 130, ml: 1 }}
+          >
             Limpar Filtros
           </Button>
         )}
 
+        {/* Botão novo armazém */}
         <Button
           variant="contained"
-          onClick={() => navigate('/CriarArmazem')}
-          sx={{ backgroundColor: '#59e60d', color: '#000', fontWeight: 'bold' }}
+          onClick={() => navigate("/CriarArmazem")}
+          sx={{
+            backgroundColor: "#59e60d",
+            color: "#000",
+            fontWeight: "bold",
+            minWidth: 165,
+            "&:hover": { backgroundColor: "#48c307" }
+          }}
           startIcon={<AddIcon />}
         >
           Novo Armazém
         </Button>
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
+      {/* Tabela principal */}
+      <TableContainer
+        component={Paper}
+        sx={{ borderRadius: 2, maxHeight: 600, overflow: "auto" }}
+      >
         <Table stickyHeader>
           <TableHead>
             <TableRow>
@@ -198,10 +258,12 @@ const ArmazemPage: React.FC = () => {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </TableCell>
-              <TableCell>Armazém</TableCell>
-              <TableCell>Capacidade</TableCell>
-              <TableCell>Endereço</TableCell>
-              <TableCell align="center">Ações</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Capacidade</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Endereço</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 600 }}>
+                Ações
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -209,23 +271,34 @@ const ArmazemPage: React.FC = () => {
               currentItems.map((item, idx) => {
                 const originalIdx = currentIndices[idx];
                 const isSelected = selectedItems.includes(originalIdx);
+
                 return (
                   <TableRow key={item.armazem_id} selected={isSelected} hover>
                     <TableCell padding="checkbox">
-                      <Checkbox checked={isSelected} onChange={(e) => handleSelectItem(originalIdx, e.target.checked)} />
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={(e) => handleSelectItem(originalIdx, e.target.checked)}
+                      />
                     </TableCell>
-                    <TableCell>{item.nome}</TableCell>
-                    <TableCell>{item.capacidade ?? '-'}</TableCell>
+
+                    <TableCell
+                      sx={{ fontWeight: 500, cursor: "pointer" }}
+                      onClick={() => navigate(`/EditarArmazem/${item.armazem_id}`)}
+                    >
+                      {item.nome}
+                    </TableCell>
+
+                    <TableCell>{item.capacidade ?? "-"}</TableCell>
                     <TableCell>{item.endereco}</TableCell>
                     <TableCell align="center">
                       <Tooltip title="Editar armazém">
                         <IconButton onClick={() => navigate(`/EditarArmazem/${item.armazem_id}`)}>
-                          <EditIcon />
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Excluir armazém">
                         <IconButton onClick={() => handleExcluir(item.armazem_id)}>
-                          <DeleteIcon />
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </TableCell>
@@ -234,8 +307,10 @@ const ArmazemPage: React.FC = () => {
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={5} align="center">
-                  Nenhum resultado encontrado.
+                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body1" color="text.secondary">
+                    Nenhum resultado encontrado.
+                  </Typography>
                 </TableCell>
               </TableRow>
             )}
@@ -244,6 +319,5 @@ const ArmazemPage: React.FC = () => {
       </TableContainer>
     </Layout>
   );
-};
-
+}
 export default ArmazemPage;
