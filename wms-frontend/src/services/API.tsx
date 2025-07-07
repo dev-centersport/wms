@@ -84,6 +84,44 @@ export interface Localizacao {
   ean: string;
   endereco: string;
 }
+export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/tipo-localizacao/${id}`);
+  } catch (err) {
+    console.error('Erro ao excluir tipo de localização:', err);
+    throw new Error('Falha ao excluir o tipo de localização.');
+  }
+};
+
+export const buscarTipoLocalizacao = async (id: number): Promise<TipoLocalizacao> => {
+  try {
+    const { data } = await api.get(`/tipo-localizacao/${id}`);
+    return data;
+  } catch (err) {
+    console.error('Erro ao buscar tipo de localização:', err);
+    throw new Error('Falha ao carregar o tipo de localização.');
+  }
+};
+export const atualizarTipoLocalizacao = async (id: number, payload: { tipo: string }): Promise<void> => {
+  try {
+    await api.patch(`/tipo-localizacao/${id}`, payload);
+  } catch (err) {
+    console.error('Erro ao atualizar tipo de localização:', err);
+    throw new Error('Falha ao atualizar tipo de localização.');
+  }
+};
+export const criarTipoLocalizacao = async (payload: { tipo: string }): Promise<void> => {
+  try {
+    await api.post(`/tipo-localizacao`, payload);
+  } catch (err) {
+    console.error('Erro ao criar tipo de localização:', err);
+    throw new Error('Falha ao criar tipo de localização.');
+  }
+};
+
+
+
+
 
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
