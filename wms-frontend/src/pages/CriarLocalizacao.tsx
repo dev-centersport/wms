@@ -41,7 +41,7 @@ const CriarLocalizacao: React.FC = () => {
   const [formData, setFormData] = useState({
     nome: '',
     tipo: '', // agora armazenamos o texto do tipo, não o ID
-    armazemId: '', // permanece para UI, mas não é enviado no serviço (o serviço usa o primeiro armazém)
+    armazem: '', // permanece para UI, mas não é enviado no serviço (o serviço usa o primeiro armazém)
     largura: '',
     altura: '',
     comprimento: '',
@@ -91,10 +91,11 @@ const CriarLocalizacao: React.FC = () => {
       await criarLocalizacaoAPI({
         nome: formData.nome,
         status: 'fechada',
-        tipo: formData.tipo,
         altura: formData.altura === '' ? '0' : String(formData.altura),
         largura: formData.largura === '' ? '0' : String(formData.largura),
         comprimento: formData.comprimento === '' ? '0' : String(formData.comprimento),
+        tipo: formData.tipo,
+        armazem: formData.armazem,
       });
 
       alert('Localização criada com sucesso!');
@@ -150,12 +151,12 @@ const CriarLocalizacao: React.FC = () => {
               label="Armazém"
               fullWidth
               sx={{ flex: 1 }}
-              value={formData.armazemId}
-              onChange={(e) => handleChange('armazemId', e.target.value)}
+              value={formData.armazem}
+              onChange={(e) => handleChange('armazem', e.target.value)}
             >
               {armazens.length > 0 ? (
                 armazens.map((ar) => (
-                  <MenuItem key={ar.armazem_id} value={String(ar.armazem_id)}>
+                  <MenuItem key={ar.armazem_id} value={ar.nome}>
                     {ar.nome}
                   </MenuItem>
                 ))
