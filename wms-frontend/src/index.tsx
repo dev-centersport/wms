@@ -53,9 +53,9 @@ root.render(
           <Route path="/EditarArmazem/:id" element={<Sidebar><EditarArmazem /></Sidebar>} />
 
           {/* Páginas de Tipo de localização */}
-          <Route path="/TipoLocalizacao" element={<Sidebar><TipoLocalizacao></TipoLocalizacao></Sidebar>}/>
-          <Route path="/tipo-localizacao/:id/editar" element={<Sidebar><EditarTipoLocalizacao /></Sidebar>} />
-          <Route path="/CriarTipoLocalizacao" element={<Sidebar><CriarTipoLocalizacao /></Sidebar>} />
+          <Route path="/TipoLocalizacao" element={<TipoLocalizacao />}/>
+          <Route path="/tipo-localizacao/:id/editar" element={<EditarTipoLocalizacao />} />
+          <Route path="/CriarTipoLocalizacao" element={<CriarTipoLocalizacao />} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />
