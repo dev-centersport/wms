@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { buscarArmazem, atualizarArmazem } from '../services/API';
-import caixa from '../img/7102305.png';
+import armazem from '../img/armazem.png';
 import Layout from '../components/Layout';
 
 const EditarArmazem: React.FC = () => {
@@ -152,7 +152,7 @@ const EditarArmazem: React.FC = () => {
               ))}
             </Box>
             <Box display="flex" alignItems="center" justifyContent="flex-start">
-              <img src={caixa} alt="Caixa" style={{ width: 90, height: 'auto' }} />
+            <img src={armazem} alt="Armazém" style={{ width: 90, height: 'auto', marginBottom: 20, marginLeft: 10 }} />
             </Box>
           </Box>
         </Box>
