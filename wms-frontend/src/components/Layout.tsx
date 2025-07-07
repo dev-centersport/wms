@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import Sidebar from './Sidebar';
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -48,7 +48,6 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
-      <Sidebar />
       <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1, p: 3 }}>{children}</Box>
 
