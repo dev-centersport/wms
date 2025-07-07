@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box, Button, Checkbox, IconButton, Paper, Table, TableBody, TableCell,
-  TableHead, TableRow, TextField
+  TableHead, TableRow, TextField, Typography
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
@@ -62,12 +62,18 @@ const TipoLocalizacaoPage: React.FC = () => {
 
   return (
     <Layout currentPage={paginaAtual} totalPages={totalPaginas} onPageChange={setPaginaAtual}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          Tipo de Localização
+      </Typography>
+
+      <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
         <TextField
           placeholder="Busca"
+          variant='outlined'
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           size="small"
+          sx={{ maxWidth: 480, width: 380 }}
         />
         <Button
           variant="contained"
