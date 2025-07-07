@@ -47,15 +47,15 @@ root.render(
           <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
           <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
 
+          {/* Páginas de Armazém */}
           <Route path="/armazem" element={<Sidebar><Armazem /></Sidebar>} />
           <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
           <Route path="/EditarArmazem/:id" element={<Sidebar><EditarArmazem /></Sidebar>} />
+
+          {/* Páginas de Tipo de localização */}
           <Route path="/TipoLocalizacao" element={<Sidebar><TipoLocalizacao></TipoLocalizacao></Sidebar>}/>
           <Route path="/tipo-localizacao/:id/editar" element={<Sidebar><EditarTipoLocalizacao /></Sidebar>} />
           <Route path="/CriarTipoLocalizacao" element={<Sidebar><CriarTipoLocalizacao /></Sidebar>} />
-          <Route path="/CriarLocalizacao" element={<Sidebar><CriarLocalizacao /></Sidebar>} />
-          <Route path="/localizacao/:id/editar" element={<Sidebar><EditarLocalizacao /></Sidebar>} />
-          <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />
