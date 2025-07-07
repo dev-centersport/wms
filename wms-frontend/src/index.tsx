@@ -15,8 +15,6 @@ import CriarLocalizacao from "./pages/CriarLocalizacao";
 import Layout from "./components/Layout";
 import theme from './components/Theme';
 import CriarArmazem from "./pages/CriarArmazem";
-import EditarLocalizacao from "./pages/EditarLocalizacao"
-
 
 
 const container = document.getElementById("root");
@@ -38,9 +36,14 @@ root.render(
           {/* Páginas internas com Sidebar */}
           <Route path="/armazem" element={<Armazem />} />
           <Route path="/localizacao" element={<Localizacao />} />
+<<<<<<< HEAD
           <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
           <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
           <Route path="/CriarArmazem" element={<CriarArmazem />} />
+=======
+          <Route path="/CriarLocalizacao" element={<Layout><CriarLocalizacao /></Layout>} />
+          <Route path="/CriarArmazem" element={<Layout><CriarArmazem /></Layout>} />
+>>>>>>> parent of e8435f0 (localizacaocompleta)
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />
