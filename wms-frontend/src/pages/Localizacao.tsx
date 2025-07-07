@@ -569,12 +569,12 @@ const Localizacao: React.FC = () => {
                                     onChange={(e) => handleSelectAll(e.target.checked)}
                                 />
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Nome</TableCell>
-                            <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Tipo</TableCell>
-                            <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Armazém</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>EAN</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Quantidade</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Ações</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>EAN</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
