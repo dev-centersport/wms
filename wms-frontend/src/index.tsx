@@ -17,6 +17,10 @@ import theme from './components/Theme';
 import CriarArmazem from "./pages/CriarArmazem";
 import EditarLocalizacao from "./pages/EditarLocalizacao"
 import EditarArmazem from "./pages/EditarArmazem"
+import  TipoLocalizacao  from "./pages/TipoLocalizacao";
+import CriarTipoLocalizacao from "./pages/CriarTipoLocalizacao";
+import EditarTipoLocalizacao from "./pages/EditarTipoLocalizacao";
+
 import Sidebar from "./components/Sidebar";
 
 
@@ -46,6 +50,12 @@ root.render(
           <Route path="/armazem" element={<Sidebar><Armazem /></Sidebar>} />
           <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
           <Route path="/EditarArmazem/:id" element={<Sidebar><EditarArmazem /></Sidebar>} />
+          <Route path="/TipoLocalizacao" element={<Sidebar><TipoLocalizacao></TipoLocalizacao></Sidebar>}/>
+          <Route path="/tipo-localizacao/:id/editar" element={<Sidebar><EditarTipoLocalizacao /></Sidebar>} />
+          <Route path="/CriarTipoLocalizacao" element={<Sidebar><CriarTipoLocalizacao /></Sidebar>} />
+          <Route path="/CriarLocalizacao" element={<Sidebar><CriarLocalizacao /></Sidebar>} />
+          <Route path="/localizacao/:id/editar" element={<Sidebar><EditarLocalizacao /></Sidebar>} />
+          <Route path="/CriarArmazem" element={<Sidebar><CriarArmazem /></Sidebar>} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

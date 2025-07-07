@@ -13,6 +13,7 @@ import {
 import SpeedIcon from '@mui/icons-material/Speed';
 import HomeIcon from '@mui/icons-material/Home';
 import RoomIcon from '@mui/icons-material/Room';
+import CategoryIcon from '@mui/icons-material/Category';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import SearchIcon from '@mui/icons-material/Search';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
@@ -20,16 +21,16 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 
 const menuItems = [
-  { label: 'Dashboard',     icon: <SpeedIcon />,         path: '/dashboard' },
-  { label: 'Armazém',       icon: <HomeIcon />,          path: '/armazem' },
-  { label: 'Localização',   icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Produto',       icon: <InventoryIcon />,     path: '/produto' },
-  { label: 'Consulta',      icon: <SearchIcon />,        path: '/consulta' },
-  { label: 'Movimentação',  icon: <WorkspacesIcon />,    path: '/movimentacao' },
-  { label: 'Ocorrência',    icon: <ReportProblemIcon />, path: '/ocorrencias' },
-  { label: 'Auditoria',     icon: <ThumbUpIcon />,       path: '/auditoria' },
+  { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
+  { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
+  { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
+  { label: 'Tipo de Localização', icon: <CategoryIcon />,      path: '/TipoLocalizacao' }, // ⬅️ Novo item
+  { label: 'Produto',             icon: <InventoryIcon />,     path: '/produto' },
+  { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
+  { label: 'Movimentação',        icon: <WorkspacesIcon />,    path: '/movimentacao' },
+  { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
 ];
-
 // ✅ Adicione essa interface
 interface SidebarProps {
   children: React.ReactNode;
