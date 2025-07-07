@@ -11,6 +11,7 @@ import {
   Checkbox,
   IconButton,
   Button,
+  Typography,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -81,14 +82,18 @@ const ArmazemPage: React.FC = () => {
 
   return (
     <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          Armazém
+      </Typography>
       {/* Barra superior: busca + botão */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
         <TextField
           placeholder="Busca"
-          size="small"
+          variant='outlined'
+          size='small'
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          sx={{ width: 300 }}
+          sx={{ maxWidth: 480, width: 380 }}
         />
 
         <Button
