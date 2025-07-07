@@ -92,9 +92,9 @@ const CriarLocalizacao: React.FC = () => {
         nome: formData.nome,
         status: 'fechada',
         tipo: formData.tipo,
-        altura: formData.altura,
-        largura: formData.largura,
-        comprimento: formData.comprimento,
+        altura: formData.altura === '' ? '0' : String(formData.altura),
+        largura: formData.largura === '' ? '0' : String(formData.largura),
+        comprimento: formData.comprimento === '' ? '0' : String(formData.comprimento),
       });
 
       alert('Localização criada com sucesso!');
@@ -175,6 +175,7 @@ const CriarLocalizacao: React.FC = () => {
                 <TextField
                   key={field}
                   label={field.charAt(0).toUpperCase() + field.slice(1)}
+                  placeholder='0'
                   type="number"
                   value={(formData as any)[field]}
                   onChange={(e) => {
