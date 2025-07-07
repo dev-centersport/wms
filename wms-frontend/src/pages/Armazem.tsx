@@ -258,9 +258,9 @@ const ArmazemPage: React.FC = () => {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Capacidade</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Endereço</TableCell>
+              <TableCell align="left" sx={{ fontWeight: 600 }}>Armazém</TableCell>
+              <TableCell align="left" sx={{ fontWeight: 600 }}>Capacidade</TableCell>
+              <TableCell align="left" sx={{ fontWeight: 600 }}>Endereço</TableCell>
               <TableCell align="center" sx={{ fontWeight: 600 }}>
                 Ações
               </TableCell>
@@ -282,13 +282,16 @@ const ArmazemPage: React.FC = () => {
                     </TableCell>
 
                     <TableCell
+                      align='left'
                       sx={{ fontWeight: 500, cursor: "pointer" }}
                       onClick={() => navigate(`/EditarArmazem/${item.armazem_id}`)}
                     >
                       {item.nome}
                     </TableCell>
 
-                    <TableCell>{item.capacidade ?? "-"}</TableCell>
+                    <TableCell align="left" sx={{ pl: "55px" }}>
+                      {item.capacidade ?? "-"}
+                    </TableCell>
                     <TableCell>{item.endereco}</TableCell>
                     <TableCell align="center">
                       <Tooltip title="Editar armazém">
