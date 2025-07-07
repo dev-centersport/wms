@@ -111,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
       </Drawer>
 
       {/* ✅ Aqui o conteúdo principal da página */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Box component="main" width="100%">
         {children}
       </Box>
     </Box>
