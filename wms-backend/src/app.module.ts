@@ -53,7 +53,7 @@ import { UsuarioModule } from './usuario/usuario.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
+        host: config.get<string>('DB_HOST', '192.168.2.41'),
         port: config.get<number>('DB_PORT', 5433),
         username: config.get<string>('DB_USERNAME', 'admin'),
         password: config.get<string>('DB_PASSWORD', 'senha123'),
