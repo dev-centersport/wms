@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, CloudUpload, Refresh } from '@mui/icons-material';
 
+
 import Layout from '../components/Layout';
 import { buscarProdutos } from '../services/API'; // crie essa função no backend se ainda não tiver
 
