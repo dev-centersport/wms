@@ -1,9 +1,11 @@
+import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -33,4 +35,7 @@ export class Usuario {
   @ManyToOne(() => Perfil, (perfil) => perfil.usuarios)
   @JoinColumn()
   perfil: Perfil;
+
+  @OneToMany(() => Movimentacao, (movimentacao) => movimentacao.usuario)
+  movimentacoes: Movimentacao[];
 }
