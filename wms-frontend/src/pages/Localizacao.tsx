@@ -132,9 +132,12 @@ const Localizacao: React.FC = () => {
         /* 3. Transformação do nome para Prateleira                           */
         /* ------------------------------------------------------------------ */
         const nomeImpresso = isPrateleira
-            ? localizacao.replace(/^.*?A/, 'A')       // elimina tudo antes do 'A'
+            ? localizacao.replace(/^.*?#/, '')
             : localizacao;
 
+
+
+        
         /* ------------------------------------------------------------------ */
         /* 4. Estilos condicionais                                            */
         /* ------------------------------------------------------------------ */
@@ -195,7 +198,7 @@ const Localizacao: React.FC = () => {
                 let tamanho   = ${fontNome.replace('px', '')};
 
                 if (texto.length > 8)      tamanho = 50;
-                else if (texto.length > 6) tamanho = 65;
+                else if (texto.length > 6) tamanho = 90;
 
                 nomeEl.style.fontSize = tamanho + 'px';
 
@@ -220,103 +223,133 @@ const Localizacao: React.FC = () => {
     };
 
 
-    const handleImprimirSelecionados = () => {
-        if (!selectedItems.length) {
-            alert('Selecione pelo menos uma localização.');
-            return;
+    /* ------------------------------------------------------------------ */
+/* Substitua a função handleImprimirSelecionados pelo código abaixo   */
+/* ------------------------------------------------------------------ */
+const handleImprimirSelecionados = () => {
+  // 1. Se nenhum item estiver selecionado, seleciona todas as "Prateleiras"
+  let indicesParaImprimir = selectedItems;
+  if (!indicesParaImprimir.length) {
+    indicesParaImprimir = listaLocalizacoes
+      .map((loc, idx) =>
+        loc.tipo.toLowerCase().includes('prateleira') ? idx : -1
+      )
+      .filter((idx) => idx !== -1);
+
+    setSelectedItems(indicesParaImprimir);
+    setSelectAll(false);
+  }
+
+  if (!indicesParaImprimir.length) {
+    alert('Nenhuma localização do tipo “Prateleira” encontrada.');
+    return;
+  }
+
+  // 2. Verifica se todos os tipos são iguais
+  const tiposSelecionados = indicesParaImprimir.map(
+    (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+  );
+  const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
+  if (!tipoUnico) {
+    alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+    return;
+  }
+
+  const tipoAtual = tiposSelecionados[0];
+  const isCaixa = tipoAtual.includes('caixa');
+  const isPrateleira = tipoAtual.includes('prateleira');
+
+  const pageWidth = '150mm';
+  const pageHeight = '100mm';
+
+  const w = window.open('', '_blank');
+  if (!w) return;
+
+  // Cabeçalho e estilos
+  w.document.write(`
+    <html>
+    <head>
+      <title>Etiquetas</title>
+      <style>
+        @page { size: ${pageWidth} ${pageHeight}; margin: 0; }
+        body {
+          margin: 0;
+          padding: 0;
+          font-family: Arial, sans-serif;
         }
-
-        /* --------- 1. verifica se todos os selecionados têm o MESMO tipo ---------- */
-        const tiposSelecionados = selectedItems.map(
-            (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
-        );
-        const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
-        if (!tipoUnico) {
-            alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
-            return;
+        .etiqueta {
+          width: ${pageWidth};
+          height: ${isCaixa ? pageHeight : '50mm'};
+          display: flex;
+          flex-direction: column;
+          justify-content: ${isPrateleira ? 'flex-start' : 'center'};
+          align-items: center;
         }
+        .nome {
+          margin: ${isPrateleira ? '-3mm' : '0'};
+          font-weight: bold;
+          line-height: 1;
+          text-align: center;
+          width: 100%;
+        }
+        .barcode {
+          width: 90%;
+          margin-top: 4mm;
+        }
+      </style>
+    </head>
+    <body>
+  `);
 
-        const tipoAtual = tiposSelecionados[0];
-        const isCaixa = tipoAtual.includes('caixa');
-        const isPrateleira = tipoAtual.includes('prateleira');
+  // Conteúdo de cada etiqueta
+  indicesParaImprimir.forEach((idx, i) => {
+    const item = listaLocalizacoes[idx];
+    const nomeLimpo = isPrateleira
+      ? item.nome.replace(/^.*?#/, '') // remove tudo até o #
+      : item.nome;
+    const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
 
-        /* ---- 2. dimensões gerais da página (uma para todas, cabe duas de 5 cm) --- */
-        const pageWidth = '150mm';   // 15 cm
-        const pageHeight = '100mm';   // 10 cm
+    w.document.write(`
+      <div class="etiqueta" data-ean="${item.ean}" data-nome="${nomeEscapado}"
+           style="${isCaixa ? 'page-break-after: always;' : ''}">
+        <h1 class="nome" id="nome-${i}">${nomeEscapado}</h1>
+        <svg class="barcode" id="barcode-${i}"></svg>
+      </div>
+    `);
+  });
 
-        const w = window.open('', '_blank');
-        if (!w) return;
+  // Script de renderização + ajuste de fonte
+  w.document.write(`
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+      window.onload = () => {
+        document.querySelectorAll('.etiqueta').forEach((div, index) => {
+          const nome = div.dataset.nome;
+          const ean = div.dataset.ean;
 
-        /* --------------------------- cabeçalho + estilos -------------------------- */
-        w.document.write(`
-            <html>
-            <head>
-                <title>Etiquetas</title>
-                <style>
-                    @page { size: ${pageWidth} ${pageHeight}; margin: 0; }
-                    body   { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-                    .etiqueta {
-                        width: ${pageWidth};
-                        height: ${isCaixa ? pageHeight : '50mm'}; /* prateleira = 5 cm */
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                    }
-                    .nome     { margin: 0; font-weight: bold; line-height: 1; text-align: center; width: 100%; }
-                    .barcode  { width: 90%; margin-top: 4mm; }
-                </style>
-            </head>
-            <body>
-        `);
+          let tamanho = 140;
+          if (nome.length > 8)      tamanho = 50;
+          else if (nome.length > 6) tamanho = 90;
+          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-        /* ----------------------------- conteúdo ---------------------------------- */
-        selectedItems.forEach((idx, i) => {
-            const item = listaLocalizacoes[idx];
-            const nomeEscapado = item.nome.replace(/'/g, "\\'"); // evita quebrar string
-
-            w.document.write(`
-                <div class="etiqueta" data-ean="${item.ean}" data-nome="${nomeEscapado}"
-                    style="${isCaixa ? 'page-break-after: always;' : ''}">
-                    <h1 class="nome" id="nome-${i}">${nomeEscapado}</h1>
-                    <svg class="barcode" id="barcode-${i}"></svg>
-                </div>
-            `);
+          JsBarcode('#barcode-' + index, ean, {
+            format: 'ean13',
+            height: ${isCaixa ? 90 : 20},
+            displayValue: true,
+            fontSize: ${isCaixa ? 22 : 10}
+          });
         });
 
-        /* ------------------- gera códigos + ajusta tamanhos ---------------------- */
-        w.document.write(`
-            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-            <script>
-                window.onload = () => {
-                    document.querySelectorAll('.etiqueta').forEach((div, index) => {
-                        const nome = div.dataset.nome;
-                        const ean  = div.dataset.ean;
+        window.print();
+        window.onafterprint = () => window.close();
+      };
+    </script>
+    </body>
+    </html>
+  `);
 
-                        /* fonte adaptativa simples */
-                        let tamanho = 120;
-                        if (nome.length > 10) tamanho = 50;
-                        else if (nome.length > 6) tamanho = 75;
-                        document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
-
-                        JsBarcode('#barcode-' + index, ean, {
-                            format: 'ean13',
-                            height: ${isCaixa ? 90 : 20},
-                            displayValue: true,
-                            fontSize: ${isCaixa ? 22 : 10}
-                        });
-                    });
-
-                    window.print();
-                    window.onafterprint = () => window.close();
-                };
-            </script>
-            </body>
-            </html>
-        `);
-
-        w.document.close();
-    };
+  w.document.close();
+};
 
 
     /* ------------------------- exclusão ------------------------- */
