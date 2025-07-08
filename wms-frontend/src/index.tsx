@@ -21,6 +21,7 @@ import  TipoLocalizacao  from "./pages/TipoLocalizacao";
 import CriarTipoLocalizacao from "./pages/CriarTipoLocalizacao";
 import EditarTipoLocalizacao from "./pages/EditarTipoLocalizacao";
 import Produto from "./pages/Produto";
+import Consulta from "./pages/consulta";
 
 import Sidebar from "./components/Sidebar";
 
@@ -60,6 +61,8 @@ root.render(
 
           {/* {/ Pagina de Produto} */} 
           <Route path="/Produto" element={<Produto/>} />
+          {/* {/ Pagina de Consulta} */} 
+          <Route path="/Consulta" element={<Consulta/>} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

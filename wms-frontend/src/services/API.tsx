@@ -124,6 +124,18 @@ export async function buscarProdutos() {
 }
 
 
+export async function buscarConsultaEstoque() {
+  const res = await axios.get('http://151.243.0.78:3001/produto-estoque');
+  return res.data.map((item: any) => ({
+    produto_id: item.produto_id,
+    descricao: item.produto?.descricao || '',
+    sku: item.produto?.sku || '',
+    ean: item.produto?.ean || '',
+    armazem: item.localizacao?.armazem?.nome || '',
+    localizacao: item.localizacao?.nome || '',
+    quantidade: item.quantidade || 0,
+  }));
+}
 
 
 
