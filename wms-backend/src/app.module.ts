@@ -12,6 +12,7 @@ import { join } from 'path';
 import { ProdutoEstoqueModule } from './produto_estoque/produto_estoque.module';
 import { PerfilModule } from './perfil/perfil.module';
 import { UsuarioModule } from './usuario/usuario.module';
+import { LogsModule } from './logs/logs.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -72,6 +73,7 @@ import { UsuarioModule } from './usuario/usuario.module';
     ProdutoEstoqueModule,
     PerfilModule,
     UsuarioModule,
+    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
