@@ -308,7 +308,7 @@ const handleImprimirSelecionados = () => {
       ? item.nome.replace(/^.*?#/, '') // remove tudo até o #
       : item.nome;
     const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
-
+   
     w.document.write(`
       <div class="etiqueta" data-ean="${item.ean}" data-nome="${nomeEscapado}"
            style="${isCaixa ? 'page-break-after: always;' : ''}">
@@ -317,7 +317,7 @@ const handleImprimirSelecionados = () => {
       </div>
     `);
   });
-
+            
   // Script de renderização + ajuste de fonte
   w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
