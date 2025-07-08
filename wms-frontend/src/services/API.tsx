@@ -125,7 +125,7 @@ export async function buscarProdutos() {
 
 
 export async function buscarConsultaEstoque() {
-  const res = await axios.get('http://151.243.0.78:3001/produto-estoque');
+  const res = await axios.get('http://192.168.2.41:3001/produto-estoque');
   return res.data.map((item: any) => ({
     produto_id: item.produto_id,
     descricao: item.produto?.descricao || '',
@@ -136,6 +136,7 @@ export async function buscarConsultaEstoque() {
     quantidade: item.quantidade || 0,
   }));
 }
+
 
 
 
