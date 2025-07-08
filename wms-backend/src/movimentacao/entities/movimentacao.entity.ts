@@ -17,7 +17,7 @@ export enum TipoMovimentacao {
 @Entity()
 export class Movimentacao {
   @PrimaryGeneratedColumn()
-  operacao_id: number;
+  movimentacao_id: number;
 
   @Column({
     type: 'enum',
@@ -36,11 +36,17 @@ export class Movimentacao {
   @JoinColumn()
   usuario: Usuario;
 
-  @ManyToOne(() => Localizacao, (localizacao) => localizacao.movimentacoes)
+  @ManyToOne(
+    () => Localizacao,
+    (localizacao) => localizacao.movimentacoes_origem,
+  )
   @JoinColumn()
   localizacao_origem: Localizacao;
 
-  @ManyToOne(() => Localizacao, (localizacao) => localizacao.movimentacoes)
+  @ManyToOne(
+    () => Localizacao,
+    (localizacao) => localizacao.movimentacoes_destino,
+  )
   @JoinColumn()
   localizacao_destino: Localizacao;
 }

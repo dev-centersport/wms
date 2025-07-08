@@ -17,7 +17,7 @@ export class Usuario {
   @Column({ type: 'varchar', length: 150 })
   responsavel: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, unique: true })
   usuario: string;
 
   @Column({ type: 'varchar', length: 100 })

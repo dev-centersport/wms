@@ -18,7 +18,6 @@ content-type: application/json
 {
     "status": "fechada",
     "nome": "BJ-120",
-    "altura": "",
     "tipo_localizacao_id": 1,
     "armazem_id": 1
 }

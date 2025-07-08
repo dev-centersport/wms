@@ -64,5 +64,11 @@ export class Localizacao {
     () => Movimentacao,
     (movimentacao) => movimentacao.localizacao_origem,
   )
-  movimentacoes: Movimentacao[];
+  movimentacoes_origem: Movimentacao[];
+
+  @OneToMany(
+    () => Movimentacao,
+    (movimentacao) => movimentacao.localizacao_destino,
+  )
+  movimentacoes_destino: Movimentacao[];
 }

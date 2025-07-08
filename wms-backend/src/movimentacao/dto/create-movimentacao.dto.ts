@@ -1,10 +1,4 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  ValidateIf,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, ValidateIf } from 'class-validator';
 import { TipoMovimentacao } from '../entities/movimentacao.entity';
 import { idRelations } from 'src/utils/decorator.id.relations';
 
@@ -22,18 +16,18 @@ export class CreateMovimentacaoDto {
 
   // Validação para quando for entrada ou transferência
   @ValidateIf(
-    (o) =>
+    (o: CreateMovimentacaoDto) =>
       o.tipo === TipoMovimentacao.TRANSFERENCIA ||
       o.tipo === TipoMovimentacao.ENTRADA,
   )
   @idRelations()
-  localizacao_origem: number;
+  localizacao_origem_id: number;
 
   @ValidateIf(
-    (o) =>
+    (o: CreateMovimentacaoDto) =>
       o.tipo === TipoMovimentacao.TRANSFERENCIA ||
       o.tipo === TipoMovimentacao.SAIDA,
   )
   @idRelations()
-  localizacao_destino: number;
+  localizacao_destino_id: number;
 }
