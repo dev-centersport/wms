@@ -118,6 +118,10 @@ export const criarTipoLocalizacao = async (payload: { tipo: string }): Promise<v
     throw new Error('Falha ao criar tipo de localização.');
   }
 };
+export async function buscarProdutos() {
+  const response = await api.get('/produtos');
+  return response.data;
+}
 
 
 
