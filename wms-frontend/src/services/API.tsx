@@ -1,9 +1,9 @@
 import axios from 'axios'
 
-const BASE_URL = 'http://192.168.2.41:3001';
+const BASE_URL = 'http://151.243.0.78:3001';
 
 const api = axios.create({
-  baseURL: 'http://192.168.2.41:3001', // ou a URL da sua API
+  baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
 });
 
 export default api;
@@ -125,7 +125,7 @@ export async function buscarProdutos() {
 
 
 export async function buscarConsultaEstoque() {
-  const res = await axios.get('http://192.168.2.41:3001/produto-estoque');
+  const res = await axios.get('http://151.243.0.78:3001/produto-estoque');
   return res.data.map((item: any) => ({
     produto_id: item.produto_id,
     descricao: item.produto?.descricao || '',
@@ -143,7 +143,7 @@ export async function buscarConsultaEstoque() {
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
-    const res = await axios.get<any[]>('http://192.168.2.41:3001/localizacao');
+    const res = await axios.get<any[]>('http://151.243.0.78:3001/localizacao');
 
     const dados: Localizacao[] = res.data.map((item) => ({
       localizacao_id: item.localizacao_id,
@@ -181,7 +181,7 @@ export interface Armazem {
 
 export const buscarArmazem = async (): Promise<Armazem[]> => {
   try {
-    const res = await axios.get<Armazem[]>('http://192.168.2.41:3001/armazem');
+    const res = await axios.get<Armazem[]>('http://151.243.0.78:3001/armazem');
     return res.data;
   } catch (err) {
     console.error('Erro ao buscar armazéns →', err);
@@ -208,7 +208,7 @@ export interface TipoLocalizacao {
 
 export const buscarTiposDeLocalizacao = async (): Promise<TipoLocalizacao[]> => {
   try {
-    const res = await axios.get<TipoLocalizacao[]>('http://192.168.2.41:3001/tipo-localizacao');
+    const res = await axios.get<TipoLocalizacao[]>('http://151.243.0.78:3001/tipo-localizacao');
 
     return res.data;
   } catch (err) {
@@ -255,7 +255,7 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
       throw new Error(`Tipo de localização "${criarLocalizacao.tipo}" não encontrado.`);
     }
 
-    await axios.post('http://192.168.2.41:3001/localizacao', {
+    await axios.post('http://151.243.0.78:3001/localizacao', {
       nome: criarLocalizacao.nome,
       status: 'fechada',
       altura: criarLocalizacao.altura,
@@ -295,7 +295,7 @@ export interface ExcluirLocalizacao {
 
 export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao): Promise<void> => {
   try {
-    await axios.delete(`http://192.168.2.41:3001/localizacao/${localizacao_id}`);
+    await axios.delete(`http://151.243.0.78:3001/localizacao/${localizacao_id}`);
     console.log(`Localização ID ${localizacao_id} excluída com sucesso.`);
   } catch (err) {
     console.error('Erro ao excluir localização →', err);
