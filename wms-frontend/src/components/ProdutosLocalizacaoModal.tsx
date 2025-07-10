@@ -20,6 +20,11 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { buscarProdutosPorLocalizacao } from '../services/API';
 
+
+
+
+
+
 interface Produto {
   produto_id: number;
   descricao: string;

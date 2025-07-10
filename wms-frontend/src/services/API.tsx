@@ -22,31 +22,24 @@ export interface Armazem {
 
 // Adicione esta função ao arquivo API.tsx
 
-/**
- * Busca produtos vinculados a uma localização específica
- * @param localizacaoId ID da localização
- * @returns Lista de produtos com suas quantidades
- */
 export async function buscarProdutosPorLocalizacao(localizacaoId: number) {
   try {
-    // Opção 1: Se existir um endpoint específico no backend
-    // const response = await api.get(`/produto-estoque/localizacao/${localizacaoId}`);
-    // return response.data;
-    
-    // Opção 2: Filtrar a partir dos dados de estoque existentes
-    const todosOsProdutos = await buscarConsultaEstoque();
-    return todosOsProdutos.filter((item: any) => item.localizacao_id === localizacaoId).map((item: any) => ({
-      produto_id: item.produto_id,
-      descricao: item.descricao || '',
-      sku: item.sku || '',
-      ean: item.ean || '',
-      quantidade: item.quantidade || 0,
-    }));
+    const todos = await buscarConsultaEstoque();
+    return todos
+      .filter((item: any) => item.localizacao_id === localizacaoId)
+      .map((item: any) => ({
+        produto_id: item.produto_id,
+        descricao: item.descricao || '',
+        sku: item.sku || '',
+        ean: item.ean || '',
+        quantidade: item.quantidade || 0,
+      }));
   } catch (err) {
-    console.error('Erro ao buscar produtos da localização →', err);
-    throw new Error('Falha ao carregar os produtos desta localização.');
+    console.error('Erro ao buscar produtos da localização:', err);
+    throw err;
   }
 }
+
 
 
 // ---------- POST /armazem ----------
@@ -112,6 +105,7 @@ export interface Localizacao {
   armazem: string;
   ean: string;
   endereco: string;
+  total_produtos: string;
 }
 export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
   try {
@@ -161,16 +155,14 @@ export async function buscarConsultaEstoque() {
     ]);
 
     const dados = estoqueRes.data.map((item: any) => {
-      const localizacaoNome = item.localizacao?.nome || '';
-      const localizacaoInfo = localizacoes.find(loc => loc.nome === localizacaoNome);
-
       return {
         produto_id: item.produto_id,
+        localizacao_id: item.localizacao?.localizacao_id ?? null,  // ESSENCIAL
         descricao: item.produto?.descricao || '',
         sku: item.produto?.sku || '',
         ean: item.produto?.ean || '',
-        armazem: item.localizacao?.armazem?.nome || localizacaoInfo?.armazem || '',
-        localizacao: localizacaoNome,
+        armazem: item.localizacao?.armazem?.nome || '',
+        localizacao: item.localizacao?.nome || '',
         quantidade: item.quantidade || 0,
       };
     });
@@ -196,6 +188,7 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
       armazem: item.armazem?.nome ?? '',
       ean: item.ean ?? '',
       endereco: item.armazem?.endereco ?? '',
+      total_produtos: item.total_produtos ?? '',
     }));
 
     return dados;

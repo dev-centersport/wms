@@ -40,27 +40,7 @@ export const useLocalizacoes = () => {
    * Efeito executado uma vez ao montar o componente.
    * Realiza a chamada à API para buscar localizações e inicializa os campos extras.
    */
-  useEffect(() => {
-    const carregar = async () => {
-      try {
-        // Busca dados básicos da API
-        const dadosBasicos = await buscarLocalizacoes();
 
-        // Adiciona campos locais (quantidade e capacidade) a cada item
-        const dadosCompletos: Localizacao[] = dadosBasicos.map((item) => ({
-          ...item,
-          quantidade: 0,
-          capacidade: 0,
-        }));
-
-        setListaLocalizacoes(dadosCompletos);
-      } catch (error: any) {
-        alert(error.message); // Exibe erro caso a requisição falhe
-      }
-    };
-
-    carregar();
-  }, []);
 
   /**
    * Lista filtrada com base no texto digitado na busca.
