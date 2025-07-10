@@ -265,7 +265,6 @@ const Localizacao: React.FC = () => {
 /* Substitua a função handleImprimirSelecionados pelo código abaixo   */
 /* ------------------------------------------------------------------ */
 const handleImprimirSelecionados = () => {
-  // 1. Se nenhum item estiver selecionado, seleciona todas as "Prateleiras"
   let indicesParaImprimir = selectedItems;
   if (!indicesParaImprimir.length) {
     indicesParaImprimir = listaLocalizacoes
@@ -283,7 +282,6 @@ const handleImprimirSelecionados = () => {
     return;
   }
 
-  // 2. Verifica se todos os tipos são iguais
   const tiposSelecionados = indicesParaImprimir.map(
     (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
   );
@@ -297,84 +295,96 @@ const handleImprimirSelecionados = () => {
   const isCaixa = tipoAtual.includes('caixa');
   const isPrateleira = tipoAtual.includes('prateleira');
 
-  const pageWidth = '150mm';
-  const pageHeight = '100mm';
+  const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+  const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+  const fontNome = '120px';
+  const barHeight = isCaixa ? 90 : 20;
+  const barFont = isCaixa ? 22 : 10;
+  const bodyJustify = isPrateleira ? 'flex-start' : 'center';
+  const nomeMarginTop = isPrateleira ? '-3mm' : '0';
 
   const w = window.open('', '_blank');
   if (!w) return;
 
-  // Cabeçalho e estilos
   w.document.write(`
+    <!DOCTYPE html>
     <html>
     <head>
       <title>Etiquetas</title>
       <style>
-        @page { size: ${pageWidth} ${pageHeight}; margin: 0; }
+        @page {
+          size: ${largura} ${altura};
+          margin: 0;
+        }
         body {
           margin: 0;
           padding: 0;
-          font-family: Arial, sans-serif;
         }
         .etiqueta {
-          width: ${pageWidth};
-          height: ${isCaixa ? pageHeight : '50mm'};
+          width: ${largura};
+          height: ${altura};
           display: flex;
           flex-direction: column;
-          justify-content: ${isPrateleira ? 'flex-start' : 'center'};
           align-items: center;
+          justify-content: ${bodyJustify};
+          font-family: Arial, sans-serif;
+          page-break-after: always;
         }
         .nome {
-          margin: ${isPrateleira ? '-3mm' : '0'};
           font-weight: bold;
+          font-size: ${fontNome};
+          margin: ${nomeMarginTop} 0 0 0;
+          padding: 0;
           line-height: 1;
-          text-align: center;
           width: 100%;
+          text-align: center;
+          word-break: break-word;
         }
         .barcode {
           width: 90%;
-          margin-top: 4mm;
+          margin: 0;
+          padding: 0;
         }
       </style>
     </head>
     <body>
   `);
 
-  // Conteúdo de cada etiqueta
   indicesParaImprimir.forEach((idx, i) => {
     const item = listaLocalizacoes[idx];
     const nomeLimpo = isPrateleira
-      ? item.nome.replace(/^.*?#/, '') // remove tudo até o #
+      ? item.nome.replace(/^.*?#/, '')
       : item.nome;
     const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
-   
+
     w.document.write(`
-      <div class="etiqueta" data-ean="${item.ean}" data-nome="${nomeEscapado}"
-           style="${isCaixa ? 'page-break-after: always;' : ''}">
-        <h1 class="nome" id="nome-${i}">${nomeEscapado}</h1>
+      <div class="etiqueta">
+        <div class="nome" id="nome-${i}">${nomeEscapado}</div>
         <svg class="barcode" id="barcode-${i}"></svg>
       </div>
     `);
   });
-            
-  // Script de renderização + ajuste de fonte
+
   w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
       window.onload = () => {
         document.querySelectorAll('.etiqueta').forEach((div, index) => {
-          const nome = div.dataset.nome;
-          const ean = div.dataset.ean;
+          const nome = div.querySelector('.nome').innerText;
+          const svg = div.querySelector('.barcode');
 
-          let tamanho = 140;
+          let tamanho = ${fontNome.replace('px', '')};
           if (nome.length > 8)      tamanho = 50;
           else if (nome.length > 6) tamanho = 90;
+
           document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-          JsBarcode('#barcode-' + index, ean, {
+          const ean = '${listaLocalizacoes[indicesParaImprimir[0]].ean}';
+          JsBarcode(svg, ean, {
             format: 'ean13',
-            height: ${isCaixa ? 90 : 20},
+            height: ${barHeight},
             displayValue: true,
-            fontSize: ${isCaixa ? 22 : 10}
+            fontSize: ${barFont}
           });
         });
 
@@ -388,6 +398,7 @@ const handleImprimirSelecionados = () => {
 
   w.document.close();
 };
+
 
 
     /* ------------------------- exclusão ------------------------- */
