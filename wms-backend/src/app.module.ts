@@ -15,6 +15,7 @@ import { UsuarioModule } from './usuario/usuario.module';
 import { LogsModule } from './logs/logs.module';
 import { MovimentacaoModule } from './movimentacao/movimentacao.module';
 import { ItemMovimentacaoModule } from './item_movimentacao/item_movimentacao.module';
+import { OcorrenciaModule } from './ocorrencia/ocorrencia.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -78,6 +79,7 @@ import { ItemMovimentacaoModule } from './item_movimentacao/item_movimentacao.mo
     LogsModule,
     MovimentacaoModule,
     ItemMovimentacaoModule,
+    OcorrenciaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

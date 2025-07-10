@@ -18,16 +18,6 @@ content-type: application/json
 {
     "tipo": "transferencia",
     "usuario_id": 1,
-    "itens_movimentacao": [
-        {
-        "produto_id": 1,
-        "quantidade": 10
-        },
-        {
-        "produto_id": 2,
-        "quantidade": 15
-        }
-    ],
     "localizacao_origem_id": 1,
     "localizacao_destino_id": 2
 }
