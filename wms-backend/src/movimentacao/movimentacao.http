@@ -16,7 +16,7 @@ POST http://localhost:3001/movimentacao HTTP/1.1
 content-type: application/json
 
 {
-    "tipo": "entrada",
+    "tipo": "transferencia",
     "usuario_id": 1,
     "itens_movimentacao": [
         {
@@ -28,8 +28,8 @@ content-type: application/json
         "quantidade": 15
         }
     ],
-    "localizacao_origem_id": 0,
-    "localizacao_destino_id": 1
+    "localizacao_origem_id": 1,
+    "localizacao_destino_id": 2
 }
 
 ###

@@ -19,10 +19,54 @@ export class LocalizacaoService {
     private readonly armazemRepository: Repository<Armazem>,
   ) {}
 
-  async findAll(): Promise<Localizacao[]> {
-    return await this.LocalizacaoRepository.find({
-      relations: ['tipo', 'armazem'],
+  async getProdutosPorLocalizacao(localizacaoId: number) {
+    return await this.LocalizacaoRepository.findOne({
+      where: { localizacao_id: localizacaoId },
+      relations: {
+        produtos_estoque: {
+          produto: true,
+        },
+      },
+      select: {
+        localizacao_id: true,
+        nome: true,
+        produtos_estoque: {
+          produto_estoque_id: true, // ou produtos_estoque_id se for o nome da coluna PK
+          quantidade: true,
+          produto: {
+            produto_id: true,
+            descricao: true,
+            ean: true,
+          },
+        },
+      },
     });
+  }
+
+  async findAll(): Promise<any[]> {
+    const localizacoes = await this.LocalizacaoRepository.createQueryBuilder(
+      'localizacao',
+    )
+      .leftJoin('localizacao.produtos_estoque', 'estoque')
+      .leftJoinAndSelect('localizacao.tipo', 'tipo')
+      .leftJoinAndSelect('localizacao.armazem', 'armazem')
+      .select([
+        'localizacao',
+        'tipo',
+        'armazem',
+        'SUM(estoque.quantidade) as total_produtos',
+      ])
+      .groupBy('localizacao.localizacao_id')
+      .addGroupBy('tipo.tipo_localizacao_id') // ajuste conforme o nome da PK do tipo
+      .addGroupBy('armazem.armazem_id') // ajuste conforme o nome da PK do armazem
+      .orderBy('total_produtos', 'DESC')
+      .getRawAndEntities();
+
+    // Combina os dados das entidades com os dados raw (incluindo a soma)
+    return localizacoes.entities.map((localizacao, index) => ({
+      ...localizacao,
+      total_produtos: parseFloat(localizacoes.raw[index].total_produtos) || 0,
+    }));
   }
 
   async findOne(localizacao_id: number): Promise<Localizacao> {

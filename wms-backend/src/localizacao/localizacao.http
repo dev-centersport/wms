@@ -8,10 +8,6 @@ GET http://localhost:3001/localizacao
 
 ###
 
-GET http://localhost:3001/localizacao/estoque
-
-###
-
 GET http://localhost:3001/localizacao/1
 
 ###
@@ -20,7 +16,7 @@ POST http://localhost:3001/localizacao HTTP/1.1
 content-type: application/json
 
 {
-    "nome": "BJ-120",
+    "nome": "AB-10",
     "tipo_localizacao_id": 1,
     "armazem_id": 1
 }
@@ -33,6 +29,10 @@ content-type: application/json
 {
     "tipo_localizacao_id": 1
 }
+
+###
+
+GET http://localhost:3001/localizacao/1/produtos
 
 ###
 

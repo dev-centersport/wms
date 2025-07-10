@@ -30,6 +30,11 @@ export class LocalizacaoController {
     return this.localizacaoService.findOne(+id);
   }
 
+  @Get(':id/produtos')
+  async getProudutosPorLocalizacao(@Param('id') id: string) {
+    return this.localizacaoService.getProdutosPorLocalizacao(parseInt(id));
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,
