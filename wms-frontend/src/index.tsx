@@ -20,6 +20,7 @@ import EditarArmazem from "./pages/EditarArmazem"
 import  TipoLocalizacao  from "./pages/TipoLocalizacao";
 import CriarTipoLocalizacao from "./pages/CriarTipoLocalizacao";
 import EditarTipoLocalizacao from "./pages/EditarTipoLocalizacao";
+import Produto from "./pages/Produto";
 
 import Sidebar from "./components/Sidebar";
 
@@ -56,6 +57,9 @@ root.render(
           <Route path="/TipoLocalizacao" element={<TipoLocalizacao />}/>
           <Route path="/tipo-localizacao/:id/editar" element={<EditarTipoLocalizacao />} />
           <Route path="/CriarTipoLocalizacao" element={<CriarTipoLocalizacao />} />
+
+          {/* {/ Pagina de Produto} */} 
+          <Route path="/Produto" element={<Produto/>} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

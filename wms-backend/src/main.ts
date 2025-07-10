@@ -20,7 +20,7 @@ async function bootstrap() {
 
   // Habilitando o Cors
   // app.enableCors({
-  //   origin: ['http://172.22.160.1:3000', 'http://localhost:3001'], // Domínios permitidos
+  //   origin: ['http://localhost:3000'], // Domínios permitidos
   //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Métodos permitidos
   //   allowedHeaders: 'Content-Type, Authorization', // Cabeçalhos permitidos
   //   credentials: true, // Permite cookies e autenticação
