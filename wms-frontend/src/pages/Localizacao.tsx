@@ -33,7 +33,7 @@ type LocalizacaoComQtd = {
   tipo: string;
   armazem: string;
   ean: string;
-  quantidade_total: number;
+  total_produtos: number;
 };
 
 
@@ -78,7 +78,7 @@ const Localizacao: React.FC = () => {
 
             const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
             ...l,
-            quantidade_total: mapa[l.localizacao_id] || 0,
+            total_produtos: mapa[l.localizacao_id] || 0,
             }));
 
             setListaLocalizacoes(locsComQtd);
@@ -424,8 +424,8 @@ const handleImprimirSelecionados = () => {
             return;
         }
 
-        const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade_total === 0);
-        const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade_total > 0);
+        const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].total_produtos === 0);
+        const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].total_produtos > 0);
 
         if (!permitidos.length) {
             alert('Nenhuma das localizações selecionadas pode ser excluída (quantidade > 0).');
@@ -683,7 +683,7 @@ const handleImprimirSelecionados = () => {
                                         <TableCell>{item.tipo}</TableCell>
                                         <TableCell>{item.armazem}</TableCell>
                                         <TableCell align="center">{item.ean}</TableCell>
-                                        <TableCell align="center">{item.quantidade_total}</TableCell>
+                                        <TableCell align="center">{item.total_produtos}</TableCell>
                                         <TableCell align="center">
                                             <Box display="flex" justifyContent="center" gap={1}>
                                                 <Tooltip title="Ver produtos">
@@ -699,12 +699,12 @@ const handleImprimirSelecionados = () => {
                                                 <Tooltip title="Excluir localização">
                                                     <IconButton
                                                         size="small"
-                                                        onClick={() => handleExcluir(item.localizacao_id, item.nome, item.quantidade_total ?? 0)}
-                                                        disabled={item.quantidade_total > 0}
+                                                        onClick={() => handleExcluir(item.localizacao_id, item.nome, item.total_produtos ?? 0)}
+                                                        disabled={item.total_produtos > 0}
                                                         sx={{
-                                                        color: item.quantidade_total > 0 ? 'text.disabled' : 'error.main',
+                                                        color: item.total_produtos > 0 ? 'text.disabled' : 'error.main',
                                                         '&:hover': {
-                                                            backgroundColor: item.quantidade_total > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
+                                                            backgroundColor: item.total_produtos > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
                                                         },
                                                         }}
 
