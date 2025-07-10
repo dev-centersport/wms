@@ -1,0 +1,46 @@
+### List Products
+
+GET http://localhost:3000/
+
+###
+
+GET http://localhost:3001/movimentacao
+
+###
+
+GET http://localhost:3001/movimentacao/8
+
+###
+
+POST http://localhost:3001/movimentacao HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "entrada",
+    "usuario_id": 1,
+    "itens_movimentacao": [
+        {
+        "produto_estoque_id": 1,
+        "quantidade": 10
+        },
+        {
+        "produto_estoque_id": 2,
+        "quantidade": 15
+        }
+    ],
+    "localizacao_origem_id": 0,
+    "localizacao_destino_id": 1
+}
+
+###
+
+PATCH http://localhost:3001/movimentacao/1 HTTP/1.1
+content-type: application/json
+
+{
+    "tipo_movimentacao_id": 1
+}
+
+###
+
+DELETE http://localhost:3000/movimentacao/14

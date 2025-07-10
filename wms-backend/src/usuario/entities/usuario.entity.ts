@@ -1,9 +1,11 @@
+import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -15,7 +17,7 @@ export class Usuario {
   @Column({ type: 'varchar', length: 150 })
   responsavel: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, unique: true })
   usuario: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -33,4 +35,7 @@ export class Usuario {
   @ManyToOne(() => Perfil, (perfil) => perfil.usuarios)
   @JoinColumn()
   perfil: Perfil;
+
+  @OneToMany(() => Movimentacao, (movimentacao) => movimentacao.usuario)
+  movimentacoes: Movimentacao[];
 }
