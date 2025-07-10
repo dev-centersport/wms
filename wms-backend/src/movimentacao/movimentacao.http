@@ -18,8 +18,8 @@ content-type: application/json
 {
     "tipo": "transferencia",
     "usuario_id": 1,
-    "localizacao_origem_id": 1,
-    "localizacao_destino_id": 2
+    "localizacao_origem_id": 2,
+    "localizacao_destino_id": 1
 }
 
 ###
