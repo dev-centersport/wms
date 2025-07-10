@@ -356,9 +356,10 @@ const handleImprimirSelecionados = () => {
       ? item.nome.replace(/^.*?#/, '')
       : item.nome;
     const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
+    const eanEscapado = item.ean.replace(/'/g, "\\'");
 
     w.document.write(`
-      <div class="etiqueta">
+      <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="nome" id="nome-${i}">${nomeEscapado}</div>
         <svg class="barcode" id="barcode-${i}"></svg>
       </div>
@@ -372,6 +373,7 @@ const handleImprimirSelecionados = () => {
         document.querySelectorAll('.etiqueta').forEach((div, index) => {
           const nome = div.querySelector('.nome').innerText;
           const svg = div.querySelector('.barcode');
+          const ean = div.dataset.ean;
 
           let tamanho = ${fontNome.replace('px', '')};
           if (nome.length > 8)      tamanho = 50;
@@ -379,7 +381,6 @@ const handleImprimirSelecionados = () => {
 
           document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-          const ean = '${listaLocalizacoes[indicesParaImprimir[0]].ean}';
           JsBarcode(svg, ean, {
             format: 'ean13',
             height: ${barHeight},
@@ -398,6 +399,7 @@ const handleImprimirSelecionados = () => {
 
   w.document.close();
 };
+
 
 
 
