@@ -28,8 +28,8 @@ export class Movimentacao {
   })
   tipo: TipoMovimentacao;
 
-  @Column({ type: 'int' })
-  quantidade: number;
+  @Column({ type: 'int', nullable: true })
+  quantidade?: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   dataHora: Date;
@@ -54,7 +54,7 @@ export class Movimentacao {
 
   @OneToMany(
     () => ItemMovimentacao,
-    (item_movimentacao) => item_movimentacao.movimentacao,
+    (itens_movimentacao) => itens_movimentacao.movimentacao,
   )
-  item_movimentacao: ItemMovimentacao[];
+  itens_movimentacao: ItemMovimentacao[];
 }

@@ -16,15 +16,15 @@ async function bootstrap() {
   );
 
   // Configuração básica do CORS (permite todas as origens)
-  // app.enableCors();
+  app.enableCors();
 
   // Habilitando o Cors
-  app.enableCors({
-    origin: ['http://localhost:3000'], // Domínios permitidos
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Métodos permitidos
-    allowedHeaders: 'Content-Type, Authorization', // Cabeçalhos permitidos
-    credentials: true, // Permite cookies e autenticação
-  });
+  // app.enableCors({
+  //   origin: ['http://localhost:3000'], // Domínios permitidos
+  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Métodos permitidos
+  //   allowedHeaders: 'Content-Type, Authorization', // Cabeçalhos permitidos
+  //   credentials: true, // Permite cookies e autenticação
+  // });
 
   await app.listen(3001);
 }

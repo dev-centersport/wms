@@ -8,7 +8,8 @@ export class MovimentacaoController {
 
   @Post()
   create(@Body() createMovimentacaoDto: CreateMovimentacaoDto) {
-    return this.movimentacaoService.create(createMovimentacaoDto);
+    const movimentacao = this.movimentacaoService.create(createMovimentacaoDto);
+    return movimentacao;
   }
 
   @Get()

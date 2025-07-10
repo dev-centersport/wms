@@ -18,12 +18,12 @@ export class ItemMovimentacao {
 
   @ManyToOne(
     () => ProdutoEstoque,
-    (produto_estoque) => produto_estoque.item_movimentacao,
+    (produto_estoque) => produto_estoque.itens_movimentacao,
   )
   @JoinColumn()
   produto_estoque: ProdutoEstoque;
 
-  @ManyToOne(() => Movimentacao, (mov) => mov.item_movimentacao)
+  @ManyToOne(() => Movimentacao, (mov) => mov.itens_movimentacao)
   @JoinColumn()
   movimentacao: Movimentacao;
 }

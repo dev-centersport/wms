@@ -28,7 +28,7 @@ export class ProdutoEstoque {
 
   @OneToMany(
     () => ItemMovimentacao,
-    (item_movimentacao) => item_movimentacao.produto_estoque,
+    (itens_movimentacao) => itens_movimentacao.produto_estoque,
   )
-  item_movimentacao: ItemMovimentacao[];
+  itens_movimentacao: ItemMovimentacao[];
 }
