@@ -1,6 +1,6 @@
 ### List Products
 
-GET http://localhost:3000/
+GET http://localhost:3001/
 
 ###
 
@@ -16,7 +16,6 @@ POST http://localhost:3001/localizacao HTTP/1.1
 content-type: application/json
 
 {
-    "status": "fechada",
     "nome": "BJ-120",
     "tipo_localizacao_id": 1,
     "armazem_id": 1

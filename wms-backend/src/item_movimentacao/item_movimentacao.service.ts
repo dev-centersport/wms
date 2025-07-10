@@ -21,14 +21,14 @@ export class ItemMovimentacaoService {
 
   async findAll(): Promise<ItemMovimentacao[]> {
     return await this.itemMovimentacaoRepository.find({
-      relations: ['movimentacao', 'produto_estoque'],
+      relations: ['movimentacao', 'produto_estoque.produto'],
     });
   }
 
   async findOne(item_movimentacao_id: number): Promise<ItemMovimentacao> {
     const item_movimentacao = await this.itemMovimentacaoRepository.findOne({
       where: { item_movimentacao_id },
-      relations: ['movimentacao', 'produto_estoque'],
+      relations: ['movimentacao', 'produto_estoque.produto'],
     });
 
     if (!item_movimentacao)
