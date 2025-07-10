@@ -9,6 +9,7 @@ import { Movimentacao, TipoMovimentacao } from './entities/movimentacao.entity';
 import { Repository } from 'typeorm';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
+import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 
 @Injectable()
 export class MovimentacaoService {
@@ -19,6 +20,8 @@ export class MovimentacaoService {
     private readonly localizacaoRepository: Repository<Localizacao>,
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
+    @InjectRepository(ProdutoEstoque)
+    private readonly produtoEstoqueRepository: Repository<ProdutoEstoque>,
   ) {}
 
   async create(
@@ -48,6 +51,12 @@ export class MovimentacaoService {
           throw new BadRequestException(
             'Para entrada, a localização de destino é obrigatória',
           );
+
+        let produtoEstoque = await this.produtoEstoqueRepository.findOne({
+          where: {
+            produto: {produto_id: }
+          }
+        })
         break;
 
       case TipoMovimentacao.SAIDA:

@@ -1,3 +1,4 @@
+import { ItemMovimentacao } from 'src/item_movimentacao/entities/item_movimentacao.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Produto } from 'src/produto/entities/produto.entity';
 import {
@@ -5,6 +6,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -23,4 +25,10 @@ export class ProdutoEstoque {
   @ManyToOne(() => Localizacao, (localizacao) => localizacao.produtos_estoque)
   @JoinColumn()
   localizacao: Localizacao;
+
+  @OneToMany(
+    () => ItemMovimentacao,
+    (item_movimentacao) => item_movimentacao.produto_estoque,
+  )
+  item_movimentacao: ItemMovimentacao[];
 }

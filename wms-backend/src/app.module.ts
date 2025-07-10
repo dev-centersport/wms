@@ -13,6 +13,7 @@ import { ProdutoEstoqueModule } from './produto_estoque/produto_estoque.module';
 import { PerfilModule } from './perfil/perfil.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { MovimentacaoModule } from './movimentacao/movimentacao.module';
+import { ItemMovimentacaoModule } from './item_movimentacao/item_movimentacao.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -74,6 +75,7 @@ import { MovimentacaoModule } from './movimentacao/movimentacao.module';
     PerfilModule,
     UsuarioModule,
     MovimentacaoModule,
+    ItemMovimentacaoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
