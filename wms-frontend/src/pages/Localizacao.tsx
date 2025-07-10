@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 
 import {
     Box,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
     Button,
     Container,
     IconButton,
@@ -26,6 +30,7 @@ import Layout from '../components/Layout';
 import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
+import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
 
 type LocalizacaoComQtd = {
   localizacao_id: number;
@@ -43,6 +48,7 @@ const itemsPerPage = 50;
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
+    
     /* ------------------------- estados globais do hook --F---------------------- */
     const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
     const [busca, setBusca] = useState('');
@@ -59,6 +65,10 @@ const Localizacao: React.FC = () => {
         const [currentPage, setCurrentPage] = useState(1);
 
         const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+        
+        // Estados para o modal de produtos
+        const [modalOpen, setModalOpen] = useState(false);
+        const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{id: number, nome: string} | null>(null);
 
         useEffect(() => {
         const carregar = async () => {
@@ -143,6 +153,44 @@ const Localizacao: React.FC = () => {
         setSelectedItems((prev) =>
             checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
         );
+    };
+
+    // Função para abrir o modal de produtos
+    const handleVerProdutos = (id: number, nome: string) => {
+        setLocalizacaoSelecionada({ id, nome });
+        setModalOpen(true);
+    };
+    
+    // Função para atualizar a quantidade total após visualização
+    const handleQuantidadeAtualizada = async () => {
+        // Recarregar os dados da tabela para atualizar as quantidades
+        const carregar = async () => {
+            try {
+                const [locs, estoque] = await Promise.all([
+                    buscarLocalizacoes(),
+                    buscarConsultaEstoque(),
+                ]);
+
+                // soma por localizacao_id
+                const mapa: Record<number, number> = {};
+                estoque.forEach((item: any) => {
+                    const id = item.localizacao_id;
+                    if (!id) return;
+                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+                });
+
+                const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
+                    ...l,
+                    quantidade_total: mapa[l.localizacao_id] || 0,
+                }));
+
+                setListaLocalizacoes(locsComQtd);
+            } catch (err) {
+                console.error('Erro ao carregar localizações →', err);
+            }
+        };
+
+        carregar();
     };
 
     const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
@@ -278,7 +326,7 @@ const handleImprimirSelecionados = () => {
   }
 
   if (!indicesParaImprimir.length) {
-    alert('Nenhuma localização do tipo “Prateleira” encontrada.');
+    alert('Nenhuma localização do tipo "Prateleira" encontrada.');
     return;
   }
 
@@ -687,7 +735,10 @@ const handleImprimirSelecionados = () => {
                                         <TableCell align="center">
                                             <Box display="flex" justifyContent="center" gap={1}>
                                                 <Tooltip title="Ver produtos">
-                                                    <IconButton size="small" onClick={() => alert(`Ver produtos em ${item.nome}`)}>
+                                                    <IconButton 
+                                                        size="small" 
+                                                        onClick={() => handleVerProdutos(item.localizacao_id, item.nome)}
+                                                    >
                                                         <ListIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
@@ -729,6 +780,17 @@ const handleImprimirSelecionados = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Modal de produtos */}
+            {localizacaoSelecionada && (
+                <ProdutosLocalizacaoModal
+                    open={modalOpen}
+                    onClose={() => setModalOpen(false)}
+                    localizacaoId={localizacaoSelecionada.id}
+                    localizacaoNome={localizacaoSelecionada.nome}
+                    onQuantidadeAtualizada={handleQuantidadeAtualizada}
+                />
+            )}
         </Layout>
     );
 };
