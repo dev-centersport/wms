@@ -112,6 +112,7 @@ export interface Localizacao {
   armazem: string;
   ean: string;
   endereco: string;
+  total_produtos: string
 }
 export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
   try {
@@ -196,6 +197,7 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
       armazem: item.armazem?.nome ?? '',
       ean: item.ean ?? '',
       endereco: item.armazem?.endereco ?? '',
+      total_produtos: item.total_produtos ?? ''
     }));
 
     return dados;
