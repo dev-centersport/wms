@@ -266,25 +266,42 @@ const Movimentacao: React.FC = () => {
             </>
           )}
 
-          {/* Campo Produto só em Entrada / Saída */}
           {tipo !== 'transferencia' && (
-            <TextField
-              fullWidth
-              label="Bipe o Produto"
-              size="small"
-              value={produto}
-              onChange={(e) => setProduto(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdicionarProduto()}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
-            />
+            <>
+              <TextField
+                fullWidth
+                label="Bipe a Localização"
+                size="small"
+                value={localizacao}
+                onChange={(e) => setLocalizacao(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Bipe o Produto"
+                size="small"
+                value={produto}
+                onChange={(e) => setProduto(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdicionarProduto()}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
+              />
+            </>
           )}
+
         </Box>
 
         {/* Tabela */}
