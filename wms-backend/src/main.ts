@@ -16,7 +16,7 @@ async function bootstrap() {
   );
 
   // Configuração básica do CORS (permite todas as origens)
-  app.enableCors();
+  // app.enableCors();
 
   // Habilitando o Cors
   //app.enableCors({

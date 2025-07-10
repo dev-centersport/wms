@@ -25,6 +25,17 @@ import { Search as SearchIcon, Delete as DeleteIcon, Print as PrintIcon, List as
 import Layout from '../components/Layout';
 import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
+import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
+
+type LocalizacaoComQtd = {
+  localizacao_id: number;
+  nome: string;
+  tipo: string;
+  armazem: string;
+  ean: string;
+  quantidade_total: number;
+};
+
 
 /* -------------------------------------------------------------------------- */
 // Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
@@ -33,24 +44,51 @@ const itemsPerPage = 50;
 
 const Localizacao: React.FC = () => {
     /* ------------------------- estados globais do hook --F---------------------- */
-    const {
-        listaLocalizacoes,
-        busca,
-        setBusca,
-        setListaLocalizacoes,
-    } = useLocalizacoes();
+    const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
+    const [busca, setBusca] = useState('');
+
 
     const navigate = useNavigate();
 
     /* ---------------------------- estados locais ----------------------------- */
-    const [filtroTipo, setFiltroTipo] = useState<string>('');
-    const [filtroArmazem, setFiltroArmazem] = useState<string>('');
+        const [filtroTipo, setFiltroTipo] = useState<string>('');
+        const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
-    const [selectAll, setSelectAll] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
+        const [selectedItems, setSelectedItems] = useState<number[]>([]);
+        const [selectAll, setSelectAll] = useState(false);
+        const [currentPage, setCurrentPage] = useState(1);
 
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+        const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+        useEffect(() => {
+        const carregar = async () => {
+        try {
+            const [locs, estoque] = await Promise.all([
+            buscarLocalizacoes(), // lista sem quantidade
+            buscarConsultaEstoque(), // cada item tem localizacao_id e quantidade
+            ]);
+
+            // soma por localizacao_id
+            const mapa: Record<number, number> = {};
+            estoque.forEach((item: any) => {
+            const id = item.localizacao_id;
+            if (!id) return;
+            mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+            });
+
+            const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
+            ...l,
+            quantidade_total: mapa[l.localizacao_id] || 0,
+            }));
+
+            setListaLocalizacoes(locsComQtd);
+        } catch (err) {
+            console.error('Erro ao carregar localizações →', err);
+        }
+        };
+
+        carregar();
+    }, []);
 
     /* ------------------------------ filtragem ------------------------------ */
     const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
@@ -373,8 +411,8 @@ const handleImprimirSelecionados = () => {
             return;
         }
 
-        const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade === 0);
-        const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade > 0);
+        const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade_total === 0);
+        const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].quantidade_total > 0);
 
         if (!permitidos.length) {
             alert('Nenhuma das localizações selecionadas pode ser excluída (quantidade > 0).');
@@ -632,7 +670,7 @@ const handleImprimirSelecionados = () => {
                                         <TableCell>{item.tipo}</TableCell>
                                         <TableCell>{item.armazem}</TableCell>
                                         <TableCell align="center">{item.ean}</TableCell>
-                                        <TableCell align="center">{item.quantidade}</TableCell>
+                                        <TableCell align="center">{item.quantidade_total}</TableCell>
                                         <TableCell align="center">
                                             <Box display="flex" justifyContent="center" gap={1}>
                                                 <Tooltip title="Ver produtos">
@@ -648,15 +686,15 @@ const handleImprimirSelecionados = () => {
                                                 <Tooltip title="Excluir localização">
                                                     <IconButton
                                                         size="small"
-                                                        onClick={() => handleExcluir(item.localizacao_id, item.nome, item.quantidade ?? 0)}
-                                                        disabled={item.quantidade > 0}
+                                                        onClick={() => handleExcluir(item.localizacao_id, item.nome, item.quantidade_total ?? 0)}
+                                                        disabled={item.quantidade_total > 0}
                                                         sx={{
-                                                            color: item.quantidade > 0 ? 'text.disabled' : 'error.main',
-                                                            '&:hover': {
-                                                                backgroundColor:
-                                                                    item.quantidade > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
-                                                            },
+                                                        color: item.quantidade_total > 0 ? 'text.disabled' : 'error.main',
+                                                        '&:hover': {
+                                                            backgroundColor: item.quantidade_total > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
+                                                        },
                                                         }}
+
                                                     >
                                                         <DeleteIcon fontSize="small" />
                                                     </IconButton>

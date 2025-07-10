@@ -119,11 +119,39 @@ export const criarTipoLocalizacao = async (payload: { tipo: string }): Promise<v
   }
 };
 export async function buscarProdutos() {
-  const response = await api.get('/produtos');
+  const response = await api.get('/produto');
   return response.data;
 }
 
 
+export async function buscarConsultaEstoque() {
+  try {
+    const [estoqueRes, localizacoes] = await Promise.all([
+      axios.get('http://151.243.0.78:3001/produto-estoque'),
+      buscarLocalizacoes(),
+    ]);
+
+    const dados = estoqueRes.data.map((item: any) => {
+      const localizacaoNome = item.localizacao?.nome || '';
+      const localizacaoInfo = localizacoes.find(loc => loc.nome === localizacaoNome);
+
+      return {
+        produto_id: item.produto_id,
+        descricao: item.produto?.descricao || '',
+        sku: item.produto?.sku || '',
+        ean: item.produto?.ean || '',
+        armazem: item.localizacao?.armazem?.nome || localizacaoInfo?.armazem || '',
+        localizacao: localizacaoNome,
+        quantidade: item.quantidade || 0,
+      };
+    });
+
+    return dados;
+  } catch (err) {
+    console.error('Erro ao buscar consulta de estoque →', err);
+    throw new Error('Falha ao carregar os dados de estoque.');
+  }
+}
 
 
 

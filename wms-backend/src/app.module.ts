@@ -12,6 +12,7 @@ import { join } from 'path';
 import { ProdutoEstoqueModule } from './produto_estoque/produto_estoque.module';
 import { PerfilModule } from './perfil/perfil.module';
 import { UsuarioModule } from './usuario/usuario.module';
+import { LogsModule } from './logs/logs.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -53,7 +54,7 @@ import { UsuarioModule } from './usuario/usuario.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
+        host: config.get<string>('DB_HOST', '192.168.56.1'),
         port: config.get<number>('DB_PORT', 5433),
         username: config.get<string>('DB_USERNAME', 'admin'),
         password: config.get<string>('DB_PASSWORD', 'senha123'),
@@ -72,6 +73,7 @@ import { UsuarioModule } from './usuario/usuario.module';
     ProdutoEstoqueModule,
     PerfilModule,
     UsuarioModule,
+    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, CloudUpload, Refresh } from '@mui/icons-material';
 
+
 import Layout from '../components/Layout';
 import { buscarProdutos } from '../services/API'; // crie essa função no backend se ainda não tiver
 
@@ -24,11 +25,11 @@ const itemsPerPage = 50;
 
 interface Produto {
   produto_id: number;
+  url_foto: string;
   descricao: string;
   sku: string;
   ean: string;
   quantidade: number;
-  imagem?: string;
 }
 
 const Produto: React.FC = () => {
@@ -148,23 +149,24 @@ const Produto: React.FC = () => {
                 return (
                   <TableRow key={produto.produto_id} selected={isSelected} hover>
                     <TableCell padding="checkbox">
-                      <Checkbox
+                        <Checkbox
                         checked={isSelected}
                         onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
-                      />
+                        />
                     </TableCell>
                     <TableCell>
-                      {produto.imagem ? (
-                        <img src={produto.imagem} alt={produto.descricao} width={40} />
-                      ) : (
+                        {produto.url_foto ? (
+                        <img src={produto.url_foto} alt={produto.descricao} width={50} />
+                        ) : (
                         '-'
-                      )}
+                        )}
                     </TableCell>
                     <TableCell>{produto.descricao}</TableCell>
                     <TableCell>{produto.sku}</TableCell>
                     <TableCell>{produto.ean}</TableCell>
                     <TableCell>{produto.quantidade}</TableCell>
-                  </TableRow>
+                    </TableRow>
+
                 );
               })
             ) : (
