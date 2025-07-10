@@ -7,7 +7,7 @@ export class CreateItemMovimentacaoDto {
   quantidade: number;
 
   @idRelations()
-  produto_estoque_id: number;
+  produto_id: number;
 
   // @idRelations()
   // movimentacao_id: number;

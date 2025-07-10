@@ -1,3 +1,4 @@
+import { ItemMovimentacao } from 'src/item_movimentacao/entities/item_movimentacao.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import {
   Column,
@@ -39,4 +40,10 @@ export class Produto {
 
   @OneToMany(() => ProdutoEstoque, (produto_estoque) => produto_estoque.produto)
   produtos_estoque: ProdutoEstoque[];
+
+  @OneToMany(
+    () => ItemMovimentacao,
+    (itens_movimentacao) => itens_movimentacao.produto,
+  )
+  itens_movimentacao: ItemMovimentacao[];
 }

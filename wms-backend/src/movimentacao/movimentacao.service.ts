@@ -12,6 +12,7 @@ import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { ItemMovimentacao } from 'src/item_movimentacao/entities/item_movimentacao.entity';
 import { CreateItemMovimentacaoDto } from 'src/item_movimentacao/dto/create-item_movimentacao.dto';
+import { Produto } from 'src/produto/entities/produto.entity';
 
 @Injectable()
 export class MovimentacaoService {
@@ -159,7 +160,7 @@ export class MovimentacaoService {
               'usuario',
               'localizacao_origem',
               'localizacao_destino',
-              'itens_movimentacao.produto_estoque.produto',
+              'itens_movimentacao.produto',
             ],
           });
 
@@ -181,19 +182,56 @@ export class MovimentacaoService {
       throw new BadRequestException('Quantidade deve ser positiva');
 
     // Buscar produto
-    const produto_estoque = await entityManager.findOne(ProdutoEstoque, {
-      where: { produto_estoque_id: itemDto.produto_estoque_id },
-      relations: ['produto', 'localizacao'],
+    const produto = await entityManager.findOne(Produto, {
+      where: { produto_id: itemDto.produto_id },
+      // relations: ['localizacao'],
     });
-    if (!produto_estoque) throw new NotFoundException('Produto não encontrado');
+    if (!produto) throw new NotFoundException('Produto não encontrado');
 
     const itemMovimentacao = this.itemMovimentacaoRepository.create({
       movimentacao,
-      produto_estoque,
+      produto,
       quantidade: itemDto.quantidade,
     });
 
     await entityManager.save(itemMovimentacao);
+
+    let localizacao_estoque: Localizacao | null = null;
+
+    if (movimentacao.tipo === TipoMovimentacao.ENTRADA) {
+      localizacao_estoque = movimentacao.localizacao_destino;
+    } else if (movimentacao.tipo === TipoMovimentacao.SAIDA) {
+      localizacao_estoque = movimentacao.localizacao_origem;
+    }
+
+    // Buscar ou criar o produto no estoque
+    let produto_estoque = await entityManager.findOne(ProdutoEstoque, {
+      where: {
+        produto: { produto_id: produto.produto_id },
+        localizacao: localizacao_estoque
+          ? { localizacao_id: localizacao_estoque.localizacao_id }
+          : undefined,
+      },
+      relations: ['produto', 'localizacao'],
+    });
+
+    // Se não existe e é uma entrada, cria um novo registro
+    if (
+      !produto_estoque &&
+      movimentacao.tipo === TipoMovimentacao.ENTRADA &&
+      localizacao_estoque
+    ) {
+      produto_estoque = entityManager.create(ProdutoEstoque, {
+        produto,
+        localizacao: localizacao_estoque,
+        quantidade: 0,
+      });
+    }
+
+    if (!produto_estoque)
+      throw new BadRequestException(
+        `Produto não encontrado no estoque da localização ${localizacao_estoque?.nome}`,
+      );
 
     await this.atualizarEstoque(
       movimentacao.tipo,

@@ -8,6 +8,10 @@ GET http://localhost:3001/localizacao
 
 ###
 
+GET http://localhost:3001/localizacao/estoque
+
+###
+
 GET http://localhost:3001/localizacao/1
 
 ###
@@ -32,4 +36,4 @@ content-type: application/json
 
 ###
 
-DELETE http://localhost:3000/localizacao/14
+DELETE http://localhost:3001/localizacao/1

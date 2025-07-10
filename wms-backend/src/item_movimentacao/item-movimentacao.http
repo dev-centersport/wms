@@ -34,4 +34,4 @@ content-type: application/json
 
 ###
 
-DELETE http://localhost:3000/item-movimentacao/14
+DELETE http://localhost:3001/item-movimentacao/1
