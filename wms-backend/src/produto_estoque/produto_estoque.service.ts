@@ -20,7 +20,7 @@ export class ProdutoEstoqueService {
 
   async findAll(): Promise<ProdutoEstoque[]> {
     return await this.ProdutoEstoqueRepository.find({
-      relations: ['produto', 'localizacao'],
+      relations: ['produto', 'localizacao.armazem', 'localizacao.tipo'],
     });
   }
 
