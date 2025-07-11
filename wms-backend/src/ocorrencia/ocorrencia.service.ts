@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { UpdateOcorrenciaDto } from './dto/update-ocorrencia.dto';
+import { Usuario } from 'src/usuario/entities/usuario.entity';
 
 @Injectable()
 export class OcorrenciaService {
@@ -13,18 +14,20 @@ export class OcorrenciaService {
     private readonly ocorrenciaRepository: Repository<Ocorrencia>,
     @InjectRepository(ProdutoEstoque)
     private readonly produtoEstoqueRepository: Repository<ProdutoEstoque>,
+    @InjectRepository(Usuario)
+    private readonly usuarioRepository: Repository<Usuario>,
   ) {}
 
   async findAll(): Promise<Ocorrencia[]> {
     return await this.ocorrenciaRepository.find({
-      relations: ['produtos_estoque'],
+      relations: ['produto_estoque', 'usuario'],
     });
   }
 
   async findOne(ocorrencia_id: number): Promise<Ocorrencia> {
     const ocorrencia = await this.ocorrenciaRepository.findOne({
       where: { ocorrencia_id },
-      relations: ['produtos_estoque'],
+      relations: ['produto_estoque', 'usuario'],
     });
 
     if (!ocorrencia)
@@ -36,16 +39,23 @@ export class OcorrenciaService {
   }
 
   async create(CreateOcorrenciaDto: CreateOcorrenciaDto): Promise<Ocorrencia> {
-    const produtos_estoque = await this.produtoEstoqueRepository.findOne({
-      where: { produto_estoque_id: CreateOcorrenciaDto.produto_estoque_id },
-    });
+    const [produto_estoque, usuario] = await Promise.all([
+      this.produtoEstoqueRepository.findOne({
+        where: { produto_estoque_id: CreateOcorrenciaDto.produto_estoque_id },
+      }),
+      this.usuarioRepository.findOne({
+        where: { usuario_id: CreateOcorrenciaDto.usuario_id },
+      }),
+    ]);
 
-    if (!produtos_estoque)
+    if (!produto_estoque)
       throw new NotFoundException('Produto estoque não encontrado');
+    if (!usuario) throw new NotFoundException('Produto estoque não encontrado');
 
     const ocorrencia = this.ocorrenciaRepository.create({
       ...CreateOcorrenciaDto,
-      produtos_estoque,
+      produto_estoque,
+      usuario,
     });
 
     return await this.ocorrenciaRepository.save(ocorrencia);
@@ -57,16 +67,16 @@ export class OcorrenciaService {
   ): Promise<Ocorrencia> {
     const ocorrencia = await this.ocorrenciaRepository.findOne({
       where: { ocorrencia_id },
-      relations: ['produtos_estoque'],
+      relations: ['produto_estoque', 'usuario'],
     });
 
     if (!ocorrencia) throw new NotFoundException('Ocorrência não encontrada');
 
     if (UpdateOcorrenciaDto.produto_estoque_id !== undefined) {
-      const produtos_estoque = await this.produtoEstoqueRepository.findOneBy({
+      const produto_estoque = await this.produtoEstoqueRepository.findOneBy({
         produto_estoque_id: UpdateOcorrenciaDto.produto_estoque_id,
       });
-      if (!produtos_estoque)
+      if (!produto_estoque)
         throw new NotFoundException('Produtos no estoque não encontrado');
     }
 

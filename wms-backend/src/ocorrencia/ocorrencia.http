@@ -16,7 +16,8 @@ POST http://localhost:3001/ocorrencia HTTP/1.1
 content-type: application/json
 
 {
-    "produto_estoque_id": 1
+    "produto_estoque_id": 1,
+    "usuario_id": 1
 }
 
 ###
@@ -30,4 +31,4 @@ content-type: application/json
 
 ###
 
-DELETE http://localhost:3000/ocorrencia/1
+DELETE http://localhost:3001/ocorrencia/1

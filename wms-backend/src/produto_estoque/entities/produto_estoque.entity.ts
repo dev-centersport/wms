@@ -26,6 +26,6 @@ export class ProdutoEstoque {
   @JoinColumn()
   localizacao: Localizacao;
 
-  @OneToMany(() => Ocorrencia, (o) => o.produtos_estoque)
+  @OneToMany(() => Ocorrencia, (o) => o.produto_estoque)
   ocorrencias: Ocorrencia[];
 }

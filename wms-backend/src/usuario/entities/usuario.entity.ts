@@ -1,4 +1,5 @@
 import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
+import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
 import {
   Column,
@@ -38,4 +39,7 @@ export class Usuario {
 
   @OneToMany(() => Movimentacao, (movimentacao) => movimentacao.usuario)
   movimentacoes: Movimentacao[];
+
+  @OneToMany(() => Ocorrencia, (o) => o.usuario)
+  ocorrencias: Ocorrencia[];
 }

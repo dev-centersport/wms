@@ -1,4 +1,5 @@
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
+import { Usuario } from 'src/usuario/entities/usuario.entity';
 import {
   Column,
   Entity,
@@ -20,5 +21,9 @@ export class Ocorrencia {
 
   @ManyToOne(() => ProdutoEstoque, (pe) => pe.ocorrencias)
   @JoinColumn()
-  produtos_estoque: ProdutoEstoque;
+  produto_estoque: ProdutoEstoque;
+
+  @ManyToOne(() => Usuario, (user) => user.ocorrencias)
+  @JoinColumn()
+  usuario: Usuario;
 }
