@@ -27,8 +27,7 @@ const menuItems = [
   // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
   { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  // eslint-disable-next-line react/jsx-no-undef
-  { label: 'Tipo de Localização', icon: <CategoryIcon />,      path: '/TipoLocalizacao' }, // ⬅️ Novo item
+  { label: 'Tipo de Localização', icon: <SpeedIcon />,      path: '/TipoLocalizacao' }, // ⬅️ Novo item
   // { label: 'Produto',             icon: <InventoryIcon />,     path: '/produto' },
   // { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
   // { label: 'Movimentação',        icon: <WorkspacesIcon />,    path: '/movimentacao' },
