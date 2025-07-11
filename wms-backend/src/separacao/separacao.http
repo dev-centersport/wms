@@ -1,0 +1,20 @@
+### Processar Separação
+POST http://localhost:3001/separacao/processar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="arquivo"; filename="exemplo.xlsx"
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+< /path/to/your/exemplo.xlsx
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="dto"
+Content-Type: application/json
+
+{
+    "armazemPrioritarioId": 1
+}
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+
