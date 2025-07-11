@@ -377,6 +377,20 @@ export async function buscarLocalizacaoPorEAN(ean: string) {
   return encontrada;
 }
 
+export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) {
+  const res = await axios.get(`http://192.168.2.41:3001/localizacao/${localizacaoId}/produtos`);
+  const dados = res.data?.produtos_estoque || [];
+
+  return dados.map((item: any) => ({
+    produto_id: item.produto?.produto_id,
+    descricao: item.produto?.descricao || '',
+    sku: item.produto?.sku || '',
+    ean: item.produto?.ean || '',
+    quantidade: item.quantidade || 0,
+  }));
+}
+
+
 // Enviar movimentação para a API
 export async function enviarMovimentacao(payload: {
   tipo: 'entrada' | 'saida' | 'transferencia';
