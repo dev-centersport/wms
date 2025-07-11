@@ -24,17 +24,16 @@ import BalanceIcon from '@mui/icons-material/Balance';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 
 const menuItems = [
-  { label: 'Dashboard',           icon: <QueryStatsIcon />,         path: '/dashboard' },
+  // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
   { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <LeaderboardIcon />,      path: '/TipoLocalizacao' }, // ⬅️ Novo item
-  { label: 'Produto',             icon: <WidgetsIcon />,     path: '/produto' },
-  { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
-  { label: 'Movimentação',        icon: <SpeedIcon />,    path: '/movimentacao' },
-  { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
-  { label: 'Auditoria',           icon: <BalanceIcon />,       path: '/auditoria' },
-  { label: 'Relatorios',           icon: <AssignmentTurnedInIcon />,       path: '/relatorios' },
-  { label: 'Usuarios',           icon: <PersonIcon />,       path: '/usuarios' },
+  // eslint-disable-next-line react/jsx-no-undef
+  { label: 'Tipo de Localização', icon: <CategoryIcon />,      path: '/TipoLocalizacao' }, // ⬅️ Novo item
+  // { label: 'Produto',             icon: <InventoryIcon />,     path: '/produto' },
+  // { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
+  // { label: 'Movimentação',        icon: <WorkspacesIcon />,    path: '/movimentacao' },
+  // { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  // { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
 ];
 // ✅ Adicione essa interface
 interface SidebarProps {
