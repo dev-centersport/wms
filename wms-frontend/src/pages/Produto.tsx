@@ -122,7 +122,7 @@ const Produto: React.FC = () => {
         </Button>
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 'auto', overflow: 'auto' }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
