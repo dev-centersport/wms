@@ -30,15 +30,27 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Layout from '../components/Layout';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import axios from 'axios';
+import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN } from '../services/API';
+
+
+interface ProdutoMovimentado {
+  produto_id: number | null;
+  descricao: string;
+  sku: string | null;
+  ean: string;
+  quantidade: number;
+}
 
 interface Item {
   contador?: string;
   descricao?: string;
-  sku: string;
+  sku: string | null;
   ean: string;
   quantidade?: number;
   produto?: string;
 }
+
 
 interface LocalizacaoOption {
   id: number;
@@ -66,6 +78,7 @@ const Movimentacao: React.FC = () => {
   // Confirmação
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
+  const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
 
   // ---------- autocomplete fetch ----------
   const fetchLocalizacoes = async (query: string) => {
@@ -83,16 +96,59 @@ const Movimentacao: React.FC = () => {
   };
 
   // ---------- Handlers ----------
-  const handleAdicionarProduto = () => {
-    if (!produto) return;
-    const novoItem: Item =
-      tipo === 'transferencia'
-        ? { quantidade: 1, produto, sku: '100542', ean: produto }
-        : { contador: 'Cell A', descricao: 'Cell B', sku: 'Cell C', ean: produto };
 
-    setLista((prev) => [...prev, novoItem]);
+  const handleAdicionarProduto = async () => {
+    if (!produto) return;
+
+    const eanLimpo = produto.trim();
+
+    if (lista.some((item) => item.ean === eanLimpo)) {
+      alert('Produto já foi adicionado.');
+      return;
+    }
+
+    const novo = await buscarProdutoPorEAN(eanLimpo);
+
+    if (!novo) {
+      alert(`Produto com EAN ${eanLimpo} não encontrado.`);
+      return;
+    }
+
+    setLista((prevLista: Item[]) => {
+      const novaLista: Item[] = [
+        ...prevLista,
+        {
+          sku: novo.sku,
+          ean: novo.ean,
+          descricao: novo.descricao,
+          quantidade: 1,
+          produto: novo.descricao,
+          contador: '',
+        },
+      ];
+      setSelectedItems((prev) => [...prev, novaLista.length - 1]);
+      return novaLista;
+    });
+
     setProduto('');
   };
+
+  const handleBuscarLocalizacao = async () => {
+    if (!localizacao.trim()) return;
+
+    const eanLocalizacao = localizacao.trim();
+    const resultado = await buscarLocalizacaoPorEAN(eanLocalizacao);
+
+    if (!resultado) {
+      alert(`Localização com EAN ${eanLocalizacao} não encontrada.`);
+      return;
+    }
+
+    setOrigem({ id: resultado.localizacao_id, nome: resultado.nome });
+    setLocalizacao(''); // limpa o campo digitado
+    setLocalizacaoBloqueada(true); // bloqueia o campo
+  };
+
 
   const handleExcluir = (index: number) => {
     setLista((prev) => prev.filter((_, i) => i !== index));
@@ -112,7 +168,18 @@ const Movimentacao: React.FC = () => {
     setSelectedItems((prev) => (checked ? [...prev, index] : prev.filter((i) => i !== index)));
   };
 
+  const validacaoCampos = () => {
+    if (lista.length === 0) {
+      alert('Adicione pelo menos um produto à movimentação.');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSalvarClick = () => {
+    if (!validacaoCampos()) return;
+
     let mensagem = '';
     switch (tipo) {
       case 'entrada':
@@ -130,60 +197,79 @@ const Movimentacao: React.FC = () => {
     setConfirmMessage(mensagem);
     setConfirmOpen(true);
   };
+
   const montarPayload = () => {
-  const usuarioId = 1; // ID do usuário logado
+    const usuarioId = 1; // ID do usuário logado
 
-  const tipoMovimentacao = tipo.toUpperCase(); // 'entrada' => 'ENTRADA'
+    const tipoMovimentacao = tipo.toUpperCase(); // 'entrada' => 'ENTRADA'
 
-  const payload: any = {
-    tipo: tipoMovimentacao,
-    usuario_id: usuarioId,
-    itens_movimentacao: lista.map((item) => ({
-      produto_id: parseInt(item.sku), // ou use outro campo como produto_id se tiver
-      quantidade: item.quantidade ?? 1
-    }))
-  };
+    const payload: any = {
+      tipo: tipoMovimentacao,
+      usuario_id: usuarioId,
+      itens_movimentacao: lista.map((item) => ({
+        produto_id: item.sku ? parseInt(item.sku) : 0,
+        quantidade: item.quantidade ?? 1,
+      }))
+    };
 
-  if (tipo === 'entrada') {
-    payload.localizacao_origem_id = origem?.id || parseInt(localizacao); // ou localizacao
-  } else if (tipo === 'saida') {
-    payload.localizacao_destino_id = destino?.id || parseInt(localizacao);
-  } else if (tipo === 'transferencia') {
-    payload.localizacao_origem_id = origem?.id;
-    payload.localizacao_destino_id = destino?.id;
-  }
 
-  return payload;
-};
-
-  const handleConfirmarOperacao = async () => {
-  try {
-    const payload = montarPayload();
-    
-    const response = await fetch('/api/movimentacoes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao salvar movimentação');
+    if (tipo === 'entrada') {
+      payload.localizacao_origem_id = origem?.id || parseInt(localizacao); // ou localizacao
+    } else if (tipo === 'saida') {
+      payload.localizacao_destino_id = destino?.id || parseInt(localizacao);
+    } else if (tipo === 'transferencia') {
+      payload.localizacao_origem_id = origem?.id;
+      payload.localizacao_destino_id = destino?.id;
     }
 
-    // Sucesso
-    alert('Movimentação realizada com sucesso!');
-    setConfirmOpen(false);
-    setLista([]);
-    setOrigem(null);
-    setDestino(null);
-    setLocalizacao('');
-  } catch (err) {
-    console.error(err);
-    alert('Falha ao salvar a movimentação.');
-  }
-};
+    return payload;
+  };
+
+  const handleConfirmarOperacao = async () => {
+    try {
+      const usuarioId = 1;
+
+      const payload: any = {
+        tipo, // mantém em minúsculo: 'entrada', 'saida', 'transferencia'
+        usuario_id: usuarioId,
+        itens_movimentacao: lista.map((item) => ({
+          produto_id: Number(item.sku),
+          quantidade: Number(item.quantidade ?? 1),
+        })),
+      };
+
+      // Define localizações conforme o tipo
+      if (tipo === 'entrada') {
+        // NÃO envie localizacao_origem_id
+        payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
+      }
+      else if (tipo === 'saida') {
+        payload.localizacao_destino_id = destino?.id || 0;
+      } else if (tipo === 'transferencia') {
+        payload.localizacao_origem_id = origem?.id;
+        payload.localizacao_destino_id = destino?.id;
+      }
+
+      console.log('📦 Payload final:', payload);
+
+      await enviarMovimentacao(payload);
+
+      alert('Movimentação realizada com sucesso!');
+      setConfirmOpen(false);
+      setLista([]);
+      setOrigem(null);
+      setDestino(null);
+      setLocalizacao('');
+      setLocalizacaoBloqueada(false);
+    } catch (err: any) {
+      console.error('Erro ao enviar movimentação:', err);
+      if (err.response) {
+        console.error('📛 Código:', err.response.status);
+        console.error('📦 Dados do erro:', err.response.data);
+      }
+      alert(err?.response?.data?.message || 'Falha ao salvar movimentação.');
+    }
+  };
 
 
   // ---------- UI ----------
@@ -319,17 +405,34 @@ const Movimentacao: React.FC = () => {
                 fullWidth
                 label="Bipe a Localização"
                 size="small"
-                value={localizacao}
-                onChange={(e) => setLocalizacao(e.target.value)}
+                value={localizacaoBloqueada ? origem?.nome || '' : localizacao}
+                onChange={(e) => !localizacaoBloqueada && setLocalizacao(e.target.value)}
+                onKeyDown={(e) => !localizacaoBloqueada && e.key === 'Enter' && handleBuscarLocalizacao()}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
                       <SearchIcon sx={{ color: 'text.secondary' }} />
                     </InputAdornment>
                   ),
+                  readOnly: localizacaoBloqueada,
                 }}
                 sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
               />
+              {origem && (
+                <Box
+                  sx={{
+                    backgroundColor: '#e3f3dc',
+                    border: '2px solid #61de27',
+                    borderRadius: 2,
+                    padding: 2,
+                    mt: 1,
+                    fontWeight: 500,
+                  }}
+                >
+                  Localização identificada: <strong>{origem.nome}</strong>
+                </Box>
+              )}
+
               <TextField
                 fullWidth
                 label="Bipe o Produto"
@@ -389,7 +492,7 @@ const Movimentacao: React.FC = () => {
               {lista.map((item, index) => {
                 const isSelected = selectedItems.includes(index);
                 return (
-                  <TableRow key={index} hover selected={isSelected}>
+                  <TableRow key={item.ean || `${item.sku}-${index}`} hover selected={isSelected}>
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
