@@ -6,7 +6,7 @@ import {
 import { CreateMovimentacaoDto } from './dto/create-movimentacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Movimentacao, TipoMovimentacao } from './entities/movimentacao.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, MoreThan, Repository } from 'typeorm';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
@@ -25,12 +25,41 @@ export class MovimentacaoService {
     private readonly usuarioRepository: Repository<Usuario>,
     @InjectRepository(Localizacao)
     private readonly localizacaoRepository: Repository<Localizacao>,
+    @InjectRepository(ProdutoEstoque)
+    private readonly produtoEstoqueRepository: Repository<ProdutoEstoque>,
     private readonly entityManager: EntityManager,
   ) {}
 
   async create(
     CreateMovimentacaoDto: CreateMovimentacaoDto,
   ): Promise<Movimentacao> {
+    // Se for transferência e não tiver itens específicados, busca todos os produtos da origem
+    if (
+      (CreateMovimentacaoDto.tipo === TipoMovimentacao.TRANSFERENCIA &&
+        !CreateMovimentacaoDto.itens_movimentacao) ||
+      CreateMovimentacaoDto.itens_movimentacao.length === 0
+    ) {
+      const produtoEstoque = await this.produtoEstoqueRepository.find({
+        where: {
+          localizacao: {
+            localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+          },
+          quantidade: MoreThan(0),
+        },
+        relations: ['produto'],
+      });
+
+      if (produtoEstoque.length === 0)
+        throw new BadRequestException(
+          'Nenhum produto encontrado na localização de origem para transferência',
+        );
+
+      CreateMovimentacaoDto.itens_movimentacao = produtoEstoque.map((pe) => ({
+        produto_id: pe.produto.produto_id,
+        quantidade: pe.quantidade,
+      }));
+    }
+
     // Validações de itens
     if (
       !CreateMovimentacaoDto.itens_movimentacao ||
