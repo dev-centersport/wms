@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Ocorrencia {
@@ -7,4 +14,11 @@ export class Ocorrencia {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   dataHora: Date;
+
+  @Column({ type: 'boolean', default: true })
+  ativo: boolean;
+
+  @ManyToOne(() => ProdutoEstoque, (pe) => pe.ocorrencias)
+  @JoinColumn()
+  produtos_estoque: ProdutoEstoque;
 }

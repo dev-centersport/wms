@@ -1,0 +1,33 @@
+### List Products
+
+GET http://localhost:3000/
+
+###
+
+GET http://localhost:3001/ocorrencia
+
+###
+
+GET http://localhost:3001/ocorrencia/8
+
+###
+
+POST http://localhost:3001/ocorrencia HTTP/1.1
+content-type: application/json
+
+{
+    "produto_estoque_id": 1
+}
+
+###
+
+PATCH http://localhost:3001/ocorrencia/1 HTTP/1.1
+content-type: application/json
+
+{
+    "tipo_ocorrencia_id": 1
+}
+
+###
+
+DELETE http://localhost:3000/ocorrencia/1
