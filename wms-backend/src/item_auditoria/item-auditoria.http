@@ -23,6 +23,7 @@ content-type: application/json
     "acao_corretiva": "foi adicionado mais dois produtos no estoque",
     "estoque_anterior": 8,
     "estoque_novo": 10,
+    "auditoria_id": 1
 }
 
 ###
