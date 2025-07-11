@@ -384,7 +384,7 @@ export async function enviarMovimentacao(payload: {
   localizacao_origem_id: number;
   localizacao_destino_id: number;
   itens_movimentacao: {
-    produto_estoque_id: number;
+    produto_id: number; // <- CORRETO
     quantidade: number;
   }[];
 }) {

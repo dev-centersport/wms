@@ -34,15 +34,8 @@ import axios from 'axios';
 import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN } from '../services/API';
 
 
-interface ProdutoMovimentado {
-  produto_id: number | null;
-  descricao: string;
-  sku: string | null;
-  ean: string;
-  quantidade: number;
-}
-
 interface Item {
+  produto_id: number;
   contador?: string;
   descricao?: string;
   sku: string | null;
@@ -118,6 +111,7 @@ const Movimentacao: React.FC = () => {
       const novaLista: Item[] = [
         ...prevLista,
         {
+          produto_id: novo.produto_id, // <- Aqui é essencial
           sku: novo.sku,
           ean: novo.ean,
           descricao: novo.descricao,
@@ -168,15 +162,6 @@ const Movimentacao: React.FC = () => {
     setSelectedItems((prev) => (checked ? [...prev, index] : prev.filter((i) => i !== index)));
   };
 
-  const validacaoCampos = () => {
-    if (lista.length === 0) {
-      alert('Adicione pelo menos um produto à movimentação.');
-      return false;
-    }
-
-    return true;
-  };
-
   const handleSalvarClick = () => {
     if (!validacaoCampos()) return;
 
@@ -198,53 +183,55 @@ const Movimentacao: React.FC = () => {
     setConfirmOpen(true);
   };
 
-  const montarPayload = () => {
-    const usuarioId = 1; // ID do usuário logado
+ const montarPayload = () => {
+  const usuarioId = 1;
 
-    const tipoMovimentacao = tipo.toUpperCase(); // 'entrada' => 'ENTRADA'
-
-    const payload: any = {
-      tipo: tipoMovimentacao,
-      usuario_id: usuarioId,
-      itens_movimentacao: lista.map((item) => ({
-        produto_id: item.sku ? parseInt(item.sku) : 0,
-        quantidade: item.quantidade ?? 1,
-      }))
-    };
-
-
-    if (tipo === 'entrada') {
-      payload.localizacao_origem_id = origem?.id || parseInt(localizacao); // ou localizacao
-    } else if (tipo === 'saida') {
-      payload.localizacao_destino_id = destino?.id || parseInt(localizacao);
-    } else if (tipo === 'transferencia') {
-      payload.localizacao_origem_id = origem?.id;
-      payload.localizacao_destino_id = destino?.id;
-    }
-
-    return payload;
+  const payload: any = {
+    tipo: tipo.toLowerCase(), // API espera em minúsculo: 'entrada', 'saida', 'transferencia'
+    usuario_id: usuarioId,
+    itens_movimentacao: lista.map((item) => ({
+      produto_id: item.produto_id, // Usar diretamente o ID correto
+      quantidade: item.quantidade ?? 1,
+    })),
+    localizacao_origem_id: 0,
+    localizacao_destino_id: 0,
   };
+
+  if (tipo === 'entrada') {
+    payload.localizacao_origem_id = 0;
+    payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
+  } else if (tipo === 'saida') {
+    payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
+    payload.localizacao_destino_id = 0;
+  } else if (tipo === 'transferencia') {
+    payload.localizacao_origem_id = origem?.id;
+    payload.localizacao_destino_id = destino?.id;
+  }
+
+  return payload;
+};
 
   const handleConfirmarOperacao = async () => {
     try {
       const usuarioId = 1;
 
       const payload: any = {
-        tipo, // mantém em minúsculo: 'entrada', 'saida', 'transferencia'
+        tipo,
         usuario_id: usuarioId,
         itens_movimentacao: lista.map((item) => ({
-          produto_id: Number(item.sku),
+          produto_id: Number(item.produto_id),
           quantidade: Number(item.quantidade ?? 1),
         })),
+        localizacao_origem_id: 0,
+        localizacao_destino_id: 0,
       };
 
-      // Define localizações conforme o tipo
       if (tipo === 'entrada') {
-        // NÃO envie localizacao_origem_id
+        payload.localizacao_origem_id = 0;
         payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
-      }
-      else if (tipo === 'saida') {
-        payload.localizacao_destino_id = destino?.id || 0;
+      } else if (tipo === 'saida') {
+        payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
+        payload.localizacao_destino_id = 0;
       } else if (tipo === 'transferencia') {
         payload.localizacao_origem_id = origem?.id;
         payload.localizacao_destino_id = destino?.id;
@@ -254,7 +241,7 @@ const Movimentacao: React.FC = () => {
 
       await enviarMovimentacao(payload);
 
-      alert('Movimentação realizada com sucesso!');
+      alert('Movimentacao realizada com sucesso!');
       setConfirmOpen(false);
       setLista([]);
       setOrigem(null);
@@ -262,14 +249,35 @@ const Movimentacao: React.FC = () => {
       setLocalizacao('');
       setLocalizacaoBloqueada(false);
     } catch (err: any) {
-      console.error('Erro ao enviar movimentação:', err);
+      console.error('Erro ao enviar movimentacao:', err);
       if (err.response) {
         console.error('📛 Código:', err.response.status);
         console.error('📦 Dados do erro:', err.response.data);
       }
-      alert(err?.response?.data?.message || 'Falha ao salvar movimentação.');
+      alert(err?.response?.data?.message || 'Falha ao salvar movimentacao.');
     }
   };
+
+  const validacaoCampos = () => {
+    if (lista.length === 0) {
+      alert('Adicione pelo menos um produto.');
+      return false;
+    }
+    if (tipo === 'saida' && !origem?.id) {
+      alert('Saída exige localização de origem.');
+      return false;
+    }
+    if (tipo === 'entrada' && !origem?.id && !localizacao) {
+      alert('Entrada exige localização de destino.');
+      return false;
+    }
+    if (tipo === 'transferencia' && (!origem?.id || !destino?.id)) {
+      alert('Transferência exige origem e destino.');
+      return false;
+    }
+    return true;
+  };
+
 
 
   // ---------- UI ----------
