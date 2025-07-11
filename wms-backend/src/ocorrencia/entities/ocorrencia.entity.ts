@@ -1,3 +1,5 @@
+import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
+import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import {
@@ -5,6 +7,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -23,7 +26,14 @@ export class Ocorrencia {
   @JoinColumn()
   produto_estoque: ProdutoEstoque;
 
+  @ManyToOne(() => Localizacao, (loc) => loc.ocorrencias)
+  @JoinColumn()
+  localizacoes: Localizacao;
+
   @ManyToOne(() => Usuario, (user) => user.ocorrencias)
   @JoinColumn()
   usuario: Usuario;
+
+  @OneToMany(() => Auditoria, (a) => a.ocorrencia)
+  auditorias: Auditoria[];
 }

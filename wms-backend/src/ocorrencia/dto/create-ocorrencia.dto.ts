@@ -6,4 +6,7 @@ export class CreateOcorrenciaDto {
 
   @idRelations()
   produto_estoque_id: number;
+
+  @idRelations()
+  localizacao_id: number;
 }
