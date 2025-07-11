@@ -1,3 +1,4 @@
+import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
 import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
 import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
@@ -42,4 +43,7 @@ export class Usuario {
 
   @OneToMany(() => Ocorrencia, (o) => o.usuario)
   ocorrencias: Ocorrencia[];
+
+  @OneToMany(() => Auditoria, (a) => a.usuario)
+  auditorias: Auditoria[];
 }

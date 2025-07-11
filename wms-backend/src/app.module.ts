@@ -17,6 +17,7 @@ import { MovimentacaoModule } from './movimentacao/movimentacao.module';
 import { ItemMovimentacaoModule } from './item_movimentacao/item_movimentacao.module';
 import { OcorrenciaModule } from './ocorrencia/ocorrencia.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
+import { ItemAuditoriaModule } from './item_auditoria/item_auditoria.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -82,6 +83,7 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
     ItemMovimentacaoModule,
     OcorrenciaModule,
     AuditoriaModule,
+    ItemAuditoriaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

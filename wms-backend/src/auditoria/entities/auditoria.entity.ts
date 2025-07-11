@@ -1,4 +1,14 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { ItemAuditoria } from 'src/item_auditoria/entities/item_auditoria.entity';
+import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
+import { Usuario } from 'src/usuario/entities/usuario.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 export enum StatusAuditoria {
   PENDENTE = 'pendente',
@@ -25,5 +35,14 @@ export class Auditoria {
   })
   status: StatusAuditoria;
 
-  @ManyToOne
+  @ManyToOne(() => Usuario, (user) => user.auditorias)
+  @JoinColumn()
+  usuario: Usuario;
+
+  @ManyToOne(() => Ocorrencia, (o) => o.auditorias)
+  @JoinColumn()
+  ocorrencia: Ocorrencia;
+
+  @OneToMany(() => ItemAuditoria, (ia) => ia.auditoria)
+  itens_auditoria: ItemAuditoria[];
 }
