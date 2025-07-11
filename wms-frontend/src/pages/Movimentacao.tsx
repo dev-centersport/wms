@@ -130,14 +130,61 @@ const Movimentacao: React.FC = () => {
     setConfirmMessage(mensagem);
     setConfirmOpen(true);
   };
+  const montarPayload = () => {
+  const usuarioId = 1; // ID do usuário logado
 
-  const handleConfirmarOperacao = () => {
-    // TODO: inserir lógica real de salvamento (API, etc.)
-    // Fechamos o modal por enquanto
-    setConfirmOpen(false);
-    // Limpar listas/estados se necessário
-    // setLista([]);
+  const tipoMovimentacao = tipo.toUpperCase(); // 'entrada' => 'ENTRADA'
+
+  const payload: any = {
+    tipo: tipoMovimentacao,
+    usuario_id: usuarioId,
+    itens_movimentacao: lista.map((item) => ({
+      produto_id: parseInt(item.sku), // ou use outro campo como produto_id se tiver
+      quantidade: item.quantidade ?? 1
+    }))
   };
+
+  if (tipo === 'entrada') {
+    payload.localizacao_origem_id = origem?.id || parseInt(localizacao); // ou localizacao
+  } else if (tipo === 'saida') {
+    payload.localizacao_destino_id = destino?.id || parseInt(localizacao);
+  } else if (tipo === 'transferencia') {
+    payload.localizacao_origem_id = origem?.id;
+    payload.localizacao_destino_id = destino?.id;
+  }
+
+  return payload;
+};
+
+  const handleConfirmarOperacao = async () => {
+  try {
+    const payload = montarPayload();
+    
+    const response = await fetch('/api/movimentacoes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao salvar movimentação');
+    }
+
+    // Sucesso
+    alert('Movimentação realizada com sucesso!');
+    setConfirmOpen(false);
+    setLista([]);
+    setOrigem(null);
+    setDestino(null);
+    setLocalizacao('');
+  } catch (err) {
+    console.error(err);
+    alert('Falha ao salvar a movimentação.');
+  }
+};
+
 
   // ---------- UI ----------
   return (
