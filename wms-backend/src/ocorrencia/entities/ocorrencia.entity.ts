@@ -1,4 +1,5 @@
 import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
+import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import {
@@ -24,6 +25,10 @@ export class Ocorrencia {
   @ManyToOne(() => ProdutoEstoque, (pe) => pe.ocorrencias)
   @JoinColumn()
   produto_estoque: ProdutoEstoque;
+
+  @ManyToOne(() => Localizacao, (loc) => loc.ocorrencias)
+  @JoinColumn()
+  localizacoes: Localizacao;
 
   @ManyToOne(() => Usuario, (user) => user.ocorrencias)
   @JoinColumn()

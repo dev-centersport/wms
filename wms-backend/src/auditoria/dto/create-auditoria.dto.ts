@@ -1,19 +1,32 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { StatusAuditoria } from '../entities/auditoria.entity';
-import { idRelations } from 'src/utils/decorator.id.relations';
+import { IsDate, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateAuditoriaDto {
-  @IsNotEmpty()
+  @IsInt()
+  usuarioId: number;
+
+  @IsInt()
+  ocorrenciaId: number;
+
+  @IsInt()
+  localizacaoId: number;
+
+  @IsOptional()
   @IsString()
-  conclusao: string;
+  conclusao?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  data_hora_inicio?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  data_hora_conclusao?: Date;
+
+  @IsOptional()
   @IsEnum(StatusAuditoria)
-  status: StatusAuditoria = StatusAuditoria.CONCLUIDA;
-
-  @idRelations()
-  usuario_id: number;
-
-  @idRelations()
-  ocorrencia_id: number;
+  status?: StatusAuditoria;
 }

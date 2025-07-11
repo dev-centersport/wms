@@ -1,4 +1,5 @@
 import { ItemAuditoria } from 'src/item_auditoria/entities/item_auditoria.entity';
+import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import {
@@ -25,8 +26,11 @@ export class Auditoria {
   @Column({ type: 'text' })
   conclusao: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  data_hora_conclusao: Date;
+  @Column({ type: 'timestamp' })
+  data_hora_inicio?: Date;
+
+  @Column({ type: 'timestamp' })
+  data_hora_conclusao?: Date;
 
   @Column({
     type: 'enum',
@@ -42,6 +46,10 @@ export class Auditoria {
   @ManyToOne(() => Ocorrencia, (o) => o.auditorias)
   @JoinColumn()
   ocorrencia: Ocorrencia;
+
+  @ManyToOne(() => Localizacao, (loc) => loc.auditorias)
+  @JoinColumn()
+  localizacao: Localizacao;
 
   @OneToMany(() => ItemAuditoria, (ia) => ia.auditoria)
   itens_auditoria: ItemAuditoria[];

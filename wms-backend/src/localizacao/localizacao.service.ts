@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateLocalizacaoDto } from './dto/create-localizacao.dto';
 import { UpdateLocalizacaoDto } from './dto/update-localizacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -102,6 +106,19 @@ export class LocalizacaoService {
       throw new NotFoundException('Tipo de localização não encontrado');
     if (!armazem)
       throw new NotFoundException('Armazem de localização não encontrado');
+
+    const localizacaoExistente = await this.LocalizacaoRepository.findOne({
+      where: {
+        nome: createLocalizacaoDto.nome,
+        armazem: { armazem_id: createLocalizacaoDto.armazem_id }, // Assumindo que há um relacionamento
+      },
+    });
+
+    if (localizacaoExistente) {
+      throw new BadRequestException(
+        'Já existe uma localização com este nome no mesmo armazém.',
+      );
+    }
 
     // Verifica se o armazém existe
     // const armazem = await this.armazemRepository.findOneBy({});
