@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum StatusAuditoria {
   PENDENTE = 'pendente',
@@ -24,4 +24,6 @@ export class Auditoria {
     default: StatusAuditoria.PENDENTE,
   })
   status: StatusAuditoria;
+
+  @ManyToOne
 }
