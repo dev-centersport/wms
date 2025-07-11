@@ -137,7 +137,6 @@ const Produto: React.FC = () => {
               <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>SKU</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>EAN</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Qtd</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

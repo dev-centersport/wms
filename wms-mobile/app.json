@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "CenterSport WMS",
+    "slug": "centersport-wms",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/image.png",
+    "splash": {
+      "image": "./assets/images/image.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "package": "com.centersporti.centersportwms"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0f373b42-fbae-4183-abb8-1dc42e4d3559"
+      }
+    }
+  }
+}

@@ -10,17 +10,16 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
-// Serviços centralizados de API
 import {
   criarLocalizacao as criarLocalizacaoAPI,
   buscarArmazem,
   buscarTiposDeLocalizacao,
+  buscarLocalizacoes,
 } from '../services/API';
 
 import prateleira from '../img/7102305.png';
 import Layout from '../components/Layout';
 
-// Tipagens vindas (ou equivalentes) do serviço ---------------------------
 interface TipoLocalizacao {
   tipo_localizacao_id: number;
   tipo: string;
@@ -30,38 +29,37 @@ interface Armazem {
   armazem_id: number;
   nome: string;
 }
-//--------------------------------------------------------------------------
 
 const CriarLocalizacao: React.FC = () => {
   const navigate = useNavigate();
 
   const [tipos, setTipos] = useState<TipoLocalizacao[]>([]);
   const [armazens, setArmazens] = useState<Armazem[]>([]);
+  const [listaLocalizacoes, setListaLocalizacoes] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     nome: '',
-    tipo: '', // agora armazenamos o texto do tipo, não o ID
-    armazem: '', // permanece para UI, mas não é enviado no serviço (o serviço usa o primeiro armazém)
+    tipo: '',
+    armazem: '',
     largura: '',
     altura: '',
     comprimento: '',
   });
 
-  //------------------------------------------------------------------
-  // Carregar listas de tipos e armazéns via serviços reutilizáveis
-  //------------------------------------------------------------------
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        const [listaTipos, listaArmazens] = await Promise.all([
+        const [listaTipos, listaArmazens, localizacoesExistentes] = await Promise.all([
           buscarTiposDeLocalizacao(),
           buscarArmazem(),
+          buscarLocalizacoes(),
         ]);
 
         setTipos(listaTipos);
         setArmazens(listaArmazens);
+        setListaLocalizacoes(localizacoesExistentes);
       } catch (err) {
-        alert('Erro ao carregar tipos ou armazéns');
+        alert('Erro ao carregar dados iniciais.');
         console.error(err);
       }
     };
@@ -69,18 +67,27 @@ const CriarLocalizacao: React.FC = () => {
     carregarDados();
   }, []);
 
-  //------------------------------------------------------------------
-  // Helpers
-  //------------------------------------------------------------------
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const validarCampos = (): boolean => {
+    const validarCampos = (): boolean => {
     if (!formData.nome || !formData.tipo) {
       alert('Preencha o nome e selecione o tipo de localização.');
       return false;
     }
+
+    const nomeExisteNoMesmoArmazem = listaLocalizacoes.some(
+      (loc) =>
+        loc.nome?.trim().toLowerCase() === formData.nome.trim().toLowerCase() &&
+        loc.armazem?.trim().toLowerCase() === formData.armazem.trim().toLowerCase()
+    );
+
+    if (nomeExisteNoMesmoArmazem) {
+      alert('Já existe uma localização com este nome neste armazém. Escolha outro nome ou armazém.');
+      return false;
+    }
+
     return true;
   };
 
@@ -102,18 +109,14 @@ const CriarLocalizacao: React.FC = () => {
       navigate('/localizacao');
     } catch (err) {
       console.error(err);
-      // a própria API já trata e exibe alerts detalhados
     }
   };
 
-  //------------------------------------------------------------------
-  // Render
-  //------------------------------------------------------------------
   return (
     <Layout>
       <Container>
         <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-            Criar Localização
+          Criar Localização
         </Typography>
 
         <Box display="flex" flexDirection="column" gap={2} alignItems="flex-start">
@@ -125,7 +128,6 @@ const CriarLocalizacao: React.FC = () => {
           />
 
           <Box display="flex" gap={2} flexWrap="wrap" width="100%">
-            {/* Seleção de Tipo */}
             <TextField
               select
               label="Tipo"
@@ -145,7 +147,6 @@ const CriarLocalizacao: React.FC = () => {
               )}
             </TextField>
 
-            {/* Seleção de Armazém (opcional / informativo) */}
             <TextField
               select
               label="Armazém"
@@ -176,17 +177,15 @@ const CriarLocalizacao: React.FC = () => {
                 <TextField
                   key={field}
                   label={field.charAt(0).toUpperCase() + field.slice(1)}
-                  placeholder='0'
+                  placeholder="0"
                   type="number"
                   value={(formData as any)[field]}
                   onChange={(e) => {
                     const valor = e.target.value;
-                    // Bloqueia hífen e caracteres não numéricos (exceto ponto)
                     if (/^[0-9]*\.?[0-9]*$/.test(valor)) {
                       handleChange(field, valor);
                     }
                   }}
-
                   inputProps={{
                     min: 0,
                     step: 'any',
@@ -211,9 +210,8 @@ const CriarLocalizacao: React.FC = () => {
                   }}
                 />
               ))}
-
-
             </Box>
+
             <Box display="flex" alignItems="center" justifyContent="flex-start">
               <img src={prateleira} alt="Medição" style={{ width: 90, height: 'auto' }} />
             </Box>
