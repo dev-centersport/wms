@@ -34,7 +34,8 @@ import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, busca
 
 
 interface Item {
-  produto_id: number;
+  produto_id?: number; // para entrada/saída
+  produto_estoque_id?: number; // para transferência
   contador?: string;
   descricao?: string;
   sku: string | null;
@@ -70,6 +71,7 @@ const Movimentacao: React.FC = () => {
   const [lista, setLista] = useState<Item[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [produtosOrigem, setProdutosOrigem] = useState<Item[]>([]);
 
   // Confirmação
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -108,32 +110,64 @@ const Movimentacao: React.FC = () => {
   // ---------- Handlers ----------
 
   const handleAdicionarProduto = async () => {
-    if (!produto) return;
+    if (!produto || tipo === 'transferencia') return; // transferência não usa bipagem de produto
 
     const eanLimpo = produto.trim();
-
-
-    const novo = await buscarProdutoPorEAN(eanLimpo);
-
-    setLista((prevLista: Item[]) => {
-      const novaLista: Item[] = [
-        ...prevLista,
-        {
-          produto_id: novo.produto_id, // <- Aqui é essencial
-          sku: novo.sku,
-          ean: novo.ean,
-          descricao: novo.descricao,
-          quantidade: 1,
-          produto: novo.descricao,
-          contador: '',
-        },
-      ];
-      setSelectedItems((prev) => [...prev, novaLista.length - 1]);
-      return novaLista;
-    });
-
     setProduto('');
+
+    try {
+      const novo = await buscarProdutoPorEAN(eanLimpo);
+
+      if (tipo === 'saida') {
+        const encontrado = produtosOrigem.find(p => p.ean === eanLimpo);
+
+        if (!encontrado) {
+          alert(`Produto ${eanLimpo} não encontrado na localização de origem.`);
+          return;
+        }
+
+        setLista((prevLista: Item[]) => {
+          const novaLista: Item[] = [
+            ...prevLista,
+            {
+              produto_id: encontrado.produto_id,
+              sku: encontrado.sku,
+              ean: encontrado.ean,
+              descricao: encontrado.descricao,
+              quantidade: 1,
+              produto: encontrado.descricao,
+              contador: '',
+            },
+          ];
+          setSelectedItems((prev) => [...prev, novaLista.length - 1]);
+          return novaLista;
+        });
+      }
+
+      if (tipo === 'entrada') {
+        setLista((prevLista: Item[]) => {
+          const novaLista: Item[] = [
+            ...prevLista,
+            {
+              produto_id: novo.produto_id,
+              sku: novo.sku,
+              ean: novo.ean,
+              descricao: novo.descricao,
+              quantidade: 1,
+              produto: novo.descricao,
+              contador: '',
+            },
+          ];
+          setSelectedItems((prev) => [...prev, novaLista.length - 1]);
+          return novaLista;
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao adicionar produto:', err);
+      alert('Erro ao buscar produto.');
+    }
   };
+
 
   const handleBuscarLocalizacao = async () => {
     if (!localizacao.trim()) return;
@@ -151,12 +185,67 @@ const Movimentacao: React.FC = () => {
     setLocalizacaoBloqueada(true); // bloqueia o campo
   };
 
+  const handleBuscarLocalizacaoEntrada = async () => {
+    if (!localizacao.trim()) return;
+
+    try {
+      const resultado = await buscarLocalizacaoPorEAN(localizacao.trim());
+      if (!resultado) {
+        alert('Localização com esse EAN não foi encontrada.');
+        return;
+      }
+
+      const destinoFormatado: LocalizacaoOption = {
+        id: resultado.localizacao_id,
+        nome: resultado.nome,
+        armazem: resultado.armazem || '',
+      };
+
+      setOrigem(destinoFormatado);
+      setLocalizacao('');
+      setLocalizacaoBloqueada(true);
+    } catch (err) {
+      console.error('Erro ao buscar localização (entrada):', err);
+      alert('Erro ao buscar localização.');
+    }
+  };
+
+  const handleBuscarLocalizacaoSaida = async () => {
+    if (!localizacao.trim()) return;
+
+    try {
+      const resultado = await buscarLocalizacaoPorEAN(localizacao.trim());
+      if (!resultado) {
+        alert('Localização com esse EAN não foi encontrada.');
+        return;
+      }
+
+      const origemFormatada: LocalizacaoOption = {
+        id: resultado.localizacao_id,
+        nome: resultado.nome,
+        armazem: resultado.armazem || '',
+      };
+
+      setOrigem(origemFormatada);
+      setLocalizacao('');
+      setLocalizacaoBloqueada(true);
+
+      const produtos = await buscarProdutosPorLocalizacaoDireto(origemFormatada.id);
+      setProdutosOrigem(produtos); // armazenar produtos válidos da localização
+      setLista([]); // inicia com lista vazia
+      setSelectedItems([]); // inicia sem seleção
+    } catch (err) {
+      console.error('Erro ao buscar localização ou produtos (saída):', err);
+      alert('Erro ao buscar localização e produtos.');
+    }
+  };
+
+
   const handleBuscarLocalizacaoTransferencia = async () => {
     if (!localizacao.trim()) return;
 
     try {
       const resultado = await buscarLocalizacaoPorEAN(localizacao.trim());
-
       if (!resultado) {
         alert('Localização com esse EAN não foi encontrada.');
         return;
@@ -174,14 +263,22 @@ const Movimentacao: React.FC = () => {
       setLocalizacaoBloqueada(true);
 
       const produtos = await buscarProdutosPorLocalizacaoDireto(origemFormatada.id);
-      setLista(produtos);
-      setSelectedItems(produtos.map((_: any, idx: number) => idx));
+
+      const produtosValidos: Item[] = produtos
+        .filter((item: Item) => Number(item.quantidade) > 0)
+        .map((item: Item) => ({
+          ...item,
+          quantidade: Number(item.quantidade),
+        }));
+
+      setLista(produtosValidos);
+      setSelectedItems(produtosValidos.map((_, idx) => idx));
+
     } catch (err) {
-      console.error('Erro ao buscar localização ou produtos:', err);
+      console.error('Erro ao buscar localização ou produtos (transferência):', err);
       alert('Erro ao buscar localização e produtos.');
     }
   };
-
 
   const handleExcluir = (index: number) => {
     setLista((prev) => prev.filter((_, i) => i !== index));
@@ -222,65 +319,58 @@ const Movimentacao: React.FC = () => {
     setConfirmOpen(true);
   };
 
-  const montarPayload = () => {
-    const usuarioId = 1;
-
-    const payload: any = {
-      tipo: tipo.toLowerCase(), // API espera em minúsculo: 'entrada', 'saida', 'transferencia'
-      usuario_id: usuarioId,
-      itens_movimentacao: lista.map((item) => ({
-        produto_id: item.produto_id, // Usar diretamente o ID correto
-        quantidade: item.quantidade ?? 1,
-      })),
-      localizacao_origem_id: 0,
-      localizacao_destino_id: 0,
-    };
-
-    if (tipo === 'entrada') {
-      payload.localizacao_origem_id = 0;
-      payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
-    } else if (tipo === 'saida') {
-      payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
-      payload.localizacao_destino_id = 0;
-    } else if (tipo === 'transferencia') {
-      payload.localizacao_origem_id = origem?.id;
-      payload.localizacao_destino_id = destino?.id;
-    }
-
-    return payload;
-  };
-
   const handleConfirmarOperacao = async () => {
     try {
       const usuarioId = 1;
 
+      if (tipo === 'transferencia' && origem?.id === destino?.id) {
+        alert('A origem e o destino não podem ser iguais.');
+        return;
+      }
+      if (lista.length === 0) {
+        alert('Nenhum produto para movimentar.');
+        return;
+      }
+      let itensValidos: any[] = [];
+      if (tipo === 'entrada' || tipo === 'saida') {
+        itensValidos = lista.filter(item => item.produto_id && Number(item.quantidade) > 0).map(item => ({
+          produto_id: Number(item.produto_id),
+          quantidade: Number(item.quantidade),
+        }));
+      }
+      if (tipo === 'transferencia') {
+        itensValidos = lista.filter(item => item.produto_estoque_id && Number(item.quantidade) > 0).map(item => ({
+          produto_estoque_id: Number(item.produto_estoque_id),
+          quantidade: Number(item.quantidade),
+        }));
+      }
+      if (itensValidos.length === 0) {
+        alert('Nenhum item válido para movimentar.');
+        return;
+      }
+
+      if (tipo === 'transferencia') {
+        const idsInvalidos = lista.filter(item =>
+          !item.produto_estoque_id
+        );
+        if (idsInvalidos.length > 0) {
+          alert('Há produtos sem produto_estoque_id válido. Verifique a origem.');
+          return;
+        }
+      }
+
       const payload: any = {
         tipo,
         usuario_id: usuarioId,
-        itens_movimentacao: lista.map((item) => ({
-          produto_id: Number(item.produto_id),
-          quantidade: Number(item.quantidade ?? 1),
-        })),
-        localizacao_origem_id: 0,
-        localizacao_destino_id: 0,
+        itens_movimentacao: itensValidos,
+        localizacao_origem_id: tipo === 'entrada' ? 0 : (origem?.id ?? null),
+        localizacao_destino_id: tipo === 'saida' ? 0 :
+          tipo === 'transferencia' ? (destino?.id ?? null) :
+            (origem?.id ?? null),
       };
-
-      if (tipo === 'entrada') {
-        payload.localizacao_origem_id = 0;
-        payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
-      } else if (tipo === 'saida') {
-        payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
-        payload.localizacao_destino_id = 0;
-      } else if (tipo === 'transferencia') {
-        payload.localizacao_origem_id = origem?.id;
-        payload.localizacao_destino_id = destino?.id;
-      }
-
       console.log('📦 Payload final:', payload);
-
       await enviarMovimentacao(payload);
-
-      alert('Movimentacao realizada com sucesso!');
+      alert('Movimentação realizada com sucesso!');
       setConfirmOpen(false);
       setLista([]);
       setOrigem(null);
@@ -291,9 +381,9 @@ const Movimentacao: React.FC = () => {
       console.error('Erro ao enviar movimentacao:', err);
       if (err.response) {
         console.error('📛 Código:', err.response.status);
-        console.error('📦 Dados do erro:', err.response.data);
+        console.dir(err.response.data);
       }
-      alert(err?.response?.data?.message || 'Falha ao salvar movimentacao.');
+      alert(err?.response?.data?.message || 'Falha ao salvar movimentação.');
     }
   };
 
@@ -540,7 +630,9 @@ const Movimentacao: React.FC = () => {
                 onChange={(e) => !localizacaoBloqueada && setLocalizacao(e.target.value)}
                 onKeyDown={(e) => {
                   if (!localizacaoBloqueada && e.key === 'Enter') {
-                    handleBuscarLocalizacaoTransferencia(); // já está fora do modo 'transferencia'
+                    if (tipo === 'entrada') handleBuscarLocalizacaoEntrada();
+                    else if (tipo === 'saida') handleBuscarLocalizacaoSaida();
+                    else if (tipo === 'transferencia') handleBuscarLocalizacaoTransferencia();
                   }
                 }}
                 InputProps={{
@@ -642,7 +734,7 @@ const Movimentacao: React.FC = () => {
               {lista.map((item, index) => {
                 const isSelected = selectedItems.includes(index);
                 return (
-                  <TableRow key={item.ean || `${item.sku}-${index}`} hover selected={isSelected}>
+                  <TableRow key={`${item.ean}-${index}`} hover selected={isSelected}>
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
@@ -666,18 +758,20 @@ const Movimentacao: React.FC = () => {
                       </>
                     )}
 
-                    <TableCell align="center">
-                      <Tooltip title="Editar">
-                        <IconButton onClick={() => handleEditar(item)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Excluir">
-                        <IconButton onClick={() => handleExcluir(index)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+                    {tipo !== 'transferencia' && (
+                      <TableCell align="center">
+                        <Tooltip title="Editar">
+                          <IconButton onClick={() => handleEditar(item)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir">
+                          <IconButton onClick={() => handleExcluir(index)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}

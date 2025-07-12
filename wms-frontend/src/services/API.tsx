@@ -382,6 +382,7 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) 
   const dados = res.data?.produtos_estoque || [];
 
   return dados.map((item: any) => ({
+    produto_estoque_id: item.produto_estoque_id, // ← novo campo necessário!
     produto_id: item.produto?.produto_id,
     descricao: item.produto?.descricao || '',
     sku: item.produto?.sku || '',
@@ -391,6 +392,7 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) 
 }
 
 
+
 // Enviar movimentação para a API
 export async function enviarMovimentacao(payload: {
   tipo: 'entrada' | 'saida' | 'transferencia';
@@ -398,12 +400,13 @@ export async function enviarMovimentacao(payload: {
   localizacao_origem_id: number;
   localizacao_destino_id: number;
   itens_movimentacao: {
-    produto_id: number; // <- CORRETO
+    produto_id?: number;            // usado em entrada e saída
+    produto_estoque_id?: number;    // usado em transferência
     quantidade: number;
   }[];
 }) {
   try {
-    const { data } = await api.post('http://151.243.0.78:3001/movimentacao', payload);
+    const { data } = await axios.post('http://151.243.0.78:3001/movimentacao', payload);
     return data;
   } catch (err: any) {
     console.error('Erro ao enviar movimentação:', err);
@@ -414,5 +417,4 @@ export async function enviarMovimentacao(payload: {
     throw err;
   }
 }
-
 
