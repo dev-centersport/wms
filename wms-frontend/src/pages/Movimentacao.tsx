@@ -112,17 +112,8 @@ const Movimentacao: React.FC = () => {
 
     const eanLimpo = produto.trim();
 
-    if (lista.some((item) => item.ean === eanLimpo)) {
-      alert('Produto já foi adicionado.');
-      return;
-    }
 
     const novo = await buscarProdutoPorEAN(eanLimpo);
-
-    if (!novo) {
-      alert(`Produto com EAN ${eanLimpo} não encontrado.`);
-      return;
-    }
 
     setLista((prevLista: Item[]) => {
       const novaLista: Item[] = [
@@ -372,11 +363,40 @@ const Movimentacao: React.FC = () => {
                   value={origem}
                   inputValue={inputOrigem}
                   loading={loadingOpt}
-                  onInputChange={(_, val) => {
+                  onInputChange={async (_, val) => {
                     setInputOrigem(val);
                     setOrigem(null);
-                    if (val.length >= 1) fetchLocalizacoes(val);
-                    else setOptions([]);
+                    if (val.length >= 13 && /^[0-9]{13}$/.test(val)) {
+                      // Validação para detectar EAN com 13 dígitos
+                      try {
+                        const resultado = await buscarLocalizacaoPorEAN(val.trim());
+
+                        if (!resultado) {
+                          alert('Localização com esse EAN não foi encontrada.');
+                          return;
+                        }
+
+                        const origemFormatada: LocalizacaoOption = {
+                          id: resultado.localizacao_id,
+                          nome: resultado.nome,
+                          armazem: resultado.armazem?.nome || resultado.armazem, // se for string
+                        };
+
+                        setOrigem(origemFormatada);
+                        setInputOrigem(`${origemFormatada.nome} - ${origemFormatada.armazem}`);
+
+                        const produtos = await buscarProdutosPorLocalizacaoDireto(origemFormatada.id);
+                        setLista(produtos);
+                        setSelectedItems(produtos.map((_: any, idx: number) => idx));
+                      } catch (err) {
+                        console.error('Erro ao buscar localização ou produtos:', err);
+                        alert('Erro ao buscar localização e produtos.');
+                      }
+                    } else {
+                      // Busca autocomplete comum
+                      if (val.length >= 1) fetchLocalizacoes(val);
+                      else setOptions([]);
+                    }
                   }}
                   onChange={async (_, val) => {
                     setOrigem(val);
@@ -574,7 +594,22 @@ const Movimentacao: React.FC = () => {
           {tipo === 'transferencia' ? 'Produtos a serem movimentados' : 'Lista de Movimentação'}
         </Typography>
 
-        <Paper elevation={1} sx={{ mb: 5, borderRadius: 2 }}>
+        <Paper
+          elevation={1}
+          sx={{
+            mb: 5,
+            borderRadius: 2,
+            maxHeight: '330px', // altura ajustável conforme seu layout
+            overflowY: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: '#c1c1c1',
+              borderRadius: '4px',
+            },
+          }}
+        >
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
@@ -618,17 +653,18 @@ const Movimentacao: React.FC = () => {
                     {tipo === 'transferencia' ? (
                       <>
                         <TableCell>{item.quantidade ?? 1}</TableCell>
-                        <TableCell>{item.produto ?? item.ean}</TableCell>
+                        <TableCell>{item.descricao}</TableCell>
+                        <TableCell>{item.sku}</TableCell>
+                        <TableCell>{item.ean}</TableCell>
                       </>
                     ) : (
                       <>
                         <TableCell>{item.contador}</TableCell>
                         <TableCell>{item.descricao}</TableCell>
+                        <TableCell>{item.sku}</TableCell>
+                        <TableCell>{item.ean}</TableCell>
                       </>
                     )}
-
-                    <TableCell>{item.sku}</TableCell>
-                    <TableCell>{item.ean}</TableCell>
 
                     <TableCell align="center">
                       <Tooltip title="Editar">
