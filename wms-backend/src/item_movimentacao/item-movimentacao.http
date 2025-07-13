@@ -16,11 +16,8 @@ POST http://localhost:3001/item-movimentacao HTTP/1.1
 content-type: application/json
 
 {
-    "tipo": "entrada",
+    "produto_id": 1,
     "quantidade": 10,
-    "usuario_id": 1,
-    "localizacao_origem_id": 0,
-    "localizacao_destino_id": 1
 }
 
 ###
