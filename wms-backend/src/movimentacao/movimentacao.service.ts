@@ -33,172 +33,213 @@ export class MovimentacaoService {
   async create(
     CreateMovimentacaoDto: CreateMovimentacaoDto,
   ): Promise<Movimentacao> {
-    // Se for transferência e não tiver itens específicados, busca todos os produtos da origem
-    if (
-      (CreateMovimentacaoDto.tipo === TipoMovimentacao.TRANSFERENCIA &&
-        !CreateMovimentacaoDto.itens_movimentacao) ||
-      CreateMovimentacaoDto.itens_movimentacao.length === 0
-    ) {
-      const produtoEstoque = await this.produtoEstoqueRepository.find({
-        where: {
-          localizacao: {
-            localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-          },
-          quantidade: MoreThan(0),
-        },
-        relations: ['produto'],
+    try {
+      // Busca o usuário
+      const usuario = await this.usuarioRepository.findOne({
+        where: { usuario_id: CreateMovimentacaoDto.usuario_id },
       });
 
-      if (produtoEstoque.length === 0)
-        throw new BadRequestException(
-          'Nenhum produto encontrado na localização de origem para transferência',
+      if (!usuario) {
+        throw new NotFoundException(
+          `Usuário com o ID ${CreateMovimentacaoDto.usuario_id} não encontrado`,
         );
+      }
 
-      CreateMovimentacaoDto.itens_movimentacao = produtoEstoque.map((pe) => ({
-        produto_id: pe.produto.produto_id,
-        quantidade: pe.quantidade,
-      }));
-    }
+      // Busca as localizações
+      const [localOrigem, localDestino] = await Promise.all([
+        CreateMovimentacaoDto.localizacao_origem_id !== 0
+          ? this.localizacaoRepository.findOne({
+              where: {
+                localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+              },
+            })
+          : Promise.resolve(null),
+        CreateMovimentacaoDto.localizacao_destino_id !== 0
+          ? this.localizacaoRepository.findOne({
+              where: {
+                localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
+              },
+            })
+          : Promise.resolve(null),
+      ]);
 
-    // Validações de itens
-    if (
-      !CreateMovimentacaoDto.itens_movimentacao ||
-      CreateMovimentacaoDto.itens_movimentacao.length === 0
-    ) {
-      throw new BadRequestException(
-        'A movimentação deve conter pelo menos um item',
-      );
-    }
+      // Validações específicas por tipo
+      switch (CreateMovimentacaoDto.tipo) {
+        case TipoMovimentacao.ENTRADA:
+          if (CreateMovimentacaoDto.localizacao_origem_id !== 0) {
+            throw new BadRequestException(
+              'Entrada não deve ter local de origem',
+            );
+          }
+          if (!localDestino) {
+            throw new BadRequestException(
+              'Local de destino é obrigatório para entrada',
+            );
+          }
+          break;
 
-    // Busca o usuário
-    const usuario = await this.usuarioRepository.findOne({
-      where: { usuario_id: CreateMovimentacaoDto.usuario_id },
-    });
+        case TipoMovimentacao.SAIDA:
+          if (!localOrigem) {
+            throw new BadRequestException(
+              'Local de origem é obrigatório para saída',
+            );
+          }
+          if (CreateMovimentacaoDto.localizacao_destino_id !== 0) {
+            throw new BadRequestException(
+              'Saída não deve ter local de destino',
+            );
+          }
+          break;
 
-    if (!usuario)
-      throw new NotFoundException(
-        `Usuário com o ID ${CreateMovimentacaoDto.usuario_id} não encontrado`,
-      );
+        case TipoMovimentacao.TRANSFERENCIA: {
+          if (!localOrigem || !localDestino) {
+            throw new BadRequestException(
+              'Transferência requer origem e destino',
+            );
+          }
+          if (localOrigem.localizacao_id === localDestino.localizacao_id) {
+            throw new BadRequestException(
+              'Origem e destino não podem ser iguais',
+            );
+          }
 
-    // Busca as localizações
-    const [localOrigem, localDestino] = await Promise.all([
-      CreateMovimentacaoDto.localizacao_origem_id !== 0
-        ? this.localizacaoRepository.findOne({
+          // Lógica específica para transferência
+          if (!localOrigem) {
+            throw new BadRequestException(
+              'Localização de origem é obrigatória para transferência',
+            );
+          }
+
+          const produtosEstoque = await this.produtoEstoqueRepository.find({
             where: {
-              localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+              localizacao: { localizacao_id: localOrigem.localizacao_id },
+              quantidade: MoreThan(0),
             },
-          })
-        : Promise.resolve(null),
-      CreateMovimentacaoDto.localizacao_destino_id !== 0
-        ? this.localizacaoRepository.findOne({
-            where: {
-              localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
-            },
-          })
-        : Promise.resolve(null),
-    ]);
-
-    // Validações específicas por tipo
-    switch (CreateMovimentacaoDto.tipo) {
-      case TipoMovimentacao.ENTRADA:
-        if (CreateMovimentacaoDto.localizacao_origem_id !== 0) {
-          throw new BadRequestException('Entrada não deve ter local de origem');
-        }
-        if (!localDestino) {
-          throw new BadRequestException(
-            'Local de destino é obrigatório para entrada',
-          );
-        }
-        break;
-
-      case TipoMovimentacao.SAIDA:
-        if (!localOrigem) {
-          throw new BadRequestException(
-            'Local de origem é obrigatório para saída',
-          );
-        }
-        if (CreateMovimentacaoDto.localizacao_destino_id !== 0) {
-          throw new BadRequestException('Saída não deve ter local de destino');
-        }
-        break;
-
-      case TipoMovimentacao.TRANSFERENCIA:
-        if (!localOrigem || !localDestino) {
-          throw new BadRequestException(
-            'Transferência requer origem e destino',
-          );
-        }
-        if (localOrigem.localizacao_id === localDestino.localizacao_id) {
-          throw new BadRequestException(
-            'Origem e destino não podem ser iguais',
-          );
-        }
-        break;
-    }
-
-    return await this.entityManager.transaction(
-      async (transactionalEntityManeger) => {
-        const quantidadeTotal = CreateMovimentacaoDto.itens_movimentacao.reduce(
-          (sum, item) => sum + item.quantidade,
-          0,
-        );
-
-        // Criando pelo Object.assign
-        const movimentacaoData = Object.assign(
-          {},
-          {
-            tipo: CreateMovimentacaoDto.tipo,
-            usuario: usuario,
-            quantidade: quantidadeTotal,
-          },
-          CreateMovimentacaoDto.localizacao_origem_id !== 0
-            ? {
-                localizacao_origem: {
-                  localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-                },
-              }
-            : {},
-          CreateMovimentacaoDto.localizacao_destino_id !== 0
-            ? {
-                localizacao_destino: {
-                  localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
-                },
-              }
-            : {},
-        );
-
-        // Then create the entity with the repository
-        const movimentacao =
-          this.movimentacaoRepository.create(movimentacaoData);
-
-        const movimentacaoSalva =
-          await transactionalEntityManeger.save(movimentacao);
-
-        for (const itemDto of CreateMovimentacaoDto.itens_movimentacao) {
-          await this.processarItemMovimentacao(
-            movimentacaoSalva,
-            itemDto,
-            transactionalEntityManeger,
-          );
-        }
-
-        const movimentacaoComRelacoes =
-          await transactionalEntityManeger.findOne(Movimentacao, {
-            where: { movimentacao_id: movimentacaoSalva.movimentacao_id },
-            relations: [
-              'usuario',
-              'localizacao_origem',
-              'localizacao_destino',
-              'itens_movimentacao.produto',
-            ],
+            relations: ['produto'],
           });
 
-        if (!movimentacaoComRelacoes)
-          throw new Error('Movimentação não encontrada após criação');
+          // Se não houver produtos no estoque da origem
+          if (produtosEstoque.length === 0) {
+            throw new BadRequestException(
+              'Nenhum produto encontrado na localização de origem para transferência',
+            );
+          }
 
-        return movimentacaoComRelacoes;
-      },
-    );
+          // Se o usuário não especificou produtos, transferir todos
+          if (
+            !CreateMovimentacaoDto.itens_movimentacao ||
+            CreateMovimentacaoDto.itens_movimentacao.length === 0
+          ) {
+            CreateMovimentacaoDto.itens_movimentacao = produtosEstoque.map(
+              (pe) => ({
+                produto_id: pe.produto.produto_id,
+                quantidade: pe.quantidade,
+              }),
+            );
+          } else {
+            // Se o usuário especificou produtos, verificar se existem no estoque e pegar as quantidades disponíveis
+            for (const item of CreateMovimentacaoDto.itens_movimentacao) {
+              const produtoEstoque = produtosEstoque.find(
+                (pe) => pe.produto.produto_id === item.produto_id,
+              );
+
+              if (!produtoEstoque) {
+                throw new BadRequestException(
+                  `Produto com ID ${item.produto_id} não encontrado no estoque da localização de origem ou sem quantidade disponível`,
+                );
+              }
+
+              // Se o usuário não especificou quantidade, usar a quantidade total disponível
+              if (!item.quantidade) {
+                item.quantidade = produtoEstoque.quantidade;
+              } else if (item.quantidade > produtoEstoque.quantidade) {
+                throw new BadRequestException(
+                  `Quantidade solicitada (${item.quantidade}) para o produto ${produtoEstoque.produto.descricao} excede a disponível (${produtoEstoque.quantidade}) na localização de origem`,
+                );
+              }
+            }
+          }
+          break;
+        }
+      }
+
+      // Validações de itens para todos os tipos de movimentação
+      if (
+        !CreateMovimentacaoDto.itens_movimentacao ||
+        CreateMovimentacaoDto.itens_movimentacao.length === 0
+      ) {
+        throw new BadRequestException(
+          'A movimentação deve conter pelo menos um item',
+        );
+      }
+
+      return await this.entityManager.transaction(
+        async (transactionalEntityManeger) => {
+          const quantidadeTotal =
+            CreateMovimentacaoDto.itens_movimentacao.reduce(
+              (sum, item) => sum + item.quantidade,
+              0,
+            );
+
+          const movimentacaoData = Object.assign(
+            {},
+            {
+              tipo: CreateMovimentacaoDto.tipo,
+              usuario: usuario,
+              quantidade: quantidadeTotal,
+            },
+            CreateMovimentacaoDto.localizacao_origem_id !== 0
+              ? {
+                  localizacao_origem: {
+                    localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+                  },
+                }
+              : {},
+            CreateMovimentacaoDto.localizacao_destino_id !== 0
+              ? {
+                  localizacao_destino: {
+                    localizacao_id:
+                      CreateMovimentacaoDto.localizacao_destino_id,
+                  },
+                }
+              : {},
+          );
+
+          const movimentacao =
+            this.movimentacaoRepository.create(movimentacaoData);
+
+          const movimentacaoSalva =
+            await transactionalEntityManeger.save(movimentacao);
+
+          for (const itemDto of CreateMovimentacaoDto.itens_movimentacao) {
+            await this.processarItemMovimentacao(
+              movimentacaoSalva,
+              itemDto,
+              transactionalEntityManeger,
+            );
+          }
+
+          const movimentacaoComRelacoes =
+            await transactionalEntityManeger.findOne(Movimentacao, {
+              where: { movimentacao_id: movimentacaoSalva.movimentacao_id },
+              relations: [
+                'usuario',
+                'localizacao_origem',
+                'localizacao_destino',
+                'itens_movimentacao.produto',
+              ],
+            });
+
+          if (!movimentacaoComRelacoes) {
+            throw new Error('Movimentação não encontrada após criação');
+          }
+
+          return movimentacaoComRelacoes;
+        },
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 
   private async processarItemMovimentacao(
@@ -206,14 +247,12 @@ export class MovimentacaoService {
     itemDto: CreateItemMovimentacaoDto,
     entityManager: EntityManager,
   ): Promise<void> {
-    // Validar item
-    if (itemDto.quantidade <= 0)
+    if (itemDto.quantidade <= 0) {
       throw new BadRequestException('Quantidade deve ser positiva');
+    }
 
-    // Buscar produto
     const produto = await entityManager.findOne(Produto, {
       where: { produto_id: itemDto.produto_id },
-      // relations: ['localizacao'],
     });
     if (!produto) throw new NotFoundException('Produto não encontrado');
 
@@ -233,7 +272,6 @@ export class MovimentacaoService {
       localizacao_estoque = movimentacao.localizacao_origem;
     }
 
-    // Buscar ou criar o produto no estoque
     let produto_estoque = await entityManager.findOne(ProdutoEstoque, {
       where: {
         produto: { produto_id: produto.produto_id },
@@ -244,7 +282,6 @@ export class MovimentacaoService {
       relations: ['produto', 'localizacao'],
     });
 
-    // Se não existe e é uma entrada, cria um novo registro
     if (
       !produto_estoque &&
       movimentacao.tipo === TipoMovimentacao.ENTRADA &&
@@ -257,10 +294,11 @@ export class MovimentacaoService {
       });
     }
 
-    if (!produto_estoque)
+    if (!produto_estoque) {
       throw new BadRequestException(
         `Produto não encontrado no estoque da localização ${localizacao_estoque?.nome}`,
       );
+    }
 
     await this.atualizarEstoque(
       movimentacao.tipo,
@@ -282,13 +320,11 @@ export class MovimentacaoService {
   ): Promise<void> {
     switch (tipo) {
       case TipoMovimentacao.ENTRADA:
-        // Apenas incrementa no destino (já que é uma entrada)
         produtoEstoqueOrigem.quantidade += quantidade;
         await entityManager.save(ProdutoEstoque, produtoEstoqueOrigem);
         break;
 
       case TipoMovimentacao.SAIDA:
-        // Valida e decrementa da origem
         if (produtoEstoqueOrigem.quantidade < quantidade) {
           throw new BadRequestException('Estoque insuficiente');
         }
@@ -297,21 +333,18 @@ export class MovimentacaoService {
         break;
 
       case TipoMovimentacao.TRANSFERENCIA: {
-        // Valida origem
         if (produtoEstoqueOrigem.quantidade < quantidade) {
           throw new BadRequestException(
             'Estoque insuficiente para transferência',
           );
         }
 
-        // Garante que localizacaoDestino não é nulo
         if (!localizacaoDestino) {
           throw new BadRequestException(
             'Localização de destino não pode ser nula para transferência',
           );
         }
 
-        // Busca ou cria estoque no destino
         let produtoEstoqueDestino = await entityManager.findOne(
           ProdutoEstoque,
           {
@@ -332,7 +365,6 @@ export class MovimentacaoService {
           });
         }
 
-        // Atualiza ambos os estoques
         produtoEstoqueOrigem.quantidade -= quantidade;
         produtoEstoqueDestino.quantidade += quantidade;
 
@@ -351,7 +383,7 @@ export class MovimentacaoService {
         'usuario',
         'localizacao_origem',
         'localizacao_destino',
-        'itens_movimentacao.produto_estoque.produto',
+        'itens_movimentacao.produto',
       ],
     });
   }
@@ -363,240 +395,16 @@ export class MovimentacaoService {
         'usuario',
         'localizacao_origem',
         'localizacao_destino',
-        'itens_movimentacao.produto_estoque.produto',
+        'itens_movimentacao.produto',
       ],
     });
 
-    if (!movimentacao)
+    if (!movimentacao) {
       throw new NotFoundException(
         `Movimentação com ID ${movimentacao_id} não encontrado`,
       );
+    }
 
     return movimentacao;
   }
-  // async create(
-  //   CreateMovimentacaoDto: CreateMovimentacaoDto,
-  // ): Promise<Movimentacao> {
-  //   // Validações básicas (como no seu código original)
-  //   if (CreateMovimentacaoDto.quantidade <= 0) {
-  //     throw new BadRequestException('A quantidade deve ser maior que zero');
-  //   }
-
-  //   // Busca o usuário
-  //   const usuario = await this.usuarioRepository.findOne({
-  //     where: { usuario_id: CreateMovimentacaoDto.usuario_id },
-  //   });
-
-  //   if (!usuario) {
-  //     throw new NotFoundException(
-  //       `Usuário com o ID ${CreateMovimentacaoDto.usuario_id} não encontrado`,
-  //     );
-  //   }
-
-  //   // Validação do tipo de movimentação (como no seu código original)
-  //   // ... (código de validação do tipo de movimentação)
-
-  //   // Busca as localizações
-  //   const [localOrigem, localDestino] = await Promise.all([
-  //     CreateMovimentacaoDto.localizacao_origem_id !== 0
-  //       ? this.localizacaoRepository.findOne({
-  //           where: {
-  //             localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-  //           },
-  //         })
-  //       : Promise.resolve(null),
-  //     CreateMovimentacaoDto.localizacao_destino_id !== 0
-  //       ? this.localizacaoRepository.findOne({
-  //           where: {
-  //             localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
-  //           },
-  //         })
-  //       : Promise.resolve(null),
-  //   ]);
-
-  //   // Valida as localizações encontradas
-  //   if (CreateMovimentacaoDto.localizacao_origem_id !== 0 && !localOrigem) {
-  //     throw new NotFoundException('Localização de origem não encontrada');
-  //   }
-
-  //   if (CreateMovimentacaoDto.localizacao_destino_id !== 0 && !localDestino) {
-  //     throw new NotFoundException('Localização de destino não encontrada');
-  //   }
-
-  //   // Criação da movimentação
-  //   const movimentacao = this.movimentacaoRepository.create({
-  //     ...CreateMovimentacaoDto,
-  //     usuario,
-  //     localizacao_origem: localOrigem,
-  //     localizacao_destino: localDestino,
-  //   });
-
-  //   // Usar transação para garantir consistência
-  //   return await this.entityManager.transaction(
-  //     async (transactionalEntityManager) => {
-  //       // Salva a movimentação primeiro
-  //       const movimentacaoSalva =
-  //         await transactionalEntityManager.save(movimentacao);
-
-  //       // Processa cada item da movimentação
-  //       for (const itemDto of CreateMovimentacaoDto.itens) {
-  //         // Validação do item
-  //         if (itemDto.quantidade <= 0) {
-  //           throw new BadRequestException(
-  //             'A quantidade do item deve ser maior que zero',
-  //           );
-  //         }
-
-  //         // Busca o produto
-  //         const produto = await transactionalEntityManager.findOne(Produto, {
-  //           where: { produto_id: itemDto.produto_id },
-  //         });
-
-  //         if (!produto) {
-  //           throw new NotFoundException(
-  //             `Produto com ID ${itemDto.produto_id} não encontrado`,
-  //           );
-  //         }
-
-  //         // Cria o item de movimentação
-  //         const itemMovimentacao = this.itemMovimentacaoRepository.create({
-  //           movimentacao: movimentacaoSalva,
-  //           produto,
-  //           quantidade: itemDto.quantidade,
-  //         });
-
-  //         await transactionalEntityManager.save(
-  //           ItemMovimentacao,
-  //           itemMovimentacao,
-  //         );
-
-  //         // Atualiza os estoques conforme o tipo de movimentação
-  //         await this.atualizarEstoques(
-  //           movimentacaoSalva.tipo,
-  //           produto,
-  //           itemDto.quantidade,
-  //           localOrigem,
-  //           localDestino,
-  //           transactionalEntityManager,
-  //         );
-  //       }
-
-  //       return movimentacaoSalva;
-  //     },
-  //   );
-  // }
-
-  // private async atualizarEstoques(
-  //   tipo: TipoMovimentacao,
-  //   produto: Produto,
-  //   quantidade: number,
-  //   localOrigem: Localizacao | null,
-  //   localDestino: Localizacao | null,
-  //   entityManager: EntityManager,
-  // ): Promise<void> {
-  //   switch (tipo) {
-  //     case TipoMovimentacao.ENTRADA:
-  //       // Atualiza apenas o estoque de destino
-  //       await this.atualizarEstoque(
-  //         produto,
-  //         localDestino!,
-  //         quantidade,
-  //         'increment',
-  //         entityManager,
-  //       );
-  //       break;
-
-  //     case TipoMovimentacao.SAIDA:
-  //       // Atualiza apenas o estoque de origem
-  //       await this.atualizarEstoque(
-  //         produto,
-  //         localOrigem!,
-  //         quantidade,
-  //         'decrement',
-  //         entityManager,
-  //       );
-  //       break;
-
-  //     case TipoMovimentacao.TRANSFERENCIA:
-  //       // Atualiza ambos os estoques
-  //       await Promise.all([
-  //         this.atualizarEstoque(
-  //           produto,
-  //           localOrigem!,
-  //           quantidade,
-  //           'decrement',
-  //           entityManager,
-  //         ),
-  //         this.atualizarEstoque(
-  //           produto,
-  //           localDestino!,
-  //           quantidade,
-  //           'increment',
-  //           entityManager,
-  //         ),
-  //       ]);
-  //       break;
-  //   }
-  // }
-
-  // private async atualizarEstoque(
-  //   produto: Produto,
-  //   localizacao: Localizacao,
-  //   quantidade: number,
-  //   operacao: 'increment' | 'decrement',
-  //   entityManager: EntityManager,
-  // ): Promise<void> {
-  //   // Busca o registro de estoque
-  //   let estoque = await entityManager.findOne(ProdutoEstoque, {
-  //     where: {
-  //       produto: { produto_id: produto.produto_id },
-  //       localizacao: { localizacao_id: localizacao.localizacao_id },
-  //     },
-  //   });
-
-  //   // Se não existe, cria um novo registro para incremento
-  //   if (!estoque) {
-  //     if (operacao === 'decrement') {
-  //       throw new BadRequestException(
-  //         `Não há estoque do produto ${produto.nome} na localização ${localizacao.nome}`,
-  //       );
-  //     }
-
-  //     estoque = entityManager.create(ProdutoEstoque, {
-  //       produto,
-  //       localizacao,
-  //       quantidade: 0,
-  //     });
-  //   }
-
-  //   // Valida estoque suficiente para saída/transferência
-  //   if (operacao === 'decrement' && estoque.quantidade < quantidade) {
-  //     throw new BadRequestException(
-  //       `Quantidade insuficiente do produto ${produto.nome} na localização ${localizacao.nome}`,
-  //     );
-  //   }
-
-  //   // Atualiza a quantidade
-  //   estoque.quantidade =
-  //     operacao === 'increment'
-  //       ? estoque.quantidade + quantidade
-  //       : estoque.quantidade - quantidade;
-
-  //   await entityManager.save(ProdutoEstoque, estoque);
-  // }
-  // create(createMovimentacaoDto: CreateMovimentacaoDto) {
-  //   return 'This action adds a new movimentacao';
-  // }
-  // findAll() {
-  //   return `This action returns all movimentacao`;
-  // }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} movimentacao`;
-  // }
-  // update(id: number, updateMovimentacaoDto: UpdateMovimentacaoDto) {
-  //   return `This action updates a #${id} movimentacao`;
-  // }
-  // remove(id: number) {
-  //   return `This action removes a #${id} movimentacao`;
-  // }
 }
