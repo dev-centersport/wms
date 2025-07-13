@@ -20,15 +20,11 @@ content-type: application/json
     "usuario_id": 1,
     "itens_movimentacao": [
         {
-        "produto_estoque_id": 1,
-        "quantidade": 10
-        },
-        {
-        "produto_estoque_id": 2,
-        "quantidade": 15
+            "produto_id": 1,
+            "quantidade": 10
         }
-    ],
-    "localizacao_origem_id": 0,
+    ]
+    "localizacao_origem_id": 2,
     "localizacao_destino_id": 1
 }
 

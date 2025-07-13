@@ -1,5 +1,5 @@
 import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
-import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
+import { Produto } from 'src/produto/entities/produto.entity';
 import {
   Column,
   Entity,
@@ -16,12 +16,9 @@ export class ItemMovimentacao {
   @Column({ type: 'int' })
   quantidade: number;
 
-  @ManyToOne(
-    () => ProdutoEstoque,
-    (produto_estoque) => produto_estoque.itens_movimentacao,
-  )
+  @ManyToOne(() => Produto, (produto) => produto.itens_movimentacao)
   @JoinColumn()
-  produto_estoque: ProdutoEstoque;
+  produto: Produto;
 
   @ManyToOne(() => Movimentacao, (mov) => mov.itens_movimentacao)
   @JoinColumn()

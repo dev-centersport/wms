@@ -690,7 +690,7 @@ const handleImprimirSelecionados = () => {
             </Box>
 
             {/* Tabela principal */}
-            <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
+            <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 'auto', overflow: 'auto' }}>
                 <Table stickyHeader>
                     <TableHead>
                         <TableRow>

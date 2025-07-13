@@ -16,10 +16,10 @@ POST http://localhost:3001/produto HTTP/1.1
 content-type: application/json
 
 {
-    "id_tiny": 484456,
-    "sku": "54545646",
-    "descricao": "Tênis Nike",
-    "ean": "5466846854569"
+    "id_tiny": 8468,
+    "sku": "5646846846",
+    "descricao": "Tênis Adidas",
+    "ean": "6875455477554"
 }
 
 ###

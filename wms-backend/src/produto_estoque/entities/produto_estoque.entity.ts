@@ -1,5 +1,5 @@
-import { ItemMovimentacao } from 'src/item_movimentacao/entities/item_movimentacao.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
+import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
 import { Produto } from 'src/produto/entities/produto.entity';
 import {
   Column,
@@ -26,9 +26,6 @@ export class ProdutoEstoque {
   @JoinColumn()
   localizacao: Localizacao;
 
-  @OneToMany(
-    () => ItemMovimentacao,
-    (itens_movimentacao) => itens_movimentacao.produto_estoque,
-  )
-  itens_movimentacao: ItemMovimentacao[];
+  @OneToMany(() => Ocorrencia, (o) => o.produto_estoque)
+  ocorrencias: Ocorrencia[];
 }

@@ -406,7 +406,7 @@ export async function enviarMovimentacao(payload: {
   }[];
 }) {
   try {
-    const { data } = await axios.post('http://151.243.0.78:3001/movimentacao', payload);
+    const { data } = await api.post('http://151.243.0.78:3001/movimentacao', payload);
     return data;
   } catch (err: any) {
     console.error('Erro ao enviar movimentação:', err);
