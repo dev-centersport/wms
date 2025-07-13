@@ -243,37 +243,43 @@ const Movimentacao: React.FC = () => {
 
   const handleBuscarLocalizacaoTransferencia = async () => {
     if (!localizacao.trim()) return;
-
+  
     try {
       const resultado = await buscarLocalizacaoPorEAN(localizacao.trim());
       if (!resultado) {
         alert('Localização com esse EAN não foi encontrada.');
         return;
       }
-
+  
       const origemFormatada: LocalizacaoOption = {
         id: resultado.localizacao_id,
         nome: resultado.nome,
         armazem: resultado.armazem || '',
       };
-
+  
       setOrigem(origemFormatada);
       setInputOrigem(`${origemFormatada.nome} - ${origemFormatada.armazem}`);
       setLocalizacao('');
       setLocalizacaoBloqueada(true);
-
+  
+      // Busca produtos da localização
       const produtos = await buscarProdutosPorLocalizacaoDireto(origemFormatada.id);
-
+  
+      // Filtra apenas produtos com quantidade > 0 e mapeia para o formato esperado
       const produtosValidos: Item[] = produtos
         .filter((item: Item) => Number(item.quantidade) > 0)
         .map((item: Item) => ({
-          ...item,
+          produto_estoque_id: item.produto_estoque_id,
+          produto_id: item.produto_id, // ← Garantindo que o produto_id está incluído
+          descricao: item.descricao,
+          sku: item.sku,
+          ean: item.ean,
           quantidade: Number(item.quantidade),
         }));
-
+  
       setLista(produtosValidos);
       setSelectedItems(produtosValidos.map((_, idx) => idx));
-
+  
     } catch (err) {
       console.error('Erro ao buscar localização ou produtos (transferência):', err);
       alert('Erro ao buscar localização e produtos.');
@@ -339,10 +345,13 @@ const Movimentacao: React.FC = () => {
         }));
       }
       if (tipo === 'transferencia') {
-        itensValidos = lista.filter(item => item.produto_estoque_id && Number(item.quantidade) > 0).map(item => ({
-          produto_estoque_id: Number(item.produto_estoque_id),
-          quantidade: Number(item.quantidade),
-        }));
+        itensValidos = lista
+          .filter(item => item.produto_estoque_id && Number(item.quantidade) > 0)
+          .map(item => ({
+            produto_estoque_id: Number(item.produto_estoque_id),
+            produto_id: Number(item.produto_id), // ← Incluindo o produto_id
+            quantidade: Number(item.quantidade),
+          }));
       }
       if (itensValidos.length === 0) {
         alert('Nenhum item válido para movimentar.');
@@ -705,28 +714,30 @@ const Movimentacao: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectAll}
-                    indeterminate={selectedItems.length > 0 && selectedItems.length < lista.length}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                </TableCell>
 
                 {tipo === 'transferencia' ? (
                   <>
                     <TableCell><strong>Quantidade</strong></TableCell>
                     <TableCell><strong>Produto</strong></TableCell>
+                    <TableCell><strong>SKU</strong></TableCell>
+                    <TableCell><strong>EAN</strong></TableCell>
                   </>
                 ) : (
                   <>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectAll}
+                        indeterminate={selectedItems.length > 0 && selectedItems.length < lista.length}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
+                    </TableCell>
                     <TableCell><strong>Contador</strong></TableCell>
                     <TableCell><strong>Descrição</strong></TableCell>
+                    <TableCell><strong>SKU</strong></TableCell>
+                    <TableCell><strong>EAN</strong></TableCell>
+                    <TableCell align="center"><strong>Ações</strong></TableCell>
                   </>
                 )}
-                <TableCell><strong>SKU</strong></TableCell>
-                <TableCell><strong>EAN</strong></TableCell>
-                <TableCell align="center"><strong>Ações</strong></TableCell>
               </TableRow>
             </TableHead>
 
@@ -735,12 +746,6 @@ const Movimentacao: React.FC = () => {
                 const isSelected = selectedItems.includes(index);
                 return (
                   <TableRow key={`${item.ean}-${index}`} hover selected={isSelected}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={(e) => handleSelectItem(index, e.target.checked)}
-                      />
-                    </TableCell>
 
                     {tipo === 'transferencia' ? (
                       <>
@@ -751,6 +756,12 @@ const Movimentacao: React.FC = () => {
                       </>
                     ) : (
                       <>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={(e) => handleSelectItem(index, e.target.checked)}
+                          />
+                        </TableCell>
                         <TableCell>{item.contador}</TableCell>
                         <TableCell>{item.descricao}</TableCell>
                         <TableCell>{item.sku}</TableCell>
