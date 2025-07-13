@@ -23,8 +23,8 @@ content-type: application/json
             "produto_id": 1,
             "quantidade": 10
         }
-    ]
-    "localizacao_origem_id": 2,
+    ],
+    "localizacao_origem_id": 0,
     "localizacao_destino_id": 1
 }
 

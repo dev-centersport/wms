@@ -1,9 +1,9 @@
 import axios from 'axios'
 
-const BASE_URL = 'http://151.243.0.78:3001';
+const BASE_URL = 'http://192.168.1.10:3001';
 
 const api = axios.create({
-  baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
+  baseURL: 'http://192.168.1.10:3001', // ou a URL da sua API
 });
 
 export default api;
@@ -151,7 +151,7 @@ export async function buscarProdutos() {
 export async function buscarConsultaEstoque() {
   try {
     const [estoqueRes, localizacoes] = await Promise.all([
-      axios.get('http://151.243.0.78:3001/produto-estoque'),
+      axios.get('http://192.168.1.10:3001/produto-estoque'),
       buscarLocalizacoes(),
     ]);
 
@@ -177,7 +177,7 @@ export async function buscarConsultaEstoque() {
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
-    const res = await axios.get<any[]>('http://151.243.0.78:3001/localizacao');
+    const res = await axios.get<any[]>('http://192.168.1.10:3001/localizacao');
 
     const dados: Localizacao[] = res.data.map((item) => ({
       localizacao_id: item.localizacao_id,
@@ -216,7 +216,7 @@ export interface Armazem {
 
 export const buscarArmazem = async (): Promise<Armazem[]> => {
   try {
-    const res = await axios.get<Armazem[]>('http://151.243.0.78:3001/armazem');
+    const res = await axios.get<Armazem[]>('http://192.168.1.10:3001/armazem');
     return res.data;
   } catch (err) {
     console.error('Erro ao buscar armazéns →', err);
@@ -243,7 +243,7 @@ export interface TipoLocalizacao {
 
 export const buscarTiposDeLocalizacao = async (): Promise<TipoLocalizacao[]> => {
   try {
-    const res = await axios.get<TipoLocalizacao[]>('http://151.243.0.78:3001/tipo-localizacao');
+    const res = await axios.get<TipoLocalizacao[]>('http://192.168.1.10:3001/tipo-localizacao');
 
     return res.data;
   } catch (err) {
@@ -290,7 +290,7 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
       throw new Error(`Tipo de localização "${criarLocalizacao.tipo}" não encontrado.`);
     }
 
-    await axios.post('http://151.243.0.78:3001/localizacao', {
+    await axios.post('http://192.168.1.10:3001/localizacao', {
       nome: criarLocalizacao.nome,
       status: 'fechada',
       altura: criarLocalizacao.altura,
@@ -330,7 +330,7 @@ export interface ExcluirLocalizacao {
 
 export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao): Promise<void> => {
   try {
-    await axios.delete(`http://151.243.0.78:3001/localizacao/${localizacao_id}`);
+    await axios.delete(`http://192.168.1.10:3001/localizacao/${localizacao_id}`);
     console.log(`Localização ID ${localizacao_id} excluída com sucesso.`);
   } catch (err) {
     console.error('Erro ao excluir localização →', err);
@@ -352,7 +352,7 @@ export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao)
 };
 
 export async function buscarProdutoPorEAN(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/produto');
+  const response = await axios.get('http://192.168.1.10:3001/produto');
   const produtos = response.data;
 
   const encontrado = produtos.find((p: any) => p.ean === ean.trim());
@@ -365,7 +365,7 @@ export async function buscarProdutoPorEAN(ean: string) {
 }
 
 export async function buscarLocalizacaoPorEAN(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/localizacao');
+  const response = await axios.get('http://192.168.1.10:3001/localizacao');
   const localizacoes = response.data;
 
   const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
@@ -378,7 +378,7 @@ export async function buscarLocalizacaoPorEAN(ean: string) {
 }
 
 export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) {
-  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacaoId}/produtos`);
+  const res = await axios.get(`http://192.168.1.10:3001/localizacao/${localizacaoId}/produtos`);
   const dados = res.data?.produtos_estoque || [];
 
   return dados.map((item: any) => ({
@@ -406,7 +406,7 @@ export async function enviarMovimentacao(payload: {
   }[];
 }) {
   try {
-    const { data } = await api.post('http://151.243.0.78:3001/movimentacao', payload);
+    const { data } = await api.post('http://192.168.1.10:3001/movimentacao', payload);
     return data;
   } catch (err: any) {
     console.error('Erro ao enviar movimentação:', err);
