@@ -377,6 +377,22 @@ export async function buscarLocalizacaoPorEAN(ean: string) {
   return encontrada;
 }
 
+export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) {
+  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacaoId}/produtos`);
+  const dados = res.data?.produtos_estoque || [];
+
+  return dados.map((item: any) => ({
+    produto_estoque_id: item.produto_estoque_id, // ← novo campo necessário!
+    produto_id: item.produto?.produto_id,
+    descricao: item.produto?.descricao || '',
+    sku: item.produto?.sku || '',
+    ean: item.produto?.ean || '',
+    quantidade: item.quantidade || 0,
+  }));
+}
+
+
+
 // Enviar movimentação para a API
 export async function enviarMovimentacao(payload: {
   tipo: 'entrada' | 'saida' | 'transferencia';
@@ -384,7 +400,8 @@ export async function enviarMovimentacao(payload: {
   localizacao_origem_id: number;
   localizacao_destino_id: number;
   itens_movimentacao: {
-    produto_id: number; // <- CORRETO
+    produto_id?: number;            // usado em entrada e saída
+    produto_estoque_id?: number;    // usado em transferência
     quantidade: number;
   }[];
 }) {
@@ -400,5 +417,4 @@ export async function enviarMovimentacao(payload: {
     throw err;
   }
 }
-
 
