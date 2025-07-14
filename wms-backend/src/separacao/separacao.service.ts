@@ -5,7 +5,10 @@ import * as XLSX from 'xlsx';
 import { Produto } from 'src/produto/entities/produto.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
-import { ResultadoSeparacaoDTO } from './dto/separacao.dto.';
+import {
+  ResultadoSeparacaoDTO,
+  ResultadoSeparacaoPorPedidoDTO,
+} from './dto/separacao.dto.';
 
 interface ExcelRow {
   'Código (SKU)': string;
@@ -29,6 +32,7 @@ export class SeparacaoService {
     arquivo: Express.Multer.File,
     armazemPrioritarioId?: number,
   ): Promise<ResultadoSeparacaoDTO> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const workbook = XLSX.read(arquivo.buffer);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const dados: ExcelRow[] = XLSX.utils.sheet_to_json(worksheet);
@@ -89,6 +93,7 @@ export class SeparacaoService {
           'CASE WHEN armazem.armazem_id = :armazemId THEN 0 ELSE 1 END',
           'ASC',
         )
+        .addOrderBy('localizacao.nome', 'ASC')
         .addOrderBy('pe.quantidade', 'DESC')
         .setParameter('armazemId', armazemPrioritarioId || 0)
         .getMany();
@@ -136,6 +141,7 @@ export class SeparacaoService {
             ],
             localizacao: estoque.localizacao.nome,
             produtoSKU: sku,
+            urlFoto: estoque.produto.url_foto,
             quantidadeSeparada: quantidadeASeparar,
             // Adiciona os pedidos atendidos neste lote
             pedidosAtendidos: pedidos
@@ -162,6 +168,141 @@ export class SeparacaoService {
           );
         });
       }
+    }
+
+    return resultado;
+  }
+
+  // Agrupando por pedido
+  async processarSeparacaoPorPedido(
+    arquivo: Express.Multer.File,
+    armazemPrioritarioId?: number,
+  ): Promise<ResultadoSeparacaoPorPedidoDTO> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const workbook = XLSX.read(arquivo.buffer);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const dados: ExcelRow[] = XLSX.utils.sheet_to_json(worksheet);
+
+    const resultado: ResultadoSeparacaoPorPedidoDTO = {
+      pedidos: [],
+      produtosNaoEncontrados: [],
+    };
+
+    // Primeiro agrupamos todos os itens por pedido
+    const itensPorPedido = new Map<
+      string | number,
+      Array<{
+        sku: string;
+        idItem: string | number;
+      }>
+    >();
+
+    for (const item of dados) {
+      const numPedido = item['Número do pedido'];
+      if (!numPedido) continue;
+
+      if (!itensPorPedido.has(numPedido)) {
+        itensPorPedido.set(numPedido, []);
+      }
+      itensPorPedido.get(numPedido)?.push({
+        sku: item['Código (SKU)'],
+        idItem: item.ID,
+      });
+    }
+
+    // Processamos cada pedido individualmente
+    for (const [numPedido, itens] of itensPorPedido.entries()) {
+      const pedidoResultado = {
+        numeroPedido: numPedido,
+        itens: [] as Array<{
+          sku: string;
+          idItem: string | number;
+          localizacoes: Array<{
+            armazem: { armazemID: number; armazem: string };
+            localizacao: string;
+            quantidadeSeparada: number;
+          }>;
+        }>,
+        completo: true,
+      };
+
+      // Processamos cada item do pedido
+      for (const item of itens) {
+        const produto = await this.produtoRepository.findOne({
+          where: { sku: item.sku },
+        });
+
+        if (!produto) {
+          resultado.produtosNaoEncontrados.push(
+            `${item.sku} (Pedido: ${numPedido})`,
+          );
+          pedidoResultado.completo = false;
+          continue;
+        }
+
+        // Consulta os estoques com prioridade para o armazém especificado
+        const estoques = await this.produtoEstoqueRepository
+          .createQueryBuilder('pe')
+          .innerJoinAndSelect('pe.localizacao', 'localizacao')
+          .innerJoinAndSelect('localizacao.armazem', 'armazem')
+          .innerJoinAndSelect('pe.produto', 'produto')
+          .where('pe.produto.produto_id = :produtoId', {
+            produtoId: produto.produto_id,
+          })
+          .andWhere('pe.quantidade > 0')
+          .orderBy(
+            'CASE WHEN armazem.armazem_id = :armazemId THEN 0 ELSE 1 END',
+            'ASC',
+          )
+          .addOrderBy('localizacao.nome', 'ASC')
+          .addOrderBy('pe.quantidade', 'DESC')
+          .setParameter('armazemId', armazemPrioritarioId || 0)
+          .getMany();
+
+        const quantidadeNecessaria = 1; // 1 unidade por item do pedido
+        let quantidadeSeparada = 0;
+        const localizacoesItem: Array<{
+          armazem: { armazemID: number; armazem: string };
+          localizacao: string;
+          quantidadeSeparada: number;
+        }> = [];
+
+        for (const estoque of estoques) {
+          if (quantidadeSeparada >= quantidadeNecessaria) break;
+
+          const quantidadeDisponivel = estoque.quantidade;
+          const quantidadeASeparar = Math.min(
+            quantidadeNecessaria - quantidadeSeparada,
+            quantidadeDisponivel,
+          );
+
+          localizacoesItem.push({
+            armazem: {
+              armazemID: estoque.localizacao.armazem.armazem_id,
+              armazem: estoque.localizacao.armazem.nome,
+            },
+            localizacao: estoque.localizacao.nome,
+            quantidadeSeparada: quantidadeASeparar,
+          });
+
+          quantidadeSeparada += quantidadeASeparar;
+        }
+
+        if (quantidadeSeparada < quantidadeNecessaria) {
+          pedidoResultado.completo = false;
+          resultado.produtosNaoEncontrados.push(
+            `${item.sku} (Pedido: ${numPedido}) - faltam ${quantidadeNecessaria - quantidadeSeparada} unidades`,
+          );
+        }
+
+        pedidoResultado.itens.push({
+          sku: item.sku,
+          idItem: item.idItem,
+          localizacoes: localizacoesItem,
+        });
+      }
+
+      resultado.pedidos.push(pedidoResultado);
     }
 
     return resultado;
