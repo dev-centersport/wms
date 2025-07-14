@@ -23,14 +23,14 @@ export class OcorrenciaService {
 
   async findAll(): Promise<Ocorrencia[]> {
     return await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque', 'usuario', 'localizacao'],
+      relations: ['produto_estoque', 'usuario', 'localizacoes'],
     });
   }
 
   async findOne(ocorrencia_id: number): Promise<Ocorrencia> {
     const ocorrencia = await this.ocorrenciaRepository.findOne({
       where: { ocorrencia_id },
-      relations: ['produto_estoque', 'usuario', 'localizacao'],
+      relations: ['produto_estoque', 'usuario', 'localizacoes'],
     });
 
     if (!ocorrencia)
