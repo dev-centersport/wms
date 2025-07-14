@@ -32,12 +32,19 @@ export default function Movimentacao() {
 
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
+  const flatListRef = useRef(null);
 
   useEffect(() => {
     if (!tipoBloqueado && localizacaoRef.current) {
       localizacaoRef.current.focus();
     }
   }, [tipo, tipoBloqueado]);
+
+  useEffect(() => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [produtos]);
 
   const handleTipoChange = (novoTipo) => {
     if (tipoBloqueado) return;
@@ -88,6 +95,7 @@ export default function Movimentacao() {
         sku: produto.sku,
         url_foto: produto.url_foto,
         quantidade: 1,
+        estoque_localizacao: produto.estoque || 0,
       };
       setProdutos((prev) => [...prev, produtoFormatado]);
       setEanProduto('');
@@ -97,6 +105,34 @@ export default function Movimentacao() {
     } catch {
       Alert.alert('Produto não encontrado');
     }
+  };
+
+  const verificarEstoqueAntesDeConfirmar = () => {
+    if (tipo !== 'saida') {
+      setMostrarConfirmacao(true);
+      return;
+    }
+
+    const contagem = {};
+    produtos.forEach((p) => {
+      contagem[p.produto_id] = (contagem[p.produto_id] || 0) + 1;
+    });
+
+    const produtoEstourado = produtos.find((p) => {
+      return contagem[p.produto_id] > (p.estoque_localizacao || 0);
+    });
+
+    if (produtoEstourado) {
+      const bipados = contagem[produtoEstourado.produto_id];
+      const disponivel = produtoEstourado.estoque_localizacao || 0;
+      Alert.alert(
+        'Estoque insuficiente',
+        `Você bipou ${bipados}x o produto "${produtoEstourado.descricao}", mas a gaveta só tem ${disponivel}.`
+      );
+      return;
+    }
+
+    setMostrarConfirmacao(true);
   };
 
   const handleConfirmar = async () => {
@@ -143,22 +179,18 @@ export default function Movimentacao() {
             <Text style={[styles.title]}>Movimentação - {tipo.toUpperCase()}</Text>
             <View style={styles.toggleContainer}>
               <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'entrada' && styles.active, {marginTop:20}]}
+                style={[styles.toggleBtn, tipo === 'entrada' && styles.active, { marginTop: 20 }]}
                 onPress={() => handleTipoChange('entrada')}
                 disabled={tipoBloqueado}
               >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
-                  ENTRADA
-                </Text>
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>ENTRADA</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'saida' && styles.active, {marginTop:20}]}
+                style={[styles.toggleBtn, tipo === 'saida' && styles.active, { marginTop: 20 }]}
                 onPress={() => handleTipoChange('saida')}
                 disabled={tipoBloqueado}
               >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
-                  SAÍDA
-                </Text>
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>SAÍDA</Text>
               </TouchableOpacity>
             </View>
             {!localizacaoId && (
@@ -206,6 +238,7 @@ export default function Movimentacao() {
             />
             <Text style={styles.totalSKU}>Total: {produtos.length} SKU</Text>
             <FlatList
+              ref={flatListRef}
               data={produtos}
               keyExtractor={(_, index) => index.toString()}
               style={{ marginTop: 4, marginBottom: 60 }}
@@ -213,11 +246,7 @@ export default function Movimentacao() {
                 <View style={styles.produtoItem}>
                   <Text style={styles.contador}>{index + 1}</Text>
                   <Image
-                    source={
-                      item.url_foto
-                        ? { uri: item.url_foto }
-                        : require('../../assets/images/no-image.png')
-                    }
+                    source={item.url_foto ? { uri: item.url_foto } : require('../../assets/images/no-image.png')}
                     style={styles.foto}
                   />
                   <View style={{ flex: 1 }}>
@@ -228,7 +257,7 @@ export default function Movimentacao() {
               )}
             />
             <View style={styles.botoesFixos}>
-              <TouchableOpacity style={styles.btnSalvar} onPress={() => setMostrarConfirmacao(true)}>
+              <TouchableOpacity style={styles.btnSalvar} onPress={verificarEstoqueAntesDeConfirmar}>
                 <Text style={styles.salvarText}>Salvar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnCancelar} onPress={() => setMostrarCancelar(true)}>
@@ -273,13 +302,14 @@ export default function Movimentacao() {
               </View>
               <View style={styles.modalContent}>
                 <Text style={styles.alertIcon}>⚠️</Text>
-                <Text style={styles.modalMessage}>
-                  Deseja realmente cancelar a {tipo}?
-                </Text>
-                <TouchableOpacity style={styles.btnConfirmar} onPress={() => {
-                  setMostrarCancelar(false);
-                  limparTudo();
-                }}>
+                <Text style={styles.modalMessage}>Deseja realmente cancelar a {tipo}?</Text>
+                <TouchableOpacity
+                  style={styles.btnConfirmar}
+                  onPress={() => {
+                    setMostrarCancelar(false);
+                    limparTudo();
+                  }}
+                >
                   <Text style={styles.confirmarText}>Sim, Cancelar</Text>
                 </TouchableOpacity>
               </View>
@@ -290,7 +320,6 @@ export default function Movimentacao() {
     </KeyboardAvoidingView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
