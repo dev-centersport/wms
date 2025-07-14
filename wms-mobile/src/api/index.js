@@ -1,23 +1,26 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'http://192.168.2.41:3001', // coloque o IP/host da sua API
-  timeout: 5000,
-});
+const BASE_URL = 'http://151.243.0.78:3001';
 
 export async function login(usuario, senha) {
   try {
-    const response = await api.post('/login', {
-      username: usuario,
-      password: senha,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Erro no login →', error.response?.data || error.message);
-    throw new Error('Falha ao fazer login.');
+    const response = await axios.get(`${BASE_URL}/usuario`);
+    const usuarios = response.data; 
+    // console.log(usuarios)
+
+
+    const encontrado = usuarios.find(
+      (u) => u.usuario === usuario && u.senha === senha
+    );
+    console.log(encontrado)
+
+    // if (!encontrado) {
+    //   return { success: false };
+    // }
+
+    return { success: true, usuario: encontrado };
+  } catch (err) {
+    console.error('Erro na autenticação:', err);
+    throw err;
   }
 }
-
-
-
-export default api;
