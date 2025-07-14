@@ -30,7 +30,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Layout from '../components/Layout';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, buscarLocalizacoes, buscarProdutosPorLocalizacaoDireto } from '../services/API';
+import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, buscarLocalizacoes, buscarProdutosPorLocalizacaoDireto, buscarProdutoEstoquePorId } from '../services/API';
 
 
 interface Item {
@@ -190,8 +190,10 @@ const Movimentacao: React.FC = () => {
 
     try {
       const resultado = await buscarLocalizacaoPorEAN(localizacao.trim());
-      if (!resultado) {
-        alert('Localização com esse EAN não foi encontrada.');
+
+      // ✅ Adicione esta verificação aqui:
+      if (!resultado || !resultado.localizacao_id) {
+        alert(`Localização com EAN ${localizacao.trim()} não encontrada.`);
         return;
       }
 
@@ -209,6 +211,7 @@ const Movimentacao: React.FC = () => {
       alert('Erro ao buscar localização.');
     }
   };
+
 
   const handleBuscarLocalizacaoSaida = async () => {
     if (!localizacao.trim()) return;
@@ -243,48 +246,50 @@ const Movimentacao: React.FC = () => {
 
   const handleBuscarLocalizacaoTransferencia = async () => {
     if (!localizacao.trim()) return;
-  
+
     try {
       const resultado = await buscarLocalizacaoPorEAN(localizacao.trim());
       if (!resultado) {
         alert('Localização com esse EAN não foi encontrada.');
         return;
       }
-  
+
       const origemFormatada: LocalizacaoOption = {
         id: resultado.localizacao_id,
         nome: resultado.nome,
         armazem: resultado.armazem || '',
       };
-  
+
       setOrigem(origemFormatada);
       setInputOrigem(`${origemFormatada.nome} - ${origemFormatada.armazem}`);
       setLocalizacao('');
       setLocalizacaoBloqueada(true);
-  
+
       // Busca produtos da localização
       const produtos = await buscarProdutosPorLocalizacaoDireto(origemFormatada.id);
-  
-      // Filtra apenas produtos com quantidade > 0 e mapeia para o formato esperado
+      console.table(produtos);
+
+      // Corrigido: inclui produto_id também!
       const produtosValidos: Item[] = produtos
-        .filter((item: Item) => Number(item.quantidade) > 0)
+        .filter((item: Item) => item.produto_estoque_id && item.produto_id && Number(item.quantidade) > 0)
         .map((item: Item) => ({
           produto_estoque_id: item.produto_estoque_id,
-          produto_id: item.produto_id, // ← Garantindo que o produto_id está incluído
+          produto_id: item.produto_id, // 🔴 ESSENCIAL PARA TRANSFERÊNCIA
           descricao: item.descricao,
           sku: item.sku,
           ean: item.ean,
           quantidade: Number(item.quantidade),
         }));
-  
+
       setLista(produtosValidos);
       setSelectedItems(produtosValidos.map((_, idx) => idx));
-  
+
     } catch (err) {
       console.error('Erro ao buscar localização ou produtos (transferência):', err);
       alert('Erro ao buscar localização e produtos.');
     }
   };
+
 
   const handleExcluir = (index: number) => {
     setLista((prev) => prev.filter((_, i) => i !== index));
@@ -329,57 +334,74 @@ const Movimentacao: React.FC = () => {
     try {
       const usuarioId = 1;
 
-      if (tipo === 'transferencia' && origem?.id === destino?.id) {
-        alert('A origem e o destino não podem ser iguais.');
-        return;
+      // Verificação básica
+      if (tipo === 'transferencia') {
+
+        for (const item of lista) {
+          const estoqueAtual = await buscarProdutoEstoquePorId(item.produto_estoque_id!);
+          if (!estoqueAtual || estoqueAtual.quantidade < item.quantidade!) {
+            alert(`❌ Estoque insuficiente para ${item.descricao || item.ean}`);
+            return;
+          }
+        }
+        if (!origem?.id || !destino?.id) {
+          alert('Transferência exige origem e destino.');
+          return;
+        }
+        if (origem.id === destino.id) {
+          alert('A origem e o destino não podem ser iguais.');
+          return;
+        }
       }
+
       if (lista.length === 0) {
         alert('Nenhum produto para movimentar.');
         return;
       }
+
+      // Validação dos itens
       let itensValidos: any[] = [];
+
       if (tipo === 'entrada' || tipo === 'saida') {
-        itensValidos = lista.filter(item => item.produto_id && Number(item.quantidade) > 0).map(item => ({
-          produto_id: Number(item.produto_id),
-          quantidade: Number(item.quantidade),
-        }));
-      }
-      if (tipo === 'transferencia') {
         itensValidos = lista
-          .filter(item => item.produto_estoque_id && Number(item.quantidade) > 0)
+          .filter(item => item.produto_id && Number(item.quantidade) > 0)
           .map(item => ({
-            produto_estoque_id: Number(item.produto_estoque_id),
-            produto_id: Number(item.produto_id), // ← Incluindo o produto_id
+            produto_id: Number(item.produto_id),
             quantidade: Number(item.quantidade),
           }));
       }
+
+      if (tipo === 'transferencia') {
+        itensValidos = lista
+          .filter(item => item.produto_id && item.produto_estoque_id && Number(item.quantidade) > 0)
+          .map(item => ({
+            produto_id: Number(item.produto_id),
+            produto_estoque_id: Number(item.produto_estoque_id),
+            quantidade: Number(item.quantidade),
+          }));
+      }
+
       if (itensValidos.length === 0) {
         alert('Nenhum item válido para movimentar.');
         return;
-      }
-
-      if (tipo === 'transferencia') {
-        const idsInvalidos = lista.filter(item =>
-          !item.produto_estoque_id
-        );
-        if (idsInvalidos.length > 0) {
-          alert('Há produtos sem produto_estoque_id válido. Verifique a origem.');
-          return;
-        }
       }
 
       const payload: any = {
         tipo,
         usuario_id: usuarioId,
         itens_movimentacao: itensValidos,
-        localizacao_origem_id: tipo === 'entrada' ? 0 : (origem?.id ?? null),
-        localizacao_destino_id: tipo === 'saida' ? 0 :
-          tipo === 'transferencia' ? (destino?.id ?? null) :
-            (origem?.id ?? null),
+        localizacao_origem_id: tipo === 'entrada' ? 0 : origem?.id ?? null,
+        localizacao_destino_id:
+          tipo === 'saida' ? 0 :
+            tipo === 'transferencia' ? destino?.id ?? null :
+              origem?.id ?? null,
       };
+
       console.log('📦 Payload final:', payload);
       await enviarMovimentacao(payload);
       alert('Movimentação realizada com sucesso!');
+
+      // Resetar estado
       setConfirmOpen(false);
       setLista([]);
       setOrigem(null);
@@ -542,11 +564,36 @@ const Movimentacao: React.FC = () => {
                   value={destino}
                   inputValue={inputDestino}
                   loading={loadingOpt}
-                  onInputChange={(_, val) => {
+                  onInputChange={async (_, val) => {
                     setInputDestino(val);
                     setDestino(null);
-                    if (val.length >= 1) fetchLocalizacoes(val);
-                    else setOptions([]);
+
+                    if (val.length >= 13 && /^[0-9]{13}$/.test(val)) {
+                      // Validação para EAN de 13 dígitos
+                      try {
+                        const resultado = await buscarLocalizacaoPorEAN(val.trim());
+
+                        if (!resultado) {
+                          alert('Localização com esse EAN não foi encontrada.');
+                          return;
+                        }
+
+                        const destinoFormatado: LocalizacaoOption = {
+                          id: resultado.localizacao_id,
+                          nome: resultado.nome,
+                          armazem: resultado.armazem?.nome || resultado.armazem,
+                        };
+
+                        setDestino(destinoFormatado);
+                        setInputDestino(`${destinoFormatado.nome} - ${destinoFormatado.armazem}`);
+                      } catch (err) {
+                        console.error('Erro ao buscar localização destino por EAN:', err);
+                        alert('Erro ao buscar localização destino.');
+                      }
+                    } else {
+                      if (val.length >= 1) fetchLocalizacoes(val);
+                      else setOptions([]);
+                    }
                   }}
                   onChange={(_, val) => {
                     setDestino(val);
@@ -577,6 +624,7 @@ const Movimentacao: React.FC = () => {
                     },
                   }}
                 />
+
               </Box>
 
               {/* Exibe campos bloqueados após preenchimento */}

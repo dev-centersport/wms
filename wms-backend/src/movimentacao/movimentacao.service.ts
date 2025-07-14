@@ -6,13 +6,12 @@ import {
 import { CreateMovimentacaoDto } from './dto/create-movimentacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Movimentacao, TipoMovimentacao } from './entities/movimentacao.entity';
-import { EntityManager, MoreThan, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { ItemMovimentacao } from 'src/item_movimentacao/entities/item_movimentacao.entity';
 import { CreateItemMovimentacaoDto } from 'src/item_movimentacao/dto/create-item_movimentacao.dto';
-import { Produto } from 'src/produto/entities/produto.entity';
 
 @Injectable()
 export class MovimentacaoService {
@@ -25,41 +24,12 @@ export class MovimentacaoService {
     private readonly usuarioRepository: Repository<Usuario>,
     @InjectRepository(Localizacao)
     private readonly localizacaoRepository: Repository<Localizacao>,
-    @InjectRepository(ProdutoEstoque)
-    private readonly produtoEstoqueRepository: Repository<ProdutoEstoque>,
     private readonly entityManager: EntityManager,
-  ) {}
+  ) { }
 
   async create(
     CreateMovimentacaoDto: CreateMovimentacaoDto,
   ): Promise<Movimentacao> {
-    // Se for transferência e não tiver itens específicados, busca todos os produtos da origem
-    if (
-      (CreateMovimentacaoDto.tipo === TipoMovimentacao.TRANSFERENCIA &&
-        !CreateMovimentacaoDto.itens_movimentacao) ||
-      CreateMovimentacaoDto.itens_movimentacao.length === 0
-    ) {
-      const produtoEstoque = await this.produtoEstoqueRepository.find({
-        where: {
-          localizacao: {
-            localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-          },
-          quantidade: MoreThan(0),
-        },
-        relations: ['produto'],
-      });
-
-      if (produtoEstoque.length === 0)
-        throw new BadRequestException(
-          'Nenhum produto encontrado na localização de origem para transferência',
-        );
-
-      CreateMovimentacaoDto.itens_movimentacao = produtoEstoque.map((pe) => ({
-        produto_id: pe.produto.produto_id,
-        quantidade: pe.quantidade,
-      }));
-    }
-
     // Validações de itens
     if (
       !CreateMovimentacaoDto.itens_movimentacao ||
@@ -84,17 +54,17 @@ export class MovimentacaoService {
     const [localOrigem, localDestino] = await Promise.all([
       CreateMovimentacaoDto.localizacao_origem_id !== 0
         ? this.localizacaoRepository.findOne({
-            where: {
-              localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-            },
-          })
+          where: {
+            localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+          },
+        })
         : Promise.resolve(null),
       CreateMovimentacaoDto.localizacao_destino_id !== 0
         ? this.localizacaoRepository.findOne({
-            where: {
-              localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
-            },
-          })
+          where: {
+            localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
+          },
+        })
         : Promise.resolve(null),
     ]);
 
@@ -153,17 +123,17 @@ export class MovimentacaoService {
           },
           CreateMovimentacaoDto.localizacao_origem_id !== 0
             ? {
-                localizacao_origem: {
-                  localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-                },
-              }
+              localizacao_origem: {
+                localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+              },
+            }
             : {},
           CreateMovimentacaoDto.localizacao_destino_id !== 0
             ? {
-                localizacao_destino: {
-                  localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
-                },
-              }
+              localizacao_destino: {
+                localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
+              },
+            }
             : {},
         );
 
@@ -189,7 +159,7 @@ export class MovimentacaoService {
               'usuario',
               'localizacao_origem',
               'localizacao_destino',
-              'itens_movimentacao.produto',
+              'itens_movimentacao.produto_estoque.produto',
             ],
           });
 
@@ -211,56 +181,19 @@ export class MovimentacaoService {
       throw new BadRequestException('Quantidade deve ser positiva');
 
     // Buscar produto
-    const produto = await entityManager.findOne(Produto, {
-      where: { produto_id: itemDto.produto_id },
-      // relations: ['localizacao'],
+    const produto_estoque = await entityManager.findOne(ProdutoEstoque, {
+      where: { produto_estoque_id: itemDto.produto_estoque_id },
+      relations: ['produto', 'localizacao'],
     });
-    if (!produto) throw new NotFoundException('Produto não encontrado');
+    if (!produto_estoque) throw new NotFoundException('Produto não encontrado');
 
     const itemMovimentacao = this.itemMovimentacaoRepository.create({
       movimentacao,
-      produto,
+      produto: produto_estoque.produto,
       quantidade: itemDto.quantidade,
     });
 
     await entityManager.save(itemMovimentacao);
-
-    let localizacao_estoque: Localizacao | null = null;
-
-    if (movimentacao.tipo === TipoMovimentacao.ENTRADA) {
-      localizacao_estoque = movimentacao.localizacao_destino;
-    } else if (movimentacao.tipo === TipoMovimentacao.SAIDA) {
-      localizacao_estoque = movimentacao.localizacao_origem;
-    }
-
-    // Buscar ou criar o produto no estoque
-    let produto_estoque = await entityManager.findOne(ProdutoEstoque, {
-      where: {
-        produto: { produto_id: produto.produto_id },
-        localizacao: localizacao_estoque
-          ? { localizacao_id: localizacao_estoque.localizacao_id }
-          : undefined,
-      },
-      relations: ['produto', 'localizacao'],
-    });
-
-    // Se não existe e é uma entrada, cria um novo registro
-    if (
-      !produto_estoque &&
-      movimentacao.tipo === TipoMovimentacao.ENTRADA &&
-      localizacao_estoque
-    ) {
-      produto_estoque = entityManager.create(ProdutoEstoque, {
-        produto,
-        localizacao: localizacao_estoque,
-        quantidade: 0,
-      });
-    }
-
-    if (!produto_estoque)
-      throw new BadRequestException(
-        `Produto não encontrado no estoque da localização ${localizacao_estoque?.nome}`,
-      );
 
     await this.atualizarEstoque(
       movimentacao.tipo,

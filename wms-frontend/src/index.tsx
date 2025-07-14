@@ -61,6 +61,9 @@ root.render(
           <Route path="/CriarTipoLocalizacao" element={<CriarTipoLocalizacao />} />
 
           {/* {/ Pagina de Produto} s */}
+          <Route path="/produto" element={<Produto />}/>
+          <Route path="/consulta" element={<Consulta />}/>
+          <Route path="/movimentacao" element={<Movimentacao/>}/>
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />
