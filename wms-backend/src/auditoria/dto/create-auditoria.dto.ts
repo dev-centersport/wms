@@ -1,16 +1,17 @@
 import { StatusAuditoria } from '../entities/auditoria.entity';
-import { IsDate, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { idRelations } from 'src/utils/decorator.id.relations';
 
 export class CreateAuditoriaDto {
-  @IsInt()
-  usuarioId: number;
+  @idRelations()
+  usuario_id: number;
 
-  @IsInt()
-  ocorrenciaId: number;
+  @idRelations()
+  ocorrencia_id: number;
 
-  @IsInt()
-  localizacaoId: number;
+  @idRelations()
+  localizacao_id: number;
 
   @IsOptional()
   @IsString()

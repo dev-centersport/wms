@@ -22,11 +22,11 @@ export interface Armazem {
 
 // Adicione esta função ao arquivo API.tsx
 
-export async function buscarProdutosPorLocalizacao(localizacaoId: number) {
+export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
   try {
     const todos = await buscarConsultaEstoque();
     return todos
-      .filter((item: any) => item.localizacao_id === localizacaoId)
+      .filter((item: any) => item.localizacao_id === localizacao_id)
       .map((item: any) => ({
         produto_id: item.produto_id,
         descricao: item.descricao || '',

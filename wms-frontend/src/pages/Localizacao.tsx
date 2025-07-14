@@ -786,7 +786,7 @@ const handleImprimirSelecionados = () => {
                 <ProdutosLocalizacaoModal
                     open={modalOpen}
                     onClose={() => setModalOpen(false)}
-                    localizacaoId={localizacaoSelecionada.id}
+                    localizacao_id={localizacaoSelecionada.id}
                     localizacaoNome={localizacaoSelecionada.nome}
                     onQuantidadeAtualizada={handleQuantidadeAtualizada}
                 />

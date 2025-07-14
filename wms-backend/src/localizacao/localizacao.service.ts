@@ -23,9 +23,9 @@ export class LocalizacaoService {
     private readonly armazemRepository: Repository<Armazem>,
   ) {}
 
-  async getProdutosPorLocalizacao(localizacaoId: number) {
+  async getProdutosPorLocalizacao(localizacao_id: number) {
     return await this.LocalizacaoRepository.findOne({
-      where: { localizacao_id: localizacaoId },
+      where: { localizacao_id: localizacao_id },
       relations: {
         produtos_estoque: {
           produto: true,

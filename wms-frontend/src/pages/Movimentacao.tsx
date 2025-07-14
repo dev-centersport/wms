@@ -184,11 +184,11 @@ const Movimentacao: React.FC = () => {
   };
 
  const montarPayload = () => {
-  const usuarioId = 1;
+  const usuario_id = 1;
 
   const payload: any = {
     tipo: tipo.toLowerCase(), // API espera em minúsculo: 'entrada', 'saida', 'transferencia'
-    usuario_id: usuarioId,
+    usuario_id: usuario_id,
     itens_movimentacao: lista.map((item) => ({
       produto_id: item.produto_id, // Usar diretamente o ID correto
       quantidade: item.quantidade ?? 1,
@@ -213,11 +213,11 @@ const Movimentacao: React.FC = () => {
 
   const handleConfirmarOperacao = async () => {
     try {
-      const usuarioId = 1;
+      const usuario_id = 1;
 
       const payload: any = {
         tipo,
-        usuario_id: usuarioId,
+        usuario_id: usuario_id,
         itens_movimentacao: lista.map((item) => ({
           produto_id: Number(item.produto_id),
           quantidade: Number(item.quantidade ?? 1),
