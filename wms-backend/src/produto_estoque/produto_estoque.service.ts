@@ -53,44 +53,70 @@ export class ProdutoEstoqueService {
     if (!produto) throw new NotFoundException('Produto não encontrado');
     if (!localizacao) throw new NotFoundException('Localizacao não encontrado');
 
-    const produto_estoque = this.ProdutoEstoqueRepository.create({
-      ...createProdutoEstoqueDto,
-      produto,
-      localizacao,
-    });
+    // Verifica se já existe um registro para este produto e localização
+    const produtoEstoqueExistente = await this.ProdutoEstoqueRepository.findOne(
+      {
+        where: {
+          localizacao: {
+            localizacao_id: createProdutoEstoqueDto.localizacao_id,
+          },
+          produto: { produto_id: createProdutoEstoqueDto.produto_id },
+        },
+        relations: ['localizacao', 'localizacao.armazem'],
+      },
+    );
+
+    let produto_estoque: ProdutoEstoque;
+
+    if (produtoEstoqueExistente) {
+      // Se existir, atualiza a quantidade
+      produtoEstoqueExistente.quantidade += createProdutoEstoqueDto.quantidade;
+      produto_estoque = produtoEstoqueExistente;
+    } else {
+      // Se não existir, cria um novo registro
+      produto_estoque = this.ProdutoEstoqueRepository.create({
+        ...createProdutoEstoqueDto,
+        produto,
+        localizacao,
+      });
+    }
 
     return await this.ProdutoEstoqueRepository.save(produto_estoque);
   }
 
   async update(
     produto_estoque_id: number,
-    UpdateProdutoEstoqueDto: UpdateProdutoEstoqueDto,
+    updateProdutoEstoqueDto: UpdateProdutoEstoqueDto,
   ): Promise<ProdutoEstoque> {
-    const produto_estoque = await this.findOne(produto_estoque_id);
-
-    if (!produto_estoque)
+    const produtoEstoque = await this.findOne(produto_estoque_id);
+    if (!produtoEstoque) {
       throw new NotFoundException('Produto estoque não encontrado!');
+    }
 
-    if (UpdateProdutoEstoqueDto.produto_id !== undefined) {
+    // Atualiza as relações se necessário
+    if (updateProdutoEstoqueDto.produto_id !== undefined) {
       const produto = await this.ProdutoRepository.findOneBy({
-        produto_id: UpdateProdutoEstoqueDto.produto_id,
+        produto_id: updateProdutoEstoqueDto.produto_id,
       });
       if (!produto) throw new NotFoundException('Produto não encontrado');
+      produtoEstoque.produto = produto;
     }
 
-    if (UpdateProdutoEstoqueDto.localizacao_id !== undefined) {
+    if (updateProdutoEstoqueDto.localizacao_id !== undefined) {
       const localizacao = await this.LocalizacaoRepository.findOneBy({
-        localizacao_id: UpdateProdutoEstoqueDto.localizacao_id,
+        localizacao_id: updateProdutoEstoqueDto.localizacao_id,
       });
-      if (!localizacao) throw new NotFoundException('Produto não encontrado');
+      if (!localizacao)
+        throw new NotFoundException('Localização não encontrada');
+      produtoEstoque.localizacao = localizacao;
     }
 
-    const { produto_id, localizacao_id, ...camposSimpels } =
-      UpdateProdutoEstoqueDto;
+    // Atualiza os campos simples (quantidade, etc.)
+    const { produto_id, localizacao_id, ...camposSimples } =
+      updateProdutoEstoqueDto;
+    Object.assign(produtoEstoque, camposSimples);
 
-    Object.assign(produto_estoque, camposSimpels);
-
-    return await this.ProdutoEstoqueRepository.save(produto_estoque);
+    return await this.ProdutoEstoqueRepository.save(produtoEstoque);
   }
 
   async remove(produto_estoque_id: number): Promise<void> {
