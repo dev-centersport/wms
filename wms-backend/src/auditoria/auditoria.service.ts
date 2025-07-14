@@ -38,21 +38,21 @@ export class AuditoriaService {
 
     // Verificar se a ocorrência existe
     const ocorrencia = await this.ocorrenciaRepository.findOne({
-      where: { ocorrencia_id: createAuditoriaDto.ocorrenciaId },
+      where: { ocorrencia_id: createAuditoriaDto.ocorrencia_id },
     });
     if (!ocorrencia) {
       throw new NotFoundException(
-        `Ocorrência com ID ${createAuditoriaDto.ocorrenciaId} não encontrada`,
+        `Ocorrência com ID ${createAuditoriaDto.ocorrencia_id} não encontrada`,
       );
     }
 
     // Verificar se a localização existe
     const localizacao = await this.localizacaoRepository.findOne({
-      where: { localizacao_id: createAuditoriaDto.localizacaoId },
+      where: { localizacao_id: createAuditoriaDto.localizacao_id },
     });
     if (!localizacao) {
       throw new NotFoundException(
-        `Localização com ID ${createAuditoriaDto.localizacaoId} não encontrada`,
+        `Localização com ID ${createAuditoriaDto.localizacao_id} não encontrada`,
       );
     }
 
@@ -108,25 +108,25 @@ export class AuditoriaService {
       auditoria.usuario = usuario;
     }
 
-    if (updateAuditoriaDto.ocorrenciaId) {
+    if (updateAuditoriaDto.ocorrencia_id) {
       const ocorrencia = await this.ocorrenciaRepository.findOne({
-        where: { ocorrencia_id: updateAuditoriaDto.ocorrenciaId },
+        where: { ocorrencia_id: updateAuditoriaDto.ocorrencia_id },
       });
       if (!ocorrencia) {
         throw new NotFoundException(
-          `Ocorrência com ID ${updateAuditoriaDto.ocorrenciaId} não encontrada`,
+          `Ocorrência com ID ${updateAuditoriaDto.ocorrencia_id} não encontrada`,
         );
       }
       auditoria.ocorrencia = ocorrencia;
     }
 
-    if (updateAuditoriaDto.localizacaoId) {
+    if (updateAuditoriaDto.localizacao_id) {
       const localizacao = await this.localizacaoRepository.findOne({
-        where: { localizacao_id: updateAuditoriaDto.localizacaoId },
+        where: { localizacao_id: updateAuditoriaDto.localizacao_id },
       });
       if (!localizacao) {
         throw new NotFoundException(
-          `Localização com ID ${updateAuditoriaDto.localizacaoId} não encontrada`,
+          `Localização com ID ${updateAuditoriaDto.localizacao_id} não encontrada`,
         );
       }
       auditoria.localizacao = localizacao;
@@ -224,14 +224,14 @@ export class AuditoriaService {
 
   async findByUsuario(usuarioId: number): Promise<Auditoria[]> {
     return this.auditoriaRepository.find({
-      where: { usuario: { usuario_id: usuarioId } },
+      where: { usuario: { usuario_id: usuario_id } },
       relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
     });
   }
 
-  async findByOcorrencia(ocorrenciaId: number): Promise<Auditoria[]> {
+  async findByOcorrencia(ocorrencia_id: number): Promise<Auditoria[]> {
     return this.auditoriaRepository.find({
-      where: { ocorrencia: { ocorrencia_id: ocorrenciaId } },
+      where: { ocorrencia: { ocorrencia_id: ocorrencia_id } },
       relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
     });
   }

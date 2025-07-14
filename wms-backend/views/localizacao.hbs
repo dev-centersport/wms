@@ -122,14 +122,14 @@
                             <td>{{quantidade}}</td>
                             <td>{{codigoBarras}}</td>
                             <td>
-                                <button class="btn btn-primary me-1 btn-ver-produtos" data-id="{{localizacaoID}}" data-nome="{{localizacao}}">
+                                <button class="btn btn-primary me-1 btn-ver-produtos" data-id="{{localizacao_id}}" data-nome="{{localizacao}}">
                                     Ver produtos
                                 </button>
-                                <a href="/imprimir-localizacao/{{localizacaoID}}" class="btn btn-primary no-print" target="_blank">
+                                <a href="/imprimir-localizacao/{{localizacao_id}}" class="btn btn-primary no-print" target="_blank">
                                     <i class="bi bi-printer"></i> Imprimir Localização
                                 </a>
                                 <form method="POST" action="/deletar-localizacao" class="d-inline">
-                                    <input type="hidden" name="id" value="{{localizacaoID}}">
+                                    <input type="hidden" name="id" value="{{localizacao_id}}">
                                     <button type="submit" class="btn btn-sm btn-danger" data-nome="{{localizacao}}">
                                         <i class="bi bi-trash-fill"></i> Excluir
                                     </button>

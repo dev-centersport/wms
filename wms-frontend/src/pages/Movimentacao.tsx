@@ -332,7 +332,7 @@ const Movimentacao: React.FC = () => {
 
   const handleConfirmarOperacao = async () => {
     try {
-      const usuarioId = 1;
+      const usuario_id = 1;
 
       // Verificação básica
       if (tipo === 'transferencia') {
@@ -388,7 +388,7 @@ const Movimentacao: React.FC = () => {
 
       const payload: any = {
         tipo,
-        usuario_id: usuarioId,
+        usuario_id: usuario_id,
         itens_movimentacao: itensValidos,
         localizacao_origem_id: tipo === 'entrada' ? 0 : origem?.id ?? null,
         localizacao_destino_id:

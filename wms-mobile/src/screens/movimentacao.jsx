@@ -18,7 +18,7 @@ import {
 export default function Movimentacao() {
   const [tipo, setTipo] = useState('entrada');
   const [eanLocalizacao, setEanLocalizacao] = useState('');
-  const [localizacaoId, setLocalizacaoId] = useState(null);
+  const [localizacao_id, setlocalizacao_id] = useState(null);
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [eanProduto, setEanProduto] = useState('');
   const [produtos, setProdutos] = useState([]);
@@ -28,7 +28,7 @@ export default function Movimentacao() {
   const handleTipoChange = (novoTipo) => {
     setTipo(novoTipo);
     setEanLocalizacao('');
-    setLocalizacaoId(null);
+    setlocalizacao_id(null);
     setNomeLocalizacao('');
     setProdutos([]);
     setTimeout(() => {
@@ -43,7 +43,7 @@ export default function Movimentacao() {
         Alert.alert('Localização não encontrada');
         return;
       }
-      setLocalizacaoId(loc.localizacao_id);
+      setlocalizacao_id(loc.localizacao_id);
       setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
       setEanLocalizacao('');
       setTimeout(() => {
@@ -80,7 +80,7 @@ export default function Movimentacao() {
   };
 
   const handleSalvar = async () => {
-    if (!localizacaoId || produtos.length === 0) {
+    if (!localizacao_id || produtos.length === 0) {
       Alert.alert('Preencha localização e produtos');
       return;
     }
@@ -88,8 +88,8 @@ export default function Movimentacao() {
       const payload = {
         tipo,
         usuario_id: 1,
-        localizacao_origem_id: tipo === 'saida' ? localizacaoId : 0,
-        localizacao_destino_id: tipo === 'entrada' ? localizacaoId : 0,
+        localizacao_origem_id: tipo === 'saida' ? localizacao_id : 0,
+        localizacao_destino_id: tipo === 'entrada' ? localizacao_id : 0,
         itens_movimentacao: produtos.map((p) => ({
           produto_id: Number(p.produto_id),
           quantidade: Number(p.quantidade),
@@ -98,7 +98,7 @@ export default function Movimentacao() {
       await enviarMovimentacao(payload);
       Alert.alert('Movimentação salva com sucesso');
       setProdutos([]);
-      setLocalizacaoId(null);
+      setlocalizacao_id(null);
       setEanLocalizacao('');
       setNomeLocalizacao('');
       setEanProduto('');
