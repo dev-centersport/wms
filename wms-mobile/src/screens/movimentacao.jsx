@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ export default function Movimentacao() {
   const [localizacaoId, setLocalizacaoId] = useState(null);
   const [eanProduto, setEanProduto] = useState('');
   const [produtos, setProdutos] = useState([]);
+  const produtoRef = useRef(null); // ref correto
 
   // Buscar localização por EAN
   const handleBuscarLocalizacao = async () => {
@@ -26,8 +27,15 @@ export default function Movimentacao() {
         Alert.alert('Localização não encontrada');
         return;
       }
+
       setLocalizacaoId(encontrada.localizacao_id);
+      setEanLocalizacao('');
       Alert.alert('Localização encontrada:', encontrada.nome);
+
+      // Mover foco para o input de produto
+      setTimeout(() => {
+        produtoRef.current?.focus();
+      }, 100);
     } catch (err) {
       Alert.alert('Erro ao buscar localização');
     }
@@ -46,11 +54,17 @@ export default function Movimentacao() {
 
       setProdutos((prev) => [...prev, { ...encontrado, quantidade: 1 }]);
       setEanProduto('');
+
+      // Voltar foco ao campo para bipar próximo produto
+      setTimeout(() => {
+        produtoRef.current?.focus();
+      }, 100);
     } catch (err) {
       Alert.alert('Erro ao adicionar produto');
     }
   };
 
+  // Salvar movimentação
   const handleSalvar = async () => {
     if (!localizacaoId || produtos.length === 0) {
       Alert.alert('Preencha localização e produtos');
@@ -60,7 +74,7 @@ export default function Movimentacao() {
     try {
       const payload = {
         tipo,
-        usuario_id: 1, // Ajuste conforme login
+        usuario_id: 1, // ID fixo ou vindo do login
         localizacao_origem_id: tipo === 'saida' ? localizacaoId : null,
         localizacao_destino_id: tipo === 'entrada' ? localizacaoId : null,
         itens_movimentacao: produtos.map((p) => ({
@@ -81,6 +95,7 @@ export default function Movimentacao() {
       setProdutos([]);
       setLocalizacaoId(null);
       setEanLocalizacao('');
+      setEanProduto('');
     } catch (err) {
       Alert.alert('Erro ao salvar movimentação');
     }
@@ -114,18 +129,19 @@ export default function Movimentacao() {
         placeholder="EAN da Localização"
         style={styles.input}
         keyboardType="numeric"
-        showSoftInputOnFocus={false} // Impede teclado
+        showSoftInputOnFocus={false} // impede teclado
       />
 
       {/* EAN Produto */}
       <TextInput
+        ref={produtoRef}
         value={eanProduto}
         onChangeText={setEanProduto}
         onSubmitEditing={handleAdicionarProduto}
         placeholder="EAN do Produto"
         style={styles.input}
         keyboardType="numeric"
-        showSoftInputOnFocus={false} // Impede teclado
+        showSoftInputOnFocus={false} // impede teclado
       />
 
       {/* Lista de Produtos */}
