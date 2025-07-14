@@ -25,6 +25,12 @@ export default function Movimentacao() {
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
 
+  useEffect(() => {
+    if (!tipoBloqueado && localizacaoRef.current) {
+      localizacaoRef.current.focus();
+    }
+  }, [tipo, tipoBloqueado]);
+
   const handleTipoChange = (novoTipo) => {
     setTipo(novoTipo);
     setEanLocalizacao('');
@@ -79,11 +85,8 @@ export default function Movimentacao() {
     }
   };
 
-  const handleSalvar = async () => {
-    if (!localizacao_id || produtos.length === 0) {
-      Alert.alert('Preencha localização e produtos');
-      return;
-    }
+  const handleConfirmar = async () => {
+    setMostrarConfirmacao(false);
     try {
       const payload = {
         tipo,
@@ -111,23 +114,110 @@ export default function Movimentacao() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Movimentação - {tipo.toUpperCase()}</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {produtos.length === 0 && (
+          <>
+            <Text style={[styles.title]}>Movimentação - {tipo.toUpperCase()}</Text>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={[styles.toggleBtn, tipo === 'entrada' && styles.active, {marginTop:20}]}
+                onPress={() => handleTipoChange('entrada')}
+                disabled={tipoBloqueado}
+              >
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  ENTRADA
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggleBtn, tipo === 'saida' && styles.active, {marginTop:20}]}
+                onPress={() => handleTipoChange('saida')}
+                disabled={tipoBloqueado}
+              >
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  SAÍDA
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {!localizacaoId && (
+              <TextInput
+                ref={localizacaoRef}
+                value={eanLocalizacao}
+                onChangeText={setEanLocalizacao}
+                onSubmitEditing={handleBuscarLocalizacao}
+                placeholder="Bipe a Localização"
+                style={styles.input}
+                keyboardType="numeric"
+                showSoftInputOnFocus={false}
+              />
+            )}
+            {nomeLocalizacao !== '' && (
+              <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
+            )}
+            {localizacaoId && (
+              <TextInput
+                ref={produtoRef}
+                value={eanProduto}
+                onChangeText={setEanProduto}
+                onSubmitEditing={handleAdicionarProduto}
+                placeholder="Bipe o Produto"
+                style={styles.input}
+                keyboardType="numeric"
+                showSoftInputOnFocus={false}
+              />
+            )}
+          </>
+        )}
 
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.toggleBtn, tipo === 'entrada' && styles.active]}
-          onPress={() => handleTipoChange('entrada')}
-        >
-          <Text style={styles.toggleText}>ENTRADA</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleBtn, tipo === 'saida' && styles.active]}
-          onPress={() => handleTipoChange('saida')}
-        >
-          <Text style={styles.toggleText}>SAÍDA</Text>
-        </TouchableOpacity>
-      </View>
+        {produtos.length > 0 && (
+          <>
+            <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
+            <TextInput
+              ref={produtoRef}
+              value={eanProduto}
+              onChangeText={setEanProduto}
+              onSubmitEditing={handleAdicionarProduto}
+              placeholder="Bipe o Produto"
+              style={styles.input}
+              keyboardType="numeric"
+              showSoftInputOnFocus={false}
+            />
+            <Text style={styles.totalSKU}>Total: {produtos.length} SKU</Text>
+            <FlatList
+              data={produtos}
+              keyExtractor={(_, index) => index.toString()}
+              style={{ marginTop: 4, marginBottom: 60 }}
+              renderItem={({ item, index }) => (
+                <View style={styles.produtoItem}>
+                  <Text style={styles.contador}>{index + 1}</Text>
+                  <Image
+                    source={
+                      item.url_foto
+                        ? { uri: item.url_foto }
+                        : require('../../assets/images/no-image.png')
+                    }
+                    style={styles.foto}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.produtoNome}>{item.descricao}</Text>
+                    <Text style={styles.produtoSKU}>SKU: {item.sku}</Text>
+                  </View>
+                </View>
+              )}
+            />
+            <View style={styles.botoesFixos}>
+              <TouchableOpacity style={styles.btnSalvar} onPress={() => setMostrarConfirmacao(true)}>
+                <Text style={styles.salvarText}>Salvar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnCancelar} onPress={() => setMostrarCancelar(true)}>
+                <Text style={styles.cancelarText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
       <TextInput
         ref={localizacaoRef}
@@ -177,12 +267,36 @@ export default function Movimentacao() {
         )}
       />
 
-      <TouchableOpacity style={styles.btnSalvar} onPress={handleSalvar}>
-        <Text style={styles.salvarText}>Salvar</Text>
-      </TouchableOpacity>
-    </View>
+        {/* Modal Cancelar */}
+        <Modal transparent visible={mostrarCancelar} animationType="fade">
+          <View style={styles.overlay}>
+            <View style={styles.modalBox}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Cancelar</Text>
+                <TouchableOpacity onPress={() => setMostrarCancelar(false)}>
+                  <Text style={styles.modalClose}>×</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.modalContent}>
+                <Text style={styles.alertIcon}>⚠️</Text>
+                <Text style={styles.modalMessage}>
+                  Deseja realmente cancelar a {tipo}?
+                </Text>
+                <TouchableOpacity style={styles.btnConfirmar} onPress={() => {
+                  setMostrarCancelar(false);
+                  limparTudo();
+                }}>
+                  <Text style={styles.confirmarText}>Sim, Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
@@ -243,5 +357,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
   },
-  salvarText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  modalHeader: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalTitle: { color: '#000', fontWeight: 'bold', fontSize: 16 },
+  modalClose: { color: '#fff', fontSize: 18 },
+  modalContent: { alignItems: 'center', padding: 20 },
+  alertIcon: { fontSize: 40, marginBottom: 10 },
+  modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
+  btnConfirmar: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  confirmarText: { color: '#fff', fontSize: 16 },
 });
