@@ -14,9 +14,9 @@ export async function login(usuario, senha) {
     );
     console.log(encontrado)
 
-    // if (!encontrado) {
-    //   return { success: false };
-    // }
+    if (!encontrado) {
+      return { success: false };
+    }
 
     return { success: true, usuario: encontrado };
   } catch (err) {
