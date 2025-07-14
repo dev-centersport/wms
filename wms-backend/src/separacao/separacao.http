@@ -1,20 +1,14 @@
-### Processar Separação
+### Processar Separação - Versão Funcional
 POST http://localhost:3001/separacao/processar
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary1234
 
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="arquivo"; filename="exemplo.xlsx"
-Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+------WebKitFormBoundary1234
+Content-Disposition: form-data; name="arquivo"; filename="pedidos.xls"
+Content-Type: application/vnd.ms-excel
 
-< /path/to/your/exemplo.xlsx
+< ./pedidos.xls
+------WebKitFormBoundary1234
+Content-Disposition: form-data; name="armazemPrioritarioId"
 
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="dto"
-Content-Type: application/json
-
-{
-    "armazemPrioritarioId": 1
-}
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
-
-
+1  # Pode ser omitido completamente se não for necessário
+------WebKitFormBoundary1234--

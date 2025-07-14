@@ -1,4 +1,3 @@
-// separacao.controller.ts
 import {
   Controller,
   Post,
@@ -8,8 +7,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SeparacaoService } from './separacao.service';
-import { SeparacaoUploadDTO } from './dto/separacao.dto.';
-import { ResultadoSeparacaoDTO } from './dto/separacao.dto.';
+import {
+  SeparacaoUploadDTO,
+  ResultadoSeparacaoDTO,
+} from './dto/separacao.dto.';
 
 @Controller('separacao')
 export class SeparacaoController {
