@@ -1,19 +1,25 @@
-import React from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-export default function Home() {
+// Removemos a importação de tipos e a definição de 'Props'
+export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image source={require('../assets/images/wms.png')} style={styles.logo} />
-        {/* Adicione mais ícones aqui se desejar */}
+        {/* Você pode adicionar sua logo aqui se quiser */}
       </View>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Movimentacao')}
+      >
         <Text style={styles.buttonText}>MOVIMENTAÇÃO</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={() => navigation.navigate('Ocorrencia')}
+      >
         <Text style={styles.buttonText}>OCORRÊNCIA</Text>
       </TouchableOpacity>
 
