@@ -10,10 +10,6 @@ import {
   ListItemText,
 } from '@mui/material';
 
-import SpeedIcon from '@mui/icons-material/Speed';
-import HomeIcon from '@mui/icons-material/Home';
-import RoomIcon from '@mui/icons-material/Room';
-
 import SearchIcon from '@mui/icons-material/Search';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import WidgetsIcon from '@mui/icons-material/Widgets';
@@ -22,19 +18,23 @@ import PersonIcon from '@mui/icons-material/Person';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import BalanceIcon from '@mui/icons-material/Balance';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
+import SpeedIcon from '@mui/icons-material/Speed';
+import HomeIcon from '@mui/icons-material/Home';
+import RoomIcon from '@mui/icons-material/Room';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import WorkspacesIcon from '@mui/icons-material/Workspaces';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 
 const menuItems = [
-  { label: 'Dashboard',           icon: <QueryStatsIcon />,         path: '/dashboard' },
+  { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
   { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <LeaderboardIcon />,      path: '/TipoLocalizacao' }, // ⬅️ Novo item
-  { label: 'Produto',             icon: <WidgetsIcon />,     path: '/produto' },
+  { label: 'Tipo de Localização', icon: <SpeedIcon />,         path: '/TipoLocalizacao' },
+  { label: 'Produto',             icon: <InventoryIcon />,     path: '/produto' },
   { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
-  { label: 'Movimentação',        icon: <SpeedIcon />,    path: '/movimentacao' },
+  { label: 'Movimentação',        icon: <WorkspacesIcon />,    path: '/movimentacao' },
   { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
-  { label: 'Auditoria',           icon: <BalanceIcon />,       path: '/auditoria' },
-  { label: 'Relatorios',           icon: <AssignmentTurnedInIcon />,       path: '/relatorios' },
-  { label: 'Usuarios',           icon: <PersonIcon />,       path: '/usuarios' },
+  { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
 ];
 // ✅ Adicione essa interface
 interface SidebarProps {

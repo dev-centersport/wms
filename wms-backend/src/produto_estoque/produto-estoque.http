@@ -17,7 +17,7 @@ content-type: application/json
 
 {
     "quantidade": 20,
-    "produto_id": 5,
+    "produto_id": 1,
     "localizacao_id": 1
 }
 
@@ -31,4 +31,4 @@ content-type: application/json
 }
 ###
 
-DELETE http://localhost:3001/produto-estoque/4
+DELETE http://localhost:3001/produto-estoque/1

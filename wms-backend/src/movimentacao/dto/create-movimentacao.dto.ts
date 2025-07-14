@@ -40,6 +40,9 @@ export class CreateMovimentacaoDto {
   @idRelations()
   localizacao_destino_id: number;
 
+  @ValidateIf(
+    (o: CreateMovimentacaoDto) => o.tipo !== TipoMovimentacao.TRANSFERENCIA,
+  )
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

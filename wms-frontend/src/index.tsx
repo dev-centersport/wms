@@ -60,12 +60,10 @@ root.render(
           <Route path="/tipo-localizacao/:id/editar" element={<EditarTipoLocalizacao />} />
           <Route path="/CriarTipoLocalizacao" element={<CriarTipoLocalizacao />} />
 
-          {/* {/ Pagina de Produto} */} 
-          <Route path="/Produto" element={<Produto/>} />
-          {/* {/ Pagina de Consulta} */} 
-          <Route path="/Consulta" element={<Consulta/>} />
-
-          <Route path="/Movimentacao" element={<Movimentacao/>} />
+          {/* {/ Pagina de Produto} s */}
+          <Route path="/produto" element={<Produto />}/>
+          <Route path="/consulta" element={<Consulta />}/>
+          <Route path="/movimentacao" element={<Movimentacao/>}/>
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

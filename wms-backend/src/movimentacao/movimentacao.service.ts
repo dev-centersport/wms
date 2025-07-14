@@ -25,7 +25,7 @@ export class MovimentacaoService {
     @InjectRepository(Localizacao)
     private readonly localizacaoRepository: Repository<Localizacao>,
     private readonly entityManager: EntityManager,
-  ) {}
+  ) { }
 
   async create(
     CreateMovimentacaoDto: CreateMovimentacaoDto,
@@ -54,17 +54,17 @@ export class MovimentacaoService {
     const [localOrigem, localDestino] = await Promise.all([
       CreateMovimentacaoDto.localizacao_origem_id !== 0
         ? this.localizacaoRepository.findOne({
-            where: {
-              localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-            },
-          })
+          where: {
+            localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+          },
+        })
         : Promise.resolve(null),
       CreateMovimentacaoDto.localizacao_destino_id !== 0
         ? this.localizacaoRepository.findOne({
-            where: {
-              localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
-            },
-          })
+          where: {
+            localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
+          },
+        })
         : Promise.resolve(null),
     ]);
 
@@ -123,17 +123,17 @@ export class MovimentacaoService {
           },
           CreateMovimentacaoDto.localizacao_origem_id !== 0
             ? {
-                localizacao_origem: {
-                  localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
-                },
-              }
+              localizacao_origem: {
+                localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+              },
+            }
             : {},
           CreateMovimentacaoDto.localizacao_destino_id !== 0
             ? {
-                localizacao_destino: {
-                  localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
-                },
-              }
+              localizacao_destino: {
+                localizacao_id: CreateMovimentacaoDto.localizacao_destino_id,
+              },
+            }
             : {},
         );
 
@@ -189,7 +189,7 @@ export class MovimentacaoService {
 
     const itemMovimentacao = this.itemMovimentacaoRepository.create({
       movimentacao,
-      produto_estoque,
+      produto: produto_estoque.produto,
       quantidade: itemDto.quantidade,
     });
 

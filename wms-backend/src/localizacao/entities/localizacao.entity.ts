@@ -1,5 +1,7 @@
 import { Armazem } from 'src/armazem/entities/armazem.entity';
+import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
 import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
+import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.entity';
 import {
@@ -71,4 +73,10 @@ export class Localizacao {
     (movimentacao) => movimentacao.localizacao_destino,
   )
   movimentacoes_destino: Movimentacao[];
+
+  @OneToMany(() => Ocorrencia, (o) => o.localizacoes)
+  ocorrencias: Ocorrencia[];
+
+  @OneToMany(() => Auditoria, (a) => a.localizacao)
+  auditorias: Auditoria[];
 }

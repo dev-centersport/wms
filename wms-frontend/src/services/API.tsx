@@ -379,9 +379,15 @@ export async function buscarLocalizacaoPorEAN(ean: string) {
 
 export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) {
   const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacaoId}/produtos`);
+  console.log(
+    '🔍 produtos_estoque[0]:',
+    JSON.stringify(res.data.produtos_estoque[0], null, 2)
+  );
+
   const dados = res.data?.produtos_estoque || [];
 
   return dados.map((item: any) => ({
+    produto_estoque_id: item.produto_estoque_id,
     produto_id: item.produto?.produto_id,
     descricao: item.produto?.descricao || '',
     sku: item.produto?.sku || '',
@@ -390,29 +396,49 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) 
   }));
 }
 
+export async function buscarProdutoEstoquePorId(id: number) {
+  try {
+    const res = await axios.get(`http://151.243.0.78:3001/produto-estoque/${id}`);
+    return res.data;
+  } catch (err: any) {
+    console.error(`❌ Erro ao buscar produto_estoque ID ${id}:`, err);
+    return null;
+  }
+}
 
-// Enviar movimentação para a API
+
+// Função para envio da movimentação
 export async function enviarMovimentacao(payload: {
   tipo: 'entrada' | 'saida' | 'transferencia';
   usuario_id: number;
   localizacao_origem_id: number;
   localizacao_destino_id: number;
   itens_movimentacao: {
-    produto_id: number; // <- CORRETO
+    produto_estoque_id: number;
     quantidade: number;
   }[];
 }) {
   try {
-    const { data } = await api.post('http://151.243.0.78:3001/movimentacao', payload);
+    const { data } = await axios.post(
+      'http://151.243.0.78:3001/movimentacao',
+      payload
+    );
     return data;
   } catch (err: any) {
-    console.error('Erro ao enviar movimentação:', err);
-    if (err.response) {
-      console.error('📛 Código:', err.response.status);
-      console.error('📦 Dados do erro:', err.response.data);
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        console.error('❌ Status do erro:', err.response.status);
+        console.error('❌ Dados da resposta:', JSON.stringify(err.response.data, null, 2));
+        alert(`Erro ${err.response.status}:\n${JSON.stringify(err.response.data, null, 2)}`);
+      } else if (err.request) {
+        alert('Nenhuma resposta recebida do servidor.');
+      } else {
+        alert('Erro na configuração da requisição.');
+      }
+    } else {
+      alert('Erro inesperado ao enviar movimentação.');
     }
-    throw err;
+
+    throw new Error('Falha ao enviar movimentação.');
   }
 }
-
-

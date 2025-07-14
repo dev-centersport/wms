@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateLocalizacaoDto } from './dto/create-localizacao.dto';
 import { UpdateLocalizacaoDto } from './dto/update-localizacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,10 +23,54 @@ export class LocalizacaoService {
     private readonly armazemRepository: Repository<Armazem>,
   ) {}
 
-  async findAll(): Promise<Localizacao[]> {
-    return await this.LocalizacaoRepository.find({
-      relations: ['tipo', 'armazem'],
+  async getProdutosPorLocalizacao(localizacaoId: number) {
+    return await this.LocalizacaoRepository.findOne({
+      where: { localizacao_id: localizacaoId },
+      relations: {
+        produtos_estoque: {
+          produto: true,
+        },
+      },
+      select: {
+        localizacao_id: true,
+        nome: true,
+        produtos_estoque: {
+          produto_estoque_id: true, // ou produtos_estoque_id se for o nome da coluna PK
+          quantidade: true,
+          produto: {
+            produto_id: true,
+            descricao: true,
+            ean: true,
+          },
+        },
+      },
     });
+  }
+
+  async findAll(): Promise<any[]> {
+    const localizacoes = await this.LocalizacaoRepository.createQueryBuilder(
+      'localizacao',
+    )
+      .leftJoin('localizacao.produtos_estoque', 'estoque')
+      .leftJoinAndSelect('localizacao.tipo', 'tipo')
+      .leftJoinAndSelect('localizacao.armazem', 'armazem')
+      .select([
+        'localizacao',
+        'tipo',
+        'armazem',
+        'SUM(estoque.quantidade) as total_produtos',
+      ])
+      .groupBy('localizacao.localizacao_id')
+      .addGroupBy('tipo.tipo_localizacao_id') // ajuste conforme o nome da PK do tipo
+      .addGroupBy('armazem.armazem_id') // ajuste conforme o nome da PK do armazem
+      .orderBy('total_produtos', 'DESC')
+      .getRawAndEntities();
+
+    // Combina os dados das entidades com os dados raw (incluindo a soma)
+    return localizacoes.entities.map((localizacao, index) => ({
+      ...localizacao,
+      total_produtos: parseFloat(localizacoes.raw[index].total_produtos) || 0,
+    }));
   }
 
   async findOne(localizacao_id: number): Promise<Localizacao> {
@@ -58,6 +106,19 @@ export class LocalizacaoService {
       throw new NotFoundException('Tipo de localização não encontrado');
     if (!armazem)
       throw new NotFoundException('Armazem de localização não encontrado');
+
+    const localizacaoExistente = await this.LocalizacaoRepository.findOne({
+      where: {
+        nome: createLocalizacaoDto.nome,
+        armazem: { armazem_id: createLocalizacaoDto.armazem_id }, // Assumindo que há um relacionamento
+      },
+    });
+
+    if (localizacaoExistente) {
+      throw new BadRequestException(
+        'Já existe uma localização com este nome no mesmo armazém.',
+      );
+    }
 
     // Verifica se o armazém existe
     // const armazem = await this.armazemRepository.findOneBy({});
