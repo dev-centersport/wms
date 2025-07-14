@@ -17,6 +17,7 @@ import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import PersonIcon from '@mui/icons-material/Person';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import BalanceIcon from '@mui/icons-material/Balance';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SpeedIcon from '@mui/icons-material/Speed';
 import HomeIcon from '@mui/icons-material/Home';
@@ -33,6 +34,7 @@ const menuItems = [
   { label: 'Produto',             icon: <InventoryIcon />,     path: '/produto' },
   { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
   { label: 'Movimentação',        icon: <WorkspacesIcon />,    path: '/movimentacao' },
+  { label: 'Separação',          icon: <LocalShippingIcon />, path: '/separacao' },
   { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
   { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
 ];
