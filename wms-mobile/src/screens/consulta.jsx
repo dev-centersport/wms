@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { buscarConsultaEstoque, buscarLocalizacoes } from '../api/index'; // ajuste o caminho conforme seu projeto
+import { buscarConsultaEstoque } from '../api/index'; // ajuste o caminho conforme seu projeto
 
 export default function ConsultaScreen({ navigation }) {
   const [busca, setBusca] = useState('');
@@ -41,7 +41,7 @@ export default function ConsultaScreen({ navigation }) {
 
   useEffect(() => {
     setTotalPaginas(Math.ceil(filtrarDados().length / itensPorPagina));
-    setPaginaAtual(1); // reset ao filtrar
+    setPaginaAtual(1);
   }, [dados, busca]);
 
   const filtrarDados = () => {
@@ -163,16 +163,10 @@ export default function ConsultaScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-
-      {/* Botão de filtro */}
-      <TouchableOpacity style={styles.filtroBtn}>
-        <Text style={styles.filtroText}>Filtro</Text>
-      </TouchableOpacity>
     </View>
-
   );
-
 }
+
 
 const styles = StyleSheet.create({
   container: {
