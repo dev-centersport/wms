@@ -28,7 +28,7 @@ export class Ocorrencia {
 
   @ManyToOne(() => Localizacao, (loc) => loc.ocorrencias)
   @JoinColumn()
-  localizacoes: Localizacao;
+  localizacao: Localizacao;
 
   @ManyToOne(() => Usuario, (user) => user.ocorrencias)
   @JoinColumn()
