@@ -4,7 +4,7 @@
     "slug": "wms-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo01.png",
     "scheme": "wmsmobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
