@@ -26,7 +26,7 @@ export default function ConsultaScreen({ navigation }) {
   const [inputPagina, setInputPagina] = useState('');
   const [modalVisivel, setModalVisivel] = useState(false);
 
-  const itensPorPagina = 10;
+  const itensPorPagina = 50;
 
   useEffect(() => {
     setTotalPaginas(Math.ceil(dados.length / itensPorPagina));
