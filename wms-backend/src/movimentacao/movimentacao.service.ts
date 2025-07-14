@@ -62,6 +62,47 @@ export class MovimentacaoService {
         : Promise.resolve(null),
     ]);
 
+    // Lógica automática para transferência (se não houver itens especificados)
+    if (
+      CreateMovimentacaoDto.tipo === TipoMovimentacao.TRANSFERENCIA &&
+      (!CreateMovimentacaoDto.itens_movimentacao ||
+        CreateMovimentacaoDto.itens_movimentacao.length === 0)
+    ) {
+      const produtosEstoque = await this.produtoEstoqueRepository.find({
+        where: {
+          localizacao: {
+            localizacao_id: CreateMovimentacaoDto.localizacao_origem_id,
+          },
+          quantidade: MoreThan(0), // Apenas produtos com estoque > 0
+        },
+        relations: ['produto'],
+      });
+
+      if (produtosEstoque.length === 0) {
+        throw new BadRequestException(
+          'Nenhum produto disponível para transferência na localização de origem',
+        );
+      }
+
+      // Mapeia os produtos do estoque para os itens da movimentação
+      CreateMovimentacaoDto.itens_movimentacao = produtosEstoque.map(
+        (item) => ({
+          produto_id: item.produto.produto_id,
+          quantidade: item.quantidade, // Transfere TODA a quantidade disponível
+        }),
+      );
+    }
+
+    // Validação padrão (garante que há itens)
+    if (
+      !CreateMovimentacaoDto.itens_movimentacao ||
+      CreateMovimentacaoDto.itens_movimentacao.length === 0
+    ) {
+      throw new BadRequestException(
+        'A movimentação deve conter pelo menos um item',
+      );
+    }
+
     // Validações específicas por tipo
     switch (CreateMovimentacaoDto.tipo) {
       case TipoMovimentacao.ENTRADA:
@@ -246,6 +287,14 @@ export class MovimentacaoService {
     });
     if (!produto) throw new NotFoundException('Produto não encontrado');
 
+    // Se for transferência automática, não valida quantidade (já veio do estoque)
+    if (
+      movimentacao.tipo !== TipoMovimentacao.TRANSFERENCIA &&
+      itemDto.quantidade <= 0
+    ) {
+      throw new BadRequestException('Quantidade deve ser positiva');
+    }
+
     const itemMovimentacao = this.itemMovimentacaoRepository.create({
       movimentacao,
       produto,
@@ -302,69 +351,99 @@ export class MovimentacaoService {
 
   private async atualizarEstoque(
     tipo: TipoMovimentacao,
-    produtoEstoqueOrigem: ProdutoEstoque,
-    quantidade: number,
+    produtoEstoqueOrigem: ProdutoEstoque, // Usado apenas para ENTRADA/SAÍDA
+    quantidade: number, // Usado apenas para ENTRADA/SAÍDA
     localizacaoOrigem: Localizacao | null,
     localizacaoDestino: Localizacao | null,
     entityManager: EntityManager,
   ): Promise<void> {
-    switch (tipo) {
-      case TipoMovimentacao.ENTRADA:
-        produtoEstoqueOrigem.quantidade += quantidade;
-        await entityManager.save(ProdutoEstoque, produtoEstoqueOrigem);
-        break;
-
-      case TipoMovimentacao.SAIDA:
-        if (produtoEstoqueOrigem.quantidade < quantidade) {
-          throw new BadRequestException('Estoque insuficiente');
-        }
-        produtoEstoqueOrigem.quantidade -= quantidade;
-        await entityManager.save(ProdutoEstoque, produtoEstoqueOrigem);
-        break;
-
-      case TipoMovimentacao.TRANSFERENCIA: {
-        if (produtoEstoqueOrigem.quantidade < quantidade) {
-          throw new BadRequestException(
-            'Estoque insuficiente para transferência',
+    await entityManager.transaction(async (transactionalEntityManager) => {
+      switch (tipo) {
+        case TipoMovimentacao.ENTRADA:
+          // Mantido igual: adiciona quantidade ao estoque
+          produtoEstoqueOrigem.quantidade += quantidade;
+          await transactionalEntityManager.save(
+            ProdutoEstoque,
+            produtoEstoqueOrigem,
           );
-        }
+          break;
 
-        if (!localizacaoDestino) {
-          throw new BadRequestException(
-            'Localização de destino não pode ser nula para transferência',
+        case TipoMovimentacao.SAIDA:
+          // Mantido igual: remove quantidade do estoque (se houver saldo)
+          if (produtoEstoqueOrigem.quantidade < quantidade) {
+            throw new BadRequestException('Estoque insuficiente');
+          }
+          produtoEstoqueOrigem.quantidade -= quantidade;
+          await transactionalEntityManager.save(
+            ProdutoEstoque,
+            produtoEstoqueOrigem,
           );
-        }
+          break;
 
-        let produtoEstoqueDestino = await entityManager.findOne(
-          ProdutoEstoque,
-          {
-            where: {
-              produto: { produto_id: produtoEstoqueOrigem.produto.produto_id },
-              localizacao: {
-                localizacao_id: localizacaoDestino.localizacao_id,
+        case TipoMovimentacao.TRANSFERENCIA: {
+          if (!localizacaoOrigem || !localizacaoDestino) {
+            throw new BadRequestException(
+              'Origem e destino são obrigatórios para transferência',
+            );
+          }
+
+          // Busca TODOS os produtos no estoque de origem
+          const produtosEstoqueOrigem = await transactionalEntityManager.find(
+            ProdutoEstoque,
+            {
+              where: {
+                localizacao: {
+                  localizacao_id: localizacaoOrigem.localizacao_id,
+                },
+                // quantidade: MoreThan(0), // Apenas produtos com quantidade > 0
               },
+              relations: ['produto'],
             },
-          },
-        );
+          );
 
-        if (!produtoEstoqueDestino) {
-          produtoEstoqueDestino = entityManager.create(ProdutoEstoque, {
-            produto: produtoEstoqueOrigem.produto,
-            localizacao: localizacaoDestino,
-            quantidade: 0,
-          });
+          if (!produtosEstoqueOrigem || produtosEstoqueOrigem.length === 0) {
+            throw new BadRequestException(
+              'Nenhum produto encontrado no estoque de origem',
+            );
+          }
+
+          // Para cada produto no estoque de origem
+          for (const produtoEstoqueOrigem of produtosEstoqueOrigem) {
+            // Busca o estoque no destino (ou cria se não existir)
+            let produtoEstoqueDestino =
+              await transactionalEntityManager.findOne(ProdutoEstoque, {
+                where: {
+                  produto: {
+                    produto_id: produtoEstoqueOrigem.produto.produto_id,
+                  },
+                  localizacao: {
+                    localizacao_id: localizacaoDestino.localizacao_id,
+                  },
+                },
+              });
+
+            if (!produtoEstoqueDestino) {
+              produtoEstoqueDestino = transactionalEntityManager.create(
+                ProdutoEstoque,
+                {
+                  produto: produtoEstoqueOrigem.produto,
+                  localizacao: localizacaoDestino,
+                  quantidade: 0,
+                },
+              );
+            }
+
+            // Transfere TODA a quantidade disponível
+            produtoEstoqueDestino.quantidade += produtoEstoqueOrigem.quantidade;
+            produtoEstoqueOrigem.quantidade = 0; // Zera o estoque de origem
+
+            await transactionalEntityManager.save(produtoEstoqueDestino);
+            await transactionalEntityManager.save(produtoEstoqueOrigem);
+          }
+          break;
         }
-
-        produtoEstoqueOrigem.quantidade -= quantidade;
-        produtoEstoqueDestino.quantidade += quantidade;
-
-        await Promise.all([
-          entityManager.save(ProdutoEstoque, produtoEstoqueOrigem),
-          entityManager.save(ProdutoEstoque, produtoEstoqueDestino),
-        ]);
-        break;
       }
-    }
+    });
   }
 
   async findAll(): Promise<Movimentacao[]> {
