@@ -24,6 +24,21 @@ content-type: application/json
 
 ###
 
+POST http://localhost:3001/movimentacao HTTP/1.1
+content-type: application/json
+
+{
+    "tipo": "entrada",
+    "usuario_id": 1,
+    "itens_movimentacao": [
+        {"produto_id": 1, "quantidade": 10}
+    ],
+    "localizacao_origem_id": 0,
+    "localizacao_destino_id": 1
+}
+
+###
+
 PATCH http://localhost:3001/movimentacao/1 HTTP/1.1
 content-type: application/json
 
