@@ -8,7 +8,7 @@ export async function login(usuario, senha) {
     const usuarios = response.data; 
     // console.log(usuarios)
 
-
+//asdsadsa
     const encontrado = usuarios.find(
       (u) => u.usuario === usuario && u.senha === senha
     );
