@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { login } from '../api/index'; // ajuste conforme a estrutura
-
+import { useNavigation } from '@react-navigation/native'; // Importação correta
+import { login } from '../api/index'; // ajuste conforme sua estrutura
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
+  const navigation = useNavigation(); // Inicializa o navigation
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -15,13 +16,16 @@ export default function LoginScreen() {
 
     try {
       const resultado = await login(usuario, senha);
-      console.log(resultado)
+      console.log(resultado);
+
       if (resultado.success) {
-        router.push('/home'); // Redireciona para a tela Home
-      } 
+        navigation.navigate('Home'); // Redireciona para a tela 'Home'
+      } else {
+        alert('Usuário ou senha inválidos.');
+      }
     } catch (err) {
-      alert('Erro ao fazer login. Verifique seus dados.', err);
-      console.log(err)
+      console.log(err);
+      alert('Erro ao fazer login. Verifique seus dados.');
     }
   };
 
