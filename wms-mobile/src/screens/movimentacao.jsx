@@ -8,31 +8,36 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { buscarLocalizacoes, buscarConsultaEstoque } from '../api/index';
+import {
+  buscarLocalizacaoPorEAN,
+  buscarProdutoPorEAN,
+  enviarMovimentacao,
+} from '../api/index';
 
 export default function Movimentacao() {
   const [tipo, setTipo] = useState('entrada');
   const [eanLocalizacao, setEanLocalizacao] = useState('');
   const [localizacaoId, setLocalizacaoId] = useState(null);
+  const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [eanProduto, setEanProduto] = useState('');
   const [produtos, setProdutos] = useState([]);
-  const produtoRef = useRef(null); // ref correto
+  const produtoRef = useRef(null);
 
   // Buscar localização por EAN
   const handleBuscarLocalizacao = async () => {
     try {
-      const lista = await buscarLocalizacoes();
-      const encontrada = lista.find((l) => l.ean === eanLocalizacao.trim());
-      if (!encontrada) {
+      const loc = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());
+
+      if (!loc || !loc.localizacao_id) {
         Alert.alert('Localização não encontrada');
         return;
       }
 
-      setLocalizacaoId(encontrada.localizacao_id);
+      setLocalizacaoId(loc.localizacao_id);
+      setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
       setEanLocalizacao('');
-      Alert.alert('Localização encontrada:', encontrada.nome);
 
-      // Mover foco para o input de produto
+      // Foco no input do produto
       setTimeout(() => {
         produtoRef.current?.focus();
       }, 100);
@@ -44,23 +49,22 @@ export default function Movimentacao() {
   // Adicionar produto à lista
   const handleAdicionarProduto = async () => {
     try {
-      const consulta = await buscarConsultaEstoque();
-      const encontrado = consulta.find((p) => p.ean === eanProduto.trim());
+      const produto = await buscarProdutoPorEAN(eanProduto.trim());
 
-      if (!encontrado) {
-        Alert.alert('Produto não encontrado');
+      if (!produto || !produto.produto_estoque_id) {
+        Alert.alert('Produto inválido');
         return;
       }
 
-      setProdutos((prev) => [...prev, { ...encontrado, quantidade: 1 }]);
+      setProdutos((prev) => [...prev, { ...produto, quantidade: 1 }]);
       setEanProduto('');
 
-      // Voltar foco ao campo para bipar próximo produto
+      // Mantém foco no input de produto
       setTimeout(() => {
         produtoRef.current?.focus();
       }, 100);
     } catch (err) {
-      Alert.alert('Erro ao adicionar produto');
+      Alert.alert('Produto não encontrado');
     }
   };
 
@@ -74,27 +78,23 @@ export default function Movimentacao() {
     try {
       const payload = {
         tipo,
-        usuario_id: 1, // ID fixo ou vindo do login
+        usuario_id: 1,
         localizacao_origem_id: tipo === 'saida' ? localizacaoId : null,
         localizacao_destino_id: tipo === 'entrada' ? localizacaoId : null,
         itens_movimentacao: produtos.map((p) => ({
-          produto_estoque_id: p.produto_estoque_id || 0,
-          quantidade: p.quantidade,
+          produto_estoque_id: Number(p.produto_estoque_id),
+          quantidade: Number(p.quantidade),
         })),
       };
 
-      const res = await fetch('http://151.243.0.78:3001/movimentacao', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error('Erro ao enviar');
+      console.log('📦 Enviando movimentação:', payload);
+      await enviarMovimentacao(payload);
 
       Alert.alert('Movimentação salva com sucesso');
       setProdutos([]);
       setLocalizacaoId(null);
       setEanLocalizacao('');
+      setNomeLocalizacao('');
       setEanProduto('');
     } catch (err) {
       Alert.alert('Erro ao salvar movimentação');
@@ -129,8 +129,12 @@ export default function Movimentacao() {
         placeholder="EAN da Localização"
         style={styles.input}
         keyboardType="numeric"
-        showSoftInputOnFocus={false} // impede teclado
+        showSoftInputOnFocus={false}
       />
+
+      {nomeLocalizacao !== '' && (
+        <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
+      )}
 
       {/* EAN Produto */}
       <TextInput
@@ -141,7 +145,7 @@ export default function Movimentacao() {
         placeholder="EAN do Produto"
         style={styles.input}
         keyboardType="numeric"
-        showSoftInputOnFocus={false} // impede teclado
+        showSoftInputOnFocus={false}
       />
 
       {/* Lista de Produtos */}
@@ -185,6 +189,12 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
     marginVertical: 6,
+  },
+  localizacaoInfo: {
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 6,
+    marginTop: -2,
   },
   item: {
     padding: 8,
