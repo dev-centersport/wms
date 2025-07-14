@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   FlatList,
+  Image,
 } from 'react-native';
 import {
   buscarLocalizacaoPorEAN,
@@ -21,82 +22,90 @@ export default function Movimentacao() {
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [eanProduto, setEanProduto] = useState('');
   const [produtos, setProdutos] = useState([]);
+  const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
 
-  // Buscar localização por EAN
+  const handleTipoChange = (novoTipo) => {
+    setTipo(novoTipo);
+    setEanLocalizacao('');
+    setLocalizacaoId(null);
+    setNomeLocalizacao('');
+    setProdutos([]);
+    setTimeout(() => {
+      localizacaoRef.current?.focus();
+    }, 100);
+  };
+
   const handleBuscarLocalizacao = async () => {
     try {
       const loc = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());
-
       if (!loc || !loc.localizacao_id) {
         Alert.alert('Localização não encontrada');
         return;
       }
-
       setLocalizacaoId(loc.localizacao_id);
       setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
       setEanLocalizacao('');
-
-      // Foco no input do produto
       setTimeout(() => {
         produtoRef.current?.focus();
       }, 100);
-    } catch (err) {
+    } catch {
       Alert.alert('Erro ao buscar localização');
     }
   };
 
-  // Adicionar produto à lista
   const handleAdicionarProduto = async () => {
     try {
       const produto = await buscarProdutoPorEAN(eanProduto.trim());
-
-      if (!produto || !produto.produto_estoque_id) {
+      if (!produto || !produto.produto_id) {
         Alert.alert('Produto inválido');
         return;
       }
-
-      setProdutos((prev) => [...prev, { ...produto, quantidade: 1 }]);
+      const produtoFormatado = {
+        produto_id: produto.produto_id,
+        descricao: produto.descricao,
+        ean: produto.ean,
+        sku: produto.sku,
+        url_foto: produto.url_foto,
+        quantidade: 1,
+      };
+      setProdutos((prev) => [...prev, produtoFormatado]);
       setEanProduto('');
-
-      // Mantém foco no input de produto
       setTimeout(() => {
         produtoRef.current?.focus();
       }, 100);
-    } catch (err) {
+    } catch {
       Alert.alert('Produto não encontrado');
     }
   };
 
-  // Salvar movimentação
   const handleSalvar = async () => {
     if (!localizacaoId || produtos.length === 0) {
       Alert.alert('Preencha localização e produtos');
       return;
     }
-
     try {
       const payload = {
         tipo,
         usuario_id: 1,
-        localizacao_origem_id: tipo === 'saida' ? localizacaoId : null,
-        localizacao_destino_id: tipo === 'entrada' ? localizacaoId : null,
+        localizacao_origem_id: tipo === 'saida' ? localizacaoId : 0,
+        localizacao_destino_id: tipo === 'entrada' ? localizacaoId : 0,
         itens_movimentacao: produtos.map((p) => ({
-          produto_estoque_id: Number(p.produto_estoque_id),
+          produto_id: Number(p.produto_id),
           quantidade: Number(p.quantidade),
         })),
       };
-
-      console.log('📦 Enviando movimentação:', payload);
       await enviarMovimentacao(payload);
-
       Alert.alert('Movimentação salva com sucesso');
       setProdutos([]);
       setLocalizacaoId(null);
       setEanLocalizacao('');
       setNomeLocalizacao('');
       setEanProduto('');
-    } catch (err) {
+      setTimeout(() => {
+        localizacaoRef.current?.focus();
+      }, 100);
+    } catch {
       Alert.alert('Erro ao salvar movimentação');
     }
   };
@@ -105,24 +114,23 @@ export default function Movimentacao() {
     <View style={styles.container}>
       <Text style={styles.title}>Movimentação - {tipo.toUpperCase()}</Text>
 
-      {/* Botões Entrada/Saída */}
       <View style={styles.toggleContainer}>
         <TouchableOpacity
           style={[styles.toggleBtn, tipo === 'entrada' && styles.active]}
-          onPress={() => setTipo('entrada')}
+          onPress={() => handleTipoChange('entrada')}
         >
           <Text style={styles.toggleText}>ENTRADA</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.toggleBtn, tipo === 'saida' && styles.active]}
-          onPress={() => setTipo('saida')}
+          onPress={() => handleTipoChange('saida')}
         >
           <Text style={styles.toggleText}>SAÍDA</Text>
         </TouchableOpacity>
       </View>
 
-      {/* EAN Localização */}
       <TextInput
+        ref={localizacaoRef}
         value={eanLocalizacao}
         onChangeText={setEanLocalizacao}
         onSubmitEditing={handleBuscarLocalizacao}
@@ -131,12 +139,10 @@ export default function Movimentacao() {
         keyboardType="numeric"
         showSoftInputOnFocus={false}
       />
-
       {nomeLocalizacao !== '' && (
         <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
       )}
 
-      {/* EAN Produto */}
       <TextInput
         ref={produtoRef}
         value={eanProduto}
@@ -148,21 +154,31 @@ export default function Movimentacao() {
         showSoftInputOnFocus={false}
       />
 
-      {/* Lista de Produtos */}
       <FlatList
         data={produtos}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(_, index) => index.toString()}
         style={{ marginTop: 10 }}
         renderItem={({ item }) => (
-          <Text style={styles.item}>
-            {item.descricao} - {item.ean}
-          </Text>
+          <View style={styles.produtoItem}>
+            <Image
+              source={
+                item.url_foto
+                  ? { uri: item.url_foto }
+                  : require('../../assets/images/no-image.png')
+                // Imagem padrão se nula
+              }
+              style={styles.foto}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.produtoNome}>{item.descricao}</Text>
+              <Text style={styles.produtoSKU}>SKU: {item.sku}</Text>
+            </View>
+          </View>
         )}
       />
 
-      {/* Botão Salvar */}
       <TouchableOpacity style={styles.btnSalvar} onPress={handleSalvar}>
-        <Text style={styles.salvarText}>SALVAR</Text>
+        <Text style={styles.salvarText}>Salvar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -196,11 +212,29 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: -2,
   },
-  item: {
-    padding: 8,
+  produtoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderColor: '#eee',
+  },
+  foto: {
+    width: 40,
+    height: 40,
+    marginRight: 10,
+    borderRadius: 6,
+    backgroundColor: '#f0f0f0',
+  },
+  produtoNome: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  produtoSKU: {
+    fontSize: 12,
+    color: '#888',
   },
   btnSalvar: {
     backgroundColor: '#4CAF50',
