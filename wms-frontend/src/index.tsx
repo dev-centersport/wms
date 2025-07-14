@@ -23,8 +23,11 @@ import EditarTipoLocalizacao from "./pages/EditarTipoLocalizacao";
 import Produto from "./pages/Produto";
 import Consulta from "./pages/consulta";
 import Movimentacao from "./pages/Movimentacao";
+import Separacao from "./pages/Separacao";
+import Ocorrencias from "./pages/Ocorrencias";
 
 import Sidebar from "./components/Sidebar";
+import Auditoria from "./pages/Auditoria";
 
 
 
@@ -64,6 +67,9 @@ root.render(
           <Route path="/produto" element={<Produto />}/>
           <Route path="/consulta" element={<Consulta />}/>
           <Route path="/movimentacao" element={<Movimentacao/>}/>
+          <Route path="/separacao" element={<Separacao/>}/>
+          <Route path="/ocorrencias" element={<Ocorrencias/>}/>
+          <Route path="/Auditoria" element={<Auditoria/>}/>
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />
