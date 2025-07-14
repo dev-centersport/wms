@@ -1,35 +1,38 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { login } from '../api/index'; // ajuste o caminho se necessário
+import { useNavigation } from '@react-navigation/native'; // Importação correta
+import { login } from '../api/index'; // ajuste conforme sua estrutura
 
-
-export default function LoginScreen({ setIsLoggedIn }) {
+export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
+  const navigation = useNavigation(); // Inicializa o navigation
 
   const handleLogin = async () => {
-  if (!usuario || !senha) {
-    alert('Usuário e senha são obrigatórios');
-    return;
-  }
-
-  try {
-    const resultado = await login(usuario, senha);
-    if (resultado.success) {
-      setIsLoggedIn(true); // ou navegue para a Home
-    } else {
-      alert('Usuário ou senha inválidos.');
+    if (!usuario || !senha) {
+      alert('Usuário e senha são obrigatórios');
+      return;
     }
-  } catch (err) {
-    alert('Erro ao fazer login. Verifique seus dados.');
-  }
-};
 
+    try {
+      const resultado = await login(usuario, senha);
+      console.log(resultado);
+
+      if (resultado.success) {
+        navigation.navigate('Home'); // Redireciona para a tela 'Home'
+      } else {
+        alert('Usuário ou senha inválidos.');
+      }
+    } catch (err) {
+      console.log(err);
+      alert('Erro ao fazer login. Verifique seus dados.');
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../assets/images/logo01.png')} // certifique-se de que esse caminho e nome estão corretos
+        source={require('../../assets/images/logo01.png')}
         style={styles.logo}
       />
       <Text style={styles.brand}>WMS</Text>
