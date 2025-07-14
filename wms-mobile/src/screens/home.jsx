@@ -1,31 +1,40 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-// Removemos a importação de tipos e a definição de 'Props'
 export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
+
+      {/* Barra superior com a logo do WMS */}
       <View style={styles.header}>
-        {/* Você pode adicionar sua logo aqui se quiser */}
+        <Image
+          source={require('../../assets/images/wms.png')}
+          style={styles.logo}
+        />
       </View>
 
+      {/* Botões principais */}
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, { marginTop: 180 }]} // margem de 30 pixels no topo
         onPress={() => navigation.navigate('Movimentacao')}
       >
         <Text style={styles.buttonText}>MOVIMENTAÇÃO</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('Ocorrencia')}
       >
         <Text style={styles.buttonText}>OCORRÊNCIA</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Consulta')}
+      >
         <Text style={styles.buttonText}>CONSULTA</Text>
       </TouchableOpacity>
+
     </View>
   );
 }
@@ -35,18 +44,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingTop: 80,
+    paddingTop: 0,
   },
   header: {
     backgroundColor: '#61DE25',
     width: '100%',
+    height: 100,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
-    marginBottom: 30,
+    paddingTop: 40,
+    paddingBottom: 10,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
     resizeMode: 'contain',
   },
   button: {
@@ -57,6 +68,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: '80%',
     alignItems: 'center',
+    marginTop: 20,
   },
   buttonText: {
     fontSize: 20,

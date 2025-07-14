@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 
 function Movimentacao() {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {marginTop: 30}]}>
       <Text style={styles.title}>Ocorrência</Text>
 
       <TextInput style={styles.input} placeholder="Bipe a Localização" />
