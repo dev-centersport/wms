@@ -33,10 +33,12 @@ export class OcorrenciaService {
       quantidade: number;
       nome_produto: string;
       sku: string;
+      ativo: boolean;
       ocorrencias: Ocorrencia[];
     }[]
   > {
     const ocorrencias = await this.ocorrenciaRepository.find({
+      where: { ativo: true },
       relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
     });
 
@@ -54,9 +56,10 @@ export class OcorrenciaService {
         if (!grupo) {
           grupo = {
             localizacao: localizacaoNome,
+            quantidade: 0,
             nome_produto: nomeProduto,
             sku: skuProduto,
-            quantidade: 0,
+            ativo: ocorrencia.ativo,
             ocorrencias: [],
           };
           acc.push(grupo);
@@ -73,6 +76,7 @@ export class OcorrenciaService {
         quantidade: number;
         nome_produto: string;
         sku: string;
+        ativo: boolean;
         ocorrencias: Ocorrencia[];
       }[],
     );
