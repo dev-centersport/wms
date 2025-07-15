@@ -69,7 +69,10 @@ import { SeparacaoModule } from './separacao/separacao.module';
         autoLoadEntities: true,
         synchronize: config.get<boolean>('DB_SYNCHRONIZE', true),
         logging: config.get<boolean>('DB_LOGGING', true),
-        timezone: 'America/Sao_Paulo',
+        timezone: 'UTC',
+        extra: {
+          options: '-c timezone=UTC',
+        },
       }),
     }),
     ProductsModule,
