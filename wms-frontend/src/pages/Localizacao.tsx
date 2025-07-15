@@ -711,21 +711,7 @@ const handleImprimirSelecionados = () => {
                     </TableHead>
                     <TableBody>
                         {currentItems.length ? (
-                            currentItems.sort((a, b) => {
-                                // Remove os prefixos CEN-#A-23, INF e SUP (e possíveis espaços após eles)
-                                const removePrefix = (str: string) => str.replace(/^(CEN|INF|SUP)\s*/i, '');
-                                
-                                const nomeA = removePrefix(a.nome).toUpperCase(); // Ignora maiúsculas/minúsculas
-                                const nomeB = removePrefix(b.nome).toUpperCase();
-
-                                if (nomeA < nomeB) {
-                                    return -1;
-                                }
-                                if (nomeA > nomeB) {
-                                    return 1;
-                                }
-                                return 0; // Nomes iguais
-                            }).map((item, idx) => {
+                            currentItems.map((item, idx) => {
                                 console.log({item})
                                 const originalIndex = currentIndices[idx];
                                 const isSelected = selectedItems.includes(originalIndex);
