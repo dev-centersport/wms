@@ -1,15 +1,14 @@
 {
   "cli": {
-    "version": ">=3.0.0"
+    "version": ">= 3.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "production": {
-      "distribution": "store",
       "android": {
         "buildType": "apk"
       },
-      "channel": "stable",
-      "root": "wms-mobile"
+      "autoIncrement": true
     }
   },
   "submit": {
