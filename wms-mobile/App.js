@@ -8,6 +8,7 @@ import Login from './src/screens/login';
 import Home from './src/screens/home';
 import Movimentacao from './src/screens/movimentacao';
 import Consulta from './src/screens/consulta';
+import Ocorrencia from './src/screens/ocorrencia';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ function App() {
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Movimentacao" component={Movimentacao} />
         <Stack.Screen name="Consulta" component={Consulta} />
+        <Stack.Screen name="Ocorrencia" component={Ocorrencia} />
       </Stack.Navigator>
     </NavigationContainer>
   );

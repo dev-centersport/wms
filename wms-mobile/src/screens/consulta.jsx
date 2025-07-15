@@ -73,7 +73,7 @@ export default function ConsultaScreen({ navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>consulta</Text>
+        <Text style={styles.headerTitle}>Consulta</Text>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={24} color="black" />
         </TouchableOpacity>
