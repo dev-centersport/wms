@@ -24,13 +24,19 @@ export default function Ocorrencia() {
   const [quantidade, setQuantidade] = useState('');
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+  const [mostrarCancelar, setMostrarCancelar] = useState(false);
 
   const inputRef = useRef(null);
+
+  const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
+  const [skuBloqueado, setSkuBloqueado] = useState(true);
 
   const handleBuscarLocalizacao = async () => {
     try {
       const res = await buscarLocalizacaoPorEAN(localizacao.trim());
       setNomeLocalizacao(`${res.nome} - ${res.armazem}`);
+      setLocalizacaoBloqueada(true);
+      setSkuBloqueado(false);
     } catch (err) {
       setNomeLocalizacao('');
       Alert.alert('Erro', 'Localização não encontrada.');
@@ -43,6 +49,7 @@ export default function Ocorrencia() {
 
       const dados = await buscarProdutoEstoquePorLocalizacaoEAN(localizacao.trim(), sku.trim());
       setQuantidade(String(dados.quantidade));
+      setSkuBloqueado(true);
     } catch (err) {
       setQuantidade('');
       Alert.alert('Erro', err.message || 'Produto não encontrado nesta localização.');
@@ -69,7 +76,7 @@ export default function Ocorrencia() {
 
       await criarOcorrencia(payload);
       Alert.alert('Sucesso', 'Ocorrência registrada com sucesso!');
-      handleCancelar();
+      limparTudo();
     } catch (err) {
       Alert.alert('Erro', err.message || 'Erro ao registrar ocorrência.');
     } finally {
@@ -77,11 +84,13 @@ export default function Ocorrencia() {
     }
   };
 
-  const handleCancelar = () => {
+  const limparTudo = () => {
     setLocalizacao('');
     setSku('');
     setQuantidade('');
     setNomeLocalizacao('');
+    setLocalizacaoBloqueada(false);
+    setSkuBloqueado(true);
   };
 
   return (
@@ -89,88 +98,71 @@ export default function Ocorrencia() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Ocorrência</Text>
-          <TouchableOpacity onPress={handleCancelar}>
+          <TouchableOpacity onPress={() => setMostrarCancelar(true)}>
             <Text style={styles.headerFechar}>Fechar</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.label}>Bipe a Localização</Text>
-        <TextInput
-          style={styles.input}
-          value={localizacao}
-          onChangeText={(text) => {
-            setLocalizacao(text);
-            setNomeLocalizacao('');
-            setQuantidade('');
-          }}
-          onBlur={handleBuscarLocalizacao}
-          placeholder="EAN da Localização"
-          keyboardType="numeric"
-        />
-
-        {nomeLocalizacao !== '' && (
-          <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
+        {/* LOCALIZAÇÃO */}
+        <Text style={styles.label}>Localização</Text>
+        {!localizacaoBloqueada ? (
+          <TextInput
+            style={styles.input}
+            value={localizacao}
+            onChangeText={setLocalizacao}
+            onBlur={handleBuscarLocalizacao}
+            placeholder="Bipe a localização"
+            keyboardType="numeric"
+          />
+        ) : (
+          <View style={styles.readOnlyBox}>
+            <Text style={styles.readOnlyText}>{nomeLocalizacao || localizacao}</Text>
+          </View>
         )}
 
-        <Text style={styles.label}>SKU / EAN</Text>
-        <View style={styles.skuContainer}>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            value={sku}
-            onChangeText={(text) => {
-              setSku(text);
-              setQuantidade('');
-            }}
-            onBlur={handleBuscarQuantidade}
-            placeholder="SKU ou EAN"
-            keyboardType="numeric"
-            ref={inputRef}
-          />
-          <TouchableOpacity onPress={() => inputRef.current?.focus()}>
-            <Ionicons name="search" size={24} color="#4CAF50" style={{ marginLeft: 10 }} />
-          </TouchableOpacity>
-        </View>
+        {/* PRODUTO */}
+        {localizacaoBloqueada && (
+          <>
+            <Text style={styles.label}>Produto</Text>
+            {!skuBloqueado ? (
+              <TextInput
+                style={styles.input}
+                value={sku}
+                onChangeText={setSku}
+                onBlur={handleBuscarQuantidade}
+                placeholder="Bipe o SKU ou EAN"
+                keyboardType="numeric"
+                ref={inputRef}
+              />
+            ) : (
+              <View style={styles.readOnlyBox}>
+                <Text style={styles.readOnlyText}>{sku}</Text>
+              </View>
+            )}
+          </>
+        )}
 
-        <Text style={styles.label}>Quantidade na Localização</Text>
-        <TextInput
-          style={styles.input}
-          value={quantidade}
-          editable={false}
-          placeholder="Quantidade"
-        />
+        {/* QUANTIDADE */}
+        {quantidade !== '' && (
+          <>
+            <Text style={styles.label}>Quantidade</Text>
+            <View style={styles.readOnlyBox}>
+              <Text style={styles.readOnlyText}>{quantidade}</Text>
+            </View>
+          </>
+        )}
 
+        {/* BOTÕES */}
         <View style={styles.botoesFixos}>
           <TouchableOpacity style={styles.btnSalvar} onPress={handleSalvar}>
             <Text style={styles.salvarText}>Salvar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnCancelar} onPress={handleCancelar}>
+          <TouchableOpacity style={styles.btnCancelar} onPress={() => setMostrarCancelar(true)}>
             <Text style={styles.cancelarText}>Cancelar</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Modal de confirmação */}
-        <Modal transparent visible={mostrarConfirmacao} animationType="fade">
-          <View style={styles.overlay}>
-            <View style={styles.modalBox}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Confirmação</Text>
-                <TouchableOpacity onPress={() => setMostrarConfirmacao(false)}>
-                  <Text style={styles.modalClose}>×</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.modalContent}>
-                <Text style={styles.alertIcon}>❗</Text>
-                <Text style={styles.modalMessage}>
-                  Confirma registrar a ocorrência com {quantidade || '0'} unidade(s)?
-                </Text>
-                <TouchableOpacity style={styles.btnConfirmar} onPress={confirmarSalvar}>
-                  <Text style={styles.confirmarText}>Confirmar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </ScrollView>
+
     </KeyboardAvoidingView>
   );
 }
@@ -199,4 +191,17 @@ const styles = StyleSheet.create({
   modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
   btnConfirmar: { backgroundColor: '#4CAF50', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 8 },
   confirmarText: { color: '#fff', fontSize: 16 },
+  
+  readOnlyBox: {
+  backgroundColor: '#e0e0e0',
+  borderRadius: 6,
+  padding: 12,
+  marginBottom: 10,
+},
+readOnlyText: {
+  fontSize: 16,
+  color: '#333',
+  fontWeight: '600',
+},
+
 });
