@@ -31,6 +31,8 @@ export class OcorrenciaService {
     {
       localizacao: string | null;
       quantidade: number;
+      nome_produto: string;
+      sku: string;
       ocorrencias: Ocorrencia[];
     }[]
   > {
@@ -44,12 +46,16 @@ export class OcorrenciaService {
         // Verifica se a ocorrência tem localizações (considerando que é um array)
         const primeiraLocalizacao = ocorrencia.localizacao;
         const localizacaoNome = primeiraLocalizacao?.nome || null;
+        const nomeProduto = ocorrencia.produto_estoque.produto.descricao;
+        const skuProduto = ocorrencia.produto_estoque.produto.sku;
 
         // Encontra ou cria o grupo para esta localização
         let grupo = acc.find((g) => g.localizacao === localizacaoNome);
         if (!grupo) {
           grupo = {
             localizacao: localizacaoNome,
+            nome_produto: nomeProduto,
+            sku: skuProduto,
             quantidade: 0,
             ocorrencias: [],
           };
@@ -65,6 +71,8 @@ export class OcorrenciaService {
       [] as {
         localizacao: string | null;
         quantidade: number;
+        nome_produto: string;
+        sku: string;
         ocorrencias: Ocorrencia[];
       }[],
     );
