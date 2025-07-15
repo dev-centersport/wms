@@ -12,12 +12,14 @@ import {
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import Sidebar from './Sidebar';
+import CustomPagination from './CustomPagination';
 
 
 interface LayoutProps {
   children: React.ReactNode;
   totalPages?: number;
   currentPage?: number;
+  show?: boolean;
   onPageChange?: (page: number) => void;
 }
 
@@ -25,6 +27,7 @@ const Layout: React.FC<LayoutProps> = ({
   children,
   totalPages = 1,
   currentPage = 1,
+  show = true,
   onPageChange = () => { },
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -65,55 +68,12 @@ const Layout: React.FC<LayoutProps> = ({
         </Box>
 
         {/* Footer/Pagination - agora sticky */}
-        <Box
-          sx={{
-            position: 'sticky',
-            bottom: 0,
-            backgroundColor: 'background.paper', // Cor de fundo para sobrepor conteúdo
-            zIndex: 1, // Garante que fique acima do conteúdo
-            borderTop: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Divider />
-          <Pagination
-            count={totalPages}
-            page={currentPage}
-            siblingCount={1}
-            boundaryCount={1}
-            onChange={(_, page) => onPageChange(page)}
-            renderItem={(item) => {
-              if (item.type === 'next') {
-                return <PaginationItem {...item} components={{ next: ArrowRightAltIcon }} />;
-              }
-              if (item.type === 'previous') {
-                return null;
-              }
-              if (item.type === 'start-ellipsis' || item.type === 'end-ellipsis') {
-                return (
-                  <IconButton onClick={handleOpenPopover}>
-                    <MoreHorizIcon />
-                  </IconButton>
-                );
-              }
-              return (
-                <PaginationItem
-                  {...item}
-                  sx={{
-                    fontWeight: item.page === currentPage ? 'bold' : 'normal',
-                    fontFamily: 'monospace',
-                    fontSize: 14,
-                    borderRadius: 0,
-                    minWidth: 36,
-                    height: 36,
-                    mx: 0.5,
-                  }}
-                />
-              );
-            }}
-          />
-          {/* ... Popover mantido igual ... */}
-        </Box>
+        <CustomPagination
+          show={show}
+          totalPages={totalPages}
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+        />
       </Box>
     </Sidebar>
   );

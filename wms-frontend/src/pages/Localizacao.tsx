@@ -44,7 +44,7 @@ type LocalizacaoComQtd = {
 
 /* -------------------------------------------------------------------------- */
 // Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
-const itemsPerPage = 50;
+const itemsPerPage = 100;
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
