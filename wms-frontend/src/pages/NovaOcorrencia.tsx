@@ -5,6 +5,7 @@ import {
   TextField,
   Typography,
   InputAdornment,
+  Container,
 } from '@mui/material';
 import { Save, Cancel } from '@mui/icons-material';
 import Layout from '../components/Layout';
@@ -87,74 +88,76 @@ export default function Ocorrencia() {
   };
 
   return (
-    <Layout>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-        Nova Ocorrência
-      </Typography>
+    <Layout show={false}>
+      <Container>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          Nova Ocorrência
+        </Typography>
 
-      <Box display="flex" flexDirection="column" gap={3} maxWidth={600}>
-        <TextField
-          label="EAN da Localização"
-          variant="outlined"
-          fullWidth
-          value={localizacao}
-          onChange={(e) => setLocalizacao(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleBuscarQuantidade()}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box display="flex" flexDirection="column" gap={3} width="100%">
+          <TextField
+            label="EAN da Localização"
+            variant="outlined"
+            fullWidth
+            value={localizacao}
+            onChange={(e) => setLocalizacao(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleBuscarQuantidade()}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        <TextField
-          label="EAN do Produto"
-          variant="outlined"
-          fullWidth
-          value={skuEan}
-          onChange={(e) => setSkuEan(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleBuscarQuantidade()}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+          <TextField
+            label="EAN do Produto"
+            variant="outlined"
+            fullWidth
+            value={skuEan}
+            onChange={(e) => setSkuEan(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleBuscarQuantidade()}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        <TextField
-          label="Quantidade"
-          type="number"
-          variant="outlined"
-          fullWidth
-          value={quantidade}
-          InputProps={{ readOnly: true }}
-        />
-      </Box>
+          <TextField
+            label="Quantidade"
+            type="number"
+            variant="outlined"
+            fullWidth
+            value={quantidade}
+            InputProps={{ readOnly: true }}
+          />
+        </Box>
 
-      <Box display="flex" gap={2} mt={4}>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<Save />}
-          onClick={handleSalvar}
-          disabled={carregando}
-        >
-          {carregando ? 'Salvando...' : 'Salvar'}
-        </Button>
+        <Box display="flex" gap={2} mt={4}>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<Save />}
+            onClick={handleSalvar}
+            disabled={carregando}
+          >
+            {carregando ? 'Salvando...' : 'Salvar'}
+          </Button>
 
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Cancel />}
-          onClick={() => navigate('/Ocorrencias')}
-        >
-          Cancelar
-        </Button>
-      </Box>
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Cancel />}
+            onClick={() => navigate('/Ocorrencias')}
+          >
+            Cancelar
+          </Button>
+        </Box>
+      </Container>
     </Layout>
   );
 }
