@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Importação correta
-import { login } from '../api/index'; // ajuste conforme sua estrutura
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { login } from '../api/index';
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
-  const navigation = useNavigation(); // Inicializa o navigation
+  const navigation = useNavigation();
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -16,10 +28,8 @@ export default function LoginScreen() {
 
     try {
       const resultado = await login(usuario, senha);
-      console.log(resultado);
-
       if (resultado.success) {
-        navigation.navigate('Home'); // Redireciona para a tela 'Home'
+        navigation.navigate('Home');
       } else {
         alert('Usuário ou senha inválidos.');
       }
@@ -30,49 +40,56 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../../assets/images/logo01.png')}
-        style={styles.logo}
-      />
-      <Text style={styles.brand}>WMS</Text>
-      <Text style={styles.welcome}>Bem Vindo!</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <Image
+            source={require('../../assets/images/logo01.png')}
+            style={styles.logo}
+          />
+          <Text style={styles.brand}>WMS</Text>
+          <Text style={styles.welcome}>Bem Vindo!</Text>
 
-      <Text style={styles.label}>Usuário</Text>
-      <TextInput
-        placeholder="Usuário"
-        value={usuario}
-        onChangeText={setUsuario}
-        style={styles.input}
-        placeholderTextColor="#888"
-      />
+          <Text style={styles.label}>Usuário</Text>
+          <TextInput
+            placeholder="Usuário"
+            value={usuario}
+            onChangeText={setUsuario}
+            style={styles.input}
+            placeholderTextColor="#888"
+          />
 
-      <Text style={styles.label}>Senha</Text>
-      <TextInput
-        placeholder="Senha"
-        value={senha}
-        onChangeText={setSenha}
-        secureTextEntry
-        style={styles.input}
-        placeholderTextColor="#888"
-      />
+          <Text style={styles.label}>Senha</Text>
+          <TextInput
+            placeholder="Senha"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry
+            style={styles.input}
+            placeholderTextColor="#888"
+          />
 
-      <TouchableOpacity onPress={handleLogin} style={styles.button}>
-        <Text style={styles.buttonText}>Entrar</Text>
-      </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogin} style={styles.button}>
+            <Text style={styles.buttonText}>Entrar</Text>
+          </TouchableOpacity>
 
-      <Text style={styles.footer}>
-        <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
-          "Otimizando a gestão de armazém com tecnologia eficiente"
-        </Text>
-      </Text>
-    </View>
+          <Text style={styles.footer}>
+            <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
+              "Otimizando a gestão de armazém com tecnologia eficiente"
+            </Text>
+          </Text>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#61DE25',
     alignItems: 'center',
     justifyContent: 'center',

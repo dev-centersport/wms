@@ -103,3 +103,21 @@ export async function enviarMovimentacao(payload) {
   }
 }
 
+export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
+  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacao_id}/produtos`);
+  console.log(
+    '🔍 produtos_estoque[0]:',
+    JSON.stringify(res.data.produtos_estoque[0], null, 2)
+  );
+
+  const dados = res.data?.produtos_estoque || [];
+
+  return dados.map((item) => ({
+    produto_estoque_id: item.produto_estoque_id,
+    produto_id: item.produto?.produto_id,
+    descricao: item.produto?.descricao || '',
+    sku: item.produto?.sku || '',
+    ean: item.produto?.ean || '',
+    quantidade: item.quantidade || 0,
+  }));
+}

@@ -50,6 +50,8 @@ const CriarTipo: React.FC = () => {
           sx={{ mb: 3 }}
         />
 
+        <Divider sx={{ mt: 20, mb: 3 }} />
+
         <Box display="flex" justifyContent="center" gap={2}>
           <Button
             variant="contained"

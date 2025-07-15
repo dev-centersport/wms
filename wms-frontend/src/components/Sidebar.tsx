@@ -56,6 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
           width: 200,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
+            borderTopRightRadius: 8,
+            borderBottomRightRadius: 8,
             width: 200,
             backgroundColor: '#61de27',
             boxSizing: 'border-box',
