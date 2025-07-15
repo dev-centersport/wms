@@ -12,28 +12,24 @@ import {
 
 import SearchIcon from '@mui/icons-material/Search';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
-import WidgetsIcon from '@mui/icons-material/Widgets';
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import PersonIcon from '@mui/icons-material/Person';
-import LeaderboardIcon from '@mui/icons-material/Leaderboard';
-import BalanceIcon from '@mui/icons-material/Balance';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SpeedIcon from '@mui/icons-material/Speed';
 import HomeIcon from '@mui/icons-material/Home';
 import RoomIcon from '@mui/icons-material/Room';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import TrolleyIcon from '@mui/icons-material/Trolley';
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const menuItems = [
   { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
   { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <SpeedIcon />,         path: '/TipoLocalizacao' },
-  { label: 'Produto',             icon: <InventoryIcon />,     path: '/produto' },
+  { label: 'Tipo de Localização', icon: <AssignmentIcon />,         path: '/TipoLocalizacao' },
+  { label: 'Produto',             icon: <ViewInArIcon />,     path: '/produto' },
   { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
-  { label: 'Movimentação',        icon: <WorkspacesIcon />,    path: '/movimentacao' },
+  { label: 'Movimentação',        icon: <TrolleyIcon />,    path: '/movimentacao' },
   { label: 'Separação',          icon: <LocalShippingIcon />, path: '/separacao' },
   { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
   { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },

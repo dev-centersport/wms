@@ -50,7 +50,7 @@ const StyledButton = styled(Button)({
   fontSize: "1rem",
   marginBottom: "30px",
   "&:hover": {
-    backgroundColor: "#333333"
+    backgroundColor: "#000000ff"
   }
 });
 
@@ -83,7 +83,7 @@ const Login: React.FC = () => {
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <FaUser color="rgb(97, 222, 37)" />
+                <FaUser color="rgba(0, 0, 0, 1)" />
               </InputAdornment>
             )
           }}
@@ -115,9 +115,9 @@ const Login: React.FC = () => {
                   aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
                 >
                   {mostrarSenha ? (
-                    <FaEyeSlash color="rgb(97, 222, 37)" />
+                    <FaEyeSlash color="rgba(0, 0, 0, 1)" />
                   ) : (
-                    <FaEye color="rgb(97, 222, 37)" />
+                    <FaEye color="rgba(0, 0, 0, 1)" />
                   )}
                 </IconButton>
               </InputAdornment>
