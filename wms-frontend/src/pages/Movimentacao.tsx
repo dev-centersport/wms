@@ -23,7 +23,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Divider
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
@@ -837,7 +838,9 @@ const Movimentacao: React.FC = () => {
           </Table>
         </Paper>
 
+        <Divider sx={{ mt: 20, mb: 3 }} />
         {/* Botões */}
+
         <Box display="flex" justifyContent="flex-start" gap={2} mt={6} mb={4}>
           <Button
             variant="contained"
