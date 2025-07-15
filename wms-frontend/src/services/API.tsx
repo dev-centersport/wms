@@ -506,7 +506,7 @@ export async function buscarOcorrencias(status?: 'pendente' | 'concluido') {
       produto: o.nome_produto || '-',
       sku: o.sku || '-',
       quantidade: o.quantidade || '-',
-      status: o.status || 'pendente',
+      status: o.status || true,
     }));
   } catch (err) {
     console.error('Erro ao buscar ocorrências:', err);

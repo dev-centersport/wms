@@ -152,11 +152,11 @@ export default function Ocorrencias() {
                 <TableCell align='center'>{item.quantidade}</TableCell>
                 <TableCell align='center'>
                   <Chip
-                    label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                    label={!item.status ? 'Concluído' : 'Pendente'}
                     size="small"
                     sx={{
-                      backgroundColor: item.status === 'concluido' ? '#4CAF50' : '#FFEB3B',
-                      color: item.status === 'concluido' ? '#fff' : '#000',
+                      backgroundColor: !item.status ? '#4CAF50' : '#FFEB3B',
+                      color: !item.status ? '#fff' : '#000',
                       fontWeight: 600,
                     }}
                   />
