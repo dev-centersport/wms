@@ -122,22 +122,6 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
   }));
 }
 
-// Buscar todos produtos de uma localização
-export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
-  const res = await axios.get(`${BASE_URL}/localizacao/${localizacao_id}/produtos`);
-  const dados = res.data?.produtos_estoque || [];
-
-  return dados.map((item) => ({
-    produto_estoque_id: item.produto_estoque_id,
-    produto_id: item.produto?.produto_id,
-    descricao: item.produto?.descricao || '',
-    sku: item.produto?.sku || '',
-    ean: item.produto?.ean || '',
-    quantidade: item.quantidade || 0,
-  }));
-}
-
-// 🔧 NOVA função: buscar produto dentro da localização
 export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao, codigoProduto) {
   try {
     const localizacao = await buscarLocalizacaoPorEAN(eanLocalizacao);
@@ -147,7 +131,9 @@ export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao, codi
       p.ean === codigoProduto.trim() || p.sku === codigoProduto.trim()
     );
 
-    if (!encontrado) throw new Error('Produto não encontrado nesta localização.');
+    if (!encontrado) {
+      throw new Error('Produto não encontrado nesta localização.');
+    }
 
     return {
       produto_estoque_id: encontrado.produto_estoque_id,
@@ -160,7 +146,7 @@ export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao, codi
   }
 }
 
-// Criar ocorrência
+
 export async function criarOcorrencia(payload) {
   try {
     const response = await axios.post(`${BASE_URL}/ocorrencia`, payload);
