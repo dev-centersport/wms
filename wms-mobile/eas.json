@@ -1,0 +1,18 @@
+{
+  "cli": {
+    "version": ">=3.0.0"
+  },
+  "build": {
+    "production": {
+      "distribution": "store",
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "stable",
+      "root": "wms-mobile"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

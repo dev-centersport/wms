@@ -11,15 +11,29 @@
     "ios": {
       "supportsTablet": true
     },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/7c70b2ce-33f0-4e1c-beb5-67312ef48ebc"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.centersporti.wmsmobile"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7c70b2ce-33f0-4e1c-beb5-67312ef48ebc"
+      }
+    },
+    "owner": "centersporti"
   }
 }
