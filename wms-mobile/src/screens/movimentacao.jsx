@@ -91,6 +91,7 @@ export default function Movimentacao() {
       Alert.alert('Bipe uma localização antes de bipar produtos.');
       return;
     }
+
     try {
       const produto = await buscarProdutoPorEAN(eanProduto.trim());
       if (!produto || !produto.produto_id) {
@@ -108,7 +109,7 @@ export default function Movimentacao() {
         estoque_localizacao: produto.estoque || 0,
       };
 
-      // 🔍 Aqui está o log completo do produto bipado
+      // 🔍 Apenas log para debug, sem bloqueio
       console.log('🔍 Produto bipado:', JSON.stringify(produtoFormatado, null, 2));
 
       setProdutos((prev) => [...prev, produtoFormatado]);
@@ -121,44 +122,43 @@ export default function Movimentacao() {
     }
   };
 
+
   const verificarEstoqueAntesDeConfirmar = () => {
     if (tipo === 'saida') {
-      const erros = [];
+      const contadorPorProduto = {};
+      const descricoes = {};
 
-      console.log('🔁 Verificando estoque para saída', produtosNaLocalizacao);
-
-      produtos.forEach((produto) => {
-        console.log('🧪 Produto bipado:', produto.produto_id);
-        console.log('📦 Produtos na localização:', produtosNaLocalizacao.map(p => p.produto_id));
-
-        const existente = produtosNaLocalizacao.find(
-          (p) => Number(p.produto_id) === Number(produto.produto_id)
-        );
-
-        const qtd = produto.quantidade ?? 1;
-        const estoque = existente?.quantidade ?? 0;
-
-        if (!existente) {
-          console.log('❌ Produto não está na localização');
-          erros.push(`Produto "${produto.descricao}" não está presente na localização.`);
-        } else if (qtd > estoque) {
-          console.log('⚠️ Quantidade excede o estoque');
-          erros.push(`Produto "${produto.descricao}" com quantidade ${qtd} excede o estoque (${estoque}).`);
-        }
+      produtos.forEach((p) => {
+        const id = p.produto_id;
+        contadorPorProduto[id] = (contadorPorProduto[id] || 0) + 1;
+        descricoes[id] = p.descricao;
       });
 
-      if (erros.length > 0) {
-        setTimeout(() => {
-          Alert.alert('Erro na Saída', erros.join('\n'));
-        }, 100); // pequeno atraso garante que o modal renderize corretamente
-        return;
-      }
+      console.log('📊 Contagem de bipagens:', contadorPorProduto);
+      console.log('📦 Estoque atual na localização:', produtosNaLocalizacao);
 
+      for (const [produto_id, bipadoQtd] of Object.entries(contadorPorProduto)) {
+        const existente = produtosNaLocalizacao.find(
+          (p) => Number(p.produto_id) === Number(produto_id)
+        );
+        const estoque = existente?.quantidade ?? 0;
+        const descricao = descricoes[produto_id] || 'Produto desconhecido';
+
+        // ✅ SOMENTE valida estoque insuficiente — produto pode não estar na localização
+        if (bipadoQtd > estoque) {
+          Alert.alert(
+            '⚠️ Estoque insuficiente',
+            `📦 Produto: ${descricao}\n🔢 Bipagens: ${bipadoQtd}\n📉 Estoque disponível: ${estoque}`,
+            [{ text: 'Entendi', style: 'default' }]
+          );
+          return; // ❌ bloqueia confirmação
+        }
+      }
     }
 
+    // ✅ Tudo ok, mostra modal de confirmação
     setMostrarConfirmacao(true);
   };
-
 
   const handleConfirmar = async () => {
     setMostrarConfirmacao(false);

@@ -121,3 +121,54 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
     quantidade: item.quantidade || 0,
   }));
 }
+
+// Buscar todos produtos de uma localização
+export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
+  const res = await axios.get(`${BASE_URL}/localizacao/${localizacao_id}/produtos`);
+  const dados = res.data?.produtos_estoque || [];
+
+  return dados.map((item) => ({
+    produto_estoque_id: item.produto_estoque_id,
+    produto_id: item.produto?.produto_id,
+    descricao: item.produto?.descricao || '',
+    sku: item.produto?.sku || '',
+    ean: item.produto?.ean || '',
+    quantidade: item.quantidade || 0,
+  }));
+}
+
+// 🔧 NOVA função: buscar produto dentro da localização
+export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao, codigoProduto) {
+  try {
+    const localizacao = await buscarLocalizacaoPorEAN(eanLocalizacao);
+    const todos = await buscarProdutosPorLocalizacaoDireto(localizacao.localizacao_id);
+
+    const encontrado = todos.find(p =>
+      p.ean === codigoProduto.trim() || p.sku === codigoProduto.trim()
+    );
+
+    if (!encontrado) throw new Error('Produto não encontrado nesta localização.');
+
+    return {
+      produto_estoque_id: encontrado.produto_estoque_id,
+      localizacao_id: localizacao.localizacao_id,
+      quantidade: encontrado.quantidade,
+    };
+  } catch (error) {
+    console.error('❌ Erro em buscarProdutoEstoquePorLocalizacaoEAN:', error);
+    throw new Error(error?.message || 'Erro ao buscar produto na localização.');
+  }
+}
+
+// Criar ocorrência
+export async function criarOcorrencia(payload) {
+  try {
+    const response = await axios.post(`${BASE_URL}/ocorrencia`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao criar ocorrência:', error);
+    throw new Error(
+      error?.response?.data?.message || 'Erro ao registrar ocorrência.'
+    );
+  }
+}
