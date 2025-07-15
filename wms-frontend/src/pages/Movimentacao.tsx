@@ -449,7 +449,7 @@ const Movimentacao: React.FC = () => {
         </Typography>
 
         {/* Seção de campos */}
-        <Box display="flex" flexDirection="column" gap={3} mb={5}>
+        <Box display="flex" flexDirection="column" gap={2} mb={5}>
           {/* Tipo */}
           <FormControl fullWidth size="small">
             <InputLabel id="tipo-label">Tipo</InputLabel>
@@ -838,7 +838,7 @@ const Movimentacao: React.FC = () => {
         </Paper>
 
         {/* Botões */}
-        <Box display="flex" justifyContent="center" gap={4} mt={6} mb={4}>
+        <Box display="flex" justifyContent="flex-start" gap={2} mt={6} mb={4}>
           <Button
             variant="contained"
             sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold', px: 4 }}

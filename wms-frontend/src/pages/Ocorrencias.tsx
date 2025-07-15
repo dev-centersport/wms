@@ -104,9 +104,9 @@ export default function Ocorrencias() {
   <Button
     variant="contained"
     sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
-    onClick={() => navigate('/NovaOcorrencias')}
+    onClick={() => navigate('/NovaOcorrencia')}
   >
-    Nova Ocorrencias
+    Nova Ocorrência
   </Button>
 </Box>
 
