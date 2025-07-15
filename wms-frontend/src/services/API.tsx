@@ -497,12 +497,14 @@ export async function criarOcorrencia(payload: {
 export async function buscarOcorrencias(status?: 'pendente' | 'concluido') {
   try {
     const query = status ? `?status=${status}` : '';
-    const res = await axios.get(`${BASE_URL}/ocorrencia${query}`);
+    const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
+    console.log(res)
 
     return res.data.map((o: any) => ({
-      ocorrencias_id: o.id, // ou o.ocorrencia_id conforme o nome correto
-      localizacao: o.localizacoes?.nome || '-',
+      ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
+      localizacao: o.localizacao || '-',
       produto: o.produto?.sku || '-',
+      quantidade: o.quantidade || '-',
       status: o.status || 'pendente',
     }));
   } catch (err) {
