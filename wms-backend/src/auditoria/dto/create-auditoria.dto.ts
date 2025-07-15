@@ -4,13 +4,13 @@ import { Type } from 'class-transformer';
 
 export class CreateAuditoriaDto {
   @IsInt()
-  usuarioId: number;
+  usuario_id: number;
 
   @IsInt()
-  ocorrenciaId: number;
+  ocorrencia_id: number;
 
   @IsInt()
-  localizacaoId: number;
+  localizacao_id: number;
 
   @IsOptional()
   @IsString()

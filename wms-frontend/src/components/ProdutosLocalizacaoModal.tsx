@@ -36,7 +36,7 @@ interface Produto {
 interface ProdutosLocalizacaoModalProps {
   open: boolean;
   onClose: () => void;
-  localizacaoId: number;
+  localizacao_id: number;
   localizacaoNome: string;
   onQuantidadeAtualizada?: () => void;
 }
@@ -44,7 +44,7 @@ interface ProdutosLocalizacaoModalProps {
 const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
   open,
   onClose,
-  localizacaoId,
+  localizacao_id,
   localizacaoNome,
   onQuantidadeAtualizada
 }) => {
@@ -54,17 +54,17 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
   const [quantidadeTotal, setQuantidadeTotal] = useState(0);
 
   useEffect(() => {
-    if (open && localizacaoId) {
+    if (open && localizacao_id) {
       carregarProdutos();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, localizacaoId]);
+  }, [open, localizacao_id]);
 
   const carregarProdutos = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await buscarProdutosPorLocalizacao(localizacaoId);
+      const data = await buscarProdutosPorLocalizacao(localizacao_id);
       setProdutos(data);
       
       // Calcular quantidade total

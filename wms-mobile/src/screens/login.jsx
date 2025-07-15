@@ -1,26 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { login } from '../api/index';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native'; // Importação correta
+import { login } from '../api/index'; // ajuste conforme sua estrutura
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
-  const [senhaVisivel, setSenhaVisivel] = useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation(); // Inicializa o navigation
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -30,8 +16,10 @@ export default function LoginScreen() {
 
     try {
       const resultado = await login(usuario, senha);
+      console.log(resultado);
+
       if (resultado.success) {
-        navigation.navigate('Home');
+        navigation.navigate('Home'); // Redireciona para a tela 'Home'
       } else {
         alert('Usuário ou senha inválidos.');
       }
@@ -42,71 +30,49 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
-          />
-          <Text style={styles.brand}>WMS</Text>
-          <Text style={styles.welcome}>Bem Vindo!</Text>
+    <View style={styles.container}>
+      <Image
+        source={require('../../assets/images/logo01.png')}
+        style={styles.logo}
+      />
+      <Text style={styles.brand}>WMS</Text>
+      <Text style={styles.welcome}>Bem Vindo!</Text>
 
-          {/* Usuário */}
-          <Text style={styles.label}>Usuário</Text>
-          <TextInput
-            placeholder="Usuário"
-            value={usuario}
-            onChangeText={setUsuario}
-            style={styles.input}
-            placeholderTextColor="#888"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+      <Text style={styles.label}>Usuário</Text>
+      <TextInput
+        placeholder="Usuário"
+        value={usuario}
+        onChangeText={setUsuario}
+        style={styles.input}
+        placeholderTextColor="#888"
+      />
 
-          {/* Senha com olho */}
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              placeholder="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!senhaVisivel}
-              style={styles.inputSenha}
-              placeholderTextColor="#888"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)} style={styles.eyeButton}>
-              <Ionicons
-                name={senhaVisivel ? 'eye-off' : 'eye'}
-                size={22}
-                color="#555"
-              />
-            </TouchableOpacity>
-          </View>
+      <Text style={styles.label}>Senha</Text>
+      <TextInput
+        placeholder="Senha"
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
+        style={styles.input}
+        placeholderTextColor="#888"
+      />
 
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
-          </TouchableOpacity>
+      <TouchableOpacity onPress={handleLogin} style={styles.button}>
+        <Text style={styles.buttonText}>Entrar</Text>
+      </TouchableOpacity>
 
-          <Text style={styles.footer}>
-            <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
-              "Otimizando a gestão de armazém com tecnologia eficiente"
-            </Text>
-          </Text>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+      <Text style={styles.footer}>
+        <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
+          "Otimizando a gestão de armazém com tecnologia eficiente"
+        </Text>
+      </Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     backgroundColor: '#61DE25',
     alignItems: 'center',
     justifyContent: 'center',
@@ -145,30 +111,10 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '80%',
-    backgroundColor: '#f1f1f1',
+    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 6,
     marginTop: 5,
-    fontSize: 16,
-    color: '#000',
-  },
-  inputWrapper: {
-    width: '80%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f1f1',
-    borderRadius: 6,
-    marginTop: 5,
-    paddingHorizontal: 10,
-  },
-  inputSenha: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#000',
-  },
-  eyeButton: {
-    padding: 6,
   },
   button: {
     backgroundColor: '#000',

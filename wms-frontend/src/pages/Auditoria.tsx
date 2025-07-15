@@ -4,7 +4,6 @@ import {
   Button,
   Checkbox,
   Chip,
-  IconButton,
   InputAdornment,
   Paper,
   Tab,
@@ -20,12 +19,12 @@ import {
 } from '@mui/material';
 import { Search, Add, CheckCircle, Cancel } from '@mui/icons-material';
 import Layout from '../components/Layout';
+import { buscarOcorrencias } from '../services/API';
 
-interface AuditoriaItem {
+interface OcorrenciaItem {
   id: number;
   localizacao: string;
-  faltando: string;
-  sku: string;
+  produto: string;
   status: 'pendente' | 'concluido';
 }
 
@@ -34,35 +33,32 @@ const ITEMS_PER_PAGE = 50;
 export default function Auditoria() {
   const [busca, setBusca] = useState('');
   const [aba, setAba] = useState<'todos' | 'pendente' | 'concluido'>('todos');
-  const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
+  const [ocorrencias, setOcorrencias] = useState<OcorrenciaItem[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   useEffect(() => {
-    // Simula carregamento de dados
-    const dados: AuditoriaItem[] = Array.from({ length: 200 }).map((_, i) => ({
-      id: i + 1,
-      localizacao: `Cell ${i % 4 === 0 ? 'A' : 'B'}`,
-      faltando: `Cell ${i % 3 === 0 ? 'B' : 'C'}`,
-      sku: `SKU-${1000 + i}`,
-      status: i % 4 === 0 ? 'concluido' : 'pendente',
-    }));
-    setAuditorias(dados);
-  }, []);
+    async function carregar() {
+      try {
+        const dados = await buscarOcorrencias(aba === 'todos' ? undefined : aba);
+        setOcorrencias(dados);
+        setSelecionados([]);
+      } catch (err) {
+        alert('Erro ao carregar ocorrências.');
+      }
+    }
+
+    carregar();
+  }, [aba]);
 
   const filtrado = useMemo(() => {
-    return auditorias.filter((a) => {
-      const termo = busca.toLowerCase();
-      const passaBusca =
-        !termo ||
-        a.sku.toLowerCase().includes(termo) ||
-        a.localizacao.toLowerCase().includes(termo) ||
-        a.faltando.toLowerCase().includes(termo);
-      const passaAba =
-        aba === 'todos' || (aba === 'concluido' && a.status === 'concluido') || (aba === 'pendente' && a.status === 'pendente');
-      return passaBusca && passaAba;
-    });
-  }, [auditorias, busca, aba]);
+    const termo = busca.toLowerCase();
+    return ocorrencias.filter(
+      (a) =>
+        a.produto.toLowerCase().includes(termo) ||
+        a.localizacao.toLowerCase().includes(termo)
+    );
+  }, [ocorrencias, busca]);
 
   const totalPaginas = Math.ceil(filtrado.length / ITEMS_PER_PAGE) || 1;
   const exibidos = filtrado.slice((paginaAtual - 1) * ITEMS_PER_PAGE, paginaAtual * ITEMS_PER_PAGE);
@@ -79,28 +75,35 @@ export default function Auditoria() {
         <Typography variant="h4" fontWeight={600}>
           Auditoria
         </Typography>
-        <Button variant="contained" startIcon={<Add />} sx={{ background: '#61de27', color: '#000' }}>
-          Nova Auditoria
-        </Button>
       </Box>
 
-      <Box display="flex" gap={2} alignItems="center" mb={2}>
-        <TextField
-          placeholder="Busca por nome, SKU ou EAN"
-          size="small"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ width: 400 }}
-        />
-        <Button variant="outlined">Filtro</Button>
-      </Box>
+      <Box display="flex" gap={2} alignItems="center" mb={2} flexWrap="wrap">
+  <TextField
+    placeholder="Busca por localização ou SKU"
+    size="small"
+    value={busca}
+    onChange={(e) => setBusca(e.target.value)}
+    InputProps={{
+      startAdornment: (
+        <InputAdornment position="start">
+          <Search />
+        </InputAdornment>
+      ),
+    }}
+    sx={{ width: 400 }}
+  />
+
+  <Button variant="outlined">Filtro</Button>
+
+  <Button
+    variant="contained"
+    sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
+    onClick={() => console.log('Nova Auditoria')}
+  >
+    Nova Auditoria
+  </Button>
+</Box>
+
 
       <Tabs value={aba} onChange={(_, v) => setAba(v)} sx={{ mb: 2 }}>
         <Tab label="Todos" value="todos" />
@@ -116,15 +119,12 @@ export default function Auditoria() {
                 <Checkbox
                   checked={selecionados.length === exibidos.length && exibidos.length > 0}
                   indeterminate={selecionados.length > 0 && selecionados.length < exibidos.length}
-                  onChange={(e) => {
-                    setSelecionados(
-                      e.target.checked ? exibidos.map((a) => a.id) : []
-                    );
-                  }}
+                  onChange={(e) =>
+                    setSelecionados(e.target.checked ? exibidos.map((a) => a.id) : [])
+                  }
                 />
               </TableCell>
               <TableCell>Localização</TableCell>
-              <TableCell>Faltando</TableCell>
               <TableCell>SKU</TableCell>
               <TableCell>Status</TableCell>
             </TableRow>
@@ -139,8 +139,7 @@ export default function Auditoria() {
                   />
                 </TableCell>
                 <TableCell>{item.localizacao}</TableCell>
-                <TableCell>{item.faltando}</TableCell>
-                <TableCell>{item.sku}</TableCell>
+                <TableCell>{item.produto}</TableCell>
                 <TableCell>
                   <Chip
                     label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}
@@ -159,10 +158,20 @@ export default function Auditoria() {
       </TableContainer>
 
       <Box display="flex" mt={3} gap={2}>
-        <Button variant="contained" color="success" startIcon={<CheckCircle />}>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<CheckCircle />}
+          disabled={selecionados.length === 0}
+        >
           Conferir Selecionado
         </Button>
-        <Button variant="contained" color="inherit" startIcon={<Cancel />}>
+        <Button
+          variant="contained"
+          color="inherit"
+          startIcon={<Cancel />}
+          onClick={() => setSelecionados([])}
+        >
           Cancelar
         </Button>
       </Box>

@@ -22,11 +22,11 @@ export interface Armazem {
 
 // Adicione esta função ao arquivo API.tsx
 
-export async function buscarProdutosPorLocalizacao(localizacaoId: number) {
+export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
   try {
     const todos = await buscarConsultaEstoque();
     return todos
-      .filter((item: any) => item.localizacao_id === localizacaoId)
+      .filter((item: any) => item.localizacao_id === localizacao_id)
       .map((item: any) => ({
         produto_id: item.produto_id,
         descricao: item.descricao || '',
@@ -377,8 +377,8 @@ export async function buscarLocalizacaoPorEAN(ean: string) {
   return encontrada;
 }
 
-export async function buscarProdutosPorLocalizacaoDireto(localizacaoId: number) {
-  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacaoId}/produtos`);
+export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number) {
+  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacao_id}/produtos`);
   console.log(
     '🔍 produtos_estoque[0]:',
     JSON.stringify(res.data.produtos_estoque[0], null, 2)
@@ -442,3 +442,76 @@ export async function enviarMovimentacao(payload: {
     throw new Error('Falha ao enviar movimentação.');
   }
 }
+export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao: string, eanProduto: string) {
+  try {
+    const localizacao = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());
+    const produto = await buscarProdutoPorEAN(eanProduto.trim());
+
+    if (!localizacao?.localizacao_id || !produto?.produto_id) {
+      throw new Error('EAN inválido.');
+    }
+
+    const produtoEstoqueRes = await axios.get(`http://151.243.0.78:3001/produto-estoque`);
+    const lista = produtoEstoqueRes.data;
+
+    const encontrado = lista.find(
+      (item: any) =>
+        item.produto?.produto_id === produto.produto_id &&
+        item.localizacao?.localizacao_id === localizacao.localizacao_id
+    );
+
+    if (!encontrado) {
+      throw new Error('Produto não encontrado nesta localização.');
+    }
+
+    return {
+      produto_estoque_id: encontrado.produto_estoque_id,
+      localizacao_id: localizacao.localizacao_id,
+      quantidade: encontrado.quantidade || 0,
+    };
+  } catch (err: any) {
+    console.error('Erro em buscarProdutoEstoquePorLocalizacaoEAN:', err);
+    throw err;
+  }
+}
+export async function criarOcorrencia(payload: {
+  usuario_id: number;
+  produto_estoque_id: number;
+  localizacao_id: number;
+  // quantidade: number;
+}) {
+  try {
+    const { data } = await axios.post(`${BASE_URL}/ocorrencia`, {
+      usuario_id: payload.usuario_id,
+      produto_estoque_id: payload.produto_estoque_id,
+      localizacao_id: payload.localizacao_id,
+      // quantidade: payload.quantidade,
+    });
+
+    return data; // opcional, caso queira retornar a ocorrência criada
+  } catch (err: any) {
+    console.error('Erro ao criar ocorrência:', err);
+    throw new Error(err?.response?.data?.message || 'Erro ao registrar ocorrência.');
+  }
+}
+export async function buscarOcorrencias(status?: 'pendente' | 'concluido') {
+  try {
+    const query = status ? `?status=${status}` : '';
+    const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
+    console.log(res)
+
+    return res.data.map((o: any) => ({
+      ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
+      localizacao: o.localizacao || '-',
+      produto: o.nome_produto || '-',
+      sku: o.sku || '-',
+      quantidade: o.quantidade || '-',
+      status: o.status || true,
+    }));
+  } catch (err) {
+    console.error('Erro ao buscar ocorrências:', err);
+    throw new Error('Erro ao buscar ocorrências.');
+  }
+}
+
+

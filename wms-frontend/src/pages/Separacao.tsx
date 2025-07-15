@@ -80,10 +80,24 @@ export default function Separacao() {
 
       <Box display="flex" alignItems="center" gap={2} mb={3} flexWrap="wrap">
         {/* Upload Planilha */}
-        <Button variant="contained" component="label" startIcon={<CloudUpload />}>
-          Escolher Ficheiro
-          <Input type="file" hidden onChange={handleUpload} />
-        </Button>
+        <Box display="flex" alignItems="center" gap={2}>
+  <Button
+    variant="contained"
+    component="label"
+    startIcon={<CloudUpload />}
+    sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
+  >
+    Selecionar Arquivo
+    <input type="file" hidden onChange={handleUpload} />
+  </Button>
+
+  {arquivoSelecionado && (
+    <Typography variant="body2" color="textSecondary">
+      {arquivoSelecionado.name}
+    </Typography>
+  )}
+</Box>
+
 
         {/* Armazém Dropdown */}
         <TextField

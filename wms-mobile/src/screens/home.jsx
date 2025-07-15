@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   logo: {
-    width: 80,
-    height: 70,
+    width: 60,
+    height: 60,
     resizeMode: 'contain',
   },
   button: {

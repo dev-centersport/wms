@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,6 @@ import {
   Alert,
   FlatList,
   Image,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from 'react-native';
 import {
   buscarLocalizacaoPorEAN,
@@ -21,18 +17,13 @@ import {
 
 export default function Movimentacao() {
   const [tipo, setTipo] = useState('entrada');
-  const [tipoBloqueado, setTipoBloqueado] = useState(false);
   const [eanLocalizacao, setEanLocalizacao] = useState('');
-  const [localizacaoId, setLocalizacaoId] = useState(null);
+  const [localizacao_id, setlocalizacao_id] = useState(null);
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [eanProduto, setEanProduto] = useState('');
   const [produtos, setProdutos] = useState([]);
-  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
-  const [mostrarCancelar, setMostrarCancelar] = useState(false);
-
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
-  const flatListRef = useRef(null);
 
   useEffect(() => {
     if (!tipoBloqueado && localizacaoRef.current) {
@@ -40,17 +31,10 @@ export default function Movimentacao() {
     }
   }, [tipo, tipoBloqueado]);
 
-  useEffect(() => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
-    }
-  }, [produtos]);
-
   const handleTipoChange = (novoTipo) => {
-    if (tipoBloqueado) return;
     setTipo(novoTipo);
     setEanLocalizacao('');
-    setLocalizacaoId(null);
+    setlocalizacao_id(null);
     setNomeLocalizacao('');
     setProdutos([]);
     setTimeout(() => {
@@ -65,9 +49,8 @@ export default function Movimentacao() {
         Alert.alert('Localização não encontrada');
         return;
       }
-      setLocalizacaoId(loc.localizacao_id);
+      setlocalizacao_id(loc.localizacao_id);
       setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
-      setTipoBloqueado(true);
       setEanLocalizacao('');
       setTimeout(() => {
         produtoRef.current?.focus();
@@ -78,10 +61,6 @@ export default function Movimentacao() {
   };
 
   const handleAdicionarProduto = async () => {
-    if (!localizacaoId) {
-      Alert.alert('Bipe uma localização antes de bipar produtos.');
-      return;
-    }
     try {
       const produto = await buscarProdutoPorEAN(eanProduto.trim());
       if (!produto || !produto.produto_id) {
@@ -95,7 +74,6 @@ export default function Movimentacao() {
         sku: produto.sku,
         url_foto: produto.url_foto,
         quantidade: 1,
-        estoque_localizacao: produto.estoque || 0,
       };
       setProdutos((prev) => [...prev, produtoFormatado]);
       setEanProduto('');
@@ -107,42 +85,14 @@ export default function Movimentacao() {
     }
   };
 
-  const verificarEstoqueAntesDeConfirmar = () => {
-    if (tipo !== 'saida') {
-      setMostrarConfirmacao(true);
-      return;
-    }
-
-    const contagem = {};
-    produtos.forEach((p) => {
-      contagem[p.produto_id] = (contagem[p.produto_id] || 0) + 1;
-    });
-
-    const produtoEstourado = produtos.find((p) => {
-      return contagem[p.produto_id] > (p.estoque_localizacao || 0);
-    });
-
-    if (produtoEstourado) {
-      const bipados = contagem[produtoEstourado.produto_id];
-      const disponivel = produtoEstourado.estoque_localizacao || 0;
-      Alert.alert(
-        'Estoque insuficiente',
-        `Você bipou ${bipados}x o produto "${produtoEstourado.descricao}", mas a gaveta só tem ${disponivel}.`
-      );
-      return;
-    }
-
-    setMostrarConfirmacao(true);
-  };
-
   const handleConfirmar = async () => {
     setMostrarConfirmacao(false);
     try {
       const payload = {
         tipo,
         usuario_id: 1,
-        localizacao_origem_id: tipo === 'saida' ? localizacaoId : 0,
-        localizacao_destino_id: tipo === 'entrada' ? localizacaoId : 0,
+        localizacao_origem_id: tipo === 'saida' ? localizacao_id : 0,
+        localizacao_destino_id: tipo === 'entrada' ? localizacao_id : 0,
         itens_movimentacao: produtos.map((p) => ({
           produto_id: Number(p.produto_id),
           quantidade: Number(p.quantidade),
@@ -150,22 +100,17 @@ export default function Movimentacao() {
       };
       await enviarMovimentacao(payload);
       Alert.alert('Movimentação salva com sucesso');
-      limparTudo();
+      setProdutos([]);
+      setlocalizacao_id(null);
+      setEanLocalizacao('');
+      setNomeLocalizacao('');
+      setEanProduto('');
+      setTimeout(() => {
+        localizacaoRef.current?.focus();
+      }, 100);
     } catch {
       Alert.alert('Erro ao salvar movimentação');
     }
-  };
-
-  const limparTudo = () => {
-    setProdutos([]);
-    setLocalizacaoId(null);
-    setNomeLocalizacao('');
-    setEanLocalizacao('');
-    setEanProduto('');
-    setTipoBloqueado(false);
-    setTimeout(() => {
-      localizacaoRef.current?.focus();
-    }, 100);
   };
 
   return (
@@ -179,18 +124,22 @@ export default function Movimentacao() {
             <Text style={[styles.title]}>Movimentação - {tipo.toUpperCase()}</Text>
             <View style={styles.toggleContainer}>
               <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'entrada' && styles.active, { marginTop: 20 }]}
+                style={[styles.toggleBtn, tipo === 'entrada' && styles.active, {marginTop:20}]}
                 onPress={() => handleTipoChange('entrada')}
                 disabled={tipoBloqueado}
               >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>ENTRADA</Text>
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  ENTRADA
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'saida' && styles.active, { marginTop: 20 }]}
+                style={[styles.toggleBtn, tipo === 'saida' && styles.active, {marginTop:20}]}
                 onPress={() => handleTipoChange('saida')}
                 disabled={tipoBloqueado}
               >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>SAÍDA</Text>
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  SAÍDA
+                </Text>
               </TouchableOpacity>
             </View>
             {!localizacaoId && (
@@ -238,7 +187,6 @@ export default function Movimentacao() {
             />
             <Text style={styles.totalSKU}>Total: {produtos.length} SKU</Text>
             <FlatList
-              ref={flatListRef}
               data={produtos}
               keyExtractor={(_, index) => index.toString()}
               style={{ marginTop: 4, marginBottom: 60 }}
@@ -246,7 +194,11 @@ export default function Movimentacao() {
                 <View style={styles.produtoItem}>
                   <Text style={styles.contador}>{index + 1}</Text>
                   <Image
-                    source={item.url_foto ? { uri: item.url_foto } : require('../../assets/images/no-image.png')}
+                    source={
+                      item.url_foto
+                        ? { uri: item.url_foto }
+                        : require('../../assets/images/no-image.png')
+                    }
                     style={styles.foto}
                   />
                   <View style={{ flex: 1 }}>
@@ -257,7 +209,7 @@ export default function Movimentacao() {
               )}
             />
             <View style={styles.botoesFixos}>
-              <TouchableOpacity style={styles.btnSalvar} onPress={verificarEstoqueAntesDeConfirmar}>
+              <TouchableOpacity style={styles.btnSalvar} onPress={() => setMostrarConfirmacao(true)}>
                 <Text style={styles.salvarText}>Salvar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnCancelar} onPress={() => setMostrarCancelar(true)}>
@@ -267,28 +219,53 @@ export default function Movimentacao() {
           </>
         )}
 
-        {/* Modal Confirmar */}
-        <Modal transparent visible={mostrarConfirmacao} animationType="fade">
-          <View style={styles.overlay}>
-            <View style={styles.modalBox}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Confirmação</Text>
-                <TouchableOpacity onPress={() => setMostrarConfirmacao(false)}>
-                  <Text style={styles.modalClose}>×</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.modalContent}>
-                <Text style={styles.alertIcon}>❗</Text>
-                <Text style={styles.modalMessage}>
-                  Confirma a {tipo === 'entrada' ? 'Entrada' : 'Saída'} de {produtos.length} SKU?
-                </Text>
-                <TouchableOpacity style={styles.btnConfirmar} onPress={handleConfirmar}>
-                  <Text style={styles.confirmarText}>Confirmar</Text>
-                </TouchableOpacity>
-              </View>
+      <TextInput
+        ref={localizacaoRef}
+        value={eanLocalizacao}
+        onChangeText={setEanLocalizacao}
+        onSubmitEditing={handleBuscarLocalizacao}
+        placeholder="EAN da Localização"
+        style={styles.input}
+        keyboardType="numeric"
+        showSoftInputOnFocus={false}
+      />
+      {nomeLocalizacao !== '' && (
+        <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
+      )}
+
+      <TextInput
+        ref={produtoRef}
+        value={eanProduto}
+        onChangeText={setEanProduto}
+        onSubmitEditing={handleAdicionarProduto}
+        placeholder="EAN do Produto"
+        style={styles.input}
+        keyboardType="numeric"
+        showSoftInputOnFocus={false}
+      />
+
+      <FlatList
+        data={produtos}
+        keyExtractor={(_, index) => index.toString()}
+        style={{ marginTop: 10 }}
+        renderItem={({ item }) => (
+          <View style={styles.produtoItem}>
+            <Image
+              source={
+                item.url_foto
+                  ? { uri: item.url_foto }
+                  : require('../../assets/images/no-image.png')
+                // Imagem padrão se nula
+              }
+              style={styles.foto}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.produtoNome}>{item.descricao}</Text>
+              <Text style={styles.produtoSKU}>SKU: {item.sku}</Text>
             </View>
           </View>
-        </Modal>
+        )}
+      />
 
         {/* Modal Cancelar */}
         <Modal transparent visible={mostrarCancelar} animationType="fade">
@@ -302,14 +279,13 @@ export default function Movimentacao() {
               </View>
               <View style={styles.modalContent}>
                 <Text style={styles.alertIcon}>⚠️</Text>
-                <Text style={styles.modalMessage}>Deseja realmente cancelar a {tipo}?</Text>
-                <TouchableOpacity
-                  style={styles.btnConfirmar}
-                  onPress={() => {
-                    setMostrarCancelar(false);
-                    limparTudo();
-                  }}
-                >
+                <Text style={styles.modalMessage}>
+                  Deseja realmente cancelar a {tipo}?
+                </Text>
+                <TouchableOpacity style={styles.btnConfirmar} onPress={() => {
+                  setMostrarCancelar(false);
+                  limparTudo();
+                }}>
                   <Text style={styles.confirmarText}>Sim, Cancelar</Text>
                 </TouchableOpacity>
               </View>
@@ -320,6 +296,7 @@ export default function Movimentacao() {
     </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
@@ -335,7 +312,6 @@ const styles = StyleSheet.create({
   },
   active: { backgroundColor: '#4CAF50' },
   toggleText: { color: '#fff', fontWeight: 'bold' },
-  disabledText: { opacity: 0.5 },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -347,10 +323,8 @@ const styles = StyleSheet.create({
   localizacaoInfo: {
     fontWeight: 'bold',
     color: '#4CAF50',
-    backgroundColor: '#eee',
-    padding: 6,
-    borderRadius: 4,
     marginBottom: 6,
+    marginTop: -2,
   },
   produtoItem: {
     flexDirection: 'row',
@@ -360,12 +334,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#eee',
   },
-  contador: {
-    fontWeight: 'bold',
-    width: 20,
-    marginRight: 6,
-    textAlign: 'center',
-  },
   foto: {
     width: 40,
     height: 40,
@@ -373,62 +341,21 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#f0f0f0',
   },
-  produtoNome: { fontSize: 16, fontWeight: '600', color: '#333' },
-  produtoSKU: { fontSize: 12, color: '#888' },
-  totalSKU: {
-    textAlign: 'right',
-    marginTop: 10,
-    fontWeight: 'bold',
-    color: '#555',
+  produtoNome: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
-  botoesFixos: {
-    position: 'absolute',
-    bottom: 10,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  produtoSKU: {
+    fontSize: 12,
+    color: '#888',
   },
   btnSalvar: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 14,
-    flex: 1,
-    marginRight: 8,
-    borderRadius: 6,
+    padding: 16,
     alignItems: 'center',
-  },
-  btnCancelar: {
-    borderColor: '#4CAF50',
-    borderWidth: 2,
-    paddingVertical: 14,
-    flex: 1,
-    marginLeft: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  salvarText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  cancelarText: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: '#000000aa',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    backgroundColor: '#fff',
-    width: '80%',
     borderRadius: 8,
-    overflow: 'hidden',
-    borderColor: '#4CAF50',
-    borderWidth: 1,
+    marginTop: 20,
   },
   modalHeader: {
     backgroundColor: '#4CAF50',

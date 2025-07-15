@@ -332,7 +332,7 @@ const Movimentacao: React.FC = () => {
 
   const handleConfirmarOperacao = async () => {
     try {
-      const usuarioId = 1;
+      const usuario_id = 1;
 
       // Verificação básica
       if (tipo === 'transferencia') {
@@ -388,7 +388,7 @@ const Movimentacao: React.FC = () => {
 
       const payload: any = {
         tipo,
-        usuario_id: usuarioId,
+        usuario_id: usuario_id,
         itens_movimentacao: itensValidos,
         localizacao_origem_id: tipo === 'entrada' ? 0 : origem?.id ?? null,
         localizacao_destino_id:
@@ -443,13 +443,13 @@ const Movimentacao: React.FC = () => {
   // ---------- UI ----------
   return (
     <Layout>
-      <Box sx={{ width: '100%', maxWidth: '1280px' }}>
+      <Box sx={{ width: '100%' }}>
         <Typography variant="h4" fontWeight={600} mb={4}>
           {tipo === 'transferencia' ? 'Transferência de Estoque' : 'Movimentação de Estoque'}
         </Typography>
 
         {/* Seção de campos */}
-        <Box display="flex" flexDirection="column" gap={3} mb={5}>
+        <Box display="flex" flexDirection="column" gap={2} mb={5}>
           {/* Tipo */}
           <FormControl fullWidth size="small">
             <InputLabel id="tipo-label">Tipo</InputLabel>
@@ -709,7 +709,6 @@ const Movimentacao: React.FC = () => {
                     border: '2px solid #61de27',
                     borderRadius: 2,
                     padding: 2,
-                    mt: 1,
                     fontWeight: 500,
                   }}
                 >
@@ -810,7 +809,7 @@ const Movimentacao: React.FC = () => {
                             onChange={(e) => handleSelectItem(index, e.target.checked)}
                           />
                         </TableCell>
-                        <TableCell>{item.contador}</TableCell>
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>{item.descricao}</TableCell>
                         <TableCell>{item.sku}</TableCell>
                         <TableCell>{item.ean}</TableCell>
@@ -819,11 +818,11 @@ const Movimentacao: React.FC = () => {
 
                     {tipo !== 'transferencia' && (
                       <TableCell align="center">
-                        <Tooltip title="Editar">
+                        {/* <Tooltip title="Editar">
                           <IconButton onClick={() => handleEditar(item)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
-                        </Tooltip>
+                        </Tooltip> */}
                         <Tooltip title="Excluir">
                           <IconButton onClick={() => handleExcluir(index)}>
                             <DeleteIcon fontSize="small" />
@@ -839,7 +838,7 @@ const Movimentacao: React.FC = () => {
         </Paper>
 
         {/* Botões */}
-        <Box display="flex" justifyContent="flex-start" gap={4} mt={6} mb={4}>
+        <Box display="flex" justifyContent="flex-start" gap={2} mt={6} mb={4}>
           <Button
             variant="contained"
             sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold', px: 4 }}
