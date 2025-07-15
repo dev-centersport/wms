@@ -27,6 +27,8 @@ interface OcorrenciaItem {
   id: number;
   localizacao: string;
   produto: string;
+  sku: string;
+  quantidade: string;
   status: 'pendente' | 'concluido';
 }
 
@@ -129,8 +131,10 @@ export default function Ocorrencias() {
                 />
               </TableCell>
               <TableCell>Localização</TableCell>
-              <TableCell>SKU</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>Nome do Produto</TableCell>
+              <TableCell align='center'>SKU</TableCell>
+              <TableCell align='center'>Quantidade de Ocorrências</TableCell>
+              <TableCell align='center'>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -144,7 +148,9 @@ export default function Ocorrencias() {
                 </TableCell>
                 <TableCell>{item.localizacao}</TableCell>
                 <TableCell>{item.produto}</TableCell>
-                <TableCell>
+                <TableCell align='center'>{item.sku}</TableCell>
+                <TableCell align='center'>{item.quantidade}</TableCell>
+                <TableCell align='center'>
                   <Chip
                     label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}
                     size="small"

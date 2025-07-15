@@ -503,7 +503,8 @@ export async function buscarOcorrencias(status?: 'pendente' | 'concluido') {
     return res.data.map((o: any) => ({
       ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
       localizacao: o.localizacao || '-',
-      produto: o.produto?.sku || '-',
+      produto: o.nome_produto || '-',
+      sku: o.sku || '-',
       quantidade: o.quantidade || '-',
       status: o.status || 'pendente',
     }));
