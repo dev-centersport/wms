@@ -109,7 +109,7 @@ const CriarArmazem: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <Layout show={false}>
       <Container>
         <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
           Criar Armazém
