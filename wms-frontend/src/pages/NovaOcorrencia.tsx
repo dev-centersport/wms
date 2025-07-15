@@ -6,6 +6,7 @@ import {
   Typography,
   InputAdornment,
   Container,
+  Divider,
 } from '@mui/material';
 import { Save, Cancel } from '@mui/icons-material';
 import Layout from '../components/Layout';
@@ -136,25 +137,43 @@ export default function Ocorrencia() {
             InputProps={{ readOnly: true }}
           />
         </Box>
+        
+        <Divider sx={{ mt: 20, mb: 3 }} />
 
-        <Box display="flex" gap={2} mt={4}>
+        <Box 
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 2,
+          }}
+        >
           <Button
             variant="contained"
             color="success"
-            startIcon={<Save />}
             onClick={handleSalvar}
             disabled={carregando}
+            sx={{
+              backgroundColor: '#59e60d',
+              color: '#000',
+              fontWeight: 'bold',
+              px: 6,
+              '&:hover': { backgroundColor: '#48c307' },
+            }}
           >
-            {carregando ? 'Salvando...' : 'Salvar'}
+            {carregando ? 'SALVANDO...' : 'SALVAR'}
           </Button>
 
           <Button
-            variant="contained"
-            color="inherit"
-            startIcon={<Cancel />}
+            variant="outlined"
             onClick={() => navigate('/Ocorrencias')}
+            sx={{
+              backgroundColor: '#f2f2f2',
+              fontWeight: 'bold',
+              color: '#333',
+              px: 6,
+            }}
           >
-            Cancelar
+            CANCELAR
           </Button>
         </Box>
       </Container>
