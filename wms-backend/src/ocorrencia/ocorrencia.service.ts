@@ -38,7 +38,6 @@ export class OcorrenciaService {
     }[]
   > {
     const ocorrencias = await this.ocorrenciaRepository.find({
-      where: { ativo: true },
       relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
     });
 
