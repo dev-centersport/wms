@@ -19,9 +19,8 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/7c70b2ce-33f0-4e1c-beb5-67312ef48ebc"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
