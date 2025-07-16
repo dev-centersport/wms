@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -28,9 +28,28 @@ export default function Ocorrencia() {
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
   const navigation = useNavigation();
   const inputRef = useRef(null);
+  const localizacaoRef = useRef(null);
+  const skuRef = useRef(null);
 
   const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
   const [skuBloqueado, setSkuBloqueado] = useState(true);
+
+  useEffect(() => {
+    if (!localizacaoBloqueada && localizacaoRef.current) {
+      setTimeout(() => {
+        localizacaoRef.current.focus();
+      }, 300);
+    }
+  }, [localizacaoBloqueada]);
+
+  useEffect(() => {
+    if (localizacaoBloqueada && skuRef.current) {
+      setTimeout(() => {
+        skuRef.current.focus();
+      }, 300);
+    }
+  }, [localizacaoBloqueada]);
+
 
   const handleBuscarLocalizacao = async () => {
     try {
@@ -38,6 +57,11 @@ export default function Ocorrencia() {
       setNomeLocalizacao(`${res.nome} - ${res.armazem}`);
       setLocalizacaoBloqueada(true);
       setSkuBloqueado(false);
+
+      if (skuRef.current) {
+        skuRef.current.focus();
+      }
+
     } catch (err) {
       setNomeLocalizacao('');
       Alert.alert('Erro', 'Localização não encontrada.');
@@ -82,6 +106,9 @@ export default function Ocorrencia() {
       Alert.alert('Erro', err.message || 'Erro ao registrar ocorrência.');
     } finally {
       setMostrarConfirmacao(false);
+      setTimeout(() => {
+        limparTudo();
+      }, 300); // espera o modal desaparecer
     }
   };
 
@@ -92,6 +119,13 @@ export default function Ocorrencia() {
     setNomeLocalizacao('');
     setLocalizacaoBloqueada(false);
     setSkuBloqueado(true);
+
+    // Aguarda atualização do estado e aplica o foco manualmente
+    setTimeout(() => {
+      if (localizacaoRef.current) {
+        localizacaoRef.current.focus();
+      }
+    }, 500); // tempo suficiente para o modal desaparecer e o input reaparecer
   };
 
   return (
@@ -119,12 +153,14 @@ export default function Ocorrencia() {
         <Text style={styles.label}>Localização</Text>
         {!localizacaoBloqueada ? (
           <TextInput
+            ref={localizacaoRef}
             style={styles.input}
             value={localizacao}
             onChangeText={setLocalizacao}
             onBlur={handleBuscarLocalizacao}
             placeholder="Bipe a localização"
             keyboardType="numeric"
+            importantForAccessibility="yes"
           />
         ) : (
           <View style={styles.readOnlyBox}>
@@ -138,13 +174,14 @@ export default function Ocorrencia() {
             <Text style={styles.label}>Produto</Text>
             {!skuBloqueado ? (
               <TextInput
+                ref={skuRef}
                 style={styles.input}
                 value={sku}
                 onChangeText={setSku}
                 onBlur={handleBuscarQuantidade}
                 placeholder="Bipe o SKU ou EAN"
                 keyboardType="numeric"
-                ref={inputRef}
+                importantForAccessibility="yes"
               />
             ) : (
               <View style={styles.readOnlyBox}>
@@ -217,7 +254,9 @@ export default function Ocorrencia() {
                 style={styles.btnConfirmar}
                 onPress={() => {
                   setMostrarCancelar(false);
-                  limparTudo();
+                  setTimeout(() => {
+                    limparTudo();
+                  }, 300); // espera o modal desaparecer
                 }}
               >
                 <Text style={styles.confirmarText}>Sim, Cancelar</Text>

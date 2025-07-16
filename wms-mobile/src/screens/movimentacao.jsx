@@ -224,7 +224,7 @@ export default function Movimentacao() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.toggleContainer}>
+          <View style={[styles.toggleContainer, {marginTop: 20}]}>
             <TouchableOpacity
               style={[styles.toggleBtn, tipo === 'entrada' && styles.active]}
               onPress={() => handleTipoChange('entrada')}
