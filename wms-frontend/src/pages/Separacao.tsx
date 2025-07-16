@@ -1,166 +1,348 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Box,
-  Button,
-  Checkbox,
-  IconButton,
-  Input,
-  MenuItem,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
+  Box, Button, MenuItem, Typography, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, TextField, IconButton, Tooltip,
+  Checkbox
 } from '@mui/material';
-import { CloudUpload, Print, Cancel } from '@mui/icons-material';
+import { CloudUpload, Print, Close } from '@mui/icons-material';
+import * as XLSX from 'xlsx';
+import PrintPorPedido from '../components/PrintPorPedido';
+import PrintPorLocalizacao from '../components/PrintPorLocalizacao';
+import axios from 'axios';
 
-import Layout from '../components/Layout';
-import { buscarArmazem, buscarConsultaEstoque } from '../services/API';
-
-interface ProdutoSeparacao {
-  produto_id: number;
-  descricao: string;
-  sku: string;
-  ean: string;
-  armazem: string;
+interface ProdutoPlanilha {
+  [key: string]: string | number;
 }
 
-export default function Separacao() {
-  const [armazens, setArmazens] = useState<{ armazem_id: number; nome: string }[]>([]);
-  const [armazemSelecionado, setArmazemSelecionado] = useState('');
-  const [produtos, setProdutos] = useState<ProdutoSeparacao[]>([]);
-  const [selecionados, setSelecionados] = useState<number[]>([]);
-  const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
+const ENDPOINT_PEDIDO = 'http://localhost:3001/separacao/agrupado-pedido';
+const ENDPOINT_SKU = 'http://localhost:3001/separacao/agrupado-sku';
 
-  useEffect(() => {
-    async function carregarArmazens() {
-      const lista = await buscarArmazem();
-      setArmazens(lista);
-    }
-    carregarArmazens();
-  }, []);
+const armazensExemplo = [
+  { armazem_id: 1, nome: 'Dib Jorge' },
+  { armazem_id: 2, nome: 'Central' },
+];
 
-  const handleBuscarProdutos = async () => {
-    const consulta = await buscarConsultaEstoque();
-    const filtrados = consulta.filter((p: ProdutoSeparacao) => p.armazem === armazemSelecionado);
-    setProdutos(filtrados);
+// Hook personalizado para impressão - CORRIGIDO
+const usePrint = () => {
+  const handlePrint = (contentRef: React.RefObject<HTMLDivElement>) => {
+    if (!contentRef.current) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printStyles = `
+      <style>
+        @media print {
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 10px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #f2f2f2 !important;
+          }
+          @page {
+            size: auto;
+            margin: 5mm;
+          }
+        }
+      </style>
+    `;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Documento para Impressão</title>
+          ${printStyles}
+        </head>
+        <body>
+          ${contentRef.current.innerHTML}
+          <script>
+            setTimeout(function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              };
+            }, 200);
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
-  const toggleSelecionado = (id: number) => {
-    setSelecionados((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+  return handlePrint;
+};
+
+export default function Separacao() {
+  const [produtos, setProdutos] = useState<ProdutoPlanilha[]>([]);
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [armazem, setArmazem] = useState('');
+  const [armazemId, setArmazemId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [printTipo, setPrintTipo] = useState<'pedido' | 'localizacao' | null>(null);
+  const [dadosImpressao, setDadosImpressao] = useState<any>(null);
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  
+  const printRef = useRef<HTMLDivElement>(null);  // Remova a união com null aqui
+  const handlePrint = usePrint();
+
+  // Leitura do XLS para exibir tabela
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setArquivo(file);
+    
+    const reader = new FileReader();
+    reader.onload = (evt: any) => {
+      const bstr = evt.target.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      setProdutos(data as ProdutoPlanilha[]);
+      setSelectedItems([]);
+      setSelectAll(false);
+    };
+    reader.readAsBinaryString(file);
+  };
+  
+  // Seleção do armazém
+  const handleArmazemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nome = e.target.value;
+    setArmazem(nome);
+    const found = armazensExemplo.find(a => a.nome === nome);
+    setArmazemId(found?.armazem_id || null);
+  };
+  
+  // Seleção de itens na tabela
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    setSelectedItems(checked ? [...Array(produtos.length).keys()] : []);
+  };
+
+  const handleSelectItem = (index: number, checked: boolean) => {
+    setSelectedItems(prev => 
+      checked ? [...prev, index] : prev.filter(i => i !== index)
     );
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const todosIds = produtos.map((p) => p.produto_id);
-      setSelecionados(todosIds);
-    } else {
-      setSelecionados([]);
+  // Função para imprimir a separação
+  const handleImprimirSeparacao = () => {
+    if (!produtos.length) {
+      alert('Nenhum produto carregado.');
+      return;
+    }
+    
+    const produtosParaImprimir = selectedItems.length > 0 
+      ? selectedItems.map(index => produtos[index]) 
+      : produtos;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const dataAtual = new Date().toLocaleString('pt-BR');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Separação de Produtos</title>
+        <style>
+          @media print {
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+            }
+            .header { margin-bottom: 24px; }
+            .header h2 { margin: 0; }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+              margin: 0 auto;
+              font-size: 15px;
+            }
+            th, td {
+              border: 1px solid #888;
+              padding: 6px 12px;
+              text-align: left;
+            }
+            th {
+              background: #f0f0f0 !important;
+            }
+            @page {
+              size: auto;
+              margin: 5mm;
+            }
+          }
+          body { font-family: Arial, sans-serif; margin: 18px; }
+          .header { margin-bottom: 24px; }
+          .header h2 { margin: 0; }
+          .info { margin: 8px 0 20px 0; font-size: 14px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>Separação de Produtos</h2>
+          <div class="info">
+            Armazém: <b>${armazem || '-'}</b> <br/>
+            Data: ${dataAtual}
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              ${produtosParaImprimir.length > 0 ? Object.keys(produtosParaImprimir[0]).map(key => `<th>${key}</th>`).join('') : ''}
+            </tr>
+          </thead>
+          <tbody>
+            ${produtosParaImprimir.map(prod => `
+              <tr>
+                ${Object.values(prod).map(val => `<td>${val}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <script>
+          setTimeout(function() {
+            window.print();
+            window.onafterprint = function() { window.close(); }
+          }, 200);
+        </script>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
+  // Requisição para endpoints de impressão
+  const handleImprimir = async (tipo: 'pedido' | 'localizacao') => {
+    if (!arquivo || !armazemId) {
+      alert('Selecione o armazém e faça upload do arquivo.');
+      return;
+    }
+    setLoading(true);
+    setPrintTipo(null);
+    setDadosImpressao(null);
+    
+    const form = new FormData();
+    form.append('arquivo', arquivo);
+    form.append('armazemPrioritarioId', String(armazemId));
+    
+    try {
+      const url = tipo === 'pedido' ? ENDPOINT_PEDIDO : ENDPOINT_SKU;
+      const { data } = await axios.post(url, form);
+      setDadosImpressao(data);
+      setPrintTipo(tipo);
+    } catch (err) {
+      alert('Erro ao gerar dados para impressão.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setArquivoSelecionado(file);
-    }
+  // Limpar seleção
+  const handleLimparSelecao = () => {
+    setSelectedItems([]);
+    setSelectAll(false);
   };
 
   return (
-    <Layout>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+    <Box sx={{ p: 4, maxWidth: 1100, mx: 'auto' }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
         Separação de Produtos
       </Typography>
 
       <Box display="flex" alignItems="center" gap={2} mb={3} flexWrap="wrap">
-        {/* Upload Planilha */}
-        <Box display="flex" alignItems="center" gap={2}>
-  <Button
-    variant="contained"
-    component="label"
-    startIcon={<CloudUpload />}
-    sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
-  >
-    Selecionar Arquivo
-    <input type="file" hidden onChange={handleUpload} />
-  </Button>
-
-  {arquivoSelecionado && (
-    <Typography variant="body2" color="textSecondary">
-      {arquivoSelecionado.name}
-    </Typography>
-  )}
-</Box>
-
-
-        {/* Armazém Dropdown */}
+        <Button
+          variant="contained"
+          component="label"
+          startIcon={<CloudUpload />}
+          sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
+        >
+          Selecionar Arquivo
+          <input type="file" hidden onChange={handleUpload} accept=".xls,.xlsx" />
+        </Button>
+        {arquivo && (
+          <Typography variant="body2">{arquivo.name}</Typography>
+        )}
         <TextField
           select
           label="Escolha o Armazém"
-          value={armazemSelecionado}
-          onChange={(e) => setArmazemSelecionado(e.target.value)}
+          value={armazem}
+          onChange={handleArmazemChange}
           sx={{ minWidth: 220 }}
           size="small"
         >
           <MenuItem value="">-- Armazém --</MenuItem>
-          {armazens.map((a) => (
+          {armazensExemplo.map((a) => (
             <MenuItem key={a.armazem_id} value={a.nome}>
               {a.nome}
             </MenuItem>
           ))}
         </TextField>
 
-        <Button
-          variant="contained"
-          sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
-          onClick={handleBuscarProdutos}
-        >
-          Enviar
-        </Button>
+        {selectedItems.length > 0 && (
+          <Tooltip title="Limpar seleção">
+            <Button
+              variant="outlined"
+              onClick={handleLimparSelecao}
+              sx={{ ml: 1 }}
+            >
+              Limpar Seleção
+            </Button>
+          </Tooltip>
+        )}
       </Box>
 
-      {/* Tabela de produtos */}
-      <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 600, overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 450, overflow: 'auto', mb: 3 }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox">
                 <Checkbox
-                  checked={selecionados.length === produtos.length && produtos.length > 0}
-                  indeterminate={selecionados.length > 0 && selecionados.length < produtos.length}
+                  checked={selectAll}
+                  indeterminate={selectedItems.length > 0 && !selectAll}
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>SKU</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>EAN</TableCell>
+              {produtos.length > 0 &&
+                Object.keys(produtos[0]).map(col => (
+                  <TableCell key={col} sx={{ fontWeight: 600 }}>{col}</TableCell>
+                ))}
             </TableRow>
           </TableHead>
           <TableBody>
             {produtos.length > 0 ? (
-              produtos.map((p) => (
-                <TableRow key={p.produto_id} hover>
+              produtos.map((p, idx) => (
+                <TableRow key={idx} selected={selectedItems.includes(idx)}>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selecionados.includes(p.produto_id)}
-                      onChange={() => toggleSelecionado(p.produto_id)}
+                      checked={selectedItems.includes(idx)}
+                      onChange={(e) => handleSelectItem(idx, e.target.checked)}
                     />
                   </TableCell>
-                  <TableCell>{p.descricao}</TableCell>
-                  <TableCell>{p.sku}</TableCell>
-                  <TableCell>{p.ean}</TableCell>
+                  {Object.values(p).map((val, i) => (
+                    <TableCell key={i}>{val}</TableCell>
+                  ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                  Nenhum produto para separação.
+                <TableCell colSpan={produtos[0] ? Object.keys(produtos[0]).length + 1 : 1} align="center">
+                  Nenhum produto carregado.
                 </TableCell>
               </TableRow>
             )}
@@ -168,18 +350,67 @@ export default function Separacao() {
         </Table>
       </TableContainer>
 
-      {/* Ações de rodapé */}
-      <Box display="flex" justifyContent="flex-start" mt={3} gap={2} flexWrap="wrap">
-        <Button variant="contained" color="success" startIcon={<Print />}>
+      <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<Print />}
+          onClick={() => handleImprimir('pedido')}
+          disabled={loading || produtos.length === 0}
+          sx={{ fontWeight: 'bold' }}
+        >
           Imprimir por Pedido
         </Button>
-        <Button variant="contained" color="success" startIcon={<Print />}>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<Print />}
+          onClick={() => handleImprimir('localizacao')}
+          disabled={loading || produtos.length === 0}
+          sx={{ fontWeight: 'bold' }}
+        >
           Imprimir por Localização
         </Button>
-        <Button variant="contained" color="inherit" startIcon={<Cancel />}>
-          Cancelar
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Print />}
+          onClick={handleImprimirSeparacao}
+          disabled={produtos.length === 0}
+          sx={{ fontWeight: 'bold' }}
+        >
+          {selectedItems.length > 0 ? 'Imprimir Selecionados' : 'Imprimir Separação'}
         </Button>
       </Box>
-    </Layout>
+
+      {/* Bloco de impressão */}
+      {printTipo && dadosImpressao && (
+        <Paper sx={{ p: 3, position: 'relative', mt: 3 }}>
+          <IconButton
+            onClick={() => setPrintTipo(null)}
+            sx={{ position: 'absolute', right: 12, top: 12 }}
+          >
+            <Close />
+          </IconButton>
+          
+          <Button 
+            variant="outlined" 
+            startIcon={<Print />}
+            onClick={() => handlePrint(printRef)}
+            sx={{ mb: 2 }}
+          >
+            Imprimir esta seção
+          </Button>
+          
+          <div ref={printRef}>
+            {printTipo === 'pedido' ? (
+              <PrintPorPedido data={dadosImpressao} />
+            ) : (
+              <PrintPorLocalizacao data={dadosImpressao} />
+            )}
+          </div>
+        </Paper>
+      )}
+    </Box>
   );
 }

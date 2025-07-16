@@ -151,39 +151,54 @@ export default function Ocorrencias() {
                 <TableCell>{item.produto}</TableCell>
                 <TableCell align='center'>{item.sku}</TableCell>
                 <TableCell align='center'>{item.quantidade}</TableCell>
-                <TableCell align='center'>
-                  {item.quantidade >= 1 && item.quantidade < 3 && (
-                    <Chip
-                      label="Baixa"
-                      size="medium"
-                      sx={{
-                        backgroundColor: '#4CAF50', // Verde para baixa prioridade
-                        color: '#fff',
-                        fontWeight: 600,
-                        px: 2
-                      }}
-                    />
-                  )}
+                <TableCell align="center">
+                  {item.ativo ? (
+                    <>
+                      {item.quantidade >= 1 && item.quantidade < 3 && (
+                        <Chip
+                          label="Baixa"
+                          size="medium"
+                          sx={{
+                            backgroundColor: '#4CAF50',
+                            color: '#fff',
+                            fontWeight: 600,
+                            px: 2
+                          }}
+                        />
+                      )}
 
-                  {item.quantidade >= 3 && item.quantidade < 5 && (
-                    <Chip
-                      label="Média"
-                      size="medium"
-                      sx={{
-                        backgroundColor: '#FF9800', // Laranja para média prioridade
-                        color: '#000',
-                        fontWeight: 600,
-                        px: 2
-                      }}
-                    />
-                  )}
+                      {item.quantidade >= 3 && item.quantidade < 5 && (
+                        <Chip
+                          label="Média"
+                          size="medium"
+                          sx={{
+                            backgroundColor: '#FF9800',
+                            color: '#000',
+                            fontWeight: 600,
+                            px: 2
+                          }}
+                        />
+                      )}
 
-                  {item.quantidade >= 5 && (
+                      {item.quantidade >= 5 && (
+                        <Chip
+                          label="Alta"
+                          size="medium"
+                          sx={{
+                            backgroundColor: '#F44336',
+                            color: '#fff',
+                            fontWeight: 600,
+                            px: 2
+                          }}
+                        />
+                      )}
+                    </>
+                  ) : (
                     <Chip
-                      label="Alta"
+                      label="Feito"
                       size="medium"
                       sx={{
-                        backgroundColor: '#F44336', // Vermelho para alta prioridade
+                        backgroundColor: '#61de27', // cinza
                         color: '#fff',
                         fontWeight: 600,
                         px: 2
