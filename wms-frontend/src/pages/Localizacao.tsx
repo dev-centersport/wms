@@ -31,6 +31,7 @@ import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
+import CarregadorComRetry from '../components/CarregadorComRetry';
 
 type LocalizacaoComQtd = {
   localizacao_id: number;
@@ -805,6 +806,28 @@ const handleImprimirSelecionadosPrateleira = () => {
 
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+          <CarregadorComRetry
+            funcaoCarregamento={async () => {
+              const [locs, estoque] = await Promise.all([
+                buscarLocalizacoes(),
+                buscarConsultaEstoque(),
+              ]);
+
+              const mapa: Record<number, number> = {};
+              estoque.forEach((item: any) => {
+                const id = item.localizacao_id;
+                if (!id) return;
+                mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+              });
+
+              return locs.map((l: any) => ({
+                ...l,
+                total_produtos: mapa[l.localizacao_id] || 0,
+              }));
+            }}
+            aoCarregar={(dados) => setListaLocalizacoes(dados)}
+            onErroFinal={(erro) => console.error('Erro definitivo:', erro)}
+          />
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
