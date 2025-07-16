@@ -59,7 +59,7 @@ const Localizacao: React.FC = () => {
 
         // Adicione no início do componente:
         const [itemsPerPage, setItemsPerPage] = useState<number>(100);
-        const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
+        // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
         const [selectedItems, setSelectedItems] = useState<number[]>([]);
         const [selectAll, setSelectAll] = useState(false);
         const [currentPage, setCurrentPage] = useState(1);
