@@ -19,6 +19,8 @@ import {
   enviarMovimentacao,
   buscarProdutosPorLocalizacaoDireto,
 } from '../api/index';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons'; // certifique-se que este está no topo
 
 export default function Movimentacao() {
   const [tipo, setTipo] = useState('entrada');
@@ -31,6 +33,7 @@ export default function Movimentacao() {
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
   const [produtosNaLocalizacao, setProdutosNaLocalizacao] = useState([]);
+  const navigation = useNavigation();
 
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
@@ -203,21 +206,48 @@ export default function Movimentacao() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {produtos.length === 0 && (
           <>
-            <Text style={[styles.title]}>Movimentação - {tipo.toUpperCase()}</Text>
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>Movimentação - {tipo.toUpperCase()}</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (localizacao_id) {
+                    Alert.alert(
+                      'Movimentação pendente',
+                      `Movimentação do tipo ${tipo.toUpperCase()} está em andamento.\nFinalize ou cancele antes de sair.`
+                    );
+                  } else {
+                    navigation.navigate('Home');
+                  }
+                }}
+              >
+                <Ionicons name="close" size={28} color="#000" />
+              </TouchableOpacity>
+            </View>
             <View style={styles.toggleContainer}>
               <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'entrada' && styles.active, { marginTop: 20 }]}
+                style={[
+                  styles.toggleBtn,
+                  tipo === 'entrada' && styles.active,
+                ]}
                 onPress={() => handleTipoChange('entrada')}
                 disabled={tipoBloqueado}
               >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>ENTRADA</Text>
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  ENTRADA
+                </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'saida' && styles.active, { marginTop: 20 }]}
+                style={[
+                  styles.toggleBtn,
+                  tipo === 'saida' && styles.active,
+                ]}
                 onPress={() => handleTipoChange('saida')}
                 disabled={tipoBloqueado}
               >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>SAÍDA</Text>
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  SAÍDA
+                </Text>
               </TouchableOpacity>
             </View>
             {!localizacao_id && (
@@ -477,4 +507,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   confirmarText: { color: '#fff', fontSize: 16 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+    paddingTop: 40, // importante para alinhar com consulta e ocorrência
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+  },
 });

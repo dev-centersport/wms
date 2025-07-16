@@ -75,9 +75,10 @@ export default function ConsultaScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Consulta</Text>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color="black" />
+          <Ionicons name="close" size={24} color="#000" />
         </TouchableOpacity>
       </View>
+
 
       {/* Input de busca */}
       <View style={styles.searchContainer}>
@@ -278,5 +279,10 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
   },
 });
