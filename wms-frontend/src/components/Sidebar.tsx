@@ -27,7 +27,7 @@ const menuItems = [
   // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
   { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <SpeedIcon />,      path: '/TipoLocalizacao' }, // ⬅️ Novo item
+  { label: 'Tipo de Localização', icon: <SpeedIcon />,      path: '/tipo-localizacao' }, // ⬅️ Novo item
   // { label: 'Produto',             icon: <InventoryIcon />,     path: '/produto' },
   // { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
   // { label: 'Movimentação',        icon: <WorkspacesIcon />,    path: '/movimentacao' },
