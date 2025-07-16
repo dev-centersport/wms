@@ -43,9 +43,6 @@ type LocalizacaoComQtd = {
 
 
 /* -------------------------------------------------------------------------- */
-// Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
-const itemsPerPage = 100;
-/* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
     
@@ -60,6 +57,9 @@ const Localizacao: React.FC = () => {
         const [filtroTipo, setFiltroTipo] = useState<string>('');
         const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
+        // Adicione no início do componente:
+        const [itemsPerPage, setItemsPerPage] = useState<number>(100);
+        // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
         const [selectedItems, setSelectedItems] = useState<number[]>([]);
         const [selectAll, setSelectAll] = useState(false);
         const [currentPage, setCurrentPage] = useState(1);
@@ -543,7 +543,7 @@ const handleImprimirSelecionados = () => {
     };
 
     return (
-        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
