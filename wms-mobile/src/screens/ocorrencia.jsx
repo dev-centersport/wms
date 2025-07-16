@@ -163,6 +163,57 @@ export default function Ocorrencia() {
         </View>
       </ScrollView>
 
+      {/* MODAL CONFIRMAR */}
+      <Modal transparent visible={mostrarConfirmacao} animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Confirmação</Text>
+              <TouchableOpacity onPress={() => setMostrarConfirmacao(false)}>
+                <Text style={styles.modalClose}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalContent}>
+              <Text style={styles.alertIcon}>❗</Text>
+              <Text style={styles.modalMessage}>
+                Confirma registrar a ocorrência com {quantidade || '0'} unidade(s)?
+              </Text>
+              <TouchableOpacity style={styles.btnConfirmar} onPress={confirmarSalvar}>
+                <Text style={styles.confirmarText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL CANCELAR */}
+      <Modal transparent visible={mostrarCancelar} animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Cancelar</Text>
+              <TouchableOpacity onPress={() => setMostrarCancelar(false)}>
+                <Text style={styles.modalClose}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalContent}>
+              <Text style={styles.alertIcon}>⚠️</Text>
+              <Text style={styles.modalMessage}>
+                Deseja realmente cancelar esta ocorrência?
+              </Text>
+              <TouchableOpacity
+                style={styles.btnConfirmar}
+                onPress={() => {
+                  setMostrarCancelar(false);
+                  limparTudo();
+                }}
+              >
+                <Text style={styles.confirmarText}>Sim, Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -191,17 +242,16 @@ const styles = StyleSheet.create({
   modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
   btnConfirmar: { backgroundColor: '#4CAF50', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 8 },
   confirmarText: { color: '#fff', fontSize: 16 },
-  
-  readOnlyBox: {
-  backgroundColor: '#e0e0e0',
-  borderRadius: 6,
-  padding: 12,
-  marginBottom: 10,
-},
-readOnlyText: {
-  fontSize: 16,
-  color: '#333',
-  fontWeight: '600',
-},
 
+  readOnlyBox: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 10,
+  },
+  readOnlyText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '600',
+  },
 });

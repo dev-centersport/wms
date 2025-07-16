@@ -14,11 +14,15 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/index';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const navigation = useNavigation();
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -54,23 +58,36 @@ export default function LoginScreen() {
           <Text style={styles.welcome}>Bem Vindo!</Text>
 
           <Text style={styles.label}>Usuário</Text>
-          <TextInput
-            placeholder="Usuário"
-            value={usuario}
-            onChangeText={setUsuario}
-            style={styles.input}
-            placeholderTextColor="#888"
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Usuário"
+              value={usuario}
+              onChangeText={setUsuario}
+              style={styles.input}
+              placeholderTextColor="#888"
+            />
+            <Icon name="user" size={20} color="#888" style={styles.icon} />
+          </View>
 
           <Text style={styles.label}>Senha</Text>
-          <TextInput
-            placeholder="Senha"
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry
-            style={styles.input}
-            placeholderTextColor="#888"
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Senha"
+              value={senha}
+              onChangeText={setSenha}
+              secureTextEntry={!mostrarSenha}
+              style={styles.input}
+              placeholderTextColor="#888"
+            />
+            <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+              <Icon
+                name={mostrarSenha ? 'eye' : 'eye-slash'}
+                size={20}
+                color="#888"
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity onPress={handleLogin} style={styles.button}>
             <Text style={styles.buttonText}>Entrar</Text>
@@ -151,5 +168,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
     textAlign: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef4ff', // tom suave para fundo do input
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    width: '80%',
+    marginTop: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+  },
+  icon: {
+    fontSize: 20,
+    color: '#000', // Ícone escuro
+    marginLeft: 10,
   },
 });
