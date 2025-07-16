@@ -425,7 +425,7 @@ const handleImprimirSelecionados = () => {
 
           let tamanho = ${fontNome.replace('px', '')};
           if (nome.length > 8)      tamanho = 50;
-          else if (nome.length > 6) tamanho = 90;
+          else if (nome.length > 5) tamanho = 90;
 
           document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
