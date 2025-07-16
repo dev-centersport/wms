@@ -18,9 +18,21 @@ function App() {
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Movimentacao" component={Movimentacao} />
-        <Stack.Screen name="Consulta" component={Consulta} />
-        <Stack.Screen name="Ocorrencia" component={Ocorrencia} />
+        <Stack.Screen
+          name="Movimentacao"
+          component={Movimentacao}
+          options={{ headerShown: false }} // desativa o cabeçalho com seta
+        />
+        <Stack.Screen
+          name="Consulta"
+          component={Consulta}
+          options={{ headerShown: false }} // <- isso desativa a seta e o título automáticos
+        />
+        <Stack.Screen
+          name="Ocorrencia"
+          component={Ocorrencia}
+          options={{ headerShown: false }} // Desativa o cabeçalho automático com seta
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

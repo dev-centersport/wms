@@ -17,6 +17,7 @@ import {
   buscarProdutoEstoquePorLocalizacaoEAN,
   criarOcorrencia,
 } from '../api/index';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Ocorrencia() {
   const [localizacao, setLocalizacao] = useState('');
@@ -25,7 +26,7 @@ export default function Ocorrencia() {
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
-
+  const navigation = useNavigation();
   const inputRef = useRef(null);
 
   const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
@@ -98,8 +99,19 @@ export default function Ocorrencia() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Ocorrência</Text>
-          <TouchableOpacity onPress={() => setMostrarCancelar(true)}>
-            <Text style={styles.headerFechar}>Fechar</Text>
+          <TouchableOpacity
+            onPress={() => {
+              if (localizacaoBloqueada) {
+                Alert.alert(
+                  'Ocorrência pendente',
+                  'Existe uma ocorrência pendente, termine o processo e envie, ou cancele.'
+                );
+              } else {
+                navigation.navigate('Home');
+              }
+            }}
+          >
+            <Ionicons name="close" size={24} color="#000" />
           </TouchableOpacity>
         </View>
 
@@ -163,15 +175,63 @@ export default function Ocorrencia() {
         </View>
       </ScrollView>
 
+      {/* MODAL CONFIRMAR */}
+      <Modal transparent visible={mostrarConfirmacao} animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Confirmação</Text>
+              <TouchableOpacity onPress={() => setMostrarConfirmacao(false)}>
+                <Text style={styles.modalClose}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalContent}>
+              <Text style={styles.alertIcon}>❗</Text>
+              <Text style={styles.modalMessage}>
+                Confirma registrar a ocorrência com {quantidade || '0'} unidade(s)?
+              </Text>
+              <TouchableOpacity style={styles.btnConfirmar} onPress={confirmarSalvar}>
+                <Text style={styles.confirmarText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL CANCELAR */}
+      <Modal transparent visible={mostrarCancelar} animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Cancelar</Text>
+              <TouchableOpacity onPress={() => setMostrarCancelar(false)}>
+                <Text style={styles.modalClose}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalContent}>
+              <Text style={styles.alertIcon}>⚠️</Text>
+              <Text style={styles.modalMessage}>
+                Deseja realmente cancelar esta ocorrência?
+              </Text>
+              <TouchableOpacity
+                style={styles.btnConfirmar}
+                onPress={() => {
+                  setMostrarCancelar(false);
+                  limparTudo();
+                }}
+              >
+                <Text style={styles.confirmarText}>Sim, Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 100, backgroundColor: '#fff', flexGrow: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontWeight: 'bold', fontSize: 18 },
-  headerFechar: { fontWeight: 'bold', color: '#000', fontSize: 14 },
+  container: { padding: 16, paddingBottom: 100, paddingTop: 40, backgroundColor: '#fff', flexGrow: 1 },
   label: { marginTop: 20, marginBottom: 6, fontWeight: '600', fontSize: 14 },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 10, fontSize: 16 },
   skuContainer: { flexDirection: 'row', alignItems: 'center' },
@@ -191,17 +251,26 @@ const styles = StyleSheet.create({
   modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
   btnConfirmar: { backgroundColor: '#4CAF50', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 8 },
   confirmarText: { color: '#fff', fontSize: 16 },
-  
   readOnlyBox: {
-  backgroundColor: '#e0e0e0',
-  borderRadius: 6,
-  padding: 12,
-  marginBottom: 10,
-},
-readOnlyText: {
-  fontSize: 16,
-  color: '#333',
-  fontWeight: '600',
-},
-
+    backgroundColor: '#e0e0e0',
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 10,
+  },
+  readOnlyText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '600',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+  },
 });
