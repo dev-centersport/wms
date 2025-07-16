@@ -30,6 +30,12 @@ interface Armazem {
   nome: string;
 }
 
+const PADRAO_PRATELEIRA = {
+  largura: '30',
+  altura: '90',
+  comprimento: '145',
+};
+
 const CriarLocalizacao: React.FC = () => {
   const navigate = useNavigate();
 
@@ -68,7 +74,23 @@ const CriarLocalizacao: React.FC = () => {
   }, []);
 
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === 'tipo') {
+      if (value.toLowerCase() === 'prateleira') {
+        setFormData((prev) => ({
+          ...prev,
+          tipo: value,
+          ...PADRAO_PRATELEIRA, // autopreenche dimensões
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          tipo: value,
+          // Não altera as dimensões (o usuário pode preencher)
+        }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
     const validarCampos = (): boolean => {
