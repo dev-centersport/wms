@@ -28,15 +28,15 @@ interface OcorrenciaItem {
   localizacao: string;
   produto: string;
   sku: string;
-  quantidade: string;
-  status: 'pendente' | 'concluido';
+  quantidade: number;
+  status: true | false;
 }
 
 const ITEMS_PER_PAGE = 50;
 
 export default function Ocorrencias() {
   const [busca, setBusca] = useState('');
-  const [aba, setAba] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [aba, setAba] = useState<'todos' | true | false>('todos');
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaItem[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -134,6 +134,7 @@ export default function Ocorrencias() {
               <TableCell>Nome do Produto</TableCell>
               <TableCell align='center'>SKU</TableCell>
               <TableCell align='center'>Quantidade de Ocorrências</TableCell>
+              <TableCell align='center'>Prioridade</TableCell>
               <TableCell align='center'>Status</TableCell>
             </TableRow>
           </TableHead>
@@ -151,13 +152,54 @@ export default function Ocorrencias() {
                 <TableCell align='center'>{item.sku}</TableCell>
                 <TableCell align='center'>{item.quantidade}</TableCell>
                 <TableCell align='center'>
+                  {item.quantidade >= 1 && item.quantidade < 3 && (
+                    <Chip
+                      label="Baixa"
+                      size="medium"
+                      sx={{
+                        backgroundColor: '#4CAF50', // Verde para baixa prioridade
+                        color: '#fff',
+                        fontWeight: 600,
+                        px: 2
+                      }}
+                    />
+                  )}
+
+                  {item.quantidade >= 3 && item.quantidade < 5 && (
+                    <Chip
+                      label="Média"
+                      size="medium"
+                      sx={{
+                        backgroundColor: '#FF9800', // Laranja para média prioridade
+                        color: '#000',
+                        fontWeight: 600,
+                        px: 2
+                      }}
+                    />
+                  )}
+
+                  {item.quantidade >= 5 && (
+                    <Chip
+                      label="Alta"
+                      size="medium"
+                      sx={{
+                        backgroundColor: '#F44336', // Vermelho para alta prioridade
+                        color: '#fff',
+                        fontWeight: 600,
+                        px: 2
+                      }}
+                    />
+                  )}
+                </TableCell>
+                <TableCell align='center'>
                   <Chip
                     label={!item.status ? 'Concluído' : 'Pendente'}
                     size="small"
                     sx={{
-                      backgroundColor: !item.status ? '#4CAF50' : '#FFEB3B',
+                      backgroundColor: !item.status ? '#61de27' : '#FFEB3B',
                       color: !item.status ? '#fff' : '#000',
                       fontWeight: 600,
+                      px: 2
                     }}
                   />
                 </TableCell>

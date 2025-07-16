@@ -494,9 +494,9 @@ export async function criarOcorrencia(payload: {
     throw new Error(err?.response?.data?.message || 'Erro ao registrar ocorrência.');
   }
 }
-export async function buscarOcorrencias(status?: 'pendente' | 'concluido') {
+export async function buscarOcorrencias(ativo?: true | false) {
   try {
-    const query = status ? `?status=${status}` : '';
+    const query = ativo ? `?ativo=${ativo}` : '';
     const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
     console.log(res)
 
