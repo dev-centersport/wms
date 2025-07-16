@@ -8,6 +8,10 @@ import {
   Popover,
   TextField,
   Button,
+  MenuItem,
+  Select,
+  Typography,
+  Stack,
 } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -16,17 +20,22 @@ interface CustomPaginationProps {
   totalPages: number;
   currentPage: number;
   show?: boolean;
-  onPageChange: (page: number) => void;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void; // Mantido como obrigatório
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
 }
 
 const CustomPagination: React.FC<CustomPaginationProps> = ({
   totalPages = 1,
   currentPage = 1,
   show = true,
+  itemsPerPage = 100,
   onPageChange,
+  onItemsPerPageChange,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [pageInput, setPageInput] = useState('');
+  const pageSizeOptions = [50, 100, 200, 500];
 
   const popoverOpen = Boolean(anchorEl);
 
@@ -45,55 +54,92 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
     handleClosePopover();
   };
 
+  const handleItemsPerPageChange = (e: any) => {
+    const newSize = Number(e.target.value);
+    if (onItemsPerPageChange) {
+      onItemsPerPageChange(newSize);
+    }
+    // Reset to first page when changing page size
+    onPageChange(1);
+  };
+
   return (
     <Box
       sx={{
-        display: (show) ? "block" : "none",
+        display: show ? "block" : "none",
         position: 'sticky',
         bottom: 0,
         backgroundColor: 'background.paper',
         zIndex: 1,
         borderTop: '1px solid',
-        borderColor: 'divider'
+        borderColor: 'divider',
+        py: 1,
       }}
     >
-      <Divider />
-      <Pagination
-        count={totalPages}
-        page={currentPage}
-        siblingCount={1}
-        boundaryCount={1}
-        onChange={(_, page) => onPageChange(page)}
-        renderItem={(item) => {
-          if (item.type === 'next') {
-            return <PaginationItem {...item} components={{ next: ArrowRightAltIcon }} />;
-          }
-          if (item.type === 'previous') {
-            return null;
-          }
-          if (item.type === 'start-ellipsis' || item.type === 'end-ellipsis') {
+      {/* <Divider /> */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        {/* Paginação */}
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={(_, page) => onPageChange && onPageChange(page)}
+          siblingCount={1}
+          boundaryCount={1}
+          renderItem={(item) => {
+            if (item.type === 'next') {
+              return <PaginationItem {...item} components={{ next: ArrowRightAltIcon }} />;
+            }
+            if (item.type === 'previous') {
+              return null;
+            }
+            if (item.type === 'start-ellipsis' || item.type === 'end-ellipsis') {
+              return (
+                <IconButton onClick={handleOpenPopover}>
+                  <MoreHorizIcon />
+                </IconButton>
+              );
+            }
             return (
-              <IconButton onClick={handleOpenPopover}>
-                <MoreHorizIcon />
-              </IconButton>
+              <PaginationItem
+                {...item}
+                sx={{
+                  fontWeight: item.page === currentPage ? 'bold' : 'normal',
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                  borderRadius: 0,
+                  minWidth: 36,
+                  height: 36,
+                  mx: 0.5,
+                }}
+              />
             );
-          }
-          return (
-            <PaginationItem
-              {...item}
-              sx={{
-                fontWeight: item.page === currentPage ? 'bold' : 'normal',
-                fontFamily: 'monospace',
-                fontSize: 14,
-                borderRadius: 0,
-                minWidth: 36,
-                height: 36,
-                mx: 0.5,
-              }}
-            />
-          );
-        }}
-      />
+          }}
+        />
+
+        {/* Seletor de itens por página */}
+        <Box marginRight={2} sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+          <Typography variant="body2" sx={{ mr: 1 }}>
+            Itens por página:
+          </Typography>
+          <Select
+            value={itemsPerPage}
+            onChange={handleItemsPerPageChange}
+            size="small"
+            sx={{
+              height: 36,
+              '& .MuiSelect-select': {
+                py: 1,
+              },
+            }}
+          >
+            {pageSizeOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+      </Stack>
 
       <Popover
         open={popoverOpen}

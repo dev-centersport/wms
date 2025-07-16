@@ -20,7 +20,9 @@ interface LayoutProps {
   totalPages?: number;
   currentPage?: number;
   show?: boolean;
-  onPageChange?: (page: number) => void;
+  onPageChange?: (page: number) => void; // Tornado opcional
+  itemsPerPage?: number;
+  onItemsPerPageChange?: (size: number) => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -28,51 +30,53 @@ const Layout: React.FC<LayoutProps> = ({
   totalPages = 1,
   currentPage = 1,
   show = true,
-  onPageChange = () => { },
+  onPageChange = () => {}, // Função vazia como padrão
+  itemsPerPage = 50,
+  onItemsPerPageChange,
 }) => {
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [pageInput, setPageInput] = useState('');
+  // const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  // const [pageInput, setPageInput] = useState('');
 
-  const popoverOpen = Boolean(anchorEl);
+  // const popoverOpen = Boolean(anchorEl);
 
-  const handleOpenPopover = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-    setPageInput('');
-  };
+  // const handleOpenPopover = (event: React.MouseEvent<HTMLElement>) => {
+  //   setAnchorEl(event.currentTarget);
+  //   setPageInput('');
+  // };
 
-  const handleClosePopover = () => setAnchorEl(null);
+  // const handleClosePopover = () => setAnchorEl(null);
 
-  const handleGoToPage = () => {
-    const pageNum = Number(pageInput);
-    if (pageNum >= 1 && pageNum <= totalPages) {
-      onPageChange(pageNum);
-    }
-    handleClosePopover();
-  };
+  // const handleGoToPage = () => {
+  //   const pageNum = Number(pageInput);
+  //   if (pageNum >= 1 && pageNum <= totalPages) {
+  //     onPageChange(pageNum);
+  //   }
+  //   handleClosePopover();
+  // };
 
   return (
     <Sidebar>
       <Box sx={{ 
         display: 'flex', 
         minHeight: '100vh', 
-        flexDirection: 'column', // Mude de 'row' para 'column'
-        position: 'relative' // Adicione isso
+        flexDirection: 'column',
+        position: 'relative'
       }}>
-        {/* Conteúdo principal - agora em um container flexível */}
         <Box sx={{ 
           flex: 1, 
           p: 3,
-          overflow: 'auto' // Permite rolagem do conteúdo
+          overflow: 'auto'
         }}>
           {children}
         </Box>
 
-        {/* Footer/Pagination - agora sticky */}
         <CustomPagination
           show={show}
           totalPages={totalPages}
           currentPage={currentPage}
           onPageChange={onPageChange}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={onItemsPerPageChange} // Passando a função para atualizar
         />
       </Box>
     </Sidebar>
