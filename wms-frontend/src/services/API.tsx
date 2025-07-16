@@ -499,6 +499,14 @@ export async function buscarOcorrencias(ativo?: true | false) {
     const query = ativo ? `?ativo=${ativo}` : '';
     const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
     console.log(res)
+    console.log(res.data.map((o: any) => ({
+      ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
+      localizacao: o.localizacao || '-',
+      produto: o.nome_produto || '-',
+      sku: o.sku || '-',
+      quantidade: o.quantidade || '-',
+      ativo: o.ativo,
+    })))
 
     return res.data.map((o: any) => ({
       ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
@@ -506,7 +514,7 @@ export async function buscarOcorrencias(ativo?: true | false) {
       produto: o.nome_produto || '-',
       sku: o.sku || '-',
       quantidade: o.quantidade || '-',
-      status: o.status || true,
+      ativo: o.ativo,
     }));
   } catch (err) {
     console.error('Erro ao buscar ocorrências:', err);

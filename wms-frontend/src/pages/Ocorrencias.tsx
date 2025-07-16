@@ -29,7 +29,7 @@ interface OcorrenciaItem {
   produto: string;
   sku: string;
   quantidade: number;
-  status: true | false;
+  ativo: boolean;
 }
 
 const ITEMS_PER_PAGE = 50;
@@ -193,11 +193,11 @@ export default function Ocorrencias() {
                 </TableCell>
                 <TableCell align='center'>
                   <Chip
-                    label={!item.status ? 'Concluído' : 'Pendente'}
+                    label={!item.ativo ? 'Concluído' : 'Pendente'}
                     size="small"
                     sx={{
-                      backgroundColor: !item.status ? '#61de27' : '#FFEB3B',
-                      color: !item.status ? '#fff' : '#000',
+                      backgroundColor: !item.ativo ? '#61de27' : '#FFEB3B',
+                      color: !item.ativo ? '#fff' : '#000',
                       fontWeight: 600,
                       px: 2
                     }}
