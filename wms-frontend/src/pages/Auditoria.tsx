@@ -32,7 +32,7 @@ const ITEMS_PER_PAGE = 50;
 
 export default function Auditoria() {
   const [busca, setBusca] = useState('');
-  const [aba, setAba] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [aba, setAba] = useState<'todos' | true | false>('todos');
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaItem[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
