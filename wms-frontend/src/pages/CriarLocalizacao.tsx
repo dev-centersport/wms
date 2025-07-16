@@ -96,7 +96,7 @@ const CriarLocalizacao: React.FC = () => {
 
     try {
       await criarLocalizacaoAPI({
-        nome: formData.nome,
+        nome: formData.nome.toUpperCase(),
         status: 'fechada',
         altura: formData.altura === '' ? '0' : String(formData.altura),
         largura: formData.largura === '' ? '0' : String(formData.largura),

@@ -284,7 +284,7 @@ const Localizacao: React.FC = () => {
                 let tamanho   = ${fontNome.replace('px', '')};
 
                 if (texto.length > 8)      tamanho = 50;
-                else if (texto.length > 6) tamanho = 90;
+                else if (texto.length > 5) tamanho = 90;
 
                 nomeEl.style.fontSize = tamanho + 'px';
 
