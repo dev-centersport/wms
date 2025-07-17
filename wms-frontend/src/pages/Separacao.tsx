@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, Paper, TextField, IconButton, Tooltip,
   Checkbox
 } from '@mui/material';
-import { CloudUpload, Print, Close } from '@mui/icons-material';
+import { CloudUpload, Print, Close, Label } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import PrintPorPedido from '../components/PrintPorPedido';
 import PrintPorLocalizacao from '../components/PrintPorLocalizacao';
@@ -23,6 +23,13 @@ const armazensExemplo = [
   { armazem_id: 2, nome: 'Central' },
 ];
 
+const columns = [
+  { key: "Número do pedido", label: "Número do Pedido" },
+  { key: "Descrição", label: "Descrição" },
+  { key: "Quantidade", label: "Quantidade" },
+  { key: "Código (SKU)", label: "Código (SKU)" },
+]
+
 // Hook personalizado para impressão - CORRIGIDO
 const usePrint = () => {
   const handlePrint = (contentRef: React.RefObject<HTMLDivElement>) => {
@@ -36,6 +43,7 @@ const usePrint = () => {
         @media print {
           body { 
             font-family: Arial, sans-serif; 
+            font-size: 1pt !important;
             margin: 10px;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -46,15 +54,16 @@ const usePrint = () => {
           }
           th, td {
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            padding: 4px;
+            text-align: center;
+            font-size: 8pt !important;
           }
           th {
             background-color: #f2f2f2 !important;
           }
           @page {
-            size: auto;
-            margin: 5mm;
+            size: A4;
+            margin: 1cm;
           }
         }
       </style>
@@ -282,7 +291,7 @@ export default function Separacao() {
         {arquivo && (
           <Typography variant="body2">{arquivo.name}</Typography>
         )}
-        <TextField
+        {/* <TextField
           select
           label="Escolha o Armazém"
           value={armazem}
@@ -296,7 +305,7 @@ export default function Separacao() {
               {a.nome}
             </MenuItem>
           ))}
-        </TextField>
+        </TextField> */}
 
         {selectedItems.length > 0 && (
           <Tooltip title="Limpar seleção">
@@ -322,10 +331,9 @@ export default function Separacao() {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </TableCell>
-              {produtos.length > 0 &&
-                Object.keys(produtos[0]).map(col => (
-                  <TableCell key={col} sx={{ fontWeight: 600 }}>{col}</TableCell>
-                ))}
+              {columns.map((col) => (
+                <TableCell key={col.key} sx={{ fontWeight: 600 }}>{col.label}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -338,14 +346,16 @@ export default function Separacao() {
                       onChange={(e) => handleSelectItem(idx, e.target.checked)}
                     />
                   </TableCell>
-                  {Object.values(p).map((val, i) => (
-                    <TableCell key={i}>{val}</TableCell>
+                  {columns.map((col) => (
+                    <TableCell key={`${idx}-${col.key}`}>
+                      {p[col.key] !== undefined ? p[col.key] : '-'}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={produtos[0] ? Object.keys(produtos[0]).length + 1 : 1} align="center">
+                <TableCell colSpan={columns.length + 1} align="center">
                   Nenhum produto carregado.
                 </TableCell>
               </TableRow>
@@ -353,7 +363,6 @@ export default function Separacao() {
           </TableBody>
         </Table>
       </TableContainer>
-
       <Box display="flex" gap={2} mb={3} flexWrap="wrap">
         <Button
           variant="contained"

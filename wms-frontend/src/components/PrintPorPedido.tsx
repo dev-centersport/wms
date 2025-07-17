@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Table, TableHead, TableRow, TableCell, TableBody, Box } from '@mui/material';
+import { Typography, Table, TableHead, TableRow, TableCell, TableBody, Box, TableContainer, Paper, Tab } from '@mui/material';
 
 interface PrintPorPedidoProps {
   data: {
@@ -18,7 +18,8 @@ interface PrintPorPedidoProps {
           quantidadeSeparada: number;
         }[];
       }[];
-    }[];
+    }[],
+    produtosNaoEncontrados: string[];
   };
 }
 
@@ -27,40 +28,57 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+      <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
         Impressão por Pedido
       </Typography>
-      {data.pedidos.map((pedido, idx) => (
-        <Box key={pedido.numeroPedido} sx={{ mb: 4 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Pedido: {pedido.numeroPedido} {pedido.completo ? '(Completo)' : '(Incompleto)'}
-          </Typography>
-          <Table size="small" sx={{ mt: 1, mb: 2 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>SKU</TableCell>
-                <TableCell>ID Item</TableCell>
-                <TableCell>Armazém</TableCell>
-                <TableCell>Localização</TableCell>
-                <TableCell>Qtd Separada</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {pedido.itens.map(item =>
-                item.localizacoes.map((loc, idx2) => (
-                  <TableRow key={`${item.idItem}-${idx2}`}>
-                    <TableCell>{item.sku}</TableCell>
-                    <TableCell>{item.idItem}</TableCell>
-                    <TableCell>{loc.armazem.armazem}</TableCell>
-                    <TableCell>{loc.localizacao}</TableCell>
-                    <TableCell>{loc.quantidadeSeparada}</TableCell>
+      
+      <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 450, overflow: 'auto', mb: 3 }}>
+          <Box sx={{ mb: 2 }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align='center'>Produto</TableCell>
+                    {/* <TableCell align='center'>ID Produto</TableCell> */}
+                    <TableCell align='center'>SKU / EAN</TableCell>
+                    <TableCell align='center'>Qtd a Separar</TableCell>
+                    <TableCell align='center'>Localização/Armazém</TableCell>
+                    {/* <TableCell>Localização</TableCell> */}
+                    <TableCell align='center'>Pedido Completo</TableCell>
+                    <TableCell align='center'>Anotações</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Box>
-      ))}
+                </TableHead>
+              {data.pedidos.map((pedido, idx) => (
+                <>
+                  <TableBody>
+                    {pedido.itens.map(item =>
+                      item.localizacoes.map((loc, idx2) => (
+                        <TableRow key={`${item.idItem}-${idx2}`}>
+                          <TableCell align='center'>imagem produto</TableCell>
+                          {/* <TableCell align='center'>{item.idItem}</TableCell> */}
+                          <TableCell align='center'>{item.sku} <p></p> EAN</TableCell>
+                          <TableCell align='center'>{loc.quantidadeSeparada}</TableCell>
+                          <TableCell align='center'>{loc.localizacao} - {loc.armazem.armazem}</TableCell>
+                          <TableCell align='center'>{pedido.completo ? 'Completo' : 'Incompleto'}</TableCell>
+                          <TableCell align='center'>▢</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </>
+              ))}
+              </Table>
+          </Box>
+        <Table stickyHeader>
+          <TableHead>
+            <TableCell>Produtos não encontrados:</TableCell>
+          </TableHead>
+          {data.produtosNaoEncontrados.map((info: string) => (
+            <TableRow>
+              <TableCell>SKU: {info}</TableCell>
+            </TableRow>
+          ))}
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
