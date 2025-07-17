@@ -517,6 +517,7 @@ const styles = StyleSheet.create({
     paddingTop: 40, // importante para alinhar com consulta e ocorrência
   },
   header: {
+    marginTop: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
