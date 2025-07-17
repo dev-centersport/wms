@@ -9,6 +9,7 @@ import * as XLSX from 'xlsx';
 import PrintPorPedido from '../components/PrintPorPedido';
 import PrintPorLocalizacao from '../components/PrintPorLocalizacao';
 import axios from 'axios';
+import Layout from '../components/Layout';
 
 interface ProdutoPlanilha {
   [key: string]: string | number;
@@ -95,7 +96,7 @@ export default function Separacao() {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   
-  const printRef = useRef<HTMLDivElement>(null);  // Remova a união com null aqui
+  const printRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>; // Remova a união com null aqui
   const handlePrint = usePrint();
 
   // Leitura do XLS para exibir tabela
@@ -229,8 +230,8 @@ export default function Separacao() {
 
   // Requisição para endpoints de impressão
   const handleImprimir = async (tipo: 'pedido' | 'localizacao') => {
-    if (!arquivo || !armazemId) {
-      alert('Selecione o armazém e faça upload do arquivo.');
+    if (!arquivo) {
+      alert('Faça upload do arquivo.');
       return;
     }
     setLoading(true);
@@ -239,14 +240,17 @@ export default function Separacao() {
     
     const form = new FormData();
     form.append('arquivo', arquivo);
-    form.append('armazemPrioritarioId', String(armazemId));
+    // form.append('armazemPrioritarioId', String(armazemId));
     
     try {
       const url = tipo === 'pedido' ? ENDPOINT_PEDIDO : ENDPOINT_SKU;
+      console.log(url)
       const { data } = await axios.post(url, form);
+      console.log(data)
       setDadosImpressao(data);
       setPrintTipo(tipo);
     } catch (err) {
+      console.log(err)
       alert('Erro ao gerar dados para impressão.');
     } finally {
       setLoading(false);
@@ -260,7 +264,7 @@ export default function Separacao() {
   };
 
   return (
-    <Box sx={{ p: 4, maxWidth: 1100, mx: 'auto' }}>
+    <Layout>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
         Separação de Produtos
       </Typography>
@@ -411,6 +415,6 @@ export default function Separacao() {
           </div>
         </Paper>
       )}
-    </Box>
+    </Layout>
   );
 }
