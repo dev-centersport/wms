@@ -40,6 +40,7 @@ export class LocalizacaoService {
           produto: {
             produto_id: true,
             descricao: true,
+            sku: true,
             ean: true,
           },
         },

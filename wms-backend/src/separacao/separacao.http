@@ -1,0 +1,14 @@
+### Processar Separação - Versão Funcional
+POST http://localhost:3001/separacao/processar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary1234
+
+------WebKitFormBoundary1234
+Content-Disposition: form-data; name="arquivo"; filename="pedidos.xls"
+Content-Type: application/vnd.ms-excel
+
+< ./pedidos.xls
+------WebKitFormBoundary1234
+Content-Disposition: form-data; name="armazemPrioritarioId"
+
+1  # Pode ser omitido completamente se não for necessário
+------WebKitFormBoundary1234--

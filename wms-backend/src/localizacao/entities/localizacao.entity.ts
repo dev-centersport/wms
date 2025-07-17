@@ -74,7 +74,7 @@ export class Localizacao {
   )
   movimentacoes_destino: Movimentacao[];
 
-  @OneToMany(() => Ocorrencia, (o) => o.localizacoes)
+  @OneToMany(() => Ocorrencia, (o) => o.localizacao)
   ocorrencias: Ocorrencia[];
 
   @OneToMany(() => Auditoria, (a) => a.localizacao)

@@ -35,6 +35,7 @@ export class Produto {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   comprimento: number;
 
+  // Para pré cadastros nullable: true
   @Column({ type: 'varchar', length: 13, unique: true, nullable: true })
   ean: string | null;
 
