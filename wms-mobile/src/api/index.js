@@ -6,6 +6,7 @@ const BASE_URL = 'http://151.243.0.78:3001';
 export async function login(usuario, senha) {
   try {
     const response = await axios.get(`${BASE_URL}/usuario`);
+    console.log(response)
     const usuarios = response.data;
 
     const encontrado = usuarios.find(
