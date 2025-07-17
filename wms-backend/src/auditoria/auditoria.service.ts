@@ -28,11 +28,11 @@ export class AuditoriaService {
   async create(createAuditoriaDto: CreateAuditoriaDto): Promise<Auditoria> {
     // Verificar se o usuário existe
     const usuario = await this.usuarioRepository.findOne({
-      where: { usuario_id: createAuditoriaDto.usuarioId },
+      where: { usuario_id: createAuditoriaDto.usuario_id },
     });
     if (!usuario) {
       throw new NotFoundException(
-        `Usuário com ID ${createAuditoriaDto.usuarioId} não encontrado`,
+        `Usuário com ID ${createAuditoriaDto.usuario_id} não encontrado`,
       );
     }
 
@@ -96,13 +96,13 @@ export class AuditoriaService {
   ): Promise<Auditoria> {
     const auditoria = await this.findOne(id);
 
-    if (updateAuditoriaDto.usuarioId) {
+    if (updateAuditoriaDto.usuario_id) {
       const usuario = await this.usuarioRepository.findOne({
-        where: { usuario_id: updateAuditoriaDto.usuarioId },
+        where: { usuario_id: updateAuditoriaDto.usuario_id },
       });
       if (!usuario) {
         throw new NotFoundException(
-          `Usuário com ID ${updateAuditoriaDto.usuarioId} não encontrado`,
+          `Usuário com ID ${updateAuditoriaDto.usuario_id} não encontrado`,
         );
       }
       auditoria.usuario = usuario;
@@ -222,7 +222,7 @@ export class AuditoriaService {
     });
   }
 
-  async findByUsuario(usuarioId: number): Promise<Auditoria[]> {
+  async findByUsuario(usuario_id: number): Promise<Auditoria[]> {
     return this.auditoriaRepository.find({
       where: { usuario: { usuario_id: usuario_id } },
       relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
