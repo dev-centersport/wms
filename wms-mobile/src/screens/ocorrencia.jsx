@@ -52,6 +52,8 @@ export default function Ocorrencia() {
 
 
   const handleBuscarLocalizacao = async () => {
+    if (!localizacao.trim()) return; // <-- Evita chamada com valor vazio
+
     try {
       const res = await buscarLocalizacaoPorEAN(localizacao.trim());
       setNomeLocalizacao(`${res.nome} - ${res.armazem}`);
@@ -61,7 +63,6 @@ export default function Ocorrencia() {
       if (skuRef.current) {
         skuRef.current.focus();
       }
-
     } catch (err) {
       setNomeLocalizacao('');
       Alert.alert('Erro', 'Localização não encontrada.');
@@ -157,7 +158,11 @@ export default function Ocorrencia() {
             style={styles.input}
             value={localizacao}
             onChangeText={setLocalizacao}
-            onBlur={handleBuscarLocalizacao}
+            onBlur={() => {
+              if (localizacao.trim()) {
+                handleBuscarLocalizacao();
+              }
+            }}
             placeholder="Bipe a localização"
             keyboardType="numeric"
             importantForAccessibility="yes"
