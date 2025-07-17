@@ -25,7 +25,7 @@ export default function HomeScreen({ navigation }) {
         style={styles.button}
         onPress={() => navigation.navigate('Ocorrencia')}
       >
-        <Text style={styles.buttonText}>OCORRÊNCIA</Text>
+        <Text style={styles.buttonText}>123</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
