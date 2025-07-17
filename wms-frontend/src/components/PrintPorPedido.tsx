@@ -7,8 +7,11 @@ interface PrintPorPedidoProps {
       numeroPedido: string;
       completo: boolean;
       itens: {
+        ean: string;
         sku: string;
         idItem: string;
+        descricao: string;
+        urlFoto: string;
         localizacoes: {
           armazem: {
             armazemID: number;
@@ -53,9 +56,9 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
                     {pedido.itens.map(item =>
                       item.localizacoes.map((loc, idx2) => (
                         <TableRow key={`${item.idItem}-${idx2}`}>
-                          <TableCell align='center'>imagem produto</TableCell>
+                          <TableCell align='center'>{item.urlFoto === undefined ? '' : <img src={item.urlFoto} alt={item.descricao} />}{item.descricao}</TableCell>
                           {/* <TableCell align='center'>{item.idItem}</TableCell> */}
-                          <TableCell align='center'>{item.sku} <p></p> EAN</TableCell>
+                          <TableCell align='center'>{item.sku} <p></p> {item.ean}</TableCell>
                           <TableCell align='center'>{loc.quantidadeSeparada}</TableCell>
                           <TableCell align='center'>{loc.localizacao} - {loc.armazem.armazem}</TableCell>
                           <TableCell align='center'>{pedido.completo ? 'Completo' : 'Incompleto'}</TableCell>
