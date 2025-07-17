@@ -5,19 +5,25 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { registerRootComponent } from 'expo';
 import * as Updates from 'expo-updates';
 
+import Login from './src/screens/login';
+import Home from './src/screens/home';
+import Movimentacao from './src/screens/movimentacao';
+import Consulta from './src/screens/consulta';
+import Ocorrencia from './src/screens/ocorrencia';
+
 const Stack = createNativeStackNavigator();
 
 function App() {
   useEffect(() => {
-  async function checkUpdate() {
-    const update = await Updates.checkForUpdateAsync();
-    if (update.isAvailable) {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
+    async function checkUpdate() {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        await Updates.fetchUpdateAsync();
+        await Updates.reloadAsync();
+      }
     }
-  }
 
-  checkUpdate();
+    checkUpdate();
   }, []);
   return (
     <NavigationContainer>
