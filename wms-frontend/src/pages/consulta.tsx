@@ -14,6 +14,7 @@ import {
   Typography,
   Menu,
   MenuItem,
+  TableSortLabel,
 } from '@mui/material';
 import { Search as SearchIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 
@@ -46,6 +47,8 @@ const Consulta: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderBy, setOrderBy] = useState<keyof ConsultaEstoque>('descricao');
+  const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
 
   // Filtro de armazém
   const [filtroArmazem, setFiltroArmazem] = useState('');
@@ -86,11 +89,41 @@ const Consulta: React.FC = () => {
     }, []);
   }, [lista, busca, appliedFiltroArmazem]);
 
-  const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
+  const handleSort = (property: keyof ConsultaEstoque) => {
+    const isAsc = orderBy === property && orderDirection === 'asc';
+    setOrderDirection(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const termo = normalizar(busca);
+
+  const filteredItems = lista.filter((item) => {
+    const campos = [item.descricao, item.sku, item.ean, item.armazem, item.localizacao]
+      .filter(Boolean)
+      .map((c) => normalizar(c));
+
+    const matchBusca = termo === '' || campos.some((c) => c.includes(termo));
+    const matchArmazem = !appliedFiltroArmazem || normalizar(item.armazem).includes(normalizar(appliedFiltroArmazem));
+
+    return matchBusca && matchArmazem;
+  });
+
+  const sortedItems = filteredItems.sort((a, b) => {
+    const aVal = a[orderBy];
+    const bVal = b[orderBy];
+
+    const aStr = typeof aVal === 'string' ? aVal.toLowerCase() : aVal;
+    const bStr = typeof bVal === 'string' ? bVal.toLowerCase() : bVal;
+
+    if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
+    if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedItems.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentIndices = filteredIndices.slice(startIndex, endIndex);
-  const currentItems = currentIndices.map((i) => lista[i]);
+  const currentItems = sortedItems.slice(startIndex, endIndex);
 
   useEffect(() => {
     // Se o filtro ou busca mudar, volte para página 1
@@ -103,17 +136,21 @@ const Consulta: React.FC = () => {
   }, [totalPages]);
 
   useEffect(() => {
-    const allSelected = currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
+    const allSelected =
+      currentItems.length > 0 &&
+      currentItems.every((item) => selectedItems.includes(item.produto_id));
     setSelectAll(allSelected);
-  }, [currentIndices, selectedItems]);
+  }, [selectedItems, currentItems]);
 
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
-    setSelectedItems(checked ? currentIndices : []);
+    setSelectedItems(checked ? currentItems.map((i) => i.produto_id) : []);
   };
 
-  const handleSelectItem = (originalIndex: number, checked: boolean) => {
-    setSelectedItems((prev) => (checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)));
+  const handleSelectItem = (id: number, checked: boolean) => {
+    setSelectedItems((prev) =>
+      checked ? [...prev, id] : prev.filter((pid) => pid !== id)
+    );
   };
 
   // Handlers do menu de filtros
@@ -219,26 +256,79 @@ const Consulta: React.FC = () => {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>SKU</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>EAN</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Qtd</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Localização</TableCell>
+
+              <TableCell sortDirection={orderBy === 'descricao' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'descricao'}
+                  direction={orderBy === 'descricao' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('descricao')}
+                >
+                  Descrição
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'sku' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'sku'}
+                  direction={orderBy === 'sku' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('sku')}
+                >
+                  SKU
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'ean' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'ean'}
+                  direction={orderBy === 'ean' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('ean')}
+                >
+                  EAN
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'armazem' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'armazem'}
+                  direction={orderBy === 'armazem' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('armazem')}
+                >
+                  Armazém
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'quantidade' ? orderDirection : false} align="left">
+                <TableSortLabel
+                  active={orderBy === 'quantidade'}
+                  direction={orderBy === 'quantidade' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('quantidade')}
+                >
+                  Qtd
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'localizacao' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'localizacao'}
+                  direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('localizacao')}
+                >
+                  Localização
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {currentItems.length ? (
               currentItems.map((item, idx) => {
-                const originalIndex = currentIndices[idx];
-                const isSelected = selectedItems.includes(originalIndex);
+                const isSelected = selectedItems.includes(item.produto_id);
 
                 return (
                   <TableRow key={item.produto_id} hover selected={isSelected}>
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
-                        onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
+                        onChange={(e) => handleSelectItem(item.produto_id, e.target.checked)}
                       />
                     </TableCell>
                     <TableCell>{item.descricao}</TableCell>
