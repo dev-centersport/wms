@@ -232,7 +232,7 @@ const ArmazemPage: React.FC = () => {
         {/* Botão novo armazém */}
         <Button
           variant="contained"
-          onClick={() => navigate("/CriarArmazem")}
+          onClick={() => navigate("/criar-armazem")}
           sx={{
             backgroundColor: "#59e60d",
             color: "#000",
@@ -287,7 +287,7 @@ const ArmazemPage: React.FC = () => {
                     <TableCell
                       align='left'
                       sx={{ fontWeight: 500, cursor: "pointer" }}
-                      onClick={() => navigate(`/EditarArmazem/${item.armazem_id}`)}
+                      onClick={() => navigate(`/armazem/${item.armazem_id}/editar/`)}
                     >
                       {item.nome}
                     </TableCell>
@@ -298,7 +298,7 @@ const ArmazemPage: React.FC = () => {
                     <TableCell>{item.endereco}</TableCell>
                     <TableCell align="center">
                       <Tooltip title="Editar armazém">
-                        <IconButton onClick={() => navigate(`/EditarArmazem/${item.armazem_id}`)}>
+                        <IconButton onClick={() => navigate(`/armazem/${item.armazem_id}/editar/`)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>

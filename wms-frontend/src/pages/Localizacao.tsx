@@ -31,6 +31,7 @@ import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
+import CarregadorComRetry from '../components/CarregadorComRetry';
 
 type LocalizacaoComQtd = {
   localizacao_id: number;
@@ -42,6 +43,9 @@ type LocalizacaoComQtd = {
 };
 
 
+/* -------------------------------------------------------------------------- */
+// Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
+const itemsPerPage = 100;
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
@@ -57,9 +61,6 @@ const Localizacao: React.FC = () => {
         const [filtroTipo, setFiltroTipo] = useState<string>('');
         const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
-        // Adicione no início do componente:
-        const [itemsPerPage, setItemsPerPage] = useState<number>(100);
-        // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
         const [selectedItems, setSelectedItems] = useState<number[]>([]);
         const [selectAll, setSelectAll] = useState(false);
         const [currentPage, setCurrentPage] = useState(1);
@@ -804,7 +805,29 @@ const handleImprimirSelecionadosPrateleira = () => {
     };
 
     return (
-        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
+        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+          <CarregadorComRetry
+            funcaoCarregamento={async () => {
+              const [locs, estoque] = await Promise.all([
+                buscarLocalizacoes(),
+                buscarConsultaEstoque(),
+              ]);
+
+              const mapa: Record<number, number> = {};
+              estoque.forEach((item: any) => {
+                const id = item.localizacao_id;
+                if (!id) return;
+                mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+              });
+
+              return locs.map((l: any) => ({
+                ...l,
+                total_produtos: mapa[l.localizacao_id] || 0,
+              }));
+            }}
+            aoCarregar={(dados) => setListaLocalizacoes(dados)}
+            onErroFinal={(erro) => console.error('Erro definitivo:', erro)}
+          />
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
@@ -936,7 +959,7 @@ const handleImprimirSelecionadosPrateleira = () => {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => navigate('/CriarLocalizacao')}
+                        onClick={() => navigate('/localizacao/criar')}
                         sx={{
                             backgroundColor: '#61de27',
                             color: '#000',

@@ -2,6 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { TimezoneInterceptor } from './interceptors/timezone.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +15,8 @@ async function bootstrap() {
       transform: true, // transforma os tipos automaticamente (ex: string para number)
     }),
   );
+
+  app.useGlobalInterceptors(new TimezoneInterceptor());
 
   // Configuração básica do CORS (permite todas as origens)
   app.enableCors();

@@ -26,7 +26,7 @@ const EditarTipoLocalizacao: React.FC = () => {
       try {
         if (!id) {
           alert('ID inválido.');
-          navigate('/TipoLocalizacao');
+          navigate('/tipo-localizacao');
           return;
         }
 
@@ -34,7 +34,7 @@ const EditarTipoLocalizacao: React.FC = () => {
         setTipo(dados.tipo ?? '');
       } catch (err) {
         alert('Erro ao carregar tipo de localização.');
-        navigate('/TipoLocalizacao');
+        navigate('/tipo-localizacao');
       }
     };
 
@@ -45,7 +45,7 @@ const EditarTipoLocalizacao: React.FC = () => {
     try {
       await atualizarTipoLocalizacao(Number(id), { tipo });
       alert('Tipo de localização atualizado com sucesso!');
-      navigate('/TipoLocalizacao');
+      navigate('/tipo-localizacao');
     } catch (err: any) {
       alert(err.message || 'Erro ao atualizar tipo de localização.');
     }
@@ -85,7 +85,7 @@ const EditarTipoLocalizacao: React.FC = () => {
 
           <Button
             variant="outlined"
-            onClick={() => navigate('/TipoLocalizacao')}
+            onClick={() => navigate('/tipo-localizacao')}
             sx={{
               backgroundColor: '#f2f2f2',
               fontWeight: 'bold',

@@ -29,7 +29,7 @@ const CriarTipo: React.FC = () => {
     try {
       await criarTipoLocalizacao({ tipo });
       alert('Tipo de localização criado com sucesso!');
-      navigate('/TipoLocalizacao');
+      navigate('/tipo-localizacao');
     } catch (err: any) {
       alert(err.message ?? 'Erro ao criar tipo de localização.');
     }
@@ -69,7 +69,7 @@ const CriarTipo: React.FC = () => {
           
           <Button
             variant="outlined"
-            onClick={() => navigate('/TipoLocalizacao')}
+            onClick={() => navigate('/tipo-localizacao')}
             sx={{
               backgroundColor: '#f2f2f2',
               fontWeight: 'bold',
