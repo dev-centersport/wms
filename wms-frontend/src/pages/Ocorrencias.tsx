@@ -25,6 +25,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 interface OcorrenciaItem {
   id: number;
+  armazem: string;
   localizacao: string;
   produto: string;
   sku: string;
@@ -130,6 +131,7 @@ export default function Ocorrencias() {
                   }
                 />
               </TableCell>
+              <TableCell>Armazém</TableCell>
               <TableCell>Localização</TableCell>
               <TableCell>Nome do Produto</TableCell>
               <TableCell align='center'>SKU</TableCell>
@@ -147,6 +149,7 @@ export default function Ocorrencias() {
                     onChange={() => toggleSelecionado(item.id)}
                   />
                 </TableCell>
+                <TableCell>{item.armazem}</TableCell>
                 <TableCell>{item.localizacao}</TableCell>
                 <TableCell>{item.produto}</TableCell>
                 <TableCell align='center'>{item.sku}</TableCell>
