@@ -23,12 +23,13 @@ export class OcorrenciaService {
 
   async findAll(): Promise<Ocorrencia[]> {
     return await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
+      relations: ['produto_estoque.produto', 'usuario', 'localizacao.armazem'],
     });
   }
 
   async listarPorLocalizacao(): Promise<
     {
+      armazem: string | null;
       localizacao: string | null;
       quantidade: number;
       nome_produto: string;
@@ -38,7 +39,7 @@ export class OcorrenciaService {
     }[]
   > {
     const ocorrencias = await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
+      relations: ['produto_estoque.produto', 'usuario', 'localizacao.armazem'],
     });
 
     // Agrupa as ocorrências por localização
@@ -46,6 +47,7 @@ export class OcorrenciaService {
       (acc, ocorrencia) => {
         // Verifica se a ocorrência tem localizações (considerando que é um array)
         const primeiraLocalizacao = ocorrencia.localizacao;
+        const armazemNome = primeiraLocalizacao?.armazem.nome;
         const localizacaoNome = primeiraLocalizacao?.nome || null;
         const nomeProduto = ocorrencia.produto_estoque.produto.descricao;
         const skuProduto = ocorrencia.produto_estoque.produto.sku;
@@ -54,6 +56,7 @@ export class OcorrenciaService {
         let grupo = acc.find((g) => g.localizacao === localizacaoNome);
         if (!grupo) {
           grupo = {
+            armazem: armazemNome,
             localizacao: localizacaoNome,
             quantidade: 0,
             nome_produto: nomeProduto,
@@ -71,6 +74,7 @@ export class OcorrenciaService {
         return acc;
       },
       [] as {
+        armazem: string | null;
         localizacao: string | null;
         quantidade: number;
         nome_produto: string;
