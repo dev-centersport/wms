@@ -1,141 +1,213 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box, Button, MenuItem, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, TextField, IconButton, Tooltip,
   Checkbox
 } from '@mui/material';
-import { CloudUpload, Print, Close, Label } from '@mui/icons-material';
+import { CloudUpload, Print, Close } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
-import PrintPorPedido from '../components/PrintPorPedido';
-import PrintPorLocalizacao from '../components/PrintPorLocalizacao';
 import axios from 'axios';
+import { pdf } from '@react-pdf/renderer';
 import Layout from '../components/Layout';
+import PdfPorPedido from '../components/PdfPorPedido';
+import PdfPorLocalizacao from '../components/PdfPorLocalizacao';
 
+// ==================== TIPOS ====================
 interface ProdutoPlanilha {
   [key: string]: string | number;
 }
 
+interface Armazem {
+  armazem_id: number;
+  nome: string;
+}
+
+interface ColunaTabela {
+  key: string;
+  label: string;
+}
+
+type PrintTipo = 'pedido' | 'localizacao' | null;
+
+interface DadosImpressaoPedido {
+  pedidos: {
+    numeroPedido: string;
+    completo: boolean;
+    itens: {
+      ean: string;
+      sku: string;
+      idItem: string;
+      descricao: string;
+      urlFoto: string;
+      localizacoes: {
+        armazem: { armazemID: number; armazem: string };
+        localizacao: string;
+        quantidadeSeparada: number;
+      }[];
+    }[];
+  }[];
+  produtosNaoEncontrados: string[];
+}
+
+interface DadosImpressaoLocalizacao {
+  localizacoes: {
+    armazem: { armazemID: number; armazem: string }[];
+    localizacao: string;
+    produtoSKU: string;
+    quantidadeSeparada: number;
+    pedidosAtendidos: { pedidoId: string; numeroPedido: string }[];
+  }[];
+  produtosNaoEncontrados?: string[];
+}
+
+// ==================== CONSTANTES ====================
 const ENDPOINT_PEDIDO = 'http://localhost:3001/separacao/agrupado-pedido';
 const ENDPOINT_SKU = 'http://localhost:3001/separacao/agrupado-sku';
 
-const armazensExemplo = [
+const ARMAZENS_EXEMPLO: Armazem[] = [
   { armazem_id: 1, nome: 'Dib Jorge' },
   { armazem_id: 2, nome: 'Central' },
 ];
 
-const columns = [
+const COLUNAS_TABELA: ColunaTabela[] = [
   { key: "Número do pedido", label: "Número do Pedido" },
   { key: "Descrição", label: "Descrição" },
   { key: "Quantidade", label: "Quantidade" },
   { key: "Código (SKU)", label: "Código (SKU)" },
-]
+];
 
-// Hook personalizado para impressão - CORRIGIDO
+
+
+// ==================== HOOK PERSONALIZADO PARA IMPRESSÃO ====================
 const usePrint = () => {
-  const handlePrint = (contentRef: React.RefObject<HTMLDivElement>) => {
+  const handlePrint = useCallback((contentRef: React.RefObject<HTMLDivElement>) => {
     if (!contentRef.current) return;
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const printStyles = `
-      <style>
-        @media print {
-          body { 
-            font-family: Arial, sans-serif; 
-            font-size: 1pt !important;
-            margin: 10px;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          table {
-            border-collapse: collapse;
-            width: 100%;
-          }
-          th, td {
-            border: 1px solid #ddd;
-            padding: 4px;
-            text-align: center;
-            font-size: 8pt !important;
-          }
-          th {
-            background-color: #f2f2f2 !important;
-          }
-          @page {
-            size: A4;
-            margin: 1cm;
-          }
+    const printStyles = Array.from(document.styleSheets)
+      .map(sheet => {
+        try {
+          return Array.from(sheet.cssRules)
+            .map(rule => rule.cssText)
+            .join('\n');
+        } catch (e) {
+          return '';
         }
-      </style>
-    `;
+      })
+      .join('\n');
 
     printWindow.document.write(`
       <html>
         <head>
           <title>Documento para Impressão</title>
-          ${printStyles}
+          <style>
+            ${printStyles}
+            @page {
+              size: auto;
+              margin: 5mm;
+            }
+            @media print {
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 0;
+                padding: 0;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+              }
+              th, td {
+                border: 1px solid #ddd;
+                padding: 4px;
+                text-align: left;
+              }
+              th {
+                background-color: #f2f2f2;
+              }
+            }
+          </style>
         </head>
         <body>
           ${contentRef.current.innerHTML}
-          <script>
-            setTimeout(function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
-              };
-            }, 200);
-          </script>
         </body>
       </html>
     `);
+
     printWindow.document.close();
-  };
+    
+    // Delay print to ensure content is loaded
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+    }, 500);
+  }, []);
 
   return handlePrint;
 };
-
-export default function Separacao() {
+// ==================== COMPONENTE PRINCIPAL ====================
+const Separacao: React.FC = () => {
+  // Estados
   const [produtos, setProdutos] = useState<ProdutoPlanilha[]>([]);
   const [arquivo, setArquivo] = useState<File | null>(null);
-  const [armazem, setArmazem] = useState('');
+  const [armazem, setArmazem] = useState<string>('');
   const [armazemId, setArmazemId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [printTipo, setPrintTipo] = useState<'pedido' | 'localizacao' | null>(null);
-  const [dadosImpressao, setDadosImpressao] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [printTipo, setPrintTipo] = useState<PrintTipo>(null);
+  const [dadosImpressao, setDadosImpressao] = useState<DadosImpressaoPedido | DadosImpressaoLocalizacao | null>(null);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const [selectAll, setSelectAll] = useState<boolean>(false);
   
-  const printRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>; // Remova a união com null aqui
+  const printRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>; 
   const handlePrint = usePrint();
 
-  // Leitura do XLS para exibir tabela
+  // ==================== HANDLERS ====================
+  const handleAbrirPdf = async (tipo: 'pedido' | 'localizacao', data: any) => {
+    const doc = tipo === 'pedido'
+      ? <PdfPorPedido data={data} />
+      : <PdfPorLocalizacao data={data} />;
+    const blob = await pdf(doc).toBlob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
+
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setArquivo(file);
     
+    setArquivo(file);
     const reader = new FileReader();
-    reader.onload = (evt: any) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      setProdutos(data as ProdutoPlanilha[]);
-      setSelectedItems([]);
-      setSelectAll(false);
+    
+    reader.onload = (evt: ProgressEvent<FileReader>) => {
+      try {
+        const bstr = evt.target?.result as string;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        setProdutos(data as ProdutoPlanilha[]);
+        setSelectedItems([]);
+        setSelectAll(false);
+      } catch (error) {
+        console.error('Erro ao processar arquivo:', error);
+        alert('Erro ao ler o arquivo. Verifique o formato.');
+      }
     };
+    
+    reader.onerror = () => {
+      alert('Erro ao ler o arquivo.');
+    };
+    
     reader.readAsBinaryString(file);
   };
-  
-  // Seleção do armazém
+
   const handleArmazemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nome = e.target.value;
     setArmazem(nome);
-    const found = armazensExemplo.find(a => a.nome === nome);
+    const found = ARMAZENS_EXEMPLO.find(a => a.nome === nome);
     setArmazemId(found?.armazem_id || null);
   };
-  
-  // Seleção de itens na tabela
+
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     setSelectedItems(checked ? [...Array(produtos.length).keys()] : []);
@@ -147,7 +219,6 @@ export default function Separacao() {
     );
   };
 
-  // Função para imprimir a separação
   const handleImprimirSeparacao = () => {
     if (!produtos.length) {
       alert('Nenhum produto carregado.');
@@ -162,6 +233,7 @@ export default function Separacao() {
     if (!printWindow) return;
 
     const dataAtual = new Date().toLocaleString('pt-BR');
+    const headers = produtosParaImprimir.length > 0 ? Object.keys(produtosParaImprimir[0]) : [];
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -169,37 +241,30 @@ export default function Separacao() {
       <head>
         <title>Separação de Produtos</title>
         <style>
+          body { font-family: Arial, sans-serif; margin: 10px; }
+          .header { margin-bottom: 20px; }
+          .header h2 { margin: 0; }
+          .info { margin: 8px 0 20px 0; font-size: 14px; color: #666; }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #f2f2f2;
+          }
           @media print {
-            body { 
-              font-family: Arial, sans-serif; 
-              margin: 10px;
-              -webkit-print-color-adjust: exact;
-            }
-            .header { margin-bottom: 24px; }
-            .header h2 { margin: 0; }
-            table {
-              border-collapse: collapse;
-              width: 100%;
-              margin: 0 auto;
-              font-size: 15px;
-            }
-            th, td {
-              border: 1px solid #888;
-              padding: 6px 12px;
-              text-align: left;
-            }
-            th {
-              background: #f0f0f0 !important;
-            }
+            body { margin: 0; padding: 0; }
             @page {
               size: auto;
               margin: 5mm;
             }
           }
-          body { font-family: Arial, sans-serif; margin: 18px; }
-          .header { margin-bottom: 24px; }
-          .header h2 { margin: 0; }
-          .info { margin: 8px 0 20px 0; font-size: 14px; color: #666; }
         </style>
       </head>
       <body>
@@ -213,13 +278,13 @@ export default function Separacao() {
         <table>
           <thead>
             <tr>
-              ${produtosParaImprimir.length > 0 ? Object.keys(produtosParaImprimir[0]).map(key => `<th>${key}</th>`).join('') : ''}
+              ${headers.map(header => `<th>${header}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
             ${produtosParaImprimir.map(prod => `
               <tr>
-                ${Object.values(prod).map(val => `<td>${val}</td>`).join('')}
+                ${headers.map(header => `<td>${prod[header] || '-'}</td>`).join('')}
               </tr>
             `).join('')}
           </tbody>
@@ -237,47 +302,53 @@ export default function Separacao() {
     printWindow.document.close();
   };
 
-  // Requisição para endpoints de impressão
   const handleImprimir = async (tipo: 'pedido' | 'localizacao') => {
     if (!arquivo) {
       alert('Faça upload do arquivo.');
       return;
     }
+    
     setLoading(true);
     setPrintTipo(null);
     setDadosImpressao(null);
     
     const form = new FormData();
     form.append('arquivo', arquivo);
-    // form.append('armazemPrioritarioId', String(armazemId));
     
     try {
       const url = tipo === 'pedido' ? ENDPOINT_PEDIDO : ENDPOINT_SKU;
-      console.log(url)
       const { data } = await axios.post(url, form);
-      console.log(data)
-      setDadosImpressao(data);
+      
+      // Validate the response data structure based on type
+      if (tipo === 'pedido') {
+        if (!data.pedidos) throw new Error('Resposta inválida: falta propriedade "pedidos"');
+        setDadosImpressao(data as DadosImpressaoPedido);
+      } else {
+        if (!data.localizacoes) throw new Error('Resposta inválida: falta propriedade "localizacoes"');
+        setDadosImpressao(data as DadosImpressaoLocalizacao);
+      }
+      
       setPrintTipo(tipo);
     } catch (err) {
-      console.log(err)
+      console.error(err);
       alert('Erro ao gerar dados para impressão.');
     } finally {
       setLoading(false);
     }
   };
-
-  // Limpar seleção
   const handleLimparSelecao = () => {
     setSelectedItems([]);
     setSelectAll(false);
   };
 
+  // ==================== RENDER ====================
   return (
     <Layout>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
         Separação de Produtos
       </Typography>
 
+      {/* Seção de upload e controles */}
       <Box display="flex" alignItems="center" gap={2} mb={3} flexWrap="wrap">
         <Button
           variant="contained"
@@ -288,24 +359,10 @@ export default function Separacao() {
           Selecionar Arquivo
           <input type="file" hidden onChange={handleUpload} accept=".xls,.xlsx" />
         </Button>
+        
         {arquivo && (
           <Typography variant="body2">{arquivo.name}</Typography>
         )}
-        {/* <TextField
-          select
-          label="Escolha o Armazém"
-          value={armazem}
-          onChange={handleArmazemChange}
-          sx={{ minWidth: 220 }}
-          size="small"
-        >
-          <MenuItem value="">-- Armazém --</MenuItem>
-          {armazensExemplo.map((a) => (
-            <MenuItem key={a.armazem_id} value={a.nome}>
-              {a.nome}
-            </MenuItem>
-          ))}
-        </TextField> */}
 
         {selectedItems.length > 0 && (
           <Tooltip title="Limpar seleção">
@@ -320,6 +377,7 @@ export default function Separacao() {
         )}
       </Box>
 
+      {/* Tabela de produtos */}
       <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 450, overflow: 'auto', mb: 3 }}>
         <Table stickyHeader>
           <TableHead>
@@ -331,7 +389,7 @@ export default function Separacao() {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </TableCell>
-              {columns.map((col) => (
+              {COLUNAS_TABELA.map((col) => (
                 <TableCell key={col.key} sx={{ fontWeight: 600 }}>{col.label}</TableCell>
               ))}
             </TableRow>
@@ -346,7 +404,7 @@ export default function Separacao() {
                       onChange={(e) => handleSelectItem(idx, e.target.checked)}
                     />
                   </TableCell>
-                  {columns.map((col) => (
+                  {COLUNAS_TABELA.map((col) => (
                     <TableCell key={`${idx}-${col.key}`}>
                       {p[col.key] !== undefined ? p[col.key] : '-'}
                     </TableCell>
@@ -355,7 +413,7 @@ export default function Separacao() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} align="center">
+                <TableCell colSpan={COLUNAS_TABELA.length + 1} align="center">
                   Nenhum produto carregado.
                 </TableCell>
               </TableRow>
@@ -363,6 +421,8 @@ export default function Separacao() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Botões de ação */}
       <Box display="flex" gap={2} mb={3} flexWrap="wrap">
         <Button
           variant="contained"
@@ -396,7 +456,7 @@ export default function Separacao() {
         </Button>
       </Box>
 
-      {/* Bloco de impressão */}
+      {/* Seção de impressão */}
       {printTipo && dadosImpressao && (
         <Paper sx={{ p: 3, position: 'relative', mt: 3 }}>
           <IconButton
@@ -406,24 +466,36 @@ export default function Separacao() {
             <Close />
           </IconButton>
           
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
+            startIcon={<Print />}
+            sx={{ mb: 2, mr: 1 }}
+            onClick={() => handleAbrirPdf(printTipo, dadosImpressao)}
+          >
+            Abrir PDF
+          </Button>
+
+          <Button
+            variant="outlined"
             startIcon={<Print />}
             onClick={() => handlePrint(printRef)}
             sx={{ mb: 2 }}
           >
-            Imprimir esta seção
+            Imprimir esta seção (HTML)
           </Button>
-          
+
           <div ref={printRef}>
-            {printTipo === 'pedido' ? (
-              <PrintPorPedido data={dadosImpressao} />
-            ) : (
-              <PrintPorLocalizacao data={dadosImpressao} />
+            {printTipo === 'pedido' && dadosImpressao && 'pedidos' in dadosImpressao && (
+              <PdfPorPedido data={dadosImpressao} />
+            )}
+            {printTipo === 'localizacao' && dadosImpressao && 'localizacoes' in dadosImpressao && (
+              <PdfPorLocalizacao data={dadosImpressao} />
             )}
           </div>
         </Paper>
       )}
     </Layout>
   );
-}
+};
+
+export default Separacao;

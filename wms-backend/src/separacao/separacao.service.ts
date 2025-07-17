@@ -141,7 +141,7 @@ export class SeparacaoService {
             ],
             localizacao: estoque.localizacao.nome,
             produtoSKU: sku,
-            urlFoto: estoque.produto.url_foto,
+            urlFoto: estoque.produto.url_foto || null,
             quantidadeSeparada: quantidadeASeparar,
             // Adiciona os pedidos atendidos neste lote
             pedidosAtendidos: pedidos
@@ -178,7 +178,6 @@ export class SeparacaoService {
     arquivo: Express.Multer.File,
     armazemPrioritarioId?: number,
   ): Promise<ResultadoSeparacaoPorPedidoDTO> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const workbook = XLSX.read(arquivo.buffer);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const dados: ExcelRow[] = XLSX.utils.sheet_to_json(worksheet);
@@ -192,8 +191,11 @@ export class SeparacaoService {
     const itensPorPedido = new Map<
       string | number,
       Array<{
+        ean: string;
         sku: string;
         idItem: string | number;
+        descricao: string;
+        urlFoto: string | null;
       }>
     >();
 
@@ -205,8 +207,11 @@ export class SeparacaoService {
         itensPorPedido.set(numPedido, []);
       }
       itensPorPedido.get(numPedido)?.push({
+        ean: '',
         sku: item['Código (SKU)'],
         idItem: item.ID,
+        descricao: '',
+        urlFoto: null,
       });
     }
 
@@ -215,8 +220,11 @@ export class SeparacaoService {
       const pedidoResultado = {
         numeroPedido: numPedido,
         itens: [] as Array<{
+          ean: string;
           sku: string;
           idItem: string | number;
+          descricao: string;
+          urlFoto: string | null;
           localizacoes: Array<{
             armazem: { armazemID: number; armazem: string };
             localizacao: string;
@@ -239,6 +247,9 @@ export class SeparacaoService {
           pedidoResultado.completo = false;
           continue;
         }
+
+        // if (produto.ean === null)
+        //   throw new Error(`Produto ${produto.sku} não possui EAN`);
 
         // Consulta os estoques com prioridade para o armazém especificado
         const estoques = await this.produtoEstoqueRepository
@@ -296,8 +307,11 @@ export class SeparacaoService {
         }
 
         pedidoResultado.itens.push({
+          ean: produto.ean || 'Produto sem EAN',
           sku: item.sku,
           idItem: item.idItem,
+          descricao: produto.descricao,
+          urlFoto: produto.url_foto || '',
           localizacoes: localizacoesItem,
         });
       }

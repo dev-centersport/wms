@@ -27,8 +27,11 @@ export class ResultadoSeparacaoPorPedidoDTO {
   pedidos: Array<{
     numeroPedido: string | number;
     itens: Array<{
+      ean: string;
       sku: string;
       idItem: string | number;
+      descricao: string;
+      urlFoto: string | null;
       localizacoes: Array<{
         armazem: { armazemID: number; armazem: string };
         localizacao: string;
