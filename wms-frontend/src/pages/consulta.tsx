@@ -15,6 +15,7 @@ import {
   Menu,
   MenuItem,
   TableSortLabel,
+  Chip,
 } from '@mui/material';
 import { Search as SearchIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 
@@ -201,47 +202,64 @@ const Consulta: React.FC = () => {
           Filtro
         </Button>
 
-
         {appliedFiltroArmazem && (
-          <Button
-            variant="outlined"
-            onClick={handleLimparFiltro}
-            sx={{ minWidth: 130 }}
-          >
-            Limpar Filtro
-          </Button>
-        )}
-
-        {/* Menu de filtro por armazém */}
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-          <Box sx={{ p: 2, width: 260 }}>
-            <TextField
-              select
-              label="Armazém"
-              value={filtroArmazem}
-              onChange={(e) => setFiltroArmazem(e.target.value)}
-              sx={{ minWidth: '100%' }}
+          <>
+            <Chip
+              label={`Filtro: Armazém - ${appliedFiltroArmazem}`}
+              color="primary"
+              variant="filled"
+              sx={{
+                backgroundColor: '#61de27',
+                color: '#000',
+                fontWeight: 'bold',
+                px: 1.5,
+                height: 32,
+                borderRadius: '8px',
+              }}
+            />
+            <Button
+              variant="outlined"
+              onClick={handleLimparFiltro}
+              sx={{
+                height: 32,
+                padding: '6px 16px',
+              }}
             >
-              <MenuItem value="">Todos</MenuItem>
-              {armazens.map((a) => (
-                <MenuItem key={a} value={a}>
-                  {a}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <Button variant="outlined" sx={{ mt: 2, width: '100%' }} onClick={handleAplicarFiltro}>
-              Aplicar
+              Limpar Filtro
             </Button>
-
-            {filtroArmazem && (
-              <Button variant="outlined" sx={{ mt: 2, width: '100%' }} onClick={handleLimparFiltro}>
-                Limpar filtro
-              </Button>
-            )}
-          </Box>
-        </Menu>
+          </>
+        )}
       </Box>
+
+      {/* Menu de filtro por armazém */}
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <Box sx={{ p: 2, width: 260 }}>
+          <TextField
+            select
+            label="Armazém"
+            value={filtroArmazem}
+            onChange={(e) => setFiltroArmazem(e.target.value)}
+            sx={{ minWidth: '100%' }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {armazens.map((a) => (
+              <MenuItem key={a} value={a}>
+                {a}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <Button variant="outlined" sx={{ mt: 2, width: '100%' }} onClick={handleAplicarFiltro}>
+            Aplicar
+          </Button>
+
+          {filtroArmazem && (
+            <Button variant="outlined" sx={{ mt: 2, width: '100%' }} onClick={handleLimparFiltro}>
+              Limpar filtro
+            </Button>
+          )}
+        </Box>
+      </Menu>
 
 
       {/* Tabela principal */}
@@ -352,7 +370,7 @@ const Consulta: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
-    </Layout>
+    </Layout >
   );
 };
 
