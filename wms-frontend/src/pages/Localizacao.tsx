@@ -23,6 +23,7 @@ import {
     Tooltip,
     MenuItem,
     Menu,
+    TableSortLabel,
 } from '@mui/material';
 import { Search as SearchIcon, Delete as DeleteIcon, Print as PrintIcon, List as ListIcon, Add as AddIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 
@@ -33,19 +34,19 @@ import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
 
 type LocalizacaoComQtd = {
-  localizacao_id: number;
-  nome: string;
-  tipo: string;
-  armazem: string;
-  ean: string;
-  total_produtos: number;
+    localizacao_id: number;
+    nome: string;
+    tipo: string;
+    armazem: string;
+    ean: string;
+    total_produtos: number;
 };
 
 
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
-    
+
     /* ------------------------- estados globais do hook --F---------------------- */
     const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
     const [busca, setBusca] = useState('');
@@ -54,47 +55,51 @@ const Localizacao: React.FC = () => {
     const navigate = useNavigate();
 
     /* ---------------------------- estados locais ----------------------------- */
-        const [filtroTipo, setFiltroTipo] = useState<string>('');
-        const [filtroArmazem, setFiltroArmazem] = useState<string>('');
+    const [filtroTipo, setFiltroTipo] = useState<string>('');
+    const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
-        // Adicione no início do componente:
-        const [itemsPerPage, setItemsPerPage] = useState<number>(100);
-        // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
-        const [selectedItems, setSelectedItems] = useState<number[]>([]);
-        const [selectAll, setSelectAll] = useState(false);
-        const [currentPage, setCurrentPage] = useState(1);
+    // Adicione no início do componente:
+    const [itemsPerPage, setItemsPerPage] = useState<number>(100);
+    // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectAll, setSelectAll] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
-        const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-        
-        // Estados para o modal de produtos
-        const [modalOpen, setModalOpen] = useState(false);
-        const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{id: number, nome: string} | null>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-        useEffect(() => {
+    // Ordenação dos campos da tabela
+    const [orderBy, setOrderBy] = useState<keyof LocalizacaoComQtd>('nome');
+    const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
+
+    // Estados para o modal de produtos
+    const [modalOpen, setModalOpen] = useState(false);
+    const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{ id: number, nome: string } | null>(null);
+
+    useEffect(() => {
         const carregar = async () => {
-        try {
-            const [locs, estoque] = await Promise.all([
-            buscarLocalizacoes(), // lista sem quantidade
-            buscarConsultaEstoque(), // cada item tem localizacao_id e quantidade
-            ]);
+            try {
+                const [locs, estoque] = await Promise.all([
+                    buscarLocalizacoes(), // lista sem quantidade
+                    buscarConsultaEstoque(), // cada item tem localizacao_id e quantidade
+                ]);
 
-            // soma por localizacao_id
-            const mapa: Record<number, number> = {};
-            estoque.forEach((item: any) => {
-            const id = item.localizacao_id;
-            if (!id) return;
-            mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-            });
+                // soma por localizacao_id
+                const mapa: Record<number, number> = {};
+                estoque.forEach((item: any) => {
+                    const id = item.localizacao_id;
+                    if (!id) return;
+                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+                });
 
-            const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
-            ...l,
-            total_produtos: mapa[l.localizacao_id] || 0,
-            }));
+                const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
+                    ...l,
+                    total_produtos: mapa[l.localizacao_id] || 0,
+                }));
 
-            setListaLocalizacoes(locsComQtd);
-        } catch (err) {
-            console.error('Erro ao carregar localizações →', err);
-        }
+                setListaLocalizacoes(locsComQtd);
+            } catch (err) {
+                console.error('Erro ao carregar localizações →', err);
+            }
         };
 
         carregar();
@@ -121,12 +126,28 @@ const Localizacao: React.FC = () => {
         }, []);
     }, [listaLocalizacoes, busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
-    /* ---------------------------- paginação ---------------------------- */
-    const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
+
+    /* ---------------------------- paginação/ordenanação ---------------------------- */
+    const filteredItems = filteredIndices.map((i) => listaLocalizacoes[i]);
+
+    const sortedItems = filteredItems.sort((a, b) => {
+        const aValue = a[orderBy];
+        const bValue = b[orderBy];
+
+        const aStr = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
+        const bStr = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
+
+        if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
+        if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const totalPages = Math.ceil(sortedItems.length / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentIndices = filteredIndices.slice(startIndex, endIndex);
-    const currentItems = currentIndices.map((i) => listaLocalizacoes[i]);
+
+    const currentItems = sortedItems.slice(startIndex, endIndex);
+
 
     /* ------------------------- efeitos auxiliares ------------------------ */
     useEffect(() => {
@@ -139,14 +160,15 @@ const Localizacao: React.FC = () => {
 
     useEffect(() => {
         const allCurrentSelected =
-            currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
+            currentItems.length > 0 &&
+            currentItems.every((item) => selectedItems.includes(item.localizacao_id));
         setSelectAll(allCurrentSelected);
-    }, [selectedItems, currentIndices]);
+    }, [selectedItems, currentItems]);
 
     /* --------------------------- seleção tabela -------------------------- */
     const handleSelectAll = (checked: boolean) => {
         setSelectAll(checked);
-        setSelectedItems(checked ? currentIndices : []);
+        setSelectedItems(checked ? currentItems.map((item) => item.localizacao_id) : []);
     };
 
     const handleSelectItem = (originalIndex: number, checked: boolean) => {
@@ -155,12 +177,20 @@ const Localizacao: React.FC = () => {
         );
     };
 
+    // Função de ordenação
+    const handleSort = (property: keyof LocalizacaoComQtd) => {
+        const isAsc = orderBy === property && orderDirection === 'asc';
+        setOrderDirection(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
+    };
+
+
     // Função para abrir o modal de produtos
     const handleVerProdutos = (id: number, nome: string) => {
         setLocalizacaoSelecionada({ id, nome });
         setModalOpen(true);
     };
-    
+
     // Função para atualizar a quantidade total após visualização
     const handleQuantidadeAtualizada = async () => {
         // Recarregar os dados da tabela para atualizar as quantidades
@@ -205,7 +235,7 @@ const Localizacao: React.FC = () => {
         /* ------------------------------------------------------------------ */
         /* 1. Identificação do tipo                                           */
         /* ------------------------------------------------------------------ */
-        
+
         const isCaixa = tipoLower.includes('caixa');
         const isPrateleira = tipoLower.includes('prateleira');
 
@@ -228,7 +258,7 @@ const Localizacao: React.FC = () => {
 
 
 
-        
+
         /* ------------------------------------------------------------------ */
         /* 4. Estilos condicionais                                            */
         /* ------------------------------------------------------------------ */
@@ -313,17 +343,17 @@ const Localizacao: React.FC = () => {
         w.document.close();
     };
 
-const handleImprimirCaixa = (localizacao: string, ean: string) => {
-  const w = window.open('', '_blank');
-  if (!w) return;
+    const handleImprimirCaixa = (localizacao: string, ean: string) => {
+        const w = window.open('', '_blank');
+        if (!w) return;
 
-  const largura = '10cm';
-  const altura = '15cm';
-  const fontNome = '120px';
-  const barHeight = 90;
-  const barFont = 22;
+        const largura = '10cm';
+        const altura = '15cm';
+        const fontNome = '120px';
+        const barHeight = 90;
+        const barFont = 22;
 
-  w.document.write(`
+        w.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
@@ -403,77 +433,77 @@ const handleImprimirCaixa = (localizacao: string, ean: string) => {
     </html>
   `);
 
-  w.document.close();
-};
+        w.document.close();
+    };
 
     /* ------------------------------------------------------------------ */
-/* Substitua a função handleImprimirSelecionados pelo código abaixo   */
-/* ------------------------------------------------------------------ */
-const handleImprimirSelecionados = () => {
-  let indicesParaImprimir = selectedItems;
+    /* Substitua a função handleImprimirSelecionados pelo código abaixo   */
+    /* ------------------------------------------------------------------ */
+    const handleImprimirSelecionados = () => {
+        let indicesParaImprimir = selectedItems;
 
-  if (!indicesParaImprimir.length) {
-    indicesParaImprimir = listaLocalizacoes
-      .map((loc, idx) => {
-        const tipo = loc.tipo?.toLowerCase() || '';
-        if (tipo.includes('caixa') || tipo.includes('prateleira')) return idx;
-        return -1;
-      })
-      .filter((idx) => idx !== -1);
+        if (!indicesParaImprimir.length) {
+            indicesParaImprimir = listaLocalizacoes
+                .map((loc, idx) => {
+                    const tipo = loc.tipo?.toLowerCase() || '';
+                    if (tipo.includes('caixa') || tipo.includes('prateleira')) return idx;
+                    return -1;
+                })
+                .filter((idx) => idx !== -1);
 
-    setSelectedItems(indicesParaImprimir);
-    setSelectAll(false);
-  }
+            setSelectedItems(indicesParaImprimir);
+            setSelectAll(false);
+        }
 
-  if (!indicesParaImprimir.length) {
-    alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
-    return;
-  }
+        if (!indicesParaImprimir.length) {
+            alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
+            return;
+        }
 
-  const tiposSelecionados = indicesParaImprimir.map(
-    (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
-  );
+        const tiposSelecionados = indicesParaImprimir.map(
+            (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+        );
 
-  const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
-  if (!tipoUnico) {
-    alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
-    return;
-  }
+        const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
+        if (!tipoUnico) {
+            alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+            return;
+        }
 
-  const tipoAtual = tiposSelecionados[0];
-  if (tipoAtual.includes('caixa')) {
-    handleImprimirSelecionadosCaixa();
-  } else {
-    handleImprimirSelecionadosPrateleira();
-  }
-};
+        const tipoAtual = tiposSelecionados[0];
+        if (tipoAtual.includes('caixa')) {
+            handleImprimirSelecionadosCaixa();
+        } else {
+            handleImprimirSelecionadosPrateleira();
+        }
+    };
 
-const handleImprimirSelecionadosCaixa = () => {
-  let indicesParaImprimir = selectedItems;
-  if (!indicesParaImprimir.length) {
-    indicesParaImprimir = listaLocalizacoes
-      .map((loc, idx) => loc.tipo.toLowerCase().includes('caixa') ? idx : -1)
-      .filter((idx) => idx !== -1);
+    const handleImprimirSelecionadosCaixa = () => {
+        let indicesParaImprimir = selectedItems;
+        if (!indicesParaImprimir.length) {
+            indicesParaImprimir = listaLocalizacoes
+                .map((loc, idx) => loc.tipo.toLowerCase().includes('caixa') ? idx : -1)
+                .filter((idx) => idx !== -1);
 
-    setSelectedItems(indicesParaImprimir);
-    setSelectAll(false);
-  }
+            setSelectedItems(indicesParaImprimir);
+            setSelectAll(false);
+        }
 
-  if (!indicesParaImprimir.length) {
-    alert('Nenhuma localização do tipo "Caixa" encontrada.');
-    return;
-  }
+        if (!indicesParaImprimir.length) {
+            alert('Nenhuma localização do tipo "Caixa" encontrada.');
+            return;
+        }
 
-  const w = window.open('', '_blank');
-  if (!w) return;
+        const w = window.open('', '_blank');
+        if (!w) return;
 
-  const largura = '10cm';
-  const altura = '15cm';
-  const fontNome = '120px';
-  const barHeight = 90;
-  const barFont = 22;
+        const largura = '10cm';
+        const altura = '15cm';
+        const fontNome = '120px';
+        const barHeight = 90;
+        const barFont = 22;
 
-  w.document.write(`
+        w.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
@@ -525,11 +555,11 @@ const handleImprimirSelecionadosCaixa = () => {
     <body>
   `);
 
-  indicesParaImprimir.forEach((idx, i) => {
-    const item = listaLocalizacoes[idx];
-    const nomeEscapado = item.nome.replace(/'/g, "\\'");
-    const eanEscapado = item.ean.replace(/'/g, "\\'");
-    w.document.write(`
+        indicesParaImprimir.forEach((idx, i) => {
+            const item = listaLocalizacoes[idx];
+            const nomeEscapado = item.nome.replace(/'/g, "\\'");
+            const eanEscapado = item.ean.replace(/'/g, "\\'");
+            w.document.write(`
       <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="container">
           <div class="nome" id="nome-${i}">${nomeEscapado}</div>
@@ -537,9 +567,9 @@ const handleImprimirSelecionadosCaixa = () => {
         </div>
       </div>
     `);
-  });
+        });
 
-  w.document.write(`
+        w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
       window.onload = () => {
@@ -570,53 +600,53 @@ const handleImprimirSelecionadosCaixa = () => {
     </html>
   `);
 
-  w.document.close();
-};
+        w.document.close();
+    };
 
 
-const handleImprimirSelecionadosPrateleira = () => {
-  let indicesParaImprimir = selectedItems;
-  if (!indicesParaImprimir.length) {
-    indicesParaImprimir = listaLocalizacoes
-      .map((loc, idx) =>
-        loc.tipo.toLowerCase().includes('prateleira') ? idx : -1
-      )
-      .filter((idx) => idx !== -1);
+    const handleImprimirSelecionadosPrateleira = () => {
+        let indicesParaImprimir = selectedItems;
+        if (!indicesParaImprimir.length) {
+            indicesParaImprimir = listaLocalizacoes
+                .map((loc, idx) =>
+                    loc.tipo.toLowerCase().includes('prateleira') ? idx : -1
+                )
+                .filter((idx) => idx !== -1);
 
-    setSelectedItems(indicesParaImprimir);
-    setSelectAll(false);
-  }
+            setSelectedItems(indicesParaImprimir);
+            setSelectAll(false);
+        }
 
-  if (!indicesParaImprimir.length) {
-    alert('Nenhuma localização do tipo "Prateleira" encontrada.');
-    return;
-  }
+        if (!indicesParaImprimir.length) {
+            alert('Nenhuma localização do tipo "Prateleira" encontrada.');
+            return;
+        }
 
-  const tiposSelecionados = indicesParaImprimir.map(
-    (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
-  );
-  const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
-  if (!tipoUnico) {
-    alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
-    return;
-  }
+        const tiposSelecionados = indicesParaImprimir.map(
+            (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+        );
+        const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
+        if (!tipoUnico) {
+            alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+            return;
+        }
 
-  const tipoAtual = tiposSelecionados[0];
-  const isCaixa = tipoAtual.includes('caixa');
-  const isPrateleira = tipoAtual.includes('prateleira');
+        const tipoAtual = tiposSelecionados[0];
+        const isCaixa = tipoAtual.includes('caixa');
+        const isPrateleira = tipoAtual.includes('prateleira');
 
-  const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
-  const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
-  const fontNome = '120px';
-  const barHeight = isCaixa ? 90 : 20;
-  const barFont = isCaixa ? 22 : 10;
-  const bodyJustify = isPrateleira ? 'flex-start' : 'center';
-  const nomeMarginTop = isPrateleira ? '-3mm' : '0';
+        const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+        const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+        const fontNome = '120px';
+        const barHeight = isCaixa ? 90 : 20;
+        const barFont = isCaixa ? 22 : 10;
+        const bodyJustify = isPrateleira ? 'flex-start' : 'center';
+        const nomeMarginTop = isPrateleira ? '-3mm' : '0';
 
-  const w = window.open('', '_blank');
-  if (!w) return;
+        const w = window.open('', '_blank');
+        if (!w) return;
 
-  w.document.write(`
+        w.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
@@ -660,23 +690,23 @@ const handleImprimirSelecionadosPrateleira = () => {
     <body>
   `);
 
-  indicesParaImprimir.forEach((idx, i) => {
-    const item = listaLocalizacoes[idx];
-    const nomeLimpo = isPrateleira
-      ? item.nome.replace(/^.*?#/, '')
-      : item.nome;
-    const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
-    const eanEscapado = item.ean.replace(/'/g, "\\'");
+        indicesParaImprimir.forEach((idx, i) => {
+            const item = listaLocalizacoes[idx];
+            const nomeLimpo = isPrateleira
+                ? item.nome.replace(/^.*?#/, '')
+                : item.nome;
+            const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
+            const eanEscapado = item.ean.replace(/'/g, "\\'");
 
-    w.document.write(`
+            w.document.write(`
       <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="nome" id="nome-${i}">${nomeEscapado}</div>
         <svg class="barcode" id="barcode-${i}"></svg>
       </div>
     `);
-  });
+        });
 
-  w.document.write(`
+        w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
       window.onload = () => {
@@ -707,8 +737,8 @@ const handleImprimirSelecionadosPrateleira = () => {
     </html>
   `);
 
-  w.document.close();
-};
+        w.document.close();
+    };
 
 
 
@@ -962,25 +992,73 @@ const handleImprimirSelecionadosPrateleira = () => {
                                     onChange={(e) => handleSelectAll(e.target.checked)}
                                 />
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600 }}>EAN</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
+
+                            <TableCell sortDirection={orderBy === 'nome' ? orderDirection : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'nome'}
+                                    direction={orderBy === 'nome' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('nome')}
+                                >
+                                    Nome
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell sortDirection={orderBy === 'tipo' ? orderDirection : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'tipo'}
+                                    direction={orderBy === 'tipo' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('tipo')}
+                                >
+                                    Tipo
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell sortDirection={orderBy === 'armazem' ? orderDirection : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'armazem'}
+                                    direction={orderBy === 'armazem' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('armazem')}
+                                >
+                                    Armazém
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell sortDirection={orderBy === 'ean' ? orderDirection : false} align="center">
+                                <TableSortLabel
+                                    active={orderBy === 'ean'}
+                                    direction={orderBy === 'ean' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('ean')}
+                                >
+                                    EAN
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell sortDirection={orderBy === 'total_produtos' ? orderDirection : false} align="center">
+                                <TableSortLabel
+                                    active={orderBy === 'total_produtos'}
+                                    direction={orderBy === 'total_produtos' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('total_produtos')}
+                                >
+                                    Quantidade
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>
+                                Ações
+                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {currentItems.length ? (
                             currentItems.map((item, idx) => {
-                                const originalIndex = currentIndices[idx];
-                                const isSelected = selectedItems.includes(originalIndex);
+                                const isSelected = selectedItems.includes(item.localizacao_id);
                                 return (
-                                    <TableRow key={`${item.nome}-${originalIndex}`} selected={isSelected} hover>
+                                    <TableRow key={`${item.nome}-${item.localizacao_id}`} selected={isSelected} hover>
+
                                         <TableCell padding="checkbox">
                                             <Checkbox
                                                 checked={isSelected}
-                                                onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
+                                                onChange={(e) => handleSelectItem(item.localizacao_id, e.target.checked)}
                                             />
                                         </TableCell>
                                         <TableCell
@@ -996,8 +1074,8 @@ const handleImprimirSelecionadosPrateleira = () => {
                                         <TableCell align="center">
                                             <Box display="flex" justifyContent="center" gap={1}>
                                                 <Tooltip title="Ver produtos">
-                                                    <IconButton 
-                                                        size="small" 
+                                                    <IconButton
+                                                        size="small"
                                                         onClick={() => handleVerProdutos(item.localizacao_id, item.nome)}
                                                     >
                                                         <ListIcon fontSize="small" />
@@ -1014,10 +1092,10 @@ const handleImprimirSelecionadosPrateleira = () => {
                                                         onClick={() => handleExcluir(item.localizacao_id, item.nome, item.total_produtos ?? 0)}
                                                         disabled={item.total_produtos > 0}
                                                         sx={{
-                                                        color: item.total_produtos > 0 ? 'text.disabled' : 'error.main',
-                                                        '&:hover': {
-                                                            backgroundColor: item.total_produtos > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
-                                                        },
+                                                            color: item.total_produtos > 0 ? 'text.disabled' : 'error.main',
+                                                            '&:hover': {
+                                                                backgroundColor: item.total_produtos > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
+                                                            },
                                                         }}
 
                                                     >
