@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { UpdateOcorrenciaDto } from './dto/update-ocorrencia.dto';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
-import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
+// import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 
 @Injectable()
 export class OcorrenciaService {
@@ -17,8 +17,6 @@ export class OcorrenciaService {
     private readonly produtoEstoqueRepository: Repository<ProdutoEstoque>,
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
-    @InjectRepository(Localizacao)
-    private readonly localizacaoRepository: Repository<Localizacao>,
   ) {}
 
   async findAll(): Promise<Ocorrencia[]> {
@@ -110,22 +108,22 @@ export class OcorrenciaService {
   }
 
   async create(CreateOcorrenciaDto: CreateOcorrenciaDto): Promise<Ocorrencia> {
-    const [produto_estoque, usuario, localizacao] = await Promise.all([
+    const [produto_estoque, usuario] = await Promise.all([
       this.produtoEstoqueRepository.findOne({
         where: { produto_estoque_id: CreateOcorrenciaDto.produto_estoque_id },
       }),
       this.usuarioRepository.findOne({
         where: { usuario_id: CreateOcorrenciaDto.usuario_id },
       }),
-      this.localizacaoRepository.findOne({
-        where: { localizacao_id: CreateOcorrenciaDto.localizacao_id },
-      }),
+      // this.localizacaoRepository.findOne({
+      //   where: { localizacao_id: CreateOcorrenciaDto.localizacao_id },
+      // }),
     ]);
 
     if (!produto_estoque)
       throw new NotFoundException('Produto estoque não encontrado');
     if (!usuario) throw new NotFoundException('Produto estoque não encontrado');
-    if (!localizacao) throw new NotFoundException('Localização não encontrado');
+    // if (!localizacao) throw new NotFoundException('Localização não encontrado');
 
     const ocorrencia = this.ocorrenciaRepository.create({
       ...CreateOcorrenciaDto,
@@ -160,16 +158,15 @@ export class OcorrenciaService {
         throw new NotFoundException('Produtos no estoque não encontrado');
     }
 
-    if (UpdateOcorrenciaDto.localizacao_id !== undefined) {
-      const localizacao = await this.localizacaoRepository.findOneBy({
-        localizacao_id: UpdateOcorrenciaDto.localizacao_id,
-      });
-      if (!localizacao)
-        throw new NotFoundException('Localização não encontrado');
-    }
+    // if (UpdateOcorrenciaDto.localizacao_id !== undefined) {
+    //   const localizacao = await this.localizacaoRepository.findOneBy({
+    //     localizacao_id: UpdateOcorrenciaDto.localizacao_id,
+    //   });
+    //   if (!localizacao)
+    //     throw new NotFoundException('Localização não encontrado');
+    // }
 
-    const { produto_estoque_id, localizacao_id, ...camposSimples } =
-      UpdateOcorrenciaDto;
+    const { produto_estoque_id, ...camposSimples } = UpdateOcorrenciaDto;
     Object.assign(ocorrencia, camposSimples);
 
     const ocorrenciaSalva = await this.ocorrenciaRepository.save(ocorrencia);

@@ -43,13 +43,13 @@ export class Auditoria {
   @JoinColumn()
   usuario: Usuario;
 
-  @ManyToOne(() => Ocorrencia, (o) => o.auditorias)
-  @JoinColumn()
-  ocorrencia: Ocorrencia;
-
   @ManyToOne(() => Localizacao, (loc) => loc.auditorias)
   @JoinColumn()
   localizacao: Localizacao;
+
+  @OneToMany(() => Ocorrencia, (o) => o.auditorias)
+  // @JoinColumn()
+  ocorrencias: Ocorrencia[];
 
   @OneToMany(() => ItemAuditoria, (ia) => ia.auditoria)
   itens_auditoria: ItemAuditoria[];

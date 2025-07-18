@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
+import { Repository, FindOneOptions, FindManyOptions, In } from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
@@ -14,22 +14,21 @@ import { ItemAuditoria } from '../item_auditoria/entities/item_auditoria.entity'
 export class AuditoriaService {
   constructor(
     @InjectRepository(Auditoria)
-    private readonly auditoriaRepository: Repository<Auditoria>,
+    private auditoriaRepository: Repository<Auditoria>,
     @InjectRepository(Usuario)
-    private readonly usuarioRepository: Repository<Usuario>,
+    private usuarioRepository: Repository<Usuario>,
     @InjectRepository(Ocorrencia)
-    private readonly ocorrenciaRepository: Repository<Ocorrencia>,
-    @InjectRepository(Localizacao)
-    private readonly localizacaoRepository: Repository<Localizacao>,
+    private ocorrenciaRepository: Repository<Ocorrencia>,
     @InjectRepository(ItemAuditoria)
-    private readonly itemAuditoriaRepository: Repository<ItemAuditoria>,
+    private itemAuditoriaRepository: Repository<ItemAuditoria>,
+    @InjectRepository(Localizacao)
+    private localizacaoRepository: Repository<Localizacao>,
   ) {}
 
   async create(createAuditoriaDto: CreateAuditoriaDto): Promise<Auditoria> {
-    // Verificar se o usuário existe
+    // Verificar usuário
     const usuario = await this.usuarioRepository.findOne({
       where: { usuario_id: createAuditoriaDto.usuario_id },
-      select: ['usuario_id', 'responsavel', 'usuario', 'nivel', 'cpf', 'ativo'],
     });
     if (!usuario) {
       throw new NotFoundException(
@@ -37,17 +36,31 @@ export class AuditoriaService {
       );
     }
 
-    // Verificar se a ocorrência existe
-    const ocorrencia = await this.ocorrenciaRepository.findOne({
-      where: { ocorrencia_id: createAuditoriaDto.ocorrencia_id },
-    });
-    if (!ocorrencia) {
+    // Verificar ocorrências
+    const ocorrenciasIds = createAuditoriaDto.ocorrencias.map(
+      (o) => o.ocorrencia_id,
+    );
+    if (ocorrenciasIds.length === 0) {
       throw new NotFoundException(
-        `Ocorrência com ID ${createAuditoriaDto.ocorrencia_id} não encontrada`,
+        'A lista de ocorrências não pode estar vazia',
       );
     }
 
-    // Verificar se a localização existe
+    const ocorrencias = await this.ocorrenciaRepository.findBy({
+      ocorrencia_id: In(ocorrenciasIds),
+    });
+
+    if (ocorrencias.length !== ocorrenciasIds.length) {
+      const encontrados = ocorrencias.map((o) => o.ocorrencia_id);
+      const naoEncontrados = ocorrenciasIds.filter(
+        (id) => !encontrados.includes(id),
+      );
+      throw new NotFoundException(
+        `Ocorrências com IDs ${naoEncontrados.join(', ')} não encontradas`,
+      );
+    }
+
+    // Verificar localização
     const localizacao = await this.localizacaoRepository.findOne({
       where: { localizacao_id: createAuditoriaDto.localizacao_id },
     });
@@ -57,10 +70,10 @@ export class AuditoriaService {
       );
     }
 
+    // Criar auditoria
     const auditoria = this.auditoriaRepository.create({
-      ...createAuditoriaDto,
       usuario,
-      ocorrencia,
+      ocorrencias,
       localizacao,
     });
 
@@ -101,24 +114,21 @@ export class AuditoriaService {
       const usuario = await this.usuarioRepository.findOne({
         where: { usuario_id: updateAuditoriaDto.usuario_id },
       });
-      if (!usuario) {
+
+      if (!usuario)
         throw new NotFoundException(
-          `Usuário com ID ${updateAuditoriaDto.usuario_id} não encontrado`,
+          `Usuário com ID ${updateAuditoriaDto.usuario_id} não foi encontrado`,
         );
-      }
+
       auditoria.usuario = usuario;
     }
 
-    if (updateAuditoriaDto.ocorrencia_id) {
-      const ocorrencia = await this.ocorrenciaRepository.findOne({
-        where: { ocorrencia_id: updateAuditoriaDto.ocorrencia_id },
-      });
-      if (!ocorrencia) {
-        throw new NotFoundException(
-          `Ocorrência com ID ${updateAuditoriaDto.ocorrencia_id} não encontrada`,
-        );
-      }
-      auditoria.ocorrencia = ocorrencia;
+    if (updateAuditoriaDto.ocorrencias) {
+      const ocorrenciasIds = updateAuditoriaDto.ocorrencias.map(
+        (o) => o.ocorrencia_id,
+      );
+      auditoria.ocorrencias =
+        await this.ocorrenciaRepository.findByIds(ocorrenciasIds);
     }
 
     if (updateAuditoriaDto.localizacao_id) {
@@ -184,14 +194,14 @@ export class AuditoriaService {
     auditoria.conclusao = conclusao;
     auditoria.data_hora_conclusao = new Date();
 
-    // Salvar os itens de auditoria
-    const itensSalvos = await Promise.all(
-      itens.map(async (item) => {
+    // Tipar explicitamente o array de itens salvos
+    const itensSalvos: ItemAuditoria[] = await Promise.all(
+      itens.map(async (item): Promise<ItemAuditoria> => {
         const itemAuditoria = this.itemAuditoriaRepository.create({
           ...item,
           auditoria,
         });
-        return this.itemAuditoriaRepository.save(itemAuditoria);
+        return await this.itemAuditoriaRepository.save(itemAuditoria);
       }),
     );
 
@@ -232,7 +242,7 @@ export class AuditoriaService {
 
   async findByOcorrencia(ocorrencia_id: number): Promise<Auditoria[]> {
     return this.auditoriaRepository.find({
-      where: { ocorrencia: { ocorrencia_id: ocorrencia_id } },
+      where: { ocorrencias: { ocorrencia_id: ocorrencia_id } },
       relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
     });
   }

@@ -5,17 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Ocorrencia } from './entities/ocorrencia.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
-import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Ocorrencia,
-      ProdutoEstoque,
-      Usuario,
-      Localizacao,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([Ocorrencia, ProdutoEstoque, Usuario])],
   controllers: [OcorrenciaController],
   providers: [OcorrenciaService],
 })
