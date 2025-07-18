@@ -26,10 +26,10 @@ export class Auditoria {
   @Column({ type: 'text', nullable: true })
   conclusao?: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   data_hora_inicio?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   data_hora_conclusao: Date;
 
   @Column({
