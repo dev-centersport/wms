@@ -16,7 +16,7 @@ import {
   buscarLocalizacaoPorEAN,
   buscarProdutoEstoquePorLocalizacaoEAN,
   criarOcorrencia,
-} from '../api/index';
+} from '../api/ocorrenciaAPI';
 import { useNavigation } from '@react-navigation/native';
 
 export default function Ocorrencia() {

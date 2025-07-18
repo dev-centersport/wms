@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { buscarConsultaEstoque } from '../api/index'; // ajuste o caminho conforme seu projeto
+import { buscarConsultaEstoque } from '../api/consultaAPI'; // ajuste o caminho conforme seu projeto
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ConsultaScreen({ navigation }) {

@@ -21,6 +21,17 @@ export interface Armazem {
 }
 
 // Adicione esta função ao arquivo API.tsx
+// ✅ ESTA É A FUNÇÃO CERTA PARA USAR:
+
+
+export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
+  return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
+}
+export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) {
+  const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
+  return response.data;
+}
+
 
 export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
   try {

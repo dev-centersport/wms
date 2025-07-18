@@ -13,7 +13,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { login } from '../api/index';
+import { login } from '../api/loginAPI';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 
