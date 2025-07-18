@@ -83,7 +83,6 @@ export class AuditoriaController {
       id,
       body.conclusao,
       body.itens,
-      body.ocorrencias,
     );
   }
 

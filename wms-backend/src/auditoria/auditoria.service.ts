@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOneOptions, FindManyOptions, In } from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
@@ -194,41 +198,51 @@ export class AuditoriaService {
   async concluirAuditoria(
     id: number,
     conclusao: string,
-    itens: ItemAuditoria[],
-    ocorrencias: Ocorrencia[],
+    itens: ItemAuditoria[], // Itens fornecidos pelo usuário
   ): Promise<Auditoria> {
-    const auditoria = await this.findOne(id);
+    // Busca a auditoria com as ocorrências carregadas
+    const auditoria = await this.auditoriaRepository.findOne({
+      where: { auditoria_id: id },
+      relations: ['ocorrencias'], // Carrega as ocorrências automaticamente
+    });
 
-    if (auditoria.status !== StatusAuditoria.EM_ANDAMENTO)
-      throw new Error(
+    if (!auditoria) {
+      throw new NotFoundException(`Auditoria com ID ${id} não encontrada`);
+    }
+
+    if (auditoria.status !== StatusAuditoria.EM_ANDAMENTO) {
+      throw new BadRequestException(
         'Só é possível concluir auditorias com status "em andamento"',
       );
+    }
 
+    // Atualiza os dados da auditoria
     auditoria.status = StatusAuditoria.CONCLUIDA;
     auditoria.conclusao = conclusao;
     auditoria.data_hora_conclusao = new Date();
 
-    // Salvar os itens de auditoria
-    const itensSalvos: ItemAuditoria[] = await Promise.all(
-      itens.map(async (item): Promise<ItemAuditoria> => {
-        const itemAuditoria = this.itemAuditoriaRepository.create({
+    // Salva os itens fornecidos pelo usuário
+    const itensSalvos = await Promise.all(
+      itens.map(async (item) => {
+        const novoItem = this.itemAuditoriaRepository.create({
           ...item,
-          auditoria,
+          auditoria, // Vincula à auditoria
         });
-        return await this.itemAuditoriaRepository.save(itemAuditoria);
+        return await this.itemAuditoriaRepository.save(novoItem);
       }),
     );
 
     auditoria.itens_auditoria = itensSalvos;
 
-    // Atualizar todas as ocorrências para ativo = false
+    // Desativa todas as ocorrências vinculadas
     await Promise.all(
-      ocorrencias.map(async (ocorrencia) => {
+      auditoria.ocorrencias.map(async (ocorrencia) => {
         ocorrencia.ativo = false;
         await this.ocorrenciaRepository.save(ocorrencia);
       }),
     );
 
+    // Salva a auditoria atualizada
     return this.auditoriaRepository.save(auditoria);
   }
 
