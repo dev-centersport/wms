@@ -539,14 +539,39 @@ export async function buscarOcorrencias(ativo?: true | false) {
 }
 
 export interface Auditoria {
-  armazem_id: number;
-  nome: string;
-  endereco: string;
+  auditoria_id: number;
+  conclusao: string;
+  data_hora_inicio: Date;
+  data_hora_fim: Date;
+  status: 'pendente' | 'concluido';
+  usuario: {
+    usuario_id: number
+    responsavel: string
+    usuario: string
+    nivel: number
+    cpf: string
+    ativo: boolean
+  }[];
+  ocorrencia: {
+    ocorrencia_id: number
+    dataHora: Date
+    ativo: boolean
+  }[]
+  localizacao: {
+    localizacao_id: number
+    status: string
+    nome: string
+    altura: string
+    largura: string
+    comprimento: string
+    ean: string
+  }[]
+  // itens_auditoria {}[]
 }
 
 export const buscarAuditoria = async (): Promise<Auditoria[]> => {
   try {
-    const res = await axios.get<Auditoria[]>('http://151.243.0.78:3001/tipo-localizacao');
+    const res = await axios.get<Auditoria[]>('http://151.243.0.78:3001/auditoria');
 
     return res.data;
   } catch (err) {
