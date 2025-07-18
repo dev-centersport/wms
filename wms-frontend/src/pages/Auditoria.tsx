@@ -21,6 +21,12 @@ import { Search, Add, CheckCircle, Cancel } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import axios from 'axios';
 
+interface Ocorrencia {
+  ocorrencia_id: number;
+  descricao: string;
+  status: 'pendente' | 'concluído';
+}
+
 interface AuditoriaItem {
   auditoria_id: number;
   conclusao: string;
@@ -28,8 +34,12 @@ interface AuditoriaItem {
   data_hora_fim: string;
   status: 'pendente' | 'concluido';
   usuario: {
-    usuario: string;
+    responsavel: string;
   };
+  localizacao: {
+    nome: string
+  }
+  ocorrencias: Ocorrencia[]
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -73,7 +83,7 @@ export default function Auditoria() {
       const statusMatch = aba === 'todos' || aud.status === aba;
       // Filtrar por termo de busca
       const buscaMatch = 
-        aud.usuario.usuario.toLowerCase().includes(termo) ||
+        aud.usuario.responsavel.toLowerCase().includes(termo) ||
         aud.auditoria_id.toString().includes(termo);
       
       return statusMatch && buscaMatch;
@@ -146,10 +156,11 @@ export default function Auditoria() {
                   }
                 />
               </TableCell>
-              <TableCell>ID</TableCell>
-              <TableCell>Usuário</TableCell>
+              <TableCell>Localização</TableCell>
+              <TableCell>Criador</TableCell>
               <TableCell>Início</TableCell>
               <TableCell>Término</TableCell>
+              <TableCell>Ocorrências</TableCell>
               <TableCell>Status</TableCell>
             </TableRow>
           </TableHead>
@@ -162,10 +173,11 @@ export default function Auditoria() {
                     onChange={() => toggleSelecionado(item.auditoria_id)}
                   />
                 </TableCell>
-                <TableCell>{item.auditoria_id}</TableCell>
-                <TableCell>{item.usuario.usuario}</TableCell>
+                <TableCell>{item.localizacao.nome}</TableCell>
+                <TableCell>{item.usuario.responsavel}</TableCell>
                 <TableCell>{item.data_hora_inicio}</TableCell>
                 <TableCell>{item.data_hora_fim}</TableCell>
+                <TableCell>modal de ocorrencias</TableCell>
                 <TableCell>
                   <Chip
                     label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}

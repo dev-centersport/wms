@@ -543,7 +543,7 @@ export interface Auditoria {
   conclusao: string;
   data_hora_inicio: Date;
   data_hora_fim: Date;
-  status: 'pendente' | 'concluido';
+  status: string;
   usuario: {
     usuario_id: number
     responsavel: string
@@ -552,7 +552,7 @@ export interface Auditoria {
     cpf: string
     ativo: boolean
   }[];
-  ocorrencia: {
+  ocorrencias: {
     ocorrencia_id: number
     dataHora: Date
     ativo: boolean
@@ -573,7 +573,10 @@ export const buscarAuditoria = async (): Promise<Auditoria[]> => {
   try {
     const res = await axios.get<Auditoria[]>('http://151.243.0.78:3001/auditoria');
 
-    return res.data;
+    return res.data.map(auditoria => ({
+      ...auditoria,
+      ocorrencia: auditoria.ocorrencias || []
+    }));
   } catch (err) {
     console.error('Erro ao buscar tipos de localização →', err);
     throw new Error('Falha ao carregar os tipos de localização do servidor.');
