@@ -23,8 +23,64 @@ export class OcorrenciaService {
 
   async findAll(): Promise<Ocorrencia[]> {
     return await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque', 'usuario', 'localizacao'],
+      relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
     });
+  }
+
+  async listarPorLocalizacao(): Promise<
+    {
+      localizacao: string | null;
+      quantidade: number;
+      nome_produto: string;
+      sku: string;
+      ativo: boolean;
+      ocorrencias: Ocorrencia[];
+    }[]
+  > {
+    const ocorrencias = await this.ocorrenciaRepository.find({
+      relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
+    });
+
+    // Agrupa as ocorrências por localização
+    const agrupamento = ocorrencias.reduce(
+      (acc, ocorrencia) => {
+        // Verifica se a ocorrência tem localizações (considerando que é um array)
+        const primeiraLocalizacao = ocorrencia.localizacao;
+        const localizacaoNome = primeiraLocalizacao?.nome || null;
+        const nomeProduto = ocorrencia.produto_estoque.produto.descricao;
+        const skuProduto = ocorrencia.produto_estoque.produto.sku;
+
+        // Encontra ou cria o grupo para esta localização
+        let grupo = acc.find((g) => g.localizacao === localizacaoNome);
+        if (!grupo) {
+          grupo = {
+            localizacao: localizacaoNome,
+            quantidade: 0,
+            nome_produto: nomeProduto,
+            sku: skuProduto,
+            ativo: ocorrencia.ativo,
+            ocorrencias: [],
+          };
+          acc.push(grupo);
+        }
+
+        // Adiciona a ocorrência ao grupo
+        grupo.quantidade++;
+        grupo.ocorrencias.push(ocorrencia);
+
+        return acc;
+      },
+      [] as {
+        localizacao: string | null;
+        quantidade: number;
+        nome_produto: string;
+        sku: string;
+        ativo: boolean;
+        ocorrencias: Ocorrencia[];
+      }[],
+    );
+
+    return agrupamento;
   }
 
   async findOne(ocorrencia_id: number): Promise<Ocorrencia> {
@@ -42,7 +98,7 @@ export class OcorrenciaService {
   }
 
   async create(CreateOcorrenciaDto: CreateOcorrenciaDto): Promise<Ocorrencia> {
-    const [produto_estoque, usuario, localizacoes] = await Promise.all([
+    const [produto_estoque, usuario, localizacao] = await Promise.all([
       this.produtoEstoqueRepository.findOne({
         where: { produto_estoque_id: CreateOcorrenciaDto.produto_estoque_id },
       }),
@@ -57,14 +113,13 @@ export class OcorrenciaService {
     if (!produto_estoque)
       throw new NotFoundException('Produto estoque não encontrado');
     if (!usuario) throw new NotFoundException('Produto estoque não encontrado');
-    if (!localizacoes)
-      throw new NotFoundException('Localização não encontrado');
+    if (!localizacao) throw new NotFoundException('Localização não encontrado');
 
     const ocorrencia = this.ocorrenciaRepository.create({
       ...CreateOcorrenciaDto,
       produto_estoque,
       usuario,
-      localizacoes,
+      localizacao,
     });
 
     return await this.ocorrenciaRepository.save(ocorrencia);

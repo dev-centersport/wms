@@ -52,18 +52,18 @@ root.render(
           {/* Páginas internas com Sidebar */}
           {/* Páginas de localização */}
           <Route path="/localizacao" element={<Localizacao />} />
-          <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
+          <Route path="/localizacao/criar" element={<CriarLocalizacao />} />
           <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
 
           {/* Páginas de Armazém */}
           <Route path="/armazem" element={<Armazem />} />
-          <Route path="/CriarArmazem" element={<CriarArmazem />} />
-          <Route path="/EditarArmazem/:id" element={<EditarArmazem />} />
+          <Route path="/criar-armazem" element={<CriarArmazem />} />
+          <Route path="/armazem/:id/editar" element={<EditarArmazem />} />
 
           {/* Páginas de Tipo de localização */}
-          <Route path="/TipoLocalizacao" element={<TipoLocalizacao />}/>
+          <Route path="/tipo-localizacao" element={<TipoLocalizacao />}/>
           <Route path="/tipo-localizacao/:id/editar" element={<EditarTipoLocalizacao />} />
-          <Route path="/CriarTipoLocalizacao" element={<CriarTipoLocalizacao />} />
+          <Route path="/tipo-localizacao/criar" element={<CriarTipoLocalizacao />} />
 
           {/* {/ Pagina de Produto} s */}
           <Route path="/produto" element={<Produto />}/>

@@ -26,14 +26,14 @@ export class AuditoriaController {
   @Get()
   findAll(
     @Query('status') status?: StatusAuditoria,
-    @Query('usuarioId') usuario_id?: number,
+    @Query('usuario_id') usuario_id?: number,
     @Query('ocorrencia_id') ocorrencia_id?: number,
   ) {
     if (status) {
       return this.auditoriaService.findByStatus(status);
     }
-    if (usuarioId) {
-      return this.auditoriaService.findByUsuario(+usuarioId);
+    if (usuario_id) {
+      return this.auditoriaService.findByUsuario(+usuario_id);
     }
     if (ocorrencia_id) {
       return this.auditoriaService.findByOcorrencia(+ocorrencia_id);
@@ -91,13 +91,15 @@ export class AuditoriaController {
     return this.auditoriaService.cancelarAuditoria(id);
   }
 
-  @Get('usuario/:usuarioId')
-  findByUsuario(@Param('usuarioId', ParseIntPipe) usuario_id: number) {
-    return this.auditoriaService.findByUsuario(usuarioId);
+  @Get('usuario/:usuario_id')
+  findByUsuario(@Param('usuario_id', ParseIntPipe) usuario_id: number) {
+    return this.auditoriaService.findByUsuario(usuario_id);
   }
 
   @Get('ocorrencia/:ocorrencia_id')
-  findByOcorrencia(@Param('ocorrencia_id', ParseIntPipe) ocorrencia_id: number) {
+  findByOcorrencia(
+    @Param('ocorrencia_id', ParseIntPipe) ocorrencia_id: number,
+  ) {
     return this.auditoriaService.findByOcorrencia(ocorrencia_id);
   }
 }

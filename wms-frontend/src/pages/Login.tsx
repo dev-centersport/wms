@@ -11,7 +11,9 @@ import {
   styled
 } from "@mui/material";
 import logo from "../img/image.png";
+import { login } from '../services/API';
 
+// -------- Styled Components --------
 const StyledLoginContainer = styled(Box)({
   backgroundColor: "rgb(97, 222, 37)",
   height: "100vh",
@@ -54,14 +56,26 @@ const StyledButton = styled(Button)({
   }
 });
 
+// -------- Componente Login --------
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
 
-  const handleLogin = () => {
-    navigate("/armazem");
+  const handleLogin = async () => {
+    try {
+      const resultado = await login(usuario, senha);
+
+      if (resultado.success) {
+        console.log('Login OK', resultado.usuario);
+        navigate('/armazem');
+      } else {
+        alert(resultado.mensagem || 'Usuário ou senha inválidos.');
+      }
+    } catch (err) {
+      alert('Erro inesperado ao tentar login.');
+    }
   };
 
   return (

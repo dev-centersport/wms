@@ -31,6 +31,25 @@ export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) 
   const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
   return response.data;
 }
+export async function login(usuario: string, senha: string) {
+  try {
+    const res = await axios.get('http://151.243.0.78:3001/usuario');
+    const usuarios = res.data;
+
+    const encontrado = usuarios.find(
+      (u: any) => u.usuario === usuario && u.senha === senha
+    );
+
+    if (!encontrado) {
+      return { success: false, mensagem: 'Usuário ou senha inválidos.' };
+    }
+
+    return { success: true, usuario: encontrado };
+  } catch (err) {
+    console.error('Erro na função login:', err);
+    throw new Error('Erro inesperado ao tentar login.');
+  }
+}
 
 
 export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
@@ -200,7 +219,21 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
       total_produtos: item.total_produtos ?? '',
     }));
 
-    return dados;
+    return dados.sort((a, b) => {
+      // Remove os prefixos CEN-#A-23, INF e SUP (e possíveis espaços após eles)
+      const removePrefix = (str: string) => str.replace(/^(CEN|INF|SUP)\s*/i, '');
+      
+      const nomeA = removePrefix(a.nome).toUpperCase(); // Ignora maiúsculas/minúsculas
+      const nomeB = removePrefix(b.nome).toUpperCase();
+
+      if (nomeA < nomeB) {
+          return -1;
+      }
+      if (nomeA > nomeB) {
+          return 1;
+      }
+      return 0; // Nomes iguais
+  });
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);
     throw new Error('Falha ao carregar as localizações do servidor.');
