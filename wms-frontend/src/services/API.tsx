@@ -538,4 +538,19 @@ export async function buscarOcorrencias(ativo?: true | false) {
   }
 }
 
+export interface Auditoria {
+  armazem_id: number;
+  nome: string;
+  endereco: string;
+}
 
+export const buscarAuditoria = async (): Promise<Auditoria[]> => {
+  try {
+    const res = await axios.get<Auditoria[]>('http://151.243.0.78:3001/tipo-localizacao');
+
+    return res.data;
+  } catch (err) {
+    console.error('Erro ao buscar tipos de localização →', err);
+    throw new Error('Falha ao carregar os tipos de localização do servidor.');
+  }
+};
