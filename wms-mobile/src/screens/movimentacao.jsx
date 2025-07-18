@@ -6,7 +6,8 @@ import {
   Platform,
   FlatList,
   StyleSheet,
-  Text
+  Text,
+  Dimensions
 } from 'react-native';
 import {
   buscarLocalizacaoPorEAN,
@@ -22,6 +23,7 @@ import ListaProdutos from '../componentes/Movimentacao/ListaProdutos';
 import BotoesMovimentacao from '../componentes/Movimentacao/BotoesMovimentacao';
 import ModalConfirmacao from '../componentes/Movimentacao/ModalConfirmacao';
 import ModalCancelar from '../componentes/Movimentacao/ModalCancelar';
+import ModalExcluirProduto from '../componentes/Movimentacao/ModalExcluirProduto';
 
 export default function Movimentacao() {
   const [tipo, setTipo] = useState('entrada');
@@ -34,6 +36,8 @@ export default function Movimentacao() {
   const [produtosNaLocalizacao, setProdutosNaLocalizacao] = useState([]);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
+  const [indexExcluir, setIndexExcluir] = useState(null);
+  const [mostrarModalExcluir, setMostrarModalExcluir] = useState(false);
 
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
@@ -104,6 +108,19 @@ export default function Movimentacao() {
     }
   };
 
+  const handleLongPressExcluir = (index) => {
+    setIndexExcluir(index);
+    setMostrarModalExcluir(true);
+  };
+
+  const confirmarExclusao = () => {
+    if (indexExcluir !== null) {
+      setProdutos((prev) => prev.filter((_, i) => i !== indexExcluir));
+      setIndexExcluir(null);
+      setMostrarModalExcluir(false);
+    }
+  };
+
   const verificarEstoqueAntesDeConfirmar = () => {
     if (tipo === 'saida') {
       const contador = {};
@@ -160,87 +177,114 @@ export default function Movimentacao() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <FlatList
-        ref={flatListRef}
-        data={produtos}
-        keyExtractor={(_, index) => index.toString()}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.container}
-        ListHeaderComponent={
-          <View>
-            <HeaderMovimentacao
-              tipo={tipo}
-              setTipo={setTipo}
-              tipoBloqueado={tipoBloqueado}
-              localizacao_id={localizacao_id}
-              setEanLocalizacao={setEanLocalizacao}
-              setlocalizacao_id={setlocalizacao_id}
-              setNomeLocalizacao={setNomeLocalizacao}
-              setProdutos={setProdutos}
-              localizacaoRef={localizacaoRef}
-            />
+      <View style={styles.container}>
+        <HeaderMovimentacao
+          tipo={tipo}
+          setTipo={setTipo}
+          tipoBloqueado={tipoBloqueado}
+          localizacao_id={localizacao_id}
+          setEanLocalizacao={setEanLocalizacao}
+          setlocalizacao_id={setlocalizacao_id}
+          setNomeLocalizacao={setNomeLocalizacao}
+          setProdutos={setProdutos}
+          localizacaoRef={localizacaoRef}
+        />
 
-            <InputLocalizacaoProduto
-              localizacao_id={localizacao_id}
-              eanLocalizacao={eanLocalizacao}
-              setEanLocalizacao={(v) => setEanLocalizacao(limparCodigo(v))}
-              handleBuscarLocalizacao={({ nativeEvent }) => handleBuscarLocalizacao(nativeEvent.text)}
-              nomeLocalizacao={nomeLocalizacao}
-              eanProduto={eanProduto}
-              setEanProduto={(v) => setEanProduto(limparCodigo(v))}
-              handleAdicionarProduto={({ nativeEvent }) => handleAdicionarProduto(nativeEvent.text)}
-              localizacaoRef={localizacaoRef}
-              produtoRef={produtoRef}
-              produtos={produtos}
-            />
+        <InputLocalizacaoProduto
+          localizacao_id={localizacao_id}
+          eanLocalizacao={eanLocalizacao}
+          setEanLocalizacao={(v) => setEanLocalizacao(limparCodigo(v))}
+          handleBuscarLocalizacao={({ nativeEvent }) => handleBuscarLocalizacao(nativeEvent.text)}
+          nomeLocalizacao={nomeLocalizacao}
+          eanProduto={eanProduto}
+          setEanProduto={(v) => setEanProduto(limparCodigo(v))}
+          handleAdicionarProduto={({ nativeEvent }) => handleAdicionarProduto(nativeEvent.text)}
+          localizacaoRef={localizacaoRef}
+          produtoRef={produtoRef}
+          produtos={produtos}
+        />
 
-            {produtos.length > 0 && (
-              <View style={{ marginBottom: 6 }}>
-                <Text style={{ textAlign: 'right', fontWeight: 'bold', color: '#555' }}>
-                  {produtos.length} produto(s) bipado(s)
-                </Text>
-              </View>
-            )}
+        {produtos.length > 0 && (
+          <View style={styles.resumoSKUs}>
+            <Text style={styles.totalTexto}>
+            </Text>
+            <Text style={styles.totalTexto}>
+              {produtos.length} produto(s) bipado(s)
+            </Text>
           </View>
-        }
-        renderItem={({ item, index }) => (
-          <ListaProdutos produto={item} index={index} />
         )}
-        ListFooterComponent={
-          <BotoesMovimentacao
-            visible={!!localizacao_id}
-            onSalvar={verificarEstoqueAntesDeConfirmar}
-            onCancelar={() => setMostrarCancelar(true)}
+
+        <View style={styles.listaContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={produtos}
+            keyExtractor={(_, index) => index.toString()}
+            keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            renderItem={({ item, index }) => (
+              <ListaProdutos produto={item} index={index} onLongPress={handleLongPressExcluir} />
+            )}
           />
-        }
-      />
+        </View>
 
-      <ModalConfirmacao
-        visible={mostrarConfirmacao}
-        onClose={() => setMostrarConfirmacao(false)}
-        onConfirmar={handleConfirmar}
-        tipo={tipo}
-        quantidade={produtos.length}
-      />
+        <BotoesMovimentacao
+          visible={!!localizacao_id}
+          onSalvar={verificarEstoqueAntesDeConfirmar}
+          onCancelar={() => setMostrarCancelar(true)}
+        />
 
-      <ModalCancelar
-        visible={mostrarCancelar}
-        onClose={() => setMostrarCancelar(false)}
-        onCancelar={() => {
-          setMostrarCancelar(false);
-          limparTudo();
-        }}
-        tipo={tipo}
-      />
+        <ModalConfirmacao
+          visible={mostrarConfirmacao}
+          onClose={() => setMostrarConfirmacao(false)}
+          onConfirmar={handleConfirmar}
+          tipo={tipo}
+          quantidade={produtos.length}
+        />
+
+        <ModalCancelar
+          visible={mostrarCancelar}
+          onClose={() => setMostrarCancelar(false)}
+          onCancelar={() => {
+            setMostrarCancelar(false);
+            limparTudo();
+          }}
+          tipo={tipo}
+        />
+
+        <ModalExcluirProduto
+          visible={mostrarModalExcluir}
+          onConfirmar={confirmarExclusao}
+          onClose={() => setMostrarModalExcluir(false)}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 }
+
+const screenHeight = Dimensions.get('window').height;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-    paddingTop: 40,
+    paddingTop: -15,
+  },
+  resumoSKUs: {
+    marginTop: 10,
+    marginBottom: 6,
+    alignItems: 'flex-end',
+  },
+  totalTexto: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: '#333',
+  },
+  listaContainer: {
+    flexGrow: 1,
+    maxHeight: screenHeight * 0.37, // 40% da altura da tela (ajuste se necessário)
+    borderTopWidth: 1,
+    borderColor: '#eee',
+    marginBottom: 10,
   },
 });
