@@ -246,6 +246,7 @@ export default function Ocorrencias() {
                 <TableCell>{item.produto}</TableCell>
                 <TableCell align='center'>{item.sku}</TableCell>
                 <TableCell align='center'>{item.quantidade}</TableCell>
+
                 <TableCell align='center'>
                   {item.prioridade === 'baixa' && (
                     <Chip label="Baixa" sx={{ backgroundColor: '#4CAF50', color: '#fff', fontWeight: 600, px: 2 }} />
@@ -255,6 +256,7 @@ export default function Ocorrencias() {
                   )}
                   {item.prioridade === 'alta' && (
                     <Chip label="Alta" sx={{ backgroundColor: '#F44336', color: '#fff', fontWeight: 600, px: 2 }} />
+
                   )}
                 </TableCell>
                 <TableCell align='center'>

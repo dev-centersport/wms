@@ -219,7 +219,21 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
       total_produtos: item.total_produtos ?? '',
     }));
 
-    return dados;
+    return dados.sort((a, b) => {
+      // Remove os prefixos CEN-#A-23, INF e SUP (e possíveis espaços após eles)
+      const removePrefix = (str: string) => str.replace(/^(CEN|INF|SUP)\s*/i, '');
+      
+      const nomeA = removePrefix(a.nome).toUpperCase(); // Ignora maiúsculas/minúsculas
+      const nomeB = removePrefix(b.nome).toUpperCase();
+
+      if (nomeA < nomeB) {
+          return -1;
+      }
+      if (nomeA > nomeB) {
+          return 1;
+      }
+      return 0; // Nomes iguais
+  });
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);
     throw new Error('Falha ao carregar as localizações do servidor.');

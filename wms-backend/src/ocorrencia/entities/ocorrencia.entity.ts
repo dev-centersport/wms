@@ -16,7 +16,10 @@ export class Ocorrencia {
   @PrimaryGeneratedColumn()
   ocorrencia_id: number;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP)',
+  })
   dataHora: Date;
 
   @Column({ type: 'boolean', default: true })
@@ -28,7 +31,7 @@ export class Ocorrencia {
 
   @ManyToOne(() => Localizacao, (loc) => loc.ocorrencias)
   @JoinColumn()
-  localizacoes: Localizacao;
+  localizacao: Localizacao;
 
   @ManyToOne(() => Usuario, (user) => user.ocorrencias)
   @JoinColumn()
