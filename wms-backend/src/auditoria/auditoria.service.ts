@@ -29,6 +29,7 @@ export class AuditoriaService {
     // Verificar se o usuário existe
     const usuario = await this.usuarioRepository.findOne({
       where: { usuario_id: createAuditoriaDto.usuario_id },
+      select: ['usuario_id', 'responsavel', 'usuario', 'nivel', 'cpf', 'ativo'],
     });
     if (!usuario) {
       throw new NotFoundException(
