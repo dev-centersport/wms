@@ -1,5 +1,5 @@
 import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
-import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
+// import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import {
@@ -18,7 +18,7 @@ export class Ocorrencia {
 
   @Column({
     type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP)',
+    default: () => 'CURRENT_TIMESTAMP',
   })
   dataHora: Date;
 
@@ -29,9 +29,9 @@ export class Ocorrencia {
   @JoinColumn()
   produto_estoque: ProdutoEstoque;
 
-  @ManyToOne(() => Localizacao, (loc) => loc.ocorrencias)
-  @JoinColumn()
-  localizacao: Localizacao;
+  // @ManyToOne(() => Localizacao, (loc) => loc.ocorrencias)
+  // @JoinColumn()
+  // localizacao: Localizacao;
 
   @ManyToOne(() => Usuario, (user) => user.ocorrencias)
   @JoinColumn()

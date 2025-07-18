@@ -23,7 +23,11 @@ export class OcorrenciaService {
 
   async findAll(): Promise<Ocorrencia[]> {
     return await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
+      relations: [
+        'produto_estoque.produto',
+        'usuario',
+        'produto_estoque.localizacao',
+      ],
     });
   }
 
@@ -38,14 +42,18 @@ export class OcorrenciaService {
     }[]
   > {
     const ocorrencias = await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque.produto', 'usuario', 'localizacao'],
+      relations: [
+        'produto_estoque.produto',
+        'usuario',
+        'produto_estoque.localizacao',
+      ],
     });
 
     // Agrupa as ocorrências por localização
     const agrupamento = ocorrencias.reduce(
       (acc, ocorrencia) => {
         // Verifica se a ocorrência tem localizações (considerando que é um array)
-        const primeiraLocalizacao = ocorrencia.localizacao;
+        const primeiraLocalizacao = ocorrencia.produto_estoque.localizacao;
         const localizacaoNome = primeiraLocalizacao?.nome || null;
         const nomeProduto = ocorrencia.produto_estoque.produto.descricao;
         const skuProduto = ocorrencia.produto_estoque.produto.sku;
@@ -86,7 +94,11 @@ export class OcorrenciaService {
   async findOne(ocorrencia_id: number): Promise<Ocorrencia> {
     const ocorrencia = await this.ocorrenciaRepository.findOne({
       where: { ocorrencia_id },
-      relations: ['produto_estoque', 'usuario', 'localizacao'],
+      relations: [
+        'produto_estoque.produto',
+        'usuario',
+        'produto_estoque.localizacao',
+      ],
     });
 
     if (!ocorrencia)
@@ -119,7 +131,7 @@ export class OcorrenciaService {
       ...CreateOcorrenciaDto,
       produto_estoque,
       usuario,
-      localizacao,
+      // localizacao,
     });
 
     return await this.ocorrenciaRepository.save(ocorrencia);
@@ -131,7 +143,11 @@ export class OcorrenciaService {
   ): Promise<Ocorrencia> {
     const ocorrencia = await this.ocorrenciaRepository.findOne({
       where: { ocorrencia_id },
-      relations: ['produto_estoque', 'usuario'],
+      relations: [
+        'produto_estoque.produto',
+        'usuario',
+        'produto_estoque.localizacao',
+      ],
     });
 
     if (!ocorrencia) throw new NotFoundException('Ocorrência não encontrada');

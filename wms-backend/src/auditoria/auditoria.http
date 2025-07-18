@@ -18,8 +18,7 @@ content-type: application/json
 {
     "usuario_id": 1,
     "ocorrencia_id": 1,
-    "localizacao_id": 1,
-    "conclusao": "houve muitos erros nesta localização"
+    "localizacao_id": 1
 }
 
 ###
