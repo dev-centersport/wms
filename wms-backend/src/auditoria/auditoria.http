@@ -16,14 +16,10 @@ POST http://localhost:3001/auditoria HTTP/1.1
 content-type: application/json
 
 {
-    "conclusao": "foi encontrado o produto faltando",
-    "quantidades_sistema": 10,
-    "quantidades_fisico": 8,
-    "motivo_diferenca": "produto a menos",
-    "acao_corretiva": "foi adicionado mais dois produtos no estoque",
-    "estoque_anterior": 8,
-    "estoque_novo": 10,
-    "auditoria_id": 1
+    "usuario_id": 1,
+    "localizacao_id": 1,
+    "ocorrencia_id": 1,
+    "conclusao": "Faltou muitos produtos nesta localização"
 }
 
 ###

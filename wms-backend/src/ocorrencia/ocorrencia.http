@@ -17,6 +17,7 @@ content-type: application/json
 
 {
     "produto_estoque_id": 1,
+    "localizacao_id": 1,
     "usuario_id": 1
 }
 
