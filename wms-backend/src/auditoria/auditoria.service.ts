@@ -26,7 +26,7 @@ export class AuditoriaService {
   ) {}
 
   async create(createAuditoriaDto: CreateAuditoriaDto): Promise<Auditoria> {
-    // Verificar usuário
+    // Verifica usuário
     const usuario = await this.usuarioRepository.findOne({
       where: { usuario_id: createAuditoriaDto.usuario_id },
     });
@@ -36,31 +36,7 @@ export class AuditoriaService {
       );
     }
 
-    // Verificar ocorrências
-    const ocorrenciasIds = createAuditoriaDto.ocorrencias.map(
-      (o) => o.ocorrencia_id,
-    );
-    if (ocorrenciasIds.length === 0) {
-      throw new NotFoundException(
-        'A lista de ocorrências não pode estar vazia',
-      );
-    }
-
-    const ocorrencias = await this.ocorrenciaRepository.findBy({
-      ocorrencia_id: In(ocorrenciasIds),
-    });
-
-    if (ocorrencias.length !== ocorrenciasIds.length) {
-      const encontrados = ocorrencias.map((o) => o.ocorrencia_id);
-      const naoEncontrados = ocorrenciasIds.filter(
-        (id) => !encontrados.includes(id),
-      );
-      throw new NotFoundException(
-        `Ocorrências com IDs ${naoEncontrados.join(', ')} não encontradas`,
-      );
-    }
-
-    // Verificar localização
+    // Verifica localização
     const localizacao = await this.localizacaoRepository.findOne({
       where: { localizacao_id: createAuditoriaDto.localizacao_id },
     });
@@ -70,11 +46,47 @@ export class AuditoriaService {
       );
     }
 
-    // Criar auditoria
+    // Verifica ocorrências
+    const ocorrenciasIds = createAuditoriaDto.ocorrencias.map(
+      (o) => o.ocorrencia_id,
+    );
+    if (ocorrenciasIds.length === 0) {
+      throw new NotFoundException(
+        'A lista de ocorrências não pode estar vazia',
+      );
+    }
+
+    let ocorrencias: Ocorrencia[] = [];
+
+    // Caso especial: única ocorrência com ID 0
+    if (ocorrenciasIds.length === 1 && ocorrenciasIds[0] === 0) {
+      // Cria uma ocorrência "fake" (não salva no banco, só para vincular)
+      ocorrencias = [this.ocorrenciaRepository.create({ ocorrencia_id: 0 })];
+    } else {
+      // Busca ocorrências válidas no banco
+      const ocorrenciasExistentes = await this.ocorrenciaRepository.findBy({
+        ocorrencia_id: In(ocorrenciasIds),
+      });
+
+      // Verifica se todas existem
+      if (ocorrenciasExistentes.length !== ocorrenciasIds.length) {
+        const encontrados = ocorrenciasExistentes.map((o) => o.ocorrencia_id);
+        const naoEncontrados = ocorrenciasIds.filter(
+          (id) => !encontrados.includes(id),
+        );
+        throw new NotFoundException(
+          `Ocorrências com IDs ${naoEncontrados.join(', ')} não encontradas`,
+        );
+      }
+      ocorrencias = ocorrenciasExistentes;
+    }
+
+    // Cria a auditoria
     const auditoria = this.auditoriaRepository.create({
       usuario,
-      ocorrencias,
       localizacao,
+      ocorrencias, // Aqui o TypeORM fará o vínculo automaticamente
+      status: StatusAuditoria.PENDENTE, // Define um status padrão
     });
 
     return this.auditoriaRepository.save(auditoria);
