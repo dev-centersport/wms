@@ -22,7 +22,38 @@ export interface Armazem {
 
 // Adicione esta função ao arquivo API.tsx
 // ✅ ESTA É A FUNÇÃO CERTA PARA USAR:
+// dentro de services/API.ts
+export interface Ocorrencia {
+  ocorrencia_id: number;
+  dataHora: string;
+  ativo: boolean;
+}
 
+export interface AuditoriaItem {
+  auditoria_id: number;
+  conclusao: string;
+  data_hora_inicio: string;
+  data_hora_fim: string;
+  status: string;
+  usuario: {
+    responsavel: string;
+  };
+  localizacao: {
+    nome: string;
+  };
+  ocorrencias: Ocorrencia[];
+}
+
+// ✅ Agora exportando corretamente
+export async function buscarAuditoria(): Promise<AuditoriaItem[]> {
+  try {
+    const res = await axios.get('http://151.243.0.78:3001/auditoria');
+    return res.data;
+  } catch (err) {
+    console.error('Erro ao buscar auditorias →', err);
+    throw new Error('Falha ao carregar as auditorias do servidor.');
+  }
+}
 
 export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
   return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
