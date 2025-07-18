@@ -24,8 +24,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/logo01.png",
+        "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.centersporti.wmsmobile"
@@ -38,6 +38,16 @@
         "projectId": "7c70b2ce-33f0-4e1c-beb5-67312ef48ebc"
       }
     },
-    "owner": "centersporti"
+    "owner": "centersporti",
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
   }
 }

@@ -10,7 +10,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { buscarConsultaEstoque } from '../api/index'; // ajuste o caminho conforme seu projeto
+import { buscarConsultaEstoque } from '../api/consultaAPI'; // ajuste o caminho conforme seu projeto
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ConsultaScreen({ navigation }) {
   const [busca, setBusca] = useState('');
@@ -70,7 +71,7 @@ export default function ConsultaScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Consulta</Text>
@@ -164,7 +165,7 @@ export default function ConsultaScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -174,6 +175,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingTop: 40,
+    paddingBottom: 30, // ✅ evita que a paginação fique grudada na borda inferior
   },
   header: {
     flexDirection: 'row',
@@ -227,6 +229,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
+    backgroundColor: '#fff',
+    marginBottom: 10, // ✅ espaçamento extra se houver SafeArea oculta
   },
   pageBtn: {
     paddingHorizontal: 10,

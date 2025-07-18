@@ -18,7 +18,7 @@ import {
   buscarProdutoPorEAN,
   enviarMovimentacao,
   buscarProdutosPorLocalizacaoDireto,
-} from '../api/index';
+} from '../api/movimentacaoAPI';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; // certifique-se que este está no topo
 
@@ -198,191 +198,182 @@ export default function Movimentacao() {
     }, 100);
   };
 
-   return (
-  <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-  >
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      {produtos.length === 0 && (
-        <>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Movimentação - {tipo.toUpperCase()}</Text>
-            <TouchableOpacity
-              onPress={() => {
-                if (localizacao_id) {
-                  Alert.alert(
-                    'Movimentação pendente',
-                    `Movimentação do tipo ${tipo.toUpperCase()} está em andamento.\nFinalize ou cancele antes de sair.`
-                  );
-                } else {
-                  navigation.navigate('Home');
-                }
-              }}
-            >
-              <Ionicons name="close" size={28} color="#000" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.toggleContainer}>
-            <TouchableOpacity
-              style={[styles.toggleBtn, tipo === 'entrada' && styles.active]}
-              onPress={() => handleTipoChange('entrada')}
-              disabled={tipoBloqueado}
-            >
-              <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
-                ENTRADA
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.toggleBtn, tipo === 'saida' && styles.active]}
-              onPress={() => handleTipoChange('saida')}
-              disabled={tipoBloqueado}
-            >
-              <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
-                SAÍDA
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {!localizacao_id && (
-            <TextInput
-              ref={localizacaoRef}
-              value={eanLocalizacao}
-              onChangeText={setEanLocalizacao}
-              onSubmitEditing={handleBuscarLocalizacao}
-              placeholder="Bipe a Localização"
-              style={styles.input}
-              keyboardType="numeric"
-              showSoftInputOnFocus={false}
-            />
-          )}
-
-          {nomeLocalizacao !== '' && (
-            <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
-          )}
-
-          {localizacao_id && (
-            <TextInput
-              ref={produtoRef}
-              value={eanProduto}
-              onChangeText={setEanProduto}
-              onSubmitEditing={handleAdicionarProduto}
-              placeholder="Bipe o Produto"
-              style={styles.input}
-              keyboardType="numeric"
-              showSoftInputOnFocus={false}
-            />
-          )}
-        </>
-      )}
-
-      {produtos.length > 0 && (
-        <>
-          <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
-          <TextInput
-            ref={produtoRef}
-            value={eanProduto}
-            onChangeText={setEanProduto}
-            onSubmitEditing={handleAdicionarProduto}
-            placeholder="Bipe o Produto"
-            style={styles.input}
-            keyboardType="numeric"
-            showSoftInputOnFocus={false}
-          />
-          <Text style={styles.totalSKU}>Total: {produtos.length} SKU</Text>
-          <FlatList
-            ref={flatListRef}
-            data={produtos}
-            keyExtractor={(_, index) => index.toString()}
-            style={{ marginTop: 4, marginBottom: 60 }}
-            renderItem={({ item, index }) => (
-              <View style={styles.produtoItem}>
-                <Text style={styles.contador}>{index + 1}</Text>
-                {item.url_foto && (
-                  <Image
-                    source={{ uri: item.url_foto }}
-                    style={styles.foto}
-                    resizeMode="cover"
-                  />
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.produtoNome}>{item.descricao}</Text>
-                  <Text style={styles.produtoSKU}>SKU: {item.sku}</Text>
-                </View>
-              </View>
-            )}
-          />
-        </>
-      )}
-
-      {/* Botões Salvar/Cancelar visíveis apenas se localização estiver definida */}
-      {localizacao_id && (
-        <View style={styles.botoesFixos}>
-          <TouchableOpacity style={styles.btnSalvar} onPress={verificarEstoqueAntesDeConfirmar}>
-            <Text style={styles.salvarText}>Salvar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.btnCancelar} onPress={() => setMostrarCancelar(true)}>
-            <Text style={styles.cancelarText}>Cancelar</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Modal Confirmar */}
-      <Modal transparent visible={mostrarConfirmacao} animationType="fade">
-        <View style={styles.overlay}>
-          <View style={styles.modalBox}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Confirmação</Text>
-              <TouchableOpacity onPress={() => setMostrarConfirmacao(false)}>
-                <Text style={styles.modalClose}>×</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalContent}>
-              <Text style={styles.alertIcon}>❗</Text>
-              <Text style={styles.modalMessage}>
-                Confirma a {tipo === 'entrada' ? 'Entrada' : 'Saída'} de {produtos.length} SKU?
-              </Text>
-              <TouchableOpacity style={styles.btnConfirmar} onPress={handleConfirmar}>
-                <Text style={styles.confirmarText}>Confirmar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal Cancelar */}
-      <Modal transparent visible={mostrarCancelar} animationType="fade">
-        <View style={styles.overlay}>
-          <View style={styles.modalBox}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Cancelar</Text>
-              <TouchableOpacity onPress={() => setMostrarCancelar(false)}>
-                <Text style={styles.modalClose}>×</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalContent}>
-              <Text style={styles.alertIcon}>⚠️</Text>
-              <Text style={styles.modalMessage}>Deseja realmente cancelar a {tipo}?</Text>
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={80}
+    >
+      <FlatList
+        ref={flatListRef}
+        data={produtos}
+        keyExtractor={(_, index) => index.toString()}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.container}
+        ListHeaderComponent={
+          <>
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>Movimentação - {tipo.toUpperCase()}</Text>
               <TouchableOpacity
-                style={styles.btnConfirmar}
                 onPress={() => {
-                  setMostrarCancelar(false);
-                  limparTudo();
+                  if (localizacao_id) {
+                    Alert.alert(
+                      'Movimentação pendente',
+                      `Movimentação do tipo ${tipo.toUpperCase()} está em andamento.\nFinalize ou cancele antes de sair.`
+                    );
+                  } else {
+                    navigation.navigate('Home');
+                  }
                 }}
               >
-                <Text style={styles.confirmarText}>Sim, Cancelar</Text>
+                <Ionicons name="close" size={28} color="#000" />
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
-    </ScrollView>
-  </KeyboardAvoidingView>
-);
-}
 
+            <View style={[styles.toggleContainer, { marginTop: 20 }]}>
+              <TouchableOpacity
+                style={[styles.toggleBtn, tipo === 'entrada' && styles.active]}
+                onPress={() => handleTipoChange('entrada')}
+                disabled={tipoBloqueado}
+              >
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  ENTRADA
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.toggleBtn, tipo === 'saida' && styles.active]}
+                onPress={() => handleTipoChange('saida')}
+                disabled={tipoBloqueado}
+              >
+                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+                  SAÍDA
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {!localizacao_id && (
+              <TextInput
+                ref={localizacaoRef}
+                value={eanLocalizacao}
+                onChangeText={setEanLocalizacao}
+                onSubmitEditing={handleBuscarLocalizacao}
+                placeholder="Bipe a Localização"
+                style={styles.input}
+                keyboardType="numeric"
+                showSoftInputOnFocus={false}
+              />
+            )}
+
+            {nomeLocalizacao !== '' && (
+              <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
+            )}
+
+            {/* ⬇️ Campo de bipar produto mostrado só se localização estiver definida */}
+            {localizacao_id && (
+              <TextInput
+                ref={produtoRef}
+                value={eanProduto}
+                onChangeText={setEanProduto}
+                onSubmitEditing={handleAdicionarProduto}
+                placeholder="Bipe o Produto"
+                style={styles.input}
+                keyboardType="numeric"
+                showSoftInputOnFocus={false}
+              />
+            )}
+
+            {/* ⬇️ Total de produtos bipados, se houver */}
+            {produtos.length > 0 && (
+              <Text style={styles.totalSKU}>Total: {produtos.length} SKU</Text>
+            )}
+          </>
+        }
+
+        renderItem={({ item, index }) => (
+          <View style={styles.produtoItem}>
+            <Text style={styles.contador}>{index + 1}</Text>
+            {item.url_foto && (
+              <Image
+                source={{ uri: item.url_foto }}
+                style={styles.foto}
+                resizeMode="cover"
+              />
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.produtoNome}>{item.descricao}</Text>
+              <Text style={styles.produtoSKU}>SKU: {item.sku}</Text>
+            </View>
+          </View>
+        )}
+        ListFooterComponent={
+          <>
+            {localizacao_id && (
+              <View style={styles.botoesFlexiveis}>
+                <TouchableOpacity style={styles.btnSalvar} onPress={verificarEstoqueAntesDeConfirmar}>
+                  <Text style={styles.salvarText}>Salvar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnCancelar} onPress={() => setMostrarCancelar(true)}>
+                  <Text style={styles.cancelarText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Modal Confirmar */}
+            <Modal transparent visible={mostrarConfirmacao} animationType="fade">
+              <View style={styles.overlay}>
+                <View style={styles.modalBox}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Confirmação</Text>
+                    <TouchableOpacity onPress={() => setMostrarConfirmacao(false)}>
+                      <Text style={styles.modalClose}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.alertIcon}>❗</Text>
+                    <Text style={styles.modalMessage}>
+                      Confirma a {tipo === 'entrada' ? 'Entrada' : 'Saída'} de {produtos.length} SKU?
+                    </Text>
+                    <TouchableOpacity style={styles.btnConfirmar} onPress={handleConfirmar}>
+                      <Text style={styles.confirmarText}>Confirmar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Modal Cancelar */}
+            <Modal transparent visible={mostrarCancelar} animationType="fade">
+              <View style={styles.overlay}>
+                <View style={styles.modalBox}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Cancelar</Text>
+                    <TouchableOpacity onPress={() => setMostrarCancelar(false)}>
+                      <Text style={styles.modalClose}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.alertIcon}>⚠️</Text>
+                    <Text style={styles.modalMessage}>Deseja realmente cancelar a {tipo}?</Text>
+                    <TouchableOpacity
+                      style={styles.btnConfirmar}
+                      onPress={() => {
+                        setMostrarCancelar(false);
+                        limparTudo();
+                      }}
+                    >
+                      <Text style={styles.confirmarText}>Sim, Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          </>
+        }
+      />
+    </KeyboardAvoidingView>
+  );
+}
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
@@ -443,13 +434,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#555',
   },
-  botoesFixos: {
-    position: 'absolute',
-    bottom: 10,
-    left: 16,
-    right: 16,
+  botoesFlexiveis: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 40, // espaço extra para não colar no fundo
+    paddingHorizontal: 10,
   },
   btnSalvar: {
     backgroundColor: '#4CAF50',
@@ -517,6 +507,7 @@ const styles = StyleSheet.create({
     paddingTop: 40, // importante para alinhar com consulta e ocorrência
   },
   header: {
+    marginTop: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

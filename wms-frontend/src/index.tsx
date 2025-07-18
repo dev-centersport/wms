@@ -26,6 +26,7 @@ import Movimentacao from "./pages/Movimentacao";
 import Separacao from "./pages/Separacao";
 import Ocorrencias from "./pages/Ocorrencias";
 import NovaOcorrencia from "./pages/NovaOcorrencia";
+import ConferenciaAudi from "./pages/ConferenciaAudi";
 
 import Sidebar from "./components/Sidebar";
 import Auditoria from "./pages/Auditoria";
@@ -72,6 +73,7 @@ root.render(
           <Route path="/ocorrencias" element={<Ocorrencias/>}/>
           <Route path="/Auditoria" element={<Auditoria/>}/>
           <Route path="/NovaOcorrencia" element={<NovaOcorrencia/>}/>
+          <Route path="/ConferenciaAudi/:id" element={<ConferenciaAudi />} />
 
           {/* Rota padrão redireciona para login */}
           <Route path="*" element={<Login />} />

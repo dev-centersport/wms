@@ -1,8 +1,9 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { registerRootComponent } from 'expo'; // 1. Importe o registerRootComponent
+import { registerRootComponent } from 'expo';
+import * as Updates from 'expo-updates';
 
 import Login from './src/screens/login';
 import Home from './src/screens/home';
@@ -13,6 +14,17 @@ import Ocorrencia from './src/screens/ocorrencia';
 const Stack = createNativeStackNavigator();
 
 function App() {
+  useEffect(() => {
+    async function checkUpdate() {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        await Updates.fetchUpdateAsync();
+        await Updates.reloadAsync();
+      }
+    }
+
+    checkUpdate();
+  }, []);
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">

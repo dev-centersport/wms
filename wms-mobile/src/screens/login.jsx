@@ -13,16 +13,14 @@ import {
   Keyboard,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { login } from '../api/index';
+import { login } from '../api/loginAPI';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
-
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -47,58 +45,64 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
-          />
-          <Text style={styles.brand}>WMS</Text>
-          <Text style={styles.welcome}>Bem Vindo!</Text>
-
-          <Text style={styles.label}>Usuário</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Usuário"
-              value={usuario}
-              onChangeText={setUsuario}
-              style={styles.input}
-              placeholderTextColor="#888"
+        <View style={styles.container}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Image
+              source={require('../../assets/images/logo01.png')}
+              style={styles.logo}
             />
-            <Icon name="user" size={20} color="#888" style={styles.icon} />
-          </View>
+            <Text style={styles.brand}>WMS</Text>
+            <Text style={styles.welcome}>Bem Vindo!</Text>
 
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!mostrarSenha}
-              style={styles.input}
-              placeholderTextColor="#888"
-            />
-            <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
-              <Icon
-                name={mostrarSenha ? 'eye' : 'eye-slash'}
-                size={20}
-                color="#888"
-                style={styles.icon}
+            <Text style={styles.label}>Usuário</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Usuário"
+                value={usuario}
+                onChangeText={setUsuario}
+                style={styles.input}
+                placeholderTextColor="#888"
               />
+              <Icon name="user" size={20} color="#888" style={styles.icon} />
+            </View>
+
+            <Text style={styles.label}>Senha</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Senha"
+                value={senha}
+                onChangeText={setSenha}
+                secureTextEntry={!mostrarSenha}
+                style={styles.input}
+                placeholderTextColor="#888"
+              />
+              <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+                <Icon
+                  name={mostrarSenha ? 'eye' : 'eye-slash'}
+                  size={20}
+                  color="#888"
+                  style={styles.icon}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={handleLogin} style={styles.button}>
+              <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.footer}>
-            <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
-              "Otimizando a gestão de armazém com tecnologia eficiente"
+            <Text style={styles.footer}>
+              <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
+                "Otimizando a gestão de armazém com tecnologia eficiente"
+              </Text>
             </Text>
-          </Text>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
@@ -106,8 +110,11 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     backgroundColor: '#61DE25',
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -143,12 +150,26 @@ const styles = StyleSheet.create({
     color: '#000',
     marginTop: 10,
   },
-  input: {
-    width: '80%',
-    backgroundColor: '#fff',
-    padding: 12,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef4ff',
     borderRadius: 6,
-    marginTop: 5,
+    paddingHorizontal: 10,
+    width: '80%',
+    marginTop: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+  },
+  icon: {
+    fontSize: 20,
+    color: '#000',
+    marginLeft: 10,
   },
   button: {
     backgroundColor: '#000',
@@ -168,26 +189,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
     textAlign: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eef4ff', // tom suave para fundo do input
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    width: '80%',
-    marginTop: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#000',
-    paddingVertical: 12,
-    paddingHorizontal: 0,
-  },
-  icon: {
-    fontSize: 20,
-    color: '#000', // Ícone escuro
-    marginLeft: 10,
   },
 });

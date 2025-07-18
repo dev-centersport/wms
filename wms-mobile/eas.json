@@ -8,7 +8,11 @@
       "android": {
         "buildType": "apk"
       },
-      "autoIncrement": true
+      "autoIncrement": true,
+      "channel": "production",
+      "env": {
+        "EXPO_RUNTIME_VERSION": "1.0.0"
+      }
     }
   },
   "submit": {

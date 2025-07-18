@@ -21,6 +21,36 @@ export interface Armazem {
 }
 
 // Adicione esta função ao arquivo API.tsx
+// ✅ ESTA É A FUNÇÃO CERTA PARA USAR:
+
+
+export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
+  return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
+}
+export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) {
+  const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
+  return response.data;
+}
+export async function login(usuario: string, senha: string) {
+  try {
+    const res = await axios.get('http://151.243.0.78:3001/usuario');
+    const usuarios = res.data;
+
+    const encontrado = usuarios.find(
+      (u: any) => u.usuario === usuario && u.senha === senha
+    );
+
+    if (!encontrado) {
+      return { success: false, mensagem: 'Usuário ou senha inválidos.' };
+    }
+
+    return { success: true, usuario: encontrado };
+  } catch (err) {
+    console.error('Erro na função login:', err);
+    throw new Error('Erro inesperado ao tentar login.');
+  }
+}
+
 
 export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
   try {
