@@ -45,7 +45,7 @@ type LocalizacaoComQtd = {
 
 /* -------------------------------------------------------------------------- */
 // Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
-const itemsPerPage = 100;
+// const itemsPerPage = 100;
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
@@ -64,6 +64,7 @@ const Localizacao: React.FC = () => {
         const [selectedItems, setSelectedItems] = useState<number[]>([]);
         const [selectAll, setSelectAll] = useState(false);
         const [currentPage, setCurrentPage] = useState(1);
+        const [itemsPerPage, setItemsPerPage] = useState(100);
 
         const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
         
@@ -805,7 +806,7 @@ const handleImprimirSelecionadosPrateleira = () => {
     };
 
     return (
-        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} onItemsPerPageChange={setItemsPerPage} itemsPerPage={itemsPerPage}>
           <CarregadorComRetry
             funcaoCarregamento={async () => {
               const [locs, estoque] = await Promise.all([

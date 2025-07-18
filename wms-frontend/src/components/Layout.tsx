@@ -34,25 +34,25 @@ const Layout: React.FC<LayoutProps> = ({
   itemsPerPage = 50,
   onItemsPerPageChange,
 }) => {
-  // const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  // const [pageInput, setPageInput] = useState('');
+ const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+ const [pageInput, setPageInput] = useState('');
 
-  // const popoverOpen = Boolean(anchorEl);
+ const popoverOpen = Boolean(anchorEl);
 
-  // const handleOpenPopover = (event: React.MouseEvent<HTMLElement>) => {
-  //   setAnchorEl(event.currentTarget);
-  //   setPageInput('');
-  // };
+ const handleOpenPopover = (event: React.MouseEvent<HTMLElement>) => {
+   setAnchorEl(event.currentTarget);
+   setPageInput('');
+ };
 
-  // const handleClosePopover = () => setAnchorEl(null);
+ const handleClosePopover = () => setAnchorEl(null);
 
-  // const handleGoToPage = () => {
-  //   const pageNum = Number(pageInput);
-  //   if (pageNum >= 1 && pageNum <= totalPages) {
-  //     onPageChange(pageNum);
-  //   }
-  //   handleClosePopover();
-  // };
+ const handleGoToPage = () => {
+   const pageNum = Number(pageInput);
+   if (pageNum >= 1 && pageNum <= totalPages) {
+     onPageChange(pageNum);
+   }
+   handleClosePopover();
+ };
 
   return (
     <Sidebar>
