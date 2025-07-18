@@ -541,8 +541,8 @@ export async function buscarOcorrencias(ativo?: true | false) {
 export interface Auditoria {
   auditoria_id: number;
   conclusao: string;
-  data_hora_inicio: Date;
-  data_hora_fim: Date;
+  data_hora_inicio: string;
+  data_hora_fim: string;
   status: string;
   usuario: {
     usuario_id: number
@@ -551,10 +551,10 @@ export interface Auditoria {
     nivel: number
     cpf: string
     ativo: boolean
-  }[];
+  };
   ocorrencias: {
     ocorrencia_id: number
-    dataHora: Date
+    dataHora: string
     ativo: boolean
   }[]
   localizacao: {
@@ -565,20 +565,41 @@ export interface Auditoria {
     largura: string
     comprimento: string
     ean: string
-  }[]
+  }
   // itens_auditoria {}[]
 }
 
 export const buscarAuditoria = async (): Promise<Auditoria[]> => {
   try {
-    const res = await axios.get<Auditoria[]>('http://151.243.0.78:3001/auditoria');
+    const res = await axios.get<Auditoria[]>('http://localhost:3001/auditoria');
+    console.log(res)
 
     return res.data.map(auditoria => ({
       ...auditoria,
       ocorrencia: auditoria.ocorrencias || []
     }));
   } catch (err) {
-    console.error('Erro ao buscar tipos de localização →', err);
-    throw new Error('Falha ao carregar os tipos de localização do servidor.');
+    console.error('Erro ao buscar as auditorias →', err);
+    throw new Error('Falha ao carregar as auditorias do servidor.');
   }
 };
+
+export const iniciarAuditoria = async (id: number) => {
+  try {
+    await axios.get(`http://localhost:3001/auditoria/${id}/iniciar`);
+  } catch (err) {
+    console.error('Erro ao iniciar a auditoria →', err);
+    throw new Error('Falha ao iniciar a auditoria do servidor.');
+  }
+};
+
+export const concluirAuditoria = async (id: number, conclusao: string) => {
+  try {
+    await axios.get(`http://localhost:3001/auditoria/${id}/iniciar`);
+  } catch (err) {
+    console.error('Erro ao iniciar a auditoria →', err);
+    throw new Error('Falha ao iniciar a auditoria do servidor.');
+  }
+};
+
+

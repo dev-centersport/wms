@@ -4,6 +4,10 @@ import {
   Button,
   Checkbox,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   InputAdornment,
   Paper,
   Tab,
@@ -16,15 +20,18 @@ import {
   TableRow,
   TextField,
   Typography,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
-import { Search, Add, CheckCircle, Cancel } from '@mui/icons-material';
+import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import axios from 'axios';
+import { buscarAuditoria } from '../services/API';
 
 interface Ocorrencia {
   ocorrencia_id: number;
-  descricao: string;
-  status: 'pendente' | 'concluído';
+  dataHora: string;
+  ativo: boolean;
 }
 
 interface AuditoriaItem {
@@ -32,14 +39,14 @@ interface AuditoriaItem {
   conclusao: string;
   data_hora_inicio: string;
   data_hora_fim: string;
-  status: 'pendente' | 'concluido';
+  status: string;
   usuario: {
     responsavel: string;
   };
   localizacao: {
-    nome: string
-  }
-  ocorrencias: Ocorrencia[]
+    nome: string;
+  };
+  ocorrencias: Ocorrencia[];
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -50,16 +57,28 @@ export default function Auditoria() {
   const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const [ocorrenciasModal, setOcorrenciasModal] = useState<{
+    open: boolean;
+    ocorrencias: Ocorrencia[];
+    localizacao: string;
+  }>({
+    open: false,
+    ocorrencias: [],
+    localizacao: '',
+  });
 
   useEffect(() => {
     async function carregar() {
       try {
-        const dados = await buscarAuditorias();
-        // Mapear os dados para o formato esperado
+        const dados = await buscarAuditoria();
         const auditoriasFormatadas = dados.map(aud => ({
           ...aud,
-          data_hora_inicio: aud.data_hora_fim ? formatarData(aud.data_hora_inicio) : '-',
-          data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-'
+          data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
+          data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
+          ocorrencias: aud.ocorrencias?.map(oc => ({
+            ...oc,
+            dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
+          })) || [],
         }));
         setAuditorias(auditoriasFormatadas);
         setSelecionados([]);
@@ -76,12 +95,26 @@ export default function Auditoria() {
     return data.toLocaleString('pt-BR');
   }
 
+  const abrirModalOcorrencias = (ocorrencias: Ocorrencia[], localizacao: string) => {
+    setOcorrenciasModal({
+      open: true,
+      ocorrencias,
+      localizacao,
+    });
+  };
+
+  const fecharModalOcorrencias = () => {
+    setOcorrenciasModal({
+      open: false,
+      ocorrencias: [],
+      localizacao: '',
+    });
+  };
+
   const filtrado = useMemo(() => {
     const termo = busca.toLowerCase();
     return auditorias.filter(aud => {
-      // Filtrar por status se não for 'todos'
       const statusMatch = aba === 'todos' || aud.status === aba;
-      // Filtrar por termo de busca
       const buscaMatch = 
         aud.usuario.responsavel.toLowerCase().includes(termo) ||
         aud.auditoria_id.toString().includes(termo);
@@ -158,10 +191,11 @@ export default function Auditoria() {
               </TableCell>
               <TableCell>Localização</TableCell>
               <TableCell>Criador</TableCell>
-              <TableCell>Início</TableCell>
-              <TableCell>Término</TableCell>
-              <TableCell>Ocorrências</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell align='center'>Início</TableCell>
+              <TableCell align='center'>Término</TableCell>
+              <TableCell align='center'>Ocorrências</TableCell>
+              <TableCell align='center'>Status</TableCell>
+              <TableCell align='center'>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -175,10 +209,18 @@ export default function Auditoria() {
                 </TableCell>
                 <TableCell>{item.localizacao.nome}</TableCell>
                 <TableCell>{item.usuario.responsavel}</TableCell>
-                <TableCell>{item.data_hora_inicio}</TableCell>
-                <TableCell>{item.data_hora_fim}</TableCell>
-                <TableCell>modal de ocorrencias</TableCell>
-                <TableCell>
+                <TableCell align='center'>{item.data_hora_inicio}</TableCell>
+                <TableCell align='center'>{item.data_hora_fim}</TableCell>
+                <TableCell align='center'>
+                  <Button 
+                    variant="text" 
+                    onClick={() => abrirModalOcorrencias(item.ocorrencias, item.localizacao.nome)}
+                    disabled={!item.ocorrencias || item.ocorrencias.length === 0}
+                  >
+                    {item.ocorrencias?.length || 0} ocorrência(s)
+                  </Button>
+                </TableCell>
+                <TableCell align='center'>
                   <Chip
                     label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}
                     size="small"
@@ -189,11 +231,79 @@ export default function Auditoria() {
                     }}
                   />
                 </TableCell>
+                <TableCell align='center'>
+                  <Tooltip title="Excluir auditoria">
+                      <IconButton
+                          size="small"
+                          onClick={() => {}}
+                          disabled={false}
+                          sx={{
+                          color: 'error.main',
+                          '&:hover': {
+                              backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                          },
+                          }}
+
+                      >
+                          <DeleteIcon fontSize="small" />
+                      </IconButton>
+                  </Tooltip>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Modal de Ocorrências */}
+      <Dialog
+        open={ocorrenciasModal.open}
+        onClose={fecharModalOcorrencias}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Ocorrências em {ocorrenciasModal.localizacao}
+        </DialogTitle>
+        <DialogContent>
+          {ocorrenciasModal.ocorrencias.length === 0 ? (
+            <Typography>Nenhuma ocorrência registrada</Typography>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align='center'>ID</TableCell>
+                    <TableCell align='center'>Data/Hora</TableCell>
+                    <TableCell align='center'>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {ocorrenciasModal.ocorrencias.map((ocorrencia) => (
+                    <TableRow key={ocorrencia.ocorrencia_id}>
+                      <TableCell align='center'>{ocorrencia.ocorrencia_id}</TableCell>
+                      <TableCell align='center'>{ocorrencia.dataHora}</TableCell>
+                      <TableCell align='center'>
+                        <Chip
+                          label={ocorrencia.ativo === false ? 'Concluído' : 'Pendente'}
+                          size="small"
+                          sx={{
+                            backgroundColor: ocorrencia.ativo === false ? '#4CAF50' : '#FFEB3B',
+                            color: ocorrencia.ativo === false ? '#fff' : '#000',
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={fecharModalOcorrencias}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
 
       <Box display="flex" mt={3} gap={2}>
         <Button
@@ -217,12 +327,12 @@ export default function Auditoria() {
   );
 }
 
-async function buscarAuditorias(): Promise<AuditoriaItem[]> {
-  try {
-    const res = await axios.get('http://151.243.0.78:3001/auditoria');
-    return res.data;
-  } catch (err) {
-    console.error('Erro ao buscar auditorias →', err);
-    throw new Error('Falha ao carregar as auditorias do servidor.');
-  }
-}
+// async function buscarAuditorias(): Promise<AuditoriaItem[]> {
+//   try {
+//     const res = await axios.get('http://151.243.0.78:3001/auditoria');
+//     return res.data;
+//   } catch (err) {
+//     console.error('Erro ao buscar auditorias →', err);
+//     throw new Error('Falha ao carregar as auditorias do servidor.');
+//   }
+// }
