@@ -4,10 +4,13 @@ const BASE_URL = 'http://151.243.0.78:3001';
 
 // 🔍 Buscar produto por EAN
 export async function buscarProdutoPorEAN(ean) {
+  const eanLimpo = ean.replace(/[\n\r\t\s]/g, '').trim();
   const response = await axios.get(`${BASE_URL}/produto`);
   const produtos = response.data;
 
-  const encontrado = produtos.find((p) => p.ean === ean.trim());
+  const encontrado = produtos.find((p) =>
+    p.ean && p.ean.replace(/[\n\r\t\s]/g, '').trim() === eanLimpo
+  );
 
   if (!encontrado) {
     throw new Error('Produto com esse EAN não encontrado.');
@@ -16,12 +19,14 @@ export async function buscarProdutoPorEAN(ean) {
   return encontrado;
 }
 
-// 📦 Buscar localização por EAN (com nome e armazém)
 export async function buscarLocalizacaoPorEAN(ean) {
+  const eanLimpo = ean.replace(/[\n\r\t\s]/g, '').trim();
   const response = await axios.get(`${BASE_URL}/localizacao`);
   const localizacoes = response.data;
 
-  const encontrada = localizacoes.find((l) => l.ean === ean.trim());
+  const encontrada = localizacoes.find((l) =>
+    l.ean && l.ean.replace(/[\n\r\t\s]/g, '').trim() === eanLimpo
+  );
 
   if (!encontrada) {
     throw new Error('Localização com esse EAN não encontrada.');
@@ -30,9 +35,10 @@ export async function buscarLocalizacaoPorEAN(ean) {
   return {
     localizacao_id: encontrada.localizacao_id,
     nome: encontrada.nome,
-    armazem: typeof encontrada.armazem === 'object'
-      ? encontrada.armazem.nome
-      : encontrada.armazem || '',
+    armazem:
+      typeof encontrada.armazem === 'object'
+        ? encontrada.armazem.nome
+        : encontrada.armazem || '',
   };
 }
 

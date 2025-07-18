@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TextInput, StyleSheet, View } from 'react-native';
 
-export default function InputLocalizacao({ refInput, value, onChange, onBlur, bloqueado, nomeLocalizacao }) {
+export default function InputLocalizacao({ refInput, value, onChangeText, onSubmitEditing, bloqueado, nomeLocalizacao }) {
   return (
     <>
       <Text style={styles.label}>Localização</Text>
@@ -10,10 +10,14 @@ export default function InputLocalizacao({ refInput, value, onChange, onBlur, bl
           ref={refInput}
           style={styles.input}
           value={value}
-          onChangeText={onChange}
-          onBlur={onBlur}
+          onChangeText={onChangeText}
+          onSubmitEditing={onSubmitEditing}
           placeholder="Bipe a localização"
-          keyboardType="numeric"
+          keyboardType="default"
+          returnKeyType="done"
+          blurOnSubmit={false}
+          autoCorrect={false}
+          autoCapitalize="characters"
           importantForAccessibility="yes"
         />
       ) : (

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TextInput, View, StyleSheet } from 'react-native';
 
-export default function InputProduto({ refInput, value, onChange, onBlur, bloqueado }) {
+export default function InputProduto({ refInput, value, onChangeText, onSubmitEditing, bloqueado }) {
   return (
     <>
       <Text style={styles.label}>Produto</Text>
@@ -10,10 +10,14 @@ export default function InputProduto({ refInput, value, onChange, onBlur, bloque
           ref={refInput}
           style={styles.input}
           value={value}
-          onChangeText={onChange}
-          onBlur={onBlur}
+          onChangeText={onChangeText}
+          onSubmitEditing={onSubmitEditing}
           placeholder="Bipe o SKU ou EAN"
-          keyboardType="numeric"
+          keyboardType="default"
+          returnKeyType="done"
+          blurOnSubmit={false}
+          autoCorrect={false}
+          autoCapitalize="characters"
           importantForAccessibility="yes"
         />
       ) : (

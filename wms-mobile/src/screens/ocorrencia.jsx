@@ -2,21 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import Header from '../componentes/Header';
-import InputLocalizacao from '../componentes/InputLocalizacao';
-import InputProduto from '../componentes/InputProduto';
-import QuantidadeDisplay from '../componentes/QuantidadeDisplay';
-import BotoesAcoes from '../componentes/BotoesAcoes';
-import ModalConfirmacao from '../componentes/ModalConfirmacao';
-import ModalCancelar from '../componentes/ModalCancelar';
+import Header from '../componentes/Ocorrencia/Header';
+import InputLocalizacao from '../componentes/Ocorrencia/InputLocalizacao';
+import InputProduto from '../componentes/Ocorrencia/InputProduto';
+import QuantidadeDisplay from '../componentes/Ocorrencia/QuantidadeDisplay';
+import BotoesAcoes from '../componentes/Ocorrencia/BotoesAcoes';
+import ModalConfirmacao from '../componentes/Ocorrencia/ModalConfirmacao';
+import ModalCancelar from '../componentes/Ocorrencia/ModalCancelar';
 
 import {
   buscarLocalizacaoPorEAN,
   buscarProdutoEstoquePorLocalizacaoEAN,
   criarOcorrencia,
 } from '../api/ocorrenciaAPI';
-
-// ... (imports inalterados)
 
 export default function Ocorrencia() {
   const [localizacao, setLocalizacao] = useState('');
@@ -32,25 +30,26 @@ export default function Ocorrencia() {
   const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
   const [skuBloqueado, setSkuBloqueado] = useState(true);
 
+  const limparCodigo = (valor) => valor.replace(/[\n\r\t\s]/g, '').trim();
+
   useEffect(() => {
     if (!localizacaoBloqueada && localizacaoRef.current) {
-      setTimeout(() => localizacaoRef.current.focus(), 300);
+      requestAnimationFrame(() => localizacaoRef.current.focus());
     }
   }, [localizacaoBloqueada]);
 
   useEffect(() => {
     if (localizacaoBloqueada && skuRef.current) {
-      setTimeout(() => skuRef.current.focus(), 300);
+      requestAnimationFrame(() => skuRef.current.focus());
     }
   }, [localizacaoBloqueada]);
 
-  const limparEAN = (valor) => valor.replace(/[\n\r\t\s]/g, '').trim();
-
-  const handleBuscarLocalizacao = async () => {
-    const eanLocal = limparEAN(localizacao);
+  const handleBuscarLocalizacao = async (eanBipado) => {
+    const eanLocal = limparCodigo(eanBipado || localizacao);
     if (!eanLocal) return;
     try {
       const res = await buscarLocalizacaoPorEAN(eanLocal);
+      setLocalizacao(eanLocal);
       setNomeLocalizacao(`${res.nome} - ${res.armazem}`);
       setLocalizacaoBloqueada(true);
       setSkuBloqueado(false);
@@ -60,11 +59,12 @@ export default function Ocorrencia() {
     }
   };
 
-  const handleBuscarQuantidade = async () => {
-    const eanLocal = limparEAN(localizacao);
-    const eanProduto = limparEAN(sku);
+  const handleBuscarQuantidade = async (eanBipado) => {
+    const eanLocal = limparCodigo(localizacao);
+    const eanProduto = limparCodigo(eanBipado || sku);
     try {
       const dados = await buscarProdutoEstoquePorLocalizacaoEAN(eanLocal, eanProduto);
+      setSku(eanProduto);
       setQuantidade(String(dados.quantidade));
       setSkuBloqueado(true);
     } catch (err) {
@@ -82,8 +82,8 @@ export default function Ocorrencia() {
   };
 
   const confirmarSalvar = async () => {
-    const eanLocal = limparEAN(localizacao);
-    const eanProduto = limparEAN(sku);
+    const eanLocal = limparCodigo(localizacao);
+    const eanProduto = limparCodigo(sku);
     try {
       const dados = await buscarProdutoEstoquePorLocalizacaoEAN(eanLocal, eanProduto);
       const payload = {
@@ -98,7 +98,6 @@ export default function Ocorrencia() {
       Alert.alert('Erro', err.message || 'Erro ao registrar ocorrência.');
     } finally {
       setMostrarConfirmacao(false);
-      setTimeout(limparTudo, 300);
     }
   };
 
@@ -109,7 +108,7 @@ export default function Ocorrencia() {
     setNomeLocalizacao('');
     setLocalizacaoBloqueada(false);
     setSkuBloqueado(true);
-    setTimeout(() => localizacaoRef.current?.focus(), 500);
+    requestAnimationFrame(() => localizacaoRef.current?.focus());
   };
 
   return (
@@ -128,8 +127,8 @@ export default function Ocorrencia() {
         <InputLocalizacao
           refInput={localizacaoRef}
           value={localizacao}
-          onChange={setLocalizacao}
-          onBlur={() => setTimeout(handleBuscarLocalizacao, 100)}
+          onChangeText={(v) => setLocalizacao(limparCodigo(v))}
+          onSubmitEditing={({ nativeEvent }) => handleBuscarLocalizacao(nativeEvent.text)}
           bloqueado={localizacaoBloqueada}
           nomeLocalizacao={nomeLocalizacao}
         />
@@ -138,8 +137,8 @@ export default function Ocorrencia() {
           <InputProduto
             refInput={skuRef}
             value={sku}
-            onChange={setSku}
-            onBlur={() => setTimeout(handleBuscarQuantidade, 100)}
+            onChangeText={(v) => setSku(limparCodigo(v))}
+            onSubmitEditing={({ nativeEvent }) => handleBuscarQuantidade(nativeEvent.text)}
             bloqueado={skuBloqueado}
           />
         )}
@@ -161,7 +160,7 @@ export default function Ocorrencia() {
         onClose={() => setMostrarCancelar(false)}
         onConfirmar={() => {
           setMostrarCancelar(false);
-          setTimeout(limparTudo, 300);
+          limparTudo();
         }}
       />
     </KeyboardAvoidingView>
@@ -169,5 +168,11 @@ export default function Ocorrencia() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 100, paddingTop: 40, backgroundColor: '#fff', flexGrow: 1 },
+  container: {
+    padding: 16,
+    paddingBottom: 100,
+    paddingTop: 40,
+    backgroundColor: '#fff',
+    flexGrow: 1,
+  },
 });
