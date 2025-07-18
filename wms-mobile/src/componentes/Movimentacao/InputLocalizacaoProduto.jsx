@@ -55,10 +55,6 @@ export default function InputLocalizacaoProduto({
                     showSoftInputOnFocus={false}
                 />
             )}
-
-            {produtos.length > 0 && (
-                <Text style={styles.totalSKU}>Total: {produtos.length} SKU</Text>
-            )}
         </View>
     );
 }

@@ -23,12 +23,35 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import { Search, CheckCircle, Cancel } from '@mui/icons-material';
+import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
 import Layout from '../components/Layout';
-import { buscarAuditoria, AuditoriaItem, Ocorrencia } from '../services/API';
+import axios from 'axios';
+import { buscarAuditoria, buscarArmazemPorEAN } from '../services/API';
 
+interface Ocorrencia {
+  ocorrencia_id: number;
+  dataHora: string;
+  ativo: boolean;
+}
 
-
+export interface AuditoriaItem {
+  auditoria_id: number;
+  conclusao: string;
+  data_hora_inicio: string;
+  data_hora_fim: string;
+  status: string;
+  usuario: {
+    responsavel: string;
+  };
+  localizacao: {
+    nome: string;
+    ean: string;
+  };
+  ocorrencias: Ocorrencia[];
+  armazem?: {
+    nome: string;
+  };
+}
 
 const ITEMS_PER_PAGE = 10;
 
@@ -52,24 +75,44 @@ export default function Auditoria() {
     async function carregar() {
       try {
         const dados = await buscarAuditoria();
-        const auditoriasFormatadas = dados.map((aud: AuditoriaItem) => ({
-          ...aud,
-          data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
-          data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
-          ocorrencias: aud.ocorrencias?.map((oc: Ocorrencia) => ({
-            ...oc,
-            dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
-          })) || [],
+
+        const auditoriasComArmazem = await Promise.all(dados.map(async (aud) => {
+          let nomeArmazem = '-';
+
+          if (aud.localizacao.ean) {
+            const armazemEncontrado = await buscarArmazemPorEAN(aud.localizacao.ean);
+            nomeArmazem = armazemEncontrado?.nome || '-';
+          }
+
+          return {
+            ...aud,
+            data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
+            data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
+            localizacao: {
+              nome: aud.localizacao.nome || '-',
+              ean: aud.localizacao.ean || '',
+            },
+            armazem: {
+              nome: nomeArmazem,
+            },
+            ocorrencias: aud.ocorrencias?.map(oc => ({
+              ...oc,
+              dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
+            })) || [],
+          };
         }));
-        setAuditorias(auditoriasFormatadas);
+
+        setAuditorias(auditoriasComArmazem);
         setSelecionados([]);
       } catch (err) {
         alert('Erro ao carregar auditorias.');
+        console.error(err);
       }
     }
 
     carregar();
   }, [aba]);
+
 
   function formatarData(dataString: string | Date) {
     const data = new Date(dataString);
@@ -94,11 +137,12 @@ export default function Auditoria() {
 
   const filtrado = useMemo(() => {
     const termo = busca.toLowerCase();
-    return auditorias.filter((aud) => {
+    return auditorias.filter(aud => {
       const statusMatch = aba === 'todos' || aud.status === aba;
       const buscaMatch =
         aud.usuario.responsavel.toLowerCase().includes(termo) ||
         aud.auditoria_id.toString().includes(termo);
+
       return statusMatch && buscaMatch;
     });
   }, [auditorias, busca, aba]);
@@ -117,10 +161,174 @@ export default function Auditoria() {
 
   return (
     <Layout totalPages={totalPaginas} currentPage={paginaAtual} onPageChange={setPaginaAtual}>
-      {/* ... conteúdo da página mantido igual ... */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4" fontWeight={600}>
+          Auditorias
+        </Typography>
+      </Box>
+
+      <Box display="flex" gap={2} alignItems="center" mb={2} flexWrap="wrap">
+        <TextField
+          placeholder="Busca por usuário ou ID"
+          size="small"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ width: 400 }}
+        />
+
+        <Button variant="outlined">Filtro</Button>
+
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
+          onClick={() => console.log('Nova Auditoria')}
+        >
+          Nova Auditoria
+        </Button>
+      </Box>
+
+      <Tabs value={aba} onChange={(_, v) => setAba(v)} sx={{ mb: 2 }}>
+        <Tab label="Todos" value="todos" />
+        <Tab label="Pendentes" value="pendente" />
+        <Tab label="Concluídos" value="concluido" />
+      </Tabs>
+
+      <TableContainer component={Paper}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  checked={selecionados.length === exibidos.length && exibidos.length > 0}
+                  indeterminate={selecionados.length > 0 && selecionados.length < exibidos.length}
+                  onChange={(e) =>
+                    setSelecionados(e.target.checked ? exibidos.map((a) => a.auditoria_id) : [])
+                  }
+                />
+              </TableCell>
+              <TableCell>Localização</TableCell>
+              <TableCell>Criador</TableCell>
+              <TableCell align='center'>Início</TableCell>
+              <TableCell align='center'>Término</TableCell>
+              <TableCell align='center'>Ocorrências</TableCell>
+              <TableCell align='center'>Status</TableCell>
+              <TableCell align='center'>Ações</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {exibidos.map((item) => (
+              <TableRow key={item.auditoria_id}>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={selecionados.includes(item.auditoria_id)}
+                    onChange={() => toggleSelecionado(item.auditoria_id)}
+                  />
+                </TableCell>
+                <TableCell>
+                  {item.localizacao.nome} - {item.armazem?.nome || '-'}
+                </TableCell>
+                <TableCell>{item.usuario.responsavel}</TableCell>
+                <TableCell align='center'>{item.data_hora_inicio}</TableCell>
+                <TableCell align='center'>{item.data_hora_fim}</TableCell>
+                <TableCell align='center'>
+                  <Button
+                    variant="text"
+                    onClick={() => abrirModalOcorrencias(item.ocorrencias, item.localizacao.nome)}
+                    disabled={!item.ocorrencias || item.ocorrencias.length === 0}
+                  >
+                    {item.ocorrencias?.length || 0} ocorrência(s)
+                  </Button>
+                </TableCell>
+                <TableCell align='center'>
+                  <Chip
+                    label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                    size="small"
+                    sx={{
+                      backgroundColor: item.status === 'concluido' ? '#4CAF50' : '#FFEB3B',
+                      color: item.status === 'concluido' ? '#fff' : '#000',
+                      fontWeight: 600,
+                    }}
+                  />
+                </TableCell>
+                <TableCell align='center'>
+                  <Tooltip title="Excluir auditoria">
+                    <IconButton
+                      size="small"
+                      onClick={() => { }}
+                      disabled={false}
+                      sx={{
+                        color: 'error.main',
+                        '&:hover': {
+                          backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                        },
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {/* Modal de Ocorrências */}
-      {/* ... mantido igual ... */}
+      <Dialog
+        open={ocorrenciasModal.open}
+        onClose={fecharModalOcorrencias}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Ocorrências em {ocorrenciasModal.localizacao}
+        </DialogTitle>
+        <DialogContent>
+          {ocorrenciasModal.ocorrencias.length === 0 ? (
+            <Typography>Nenhuma ocorrência registrada</Typography>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align='center'>ID</TableCell>
+                    <TableCell align='center'>Data/Hora</TableCell>
+                    <TableCell align='center'>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {ocorrenciasModal.ocorrencias.map((ocorrencia) => (
+                    <TableRow key={ocorrencia.ocorrencia_id}>
+                      <TableCell align='center'>{ocorrencia.ocorrencia_id}</TableCell>
+                      <TableCell align='center'>{ocorrencia.dataHora}</TableCell>
+                      <TableCell align='center'>
+                        <Chip
+                          label={ocorrencia.ativo === false ? 'Concluído' : 'Pendente'}
+                          size="small"
+                          sx={{
+                            backgroundColor: ocorrencia.ativo === false ? '#4CAF50' : '#FFEB3B',
+                            color: ocorrencia.ativo === false ? '#fff' : '#000',
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={fecharModalOcorrencias}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
 
       <Box display="flex" mt={3} gap={2}>
         <Button
@@ -144,3 +352,12 @@ export default function Auditoria() {
   );
 }
 
+// async function buscarAuditorias(): Promise<AuditoriaItem[]> {
+//   try {
+//     const res = await axios.get('http://151.243.0.78:3001/auditoria');
+//     return res.data;
+//   } catch (err) {
+//     console.error('Erro ao buscar auditorias →', err);
+//     throw new Error('Falha ao carregar as auditorias do servidor.');
+//   }
+// }

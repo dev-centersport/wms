@@ -19,14 +19,19 @@ export function TableBody({ data }) {
             renderItem={({ item }) => (
                 <View style={styles.tableRow}>
                     <Text style={[styles.tableCell, { flex: 2 }]}>{item.sku}</Text>
-                    <Text style={[styles.tableCell, { flex: 2 }]}>{item.localizacao}</Text>
-                    <Text style={[styles.tableCell, { flex: 1 }]}>{item.quantidade}</Text>
+                    <Text style={[styles.tableCell, { flex: 2, textAlign: 'left', marginRight: 42 }]}>
+                        {item.localizacao} - {item.armazem}
+                    </Text>
+                    <Text style={[styles.tableCell, { flex: 1, marginLeft: 10 }]}>
+                        {item.quantidade}
+                    </Text>
                 </View>
             )}
             style={{ flex: 1 }}
         />
     );
 }
+
 
 const styles = StyleSheet.create({
     tableHeader: {

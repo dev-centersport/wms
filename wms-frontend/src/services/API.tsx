@@ -40,6 +40,7 @@ export interface AuditoriaItem {
   };
   localizacao: {
     nome: string;
+    ean: string;
   };
   ocorrencias: Ocorrencia[];
 }
@@ -577,6 +578,7 @@ export async function buscarOcorrencias(ativo?: true | false) {
     console.log(res.data.map((o: any) => ({
       ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
       localizacao: o.localizacao || '-',
+      armazem: o.armazem || '-',
       produto: o.nome_produto || '-',
       sku: o.sku || '-',
       quantidade: o.quantidade || '-',
@@ -586,6 +588,7 @@ export async function buscarOcorrencias(ativo?: true | false) {
     return res.data.map((o: any) => ({
       ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
       localizacao: o.localizacao || '-',
+      armazem: o.armazem || '-',
       produto: o.nome_produto || '-',
       sku: o.sku || '-',
       quantidade: o.quantidade || '-',
@@ -597,4 +600,19 @@ export async function buscarOcorrencias(ativo?: true | false) {
   }
 }
 
+export interface Armazem {
+  armazem_id: number;
+  nome: string;
+}
 
+export async function buscarArmazemPorEAN(ean: string): Promise<Armazem | null> {
+  try {
+    const res = await axios.get<Armazem[]>(`http://151.243.0.78:3001/armazem`, {
+      params: { ean }
+    });
+    return res.data.length > 0 ? res.data[0] : null;
+  } catch (err) {
+    console.error('Erro ao buscar armazém por EAN →', err);
+    return null;
+  }
+}
