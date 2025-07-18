@@ -15,8 +15,8 @@ interface ProdutoPlanilha {
   [key: string]: string | number;
 }
 
-const ENDPOINT_PEDIDO = 'http://localhost:3001/separacao/agrupado-pedido';
-const ENDPOINT_SKU = 'http://localhost:3001/separacao/agrupado-sku';
+const ENDPOINT_PEDIDO = 'http://151.243.0.78:3001/separacao/agrupado-pedido';
+const ENDPOINT_SKU = 'http://151.243.0.78:3001/separacao/agrupado-sku';
 
 const armazensExemplo = [
   { armazem_id: 1, nome: 'Dib Jorge' },
