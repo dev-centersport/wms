@@ -77,12 +77,13 @@ export class AuditoriaController {
   @Post(':id/concluir')
   concluir(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { conclusao: string; itens: any[] },
+    @Body() body: { conclusao: string; itens: any[]; ocorrencias: any[] },
   ) {
     return this.auditoriaService.concluirAuditoria(
       id,
       body.conclusao,
       body.itens,
+      body.ocorrencias,
     );
   }
 

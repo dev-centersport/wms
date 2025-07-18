@@ -83,7 +83,7 @@ export class AuditoriaService {
   async findAll(options?: FindManyOptions<Auditoria>): Promise<Auditoria[]> {
     return this.auditoriaRepository.find({
       ...options,
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
+      relations: ['usuario', 'ocorrencias', 'localizacao', 'itens_auditoria'],
     });
   }
 
@@ -94,7 +94,7 @@ export class AuditoriaService {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: id },
       ...options,
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
+      relations: ['usuario', 'ocorrencias', 'localizacao', 'itens_auditoria'],
     });
 
     if (!auditoria) {
@@ -165,6 +165,8 @@ export class AuditoriaService {
     await this.auditoriaRepository.remove(auditoria);
   }
 
+  // Ações com auditoria
+
   async iniciarAuditoria(id: number): Promise<Auditoria> {
     const auditoria = await this.findOne(id);
 
@@ -181,20 +183,20 @@ export class AuditoriaService {
     id: number,
     conclusao: string,
     itens: ItemAuditoria[],
+    ocorrencias: Ocorrencia[],
   ): Promise<Auditoria> {
     const auditoria = await this.findOne(id);
 
-    if (auditoria.status !== StatusAuditoria.EM_ANDAMENTO) {
+    if (auditoria.status !== StatusAuditoria.EM_ANDAMENTO)
       throw new Error(
         'Só é possível concluir auditorias com status "em andamento"',
       );
-    }
 
     auditoria.status = StatusAuditoria.CONCLUIDA;
     auditoria.conclusao = conclusao;
     auditoria.data_hora_conclusao = new Date();
 
-    // Tipar explicitamente o array de itens salvos
+    // Salvar os itens de auditoria
     const itensSalvos: ItemAuditoria[] = await Promise.all(
       itens.map(async (item): Promise<ItemAuditoria> => {
         const itemAuditoria = this.itemAuditoriaRepository.create({
@@ -206,6 +208,14 @@ export class AuditoriaService {
     );
 
     auditoria.itens_auditoria = itensSalvos;
+
+    // Atualizar todas as ocorrências para ativo = false
+    await Promise.all(
+      ocorrencias.map(async (ocorrencia) => {
+        ocorrencia.ativo = false;
+        await this.ocorrenciaRepository.save(ocorrencia);
+      }),
+    );
 
     return this.auditoriaRepository.save(auditoria);
   }
@@ -224,6 +234,14 @@ export class AuditoriaService {
 
     auditoria.status = StatusAuditoria.CANCELADA;
     return this.auditoriaRepository.save(auditoria);
+  }
+
+  async findAuditoriasEmAndamento(): Promise<Auditoria[]> {
+    return this.findByStatus(StatusAuditoria.EM_ANDAMENTO);
+  }
+
+  async findAuditoriasConcluidas(): Promise<Auditoria[]> {
+    return this.findByStatus(StatusAuditoria.CONCLUIDA);
   }
 
   async findByStatus(status: StatusAuditoria): Promise<Auditoria[]> {
@@ -245,13 +263,5 @@ export class AuditoriaService {
       where: { ocorrencias: { ocorrencia_id: ocorrencia_id } },
       relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
     });
-  }
-
-  async findAuditoriasEmAndamento(): Promise<Auditoria[]> {
-    return this.findByStatus(StatusAuditoria.EM_ANDAMENTO);
-  }
-
-  async findAuditoriasConcluidas(): Promise<Auditoria[]> {
-    return this.findByStatus(StatusAuditoria.CONCLUIDA);
   }
 }
