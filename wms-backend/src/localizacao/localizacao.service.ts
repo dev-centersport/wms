@@ -6,7 +6,7 @@ import {
 import { CreateLocalizacaoDto } from './dto/create-localizacao.dto';
 import { UpdateLocalizacaoDto } from './dto/update-localizacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Localizacao } from './entities/localizacao.entity';
+import { Localizacao, StatusPrateleira } from './entities/localizacao.entity';
 import { Repository } from 'typeorm';
 import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.entity';
 import { Armazem } from 'src/armazem/entities/armazem.entity';
@@ -48,10 +48,43 @@ export class LocalizacaoService {
     });
   }
 
-  async findAll(): Promise<any[]> {
-    const localizacoes = await this.LocalizacaoRepository.createQueryBuilder(
-      'localizacao',
-    )
+  // async findAll(): Promise<any[]> {
+  //   const localizacoes = await this.LocalizacaoRepository.createQueryBuilder(
+  //     'localizacao',
+  //   )
+  //     .leftJoin('localizacao.produtos_estoque', 'estoque')
+  //     .leftJoinAndSelect('localizacao.tipo', 'tipo')
+  //     .leftJoinAndSelect('localizacao.armazem', 'armazem')
+  //     .select([
+  //       'localizacao',
+  //       'tipo',
+  //       'armazem',
+  //       'SUM(estoque.quantidade) as total_produtos',
+  //     ])
+  //     .groupBy('localizacao.localizacao_id')
+  //     .addGroupBy('tipo.tipo_localizacao_id') // ajuste conforme o nome da PK do tipo
+  //     .addGroupBy('armazem.armazem_id') // ajuste conforme o nome da PK do armazem
+  //     .orderBy('total_produtos', 'DESC')
+  //     .orderBy('localizacao.nome', 'ASC')
+  //     .getRawAndEntities();
+
+  //   // Combina os dados das entidades com os dados raw (incluindo a soma)
+  //   return localizacoes.entities.map((localizacao, index) => ({
+  //     ...localizacao,
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+  //     total_produtos: parseFloat(localizacoes.raw[index].total_produtos) || 0,
+  //   }));
+  // }
+
+  async search(
+    search?: string,
+    offset = 0,
+    limit = 20,
+    status?: StatusPrateleira,
+    armazemId?: number,
+    tipoId?: number,
+  ): Promise<{ results: any[]; total: number }> {
+    const query = this.LocalizacaoRepository.createQueryBuilder('localizacao')
       .leftJoin('localizacao.produtos_estoque', 'estoque')
       .leftJoinAndSelect('localizacao.tipo', 'tipo')
       .leftJoinAndSelect('localizacao.armazem', 'armazem')
@@ -62,17 +95,43 @@ export class LocalizacaoService {
         'SUM(estoque.quantidade) as total_produtos',
       ])
       .groupBy('localizacao.localizacao_id')
-      .addGroupBy('tipo.tipo_localizacao_id') // ajuste conforme o nome da PK do tipo
-      .addGroupBy('armazem.armazem_id') // ajuste conforme o nome da PK do armazem
-      .orderBy('total_produtos', 'DESC')
-      .getRawAndEntities();
+      .addGroupBy('tipo.tipo_localizacao_id')
+      .addGroupBy('armazem.armazem_id');
 
-    // Combina os dados das entidades com os dados raw (incluindo a soma)
-    return localizacoes.entities.map((localizacao, index) => ({
+    if (search) {
+      query.andWhere('localizacao.nome ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+    if (status) {
+      query.andWhere('localizacao.status = :status', { status });
+    }
+    if (armazemId) {
+      query.andWhere('armazem.armazem_id = :armazemId', { armazemId });
+    }
+    if (tipoId) {
+      query.andWhere('tipo.tipo_localizacao_id = :tipoId', { tipoId });
+    }
+
+    // total para paginação
+    const total = await query.getCount();
+
+    // Paginação e ordenação
+    query
+      .orderBy('total_produtos', 'DESC')
+      .addOrderBy('localizacao.nome', 'ASC')
+      .offset(offset)
+      .limit(limit);
+
+    const { entities, raw } = await query.getRawAndEntities();
+
+    const results = entities.map((localizacao, index) => ({
       ...localizacao,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-      total_produtos: parseFloat(localizacoes.raw[index].total_produtos) || 0,
+      total_produtos: parseFloat(raw[index].total_produtos) || 0,
     }));
+
+    return { results, total };
   }
 
   async findOne(localizacao_id: number): Promise<Localizacao> {
