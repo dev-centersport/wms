@@ -83,12 +83,14 @@ export default function Movimentacao() {
     const ean = limparCodigo(eanBipado || eanProduto);
     if (!localizacao_id) {
       Alert.alert('Bipe uma localização antes de bipar produtos.');
+      setEanProduto('');
       return;
     }
     try {
       const produto = await buscarProdutoPorEAN(ean);
       if (!produto || !produto.produto_id) {
         Alert.alert('Produto inválido');
+        setEanProduto('');
         return;
       }
       const produtoFormatado = {
@@ -105,6 +107,7 @@ export default function Movimentacao() {
       requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
       Alert.alert('Produto não encontrado');
+      setEanProduto('');
     }
   };
 
