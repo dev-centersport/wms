@@ -32,6 +32,7 @@ export default function InputLocalizacaoProduto({
                     returnKeyType="done"
                     blurOnSubmit={false}
                     showSoftInputOnFocus={false}
+                    maxLength={13}
                 />
             )}
 
@@ -53,6 +54,7 @@ export default function InputLocalizacaoProduto({
                     returnKeyType="done"
                     blurOnSubmit={false}
                     showSoftInputOnFocus={false}
+                    maxLength={13}
                 />
             )}
         </View>
