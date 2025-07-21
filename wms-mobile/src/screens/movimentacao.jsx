@@ -58,27 +58,6 @@ export default function Movimentacao() {
     }
   }, [produtos]);
 
-  const handleBuscarLocalizacao = async (eanBipado) => {
-    const ean = limparCodigo(eanBipado || eanLocalizacao);
-    if (!ean) return;
-    try {
-      const loc = await buscarLocalizacaoPorEAN(ean);
-      if (!loc || !loc.localizacao_id) {
-        Alert.alert('Localização não encontrada');
-        return;
-      }
-      setlocalizacao_id(loc.localizacao_id);
-      setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
-      setTipoBloqueado(true);
-      setEanLocalizacao('');
-      const produtosExistentes = await buscarProdutosPorLocalizacaoDireto(loc.localizacao_id);
-      setProdutosNaLocalizacao(produtosExistentes);
-      requestAnimationFrame(() => produtoRef.current?.focus());
-    } catch {
-      Alert.alert('Erro ao buscar localização');
-    }
-  };
-
   const handleAdicionarProduto = async (eanBipado) => {
     const ean = limparCodigo(eanBipado || eanProduto);
     if (!localizacao_id) {
@@ -123,7 +102,6 @@ export default function Movimentacao() {
       setEanProduto('');
     }
   };
-
 
   const handleLongPressExcluir = (index) => {
     setIndexExcluir(index);
