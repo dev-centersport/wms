@@ -30,6 +30,11 @@ export class ProdutoController {
     return this.produtoService.findOne(+id);
   }
 
+  @Get('buscar-por-ean/:ean')
+  encontrarProdutoPorEan(@Param('ean') ean: string) {
+    return this.produtoService.encontrarProdutoPorEan(ean);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProdutoDto: UpdateProdutoDto) {
     return this.produtoService.update(+id, updateProdutoDto);
