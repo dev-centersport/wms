@@ -211,7 +211,7 @@ export default function Movimentacao() {
           localizacao_id={localizacao_id}
           eanLocalizacao={eanLocalizacao}
           setEanLocalizacao={(v) => setEanLocalizacao(limparCodigo(v))}
-          handleBuscarLocalizacao={({ nativeEvent }) => handleBuscarLocalizacao(nativeEvent.text)}
+          handleBuscarLocalizacao={handleBuscarLocalizacao}
           nomeLocalizacao={nomeLocalizacao}
           eanProduto={eanProduto}
           setEanProduto={(v) => setEanProduto(limparCodigo(v))}
@@ -220,6 +220,7 @@ export default function Movimentacao() {
           produtoRef={produtoRef}
           produtos={produtos}
         />
+
 
         {produtos.length > 0 && (
           <View style={styles.resumoSKUs}>
