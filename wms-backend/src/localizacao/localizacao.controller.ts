@@ -30,6 +30,11 @@ export class LocalizacaoController {
     return this.localizacaoService.findOne(+id);
   }
 
+  @Get('buscar-por-ean/:ean')
+  encontrarLocalizacaoPorEan(@Param('ean') ean: string) {
+    return this.localizacaoService.encontrarLocalizacaoPorEan(ean);
+  }
+
   @Get(':id/produtos')
   async getProudutosPorLocalizacao(@Param('id') id: string) {
     return this.localizacaoService.getProdutosPorLocalizacao(parseInt(id));
