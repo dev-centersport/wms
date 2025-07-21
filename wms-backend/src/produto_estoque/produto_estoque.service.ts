@@ -18,10 +18,37 @@ export class ProdutoEstoqueService {
     private readonly LocalizacaoRepository: Repository<Localizacao>,
   ) {}
 
-  async findAll(): Promise<ProdutoEstoque[]> {
-    return await this.ProdutoEstoqueRepository.find({
-      relations: ['produto', 'localizacao.armazem', 'localizacao.tipo'],
-    });
+  async search(
+    search?: string,
+    offset = 0,
+    limit = 50,
+  ): Promise<{ results: ProdutoEstoque[]; total: number }> {
+    const query = this.ProdutoEstoqueRepository.createQueryBuilder('pe')
+      .leftJoinAndSelect('pe.produto', 'produto')
+      .leftJoinAndSelect('pe.localizacao', 'localizacao')
+      .leftJoinAndSelect('localizacao.armazem', 'armazem')
+      .leftJoinAndSelect('localizacao.tipo', 'tipo')
+      .groupBy(
+        'pe.produto_estoque_id, produto.produto_id, localizacao.localizacao_id, armazem.armazem_id, tipo.tipo_localizacao_id',
+      );
+
+    if (search) {
+      query.andWhere('produto.descricao ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    // Total para paginação
+    const total = await query.getCount();
+
+    // Paginação e ordenação
+    query.addOrderBy('produto.descricao', 'ASC').offset(offset).limit(limit);
+
+    const { entities } = await query.getRawAndEntities();
+
+    const results = entities.map((produtoEstoque) => produtoEstoque);
+
+    return { results, total };
   }
 
   async findOne(produto_estoque_id: number): Promise<ProdutoEstoque> {
