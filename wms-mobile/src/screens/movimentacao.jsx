@@ -104,7 +104,6 @@ export default function Movimentacao() {
       setEanProduto('');
       requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
-      setEanProduto('');
       Alert.alert('Produto não encontrado');
     }
   };
