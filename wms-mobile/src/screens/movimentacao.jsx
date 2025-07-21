@@ -60,11 +60,15 @@ export default function Movimentacao() {
 
   const handleBuscarLocalizacao = async (eanBipado) => {
     const ean = limparCodigo(eanBipado || eanLocalizacao);
-    if (!ean) return;
+    if (!ean) {
+      setEanLocalizacao('');
+      return
+    };
     try {
       const loc = await buscarLocalizacaoPorEAN(ean);
       if (!loc || !loc.localizacao_id) {
         Alert.alert('Localização não encontrada');
+        setEanLocalizacao(''); 
         return;
       }
       setlocalizacao_id(loc.localizacao_id);
@@ -76,6 +80,7 @@ export default function Movimentacao() {
       requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
       Alert.alert('Erro ao buscar localização');
+      setEanLocalizacao('');
     }
   };
 
