@@ -31,11 +31,13 @@ export class ProdutoEstoqueController {
     @Query('search') search?: string,
     @Query('offset') offset?: string,
     @Query('limit') limit?: string,
+    @Query('armazemId') armazemId?: string,
   ) {
     const results = await this.produtoEstoqueService.search(
       search,
       Number(offset) || 0,
       Number(limit) || 50,
+      armazemId ? Number(armazemId) : undefined,
     );
     return results;
   }

@@ -22,6 +22,7 @@ export class ProdutoEstoqueService {
     search?: string,
     offset = 0,
     limit = 50,
+    armazemId?: number,
   ): Promise<{ results: ProdutoEstoque[]; total: number }> {
     const query = this.ProdutoEstoqueRepository.createQueryBuilder('pe')
       .leftJoinAndSelect('pe.produto', 'produto')
@@ -35,6 +36,12 @@ export class ProdutoEstoqueService {
     if (search) {
       query.andWhere('produto.descricao ILIKE :search', {
         search: `%${search}%`,
+      });
+    }
+
+    if (armazemId) {
+      query.andWhere('localizacao.armazem.armazem_id = :armazemId', {
+        armazemId,
       });
     }
 
