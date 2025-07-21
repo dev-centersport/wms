@@ -219,7 +219,7 @@ const Produto: React.FC = () => {
                     <TableCell>{produto.descricao}</TableCell>
                     <TableCell>{produto.sku}</TableCell>
                     <TableCell>{produto.ean}</TableCell>
-                    <TableCell>{produto.quantidade}</TableCell>
+                    {/* <TableCell>{produto.quantidade}</TableCell> */}
                   </TableRow>
 
                 );
