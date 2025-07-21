@@ -104,6 +104,7 @@ const Movimentacao: React.FC = () => {
 
     if (!novo) {
       alert(`Produto com EAN ${eanLimpo} não encontrado.`);
+      setProduto('');
       return;
     }
 
