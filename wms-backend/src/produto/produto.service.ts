@@ -36,6 +36,18 @@ export class ProdutoService {
     return await this.produtoRepository.save(produto);
   }
 
+  async encontrarProdutoPorEan(ean: string) {
+    const produto = await this.produtoRepository.findOneBy({
+      ean: ean,
+    });
+
+    if (!produto) {
+      throw new NotFoundException(`Localização com EAN ${ean} não encontrado`);
+    }
+
+    return produto;
+  }
+
   async update(
     produto_id: number,
     updateProdutoDto: UpdateProdutoDto,

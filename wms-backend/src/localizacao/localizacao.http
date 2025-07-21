@@ -12,6 +12,10 @@ GET http://localhost:3001/localizacao/2
 
 ###
 
+GET http://localhost:3001/localizacao/buscar-por-ean/7893596226205
+
+###
+
 POST http://localhost:3001/localizacao HTTP/1.1
 content-type: application/json
 

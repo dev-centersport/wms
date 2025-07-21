@@ -70,6 +70,7 @@ export class LocalizacaoService {
     // Combina os dados das entidades com os dados raw (incluindo a soma)
     return localizacoes.entities.map((localizacao, index) => ({
       ...localizacao,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       total_produtos: parseFloat(localizacoes.raw[index].total_produtos) || 0,
     }));
   }
@@ -84,6 +85,18 @@ export class LocalizacaoService {
       throw new NotFoundException(
         `Armazém com ID ${localizacao_id} não encontrado`,
       );
+    }
+
+    return localizacao;
+  }
+
+  async encontrarLocalizacaoPorEan(ean: string) {
+    const localizacao = await this.LocalizacaoRepository.findOneBy({
+      ean: ean,
+    });
+
+    if (!localizacao) {
+      throw new NotFoundException(`Localização com EAN ${ean} não encontrado`);
     }
 
     return localizacao;
