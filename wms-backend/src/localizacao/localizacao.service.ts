@@ -150,9 +150,8 @@ export class LocalizacaoService {
   }
 
   async encontrarLocalizacaoPorEan(ean: string) {
-    const localizacao = await this.LocalizacaoRepository.findOne({
-      where: { ean: ean },
-      relations: ['armazem'],
+    const localizacao = await this.LocalizacaoRepository.findOneBy({
+      ean: ean,
     });
 
     if (!localizacao) {
