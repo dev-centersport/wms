@@ -2,19 +2,22 @@ import axios from 'axios';
 
 const BASE_URL = 'http://151.243.0.78:3001';
 
-// ✅ Buscar produto por EAN com performance ideal
+// 🔍 Buscar produto por EAN
 export async function buscarProdutoPorEAN(ean) {
   const eanLimpo = ean.replace(/[\n\r\t\s]/g, '').trim();
+  const response = await axios.get(`${BASE_URL}/produto`);
+  const produtos = response.data;
 
-  try {
-    const response = await axios.get(`${BASE_URL}/produto/buscar-por-ean/${eanLimpo}`);
-    return response.data;
-  } catch (error) {
-    console.error('Erro ao buscar produto por EAN:', error);
+  const encontrado = produtos.find((p) =>
+    p.ean && p.ean.replace(/[\n\r\t\s]/g, '').trim() === eanLimpo
+  );
+
+  if (!encontrado) {
     throw new Error('Produto com esse EAN não encontrado.');
   }
-}
 
+  return encontrado;
+}
 
 export async function buscarLocalizacaoPorEAN(ean) {
   const eanLimpo = ean.replace(/[\n\r\t\s]/g, '').trim();
