@@ -177,9 +177,10 @@ export async function buscarConsultaEstoque() {
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
-    const res = await axios.get<any[]>('http://151.243.0.78:3001/localizacao');
+    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/localizacao');
+    console.log(res)
 
-    const dados: Localizacao[] = res.data.map((item) => ({
+    const dados: Localizacao[] = res.data.results.map((item) => ({
       localizacao_id: item.localizacao_id,
       nome: item.nome,
       tipo: item.tipo?.tipo ?? '',
@@ -366,8 +367,8 @@ export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao)
 };
 
 export async function buscarProdutoPorEAN(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/produto');
-  const produtos = response.data;
+  const response = await axios.get<{results: any[]}>('http://151.243.0.78:3001/produto');
+  const produtos = response.data.results;
 
   const encontrado = produtos.find((p: any) => p.ean === ean.trim());
 
