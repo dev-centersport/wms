@@ -9,6 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -19,7 +21,6 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState('');
   const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [inputAtivo, setInputAtivo] = useState(null);
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -45,76 +46,64 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
-      enabled={Platform.OS !== 'web'} // Desativa no web para evitar conflitos
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
-          />
-          <Text style={styles.brand}>WMS</Text>
-          <Text style={styles.welcome}>Bem Vindo!</Text>
-
-          <Text style={styles.label}>Usuário</Text>
-          <View style={[
-            styles.inputContainer,
-            inputAtivo === 'usuario' && styles.inputContainerAtivo
-          ]}>
-            <TextInput
-              placeholder="Usuário"
-              value={usuario}
-              onChangeText={setUsuario}
-              style={styles.input}
-              placeholderTextColor="#888"
-              onFocus={() => setInputAtivo('usuario')}
-              onBlur={() => setInputAtivo(null)}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Image
+              source={require('../../assets/images/logo01.png')}
+              style={styles.logo}
             />
-            <Icon name="user" size={20} color="#888" style={styles.icon} />
-          </View>
+            <Text style={styles.brand}>WMS</Text>
+            <Text style={styles.welcome}>Bem Vindo!</Text>
 
-          <Text style={styles.label}>Senha</Text>
-          <View style={[
-            styles.inputContainer,
-            inputAtivo === 'senha' && styles.inputContainerAtivo
-          ]}>
-            <TextInput
-              placeholder="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!mostrarSenha}
-              style={styles.input}
-              placeholderTextColor="#888"
-              onFocus={() => setInputAtivo('senha')}
-              onBlur={() => setInputAtivo(null)}
-            />
-            <TouchableOpacity 
-              onPress={() => setMostrarSenha(!mostrarSenha)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Icon
-                name={mostrarSenha ? 'eye' : 'eye-slash'}
-                size={20}
-                color="#888"
-                style={styles.icon}
+            <Text style={styles.label}>Usuário</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Usuário"
+                value={usuario}
+                onChangeText={setUsuario}
+                style={styles.input}
+                placeholderTextColor="#888"
               />
+              <Icon name="user" size={20} color="#888" style={styles.icon} />
+            </View>
+
+            <Text style={styles.label}>Senha</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Senha"
+                value={senha}
+                onChangeText={setSenha}
+                secureTextEntry={!mostrarSenha}
+                style={styles.input}
+                placeholderTextColor="#888"
+              />
+              <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+                <Icon
+                  name={mostrarSenha ? 'eye' : 'eye-slash'}
+                  size={20}
+                  color="#888"
+                  style={styles.icon}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={handleLogin} style={styles.button}>
+              <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.footer}>
-            <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
-              "Otimizando a gestão de armazém com tecnologia eficiente"
+            <Text style={styles.footer}>
+              <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
+                "Otimizando a gestão de armazém com tecnologia eficiente"
+              </Text>
             </Text>
-          </Text>
+          </ScrollView>
         </View>
-      </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
@@ -123,13 +112,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#61DE25',
-    width: '100%',
-    alignItems: 'center',
-    padding: 20,
   },
   scrollContent: {
     flexGrow: 1,
+    alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
   logo: {
     width: 150,
@@ -170,11 +158,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     width: '80%',
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#eef4ff',
-  },
-  inputContainerAtivo: {
-    borderColor: '#000',
   },
   input: {
     flex: 1,

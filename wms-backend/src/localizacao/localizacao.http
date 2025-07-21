@@ -12,7 +12,7 @@ GET http://localhost:3001/localizacao/2
 
 ###
 
-GET http://localhost:3001/localizacao/buscar-por-ean/2101908614806
+GET http://localhost:3001/localizacao/buscar-por-ean/7893596226205
 
 ###
 
