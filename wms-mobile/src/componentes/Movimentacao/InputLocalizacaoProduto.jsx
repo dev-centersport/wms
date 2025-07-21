@@ -23,7 +23,7 @@ export default function InputLocalizacaoProduto({
                     ref={localizacaoRef}
                     value={eanLocalizacao}
                     onChangeText={(v) => setEanLocalizacao(limpar(v))}
-                    onSubmitEditing={handleBuscarLocalizacao}
+                    onSubmitEditing={() => {handleBuscarLocalizacao; value=''}}
                     placeholder="Bipe a Localização"
                     style={styles.input}
                     keyboardType="default"
@@ -45,7 +45,7 @@ export default function InputLocalizacaoProduto({
                     ref={produtoRef}
                     value={eanProduto}
                     onChangeText={(v) => setEanProduto(limpar(v))}
-                    onSubmitEditing={handleAdicionarProduto}
+                    onSubmitEditing={() => {handleBuscarLocalizacao; value=''}}
                     placeholder="Bipe o Produto"
                     style={styles.input}
                     keyboardType="default"
