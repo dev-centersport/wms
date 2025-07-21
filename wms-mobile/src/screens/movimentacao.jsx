@@ -60,15 +60,11 @@ export default function Movimentacao() {
 
   const handleBuscarLocalizacao = async (eanBipado) => {
     const ean = limparCodigo(eanBipado || eanLocalizacao);
-    if (!ean) {
-      setEanLocalizacao('');
-      return
-    };
+    if (!ean) return;
     try {
       const loc = await buscarLocalizacaoPorEAN(ean);
       if (!loc || !loc.localizacao_id) {
         Alert.alert('Localização não encontrada');
-        setEanLocalizacao(''); 
         return;
       }
       setlocalizacao_id(loc.localizacao_id);
@@ -80,7 +76,6 @@ export default function Movimentacao() {
       requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
       Alert.alert('Erro ao buscar localização');
-      setEanLocalizacao('');
     }
   };
 
@@ -98,6 +93,19 @@ export default function Movimentacao() {
         setEanProduto('');
         return;
       }
+
+      if (tipo === 'saida') {
+        const existeNaGaveta = produtosNaLocalizacao.some(
+          (p) => Number(p.produto_id) === Number(produto.produto_id)
+        );
+        if (!existeNaGaveta) {
+          Alert.alert('Produto não localizado na gaveta, portanto foi excluído da lista.');
+          setEanProduto('');
+          requestAnimationFrame(() => produtoRef.current?.focus());
+          return;
+        }
+      }
+
       const produtoFormatado = {
         produto_id: produto.produto_id,
         descricao: produto.descricao,
@@ -115,6 +123,7 @@ export default function Movimentacao() {
       setEanProduto('');
     }
   };
+
 
   const handleLongPressExcluir = (index) => {
     setIndexExcluir(index);
