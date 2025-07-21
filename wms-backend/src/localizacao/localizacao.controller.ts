@@ -39,7 +39,7 @@ export class LocalizacaoController {
     const results = await this.localizacaoService.search(
       search,
       Number(offset) || 0,
-      Number(limit) || 20,
+      Number(limit) || 50,
       status,
       armazemId ? Number(armazemId) : undefined,
       tipoId ? Number(tipoId) : undefined,

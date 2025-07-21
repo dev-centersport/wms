@@ -79,7 +79,7 @@ export class LocalizacaoService {
   async search(
     search?: string,
     offset = 0,
-    limit = 20,
+    limit = 50,
     status?: StatusPrateleira,
     armazemId?: number,
     tipoId?: number,
@@ -118,7 +118,7 @@ export class LocalizacaoService {
 
     // Paginação e ordenação
     query
-      .orderBy('total_produtos', 'DESC')
+      // .orderBy('total_produtos', 'DESC')
       .addOrderBy('localizacao.nome', 'ASC')
       .offset(offset)
       .limit(limit);

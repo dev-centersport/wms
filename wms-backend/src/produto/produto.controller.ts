@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProdutoService } from './produto.service';
 import { CreateProdutoDto } from './dto/create-produto.dto';
@@ -20,9 +21,23 @@ export class ProdutoController {
     return this.produtoService.create(createProdutoDto);
   }
 
+  // @Get()
+  // findAll() {
+  //   return this.produtoService.findAll();
+  // }
+
   @Get()
-  findAll() {
-    return this.produtoService.findAll();
+  async search(
+    @Query('search') search?: string,
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const results = await this.produtoService.search(
+      search,
+      Number(offset) || 0,
+      Number(limit) || 50,
+    );
+    return results;
   }
 
   @Get(':id')
