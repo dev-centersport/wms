@@ -28,16 +28,14 @@ export async function buscarLocalizacaoPorEAN(ean) {
 		throw new Error("Localização com esse EAN não encontrada.");
 	}
 
-	// return {
-	// 	localizacao_id: encontrada.localizacao_id,
-	// 	nome: encontrada.nome,
-	// 	armazem:
-	// 		typeof encontrada.armazem === "object"
-	// 			? encontrada.armazem.nome
-	// 			: encontrada.armazem || "",
-	// };
-
-	return localizacao;
+	return {
+		localizacao_id: localizacao.localizacao_id,
+		nome: localizacao.nome,
+		armazem:
+			typeof localizacao.armazem === "object"
+				? localizacao.armazem.nome
+				: localizacao.armazem || "",
+	};
 }
 
 // 🚚 Enviar movimentação (entrada / saída)
