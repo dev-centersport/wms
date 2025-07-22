@@ -10,11 +10,12 @@ export class SeparacaoUploadDTO {
 
 export class ResultadoSeparacaoDTO {
   localizacoes: Array<{
-    // armazem: Array<{ armazemID: number; armazem: string }>;
+    urlFoto: string | null;
+    descricao: string;
+    // produtoSKU: string;
+    eanProduto: string | null;
     armazem: string;
     localizacao: string;
-    produtoSKU: string;
-    urlFoto: string | null;
     quantidadeSeparada: number;
     pedidosAtendidos: Array<{
       pedidoId: string | number;

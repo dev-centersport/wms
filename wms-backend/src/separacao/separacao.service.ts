@@ -117,7 +117,7 @@ export class SeparacaoService {
         // Adiciona ao resultado (agrupado por SKU e localização)
         const itemExistente = resultado.localizacoes.find(
           (item) =>
-            item.produtoSKU === sku &&
+            item.eanProduto === estoque.produto.ean &&
             item.localizacao === estoque.localizacao.nome,
         );
 
@@ -134,11 +134,12 @@ export class SeparacaoService {
         } else {
           // Cria um novo item no resultado
           resultado.localizacoes.push({
+            urlFoto: estoque.produto.url_foto,
+            descricao: estoque.produto.descricao,
+            eanProduto: estoque.produto.ean,
+            quantidadeSeparada: quantidadeASeparar,
             armazem: estoque.localizacao.armazem.nome,
             localizacao: estoque.localizacao.nome,
-            produtoSKU: sku,
-            urlFoto: estoque.produto.url_foto,
-            quantidadeSeparada: quantidadeASeparar,
             // Adiciona os pedidos atendidos neste lote
             pedidosAtendidos: pedidos
               .slice(
@@ -160,7 +161,7 @@ export class SeparacaoService {
         const pedidosNaoAtendidos = pedidos.slice(quantidadeSeparada);
         pedidosNaoAtendidos.forEach((pedido) => {
           resultado.produtosNaoEncontrados.push(
-            `${sku} (Pedido: ${pedido.numPedido}) - faltam 1 unidade`,
+            `Produto com SKU ${sku} (Pedido: ${pedido.numPedido}) - faltam 1 unidade`,
           );
         });
       }
