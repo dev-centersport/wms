@@ -210,7 +210,7 @@ export default function Separacao() {
           ...pedido,
           itens: pedido.itens.map((item: any) => ({
             ...item,
-            urlFoto: item.urlFoto || ''
+            urlFoto: item.url_foto || ''
           }))
         }))
       };
