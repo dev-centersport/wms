@@ -43,6 +43,9 @@ export async function enviarMovimentacao(payload) {
 		return data;
 	} catch (err) {
 		console.error('❌ Erro ao salvar movimentação:', err);
+		if (err.response?.data) {
+			console.error('🔍 Detalhe do erro:', JSON.stringify(err.response.data, null, 2));
+		}
 		Alert.alert('Erro ao salvar movimentação');
 	}
 }
