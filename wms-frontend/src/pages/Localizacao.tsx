@@ -1,14 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
     Box,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
     Button,
-    Container,
     IconButton,
     Paper,
     Table,
@@ -28,7 +23,6 @@ import {
 import { Search as SearchIcon, Delete as DeleteIcon, Print as PrintIcon, List as ListIcon, Add as AddIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 
 import Layout from '../components/Layout';
-import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
@@ -57,6 +51,7 @@ const Localizacao: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(100);
     const [busca, setBusca] = useState('');
+    const [buscaInput, setBuscaInput] = useState('');
     const [filtroTipo, setFiltroTipo] = useState<string>('');
     const [filtroArmazem, setFiltroArmazem] = useState<string>('');
     // Filtros aplicados:
@@ -83,22 +78,23 @@ const Localizacao: React.FC = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{ id: number, nome: string } | null>(null);
 
-    useEffect(() => {
-        const carregar = async () => {
-            const offset = (currentPage - 1) * itemsPerPage;
-            const res = await buscarLocalizacoes(itemsPerPage, offset, busca);
+    // useEffect(() => {
+    //     const carregar = async () => {
+    //         const offset = (currentPage - 1) * itemsPerPage;
+    //         const res = await buscarLocalizacoes(itemsPerPage, offset, busca);
 
-            // Corrige tipagem aqui
-            const locais: LocalizacaoComQtd[] = res.results.map((item) => ({
-                ...item,
-                total_produtos: Number(item.total_produtos) || 0,
-            }));
+    //         // Corrige tipagem aqui
+    //         const locais: LocalizacaoComQtd[] = res.results.map((item) => ({
+    //             ...item,
+    //             total_produtos: Number(item.total_produtos) || 0,
+    //         }));
 
-            setListaLocalizacoes(locais);
-            setTotalItens(res.total);
-        };
-        carregar();
-    }, [currentPage, itemsPerPage, busca]);
+    //         setListaLocalizacoes(locais);
+    //         setTotalItens(res.total);
+    //     };
+    //     carregar();
+    // }, [currentPage, itemsPerPage, busca]);
+    // console.log(listaLocalizacoes)
 
 
     const filteredItems = useMemo(() => {
@@ -108,21 +104,19 @@ const Localizacao: React.FC = () => {
         );
     }, [listaLocalizacoes, appliedFiltroTipo, appliedFiltroArmazem]);
 
-
-    /* ---------------------------- paginação/ordenanação ---------------------------- */
-    // const filteredItems = filteredIndices.map((i) => listaLocalizacoes[i]);
-
-    const sortedItems = filteredItems.sort((a, b) => {
-        const aValue = a[orderBy];
-        const bValue = b[orderBy];
-
-        const aStr = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
-        const bStr = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
-
-        if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
-        if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
-        return 0;
-    });
+    const sortedItems = useMemo(() => {
+        const arr = [...filteredItems];
+        arr.sort((a, b) => {
+            const aValue = a[orderBy];
+            const bValue = b[orderBy];
+            const aStr = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
+            const bStr = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
+            if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
+            if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return arr;
+    }, [filteredItems, orderBy, orderDirection]);
     
     const totalPages = Math.ceil(totalItens / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -132,13 +126,13 @@ const Localizacao: React.FC = () => {
 
 
     /* ------------------------- efeitos auxiliares ------------------------ */
-    useEffect(() => {
-        if (currentPage > totalPages) setCurrentPage(totalPages);
-    }, [totalPages]);
+    // useEffect(() => {
+    //     if (currentPage > totalPages) setCurrentPage(totalPages);
+    // }, [totalPages]);
 
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
+    // useEffect(() => {
+    //     setCurrentPage(1);
+    // }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
     useEffect(() => {
         const allCurrentSelected =
@@ -148,16 +142,16 @@ const Localizacao: React.FC = () => {
     }, [selectedItems, currentItems]);
 
     /* --------------------------- seleção tabela -------------------------- */
-    const handleSelectAll = (checked: boolean) => {
+    const handleSelectAll = useCallback((checked: boolean) => {
         setSelectAll(checked);
-        setSelectedItems(checked ? currentItems.map((item) => item.localizacao_id) : []);
-    };
+        setSelectedItems(checked ? sortedItems.map((item) => item.localizacao_id) : []);
+    }, [sortedItems]);
 
-    const handleSelectItem = (originalIndex: number, checked: boolean) => {
+    const handleSelectItem = useCallback((id: number, checked: boolean) => {
         setSelectedItems((prev) =>
-            checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
+            checked ? [...prev, id] : prev.filter((idx) => idx !== id)
         );
-    };
+    }, []);
 
     // Função de ordenação
     const handleSort = (property: keyof LocalizacaoComQtd) => {
@@ -201,7 +195,8 @@ const Localizacao: React.FC = () => {
     };
     useEffect(() => {
         carregarDados();
-    }, [currentPage, itemsPerPage, busca]);
+    }, [currentPage, itemsPerPage, busca, appliedFiltroTipo, appliedFiltroArmazem]);
+    console.log(busca)
 
 
 
@@ -878,10 +873,18 @@ const Localizacao: React.FC = () => {
                 <TextField
                     placeholder="Buscar Localização, tipo, armazém ou EAN"
                     variant="outlined"
-                    size='small'
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
+                    size="small"
+                    value={buscaInput}
+                    onChange={e => setBuscaInput(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                            setBusca(buscaInput);
+                            setCurrentPage(1);
+                        }
+                    }}
+                    InputProps={{
+                        startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    }}
                     sx={{ maxWidth: 480, width: 380 }}
                 />
 
