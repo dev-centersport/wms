@@ -6,7 +6,7 @@ interface Item {
   ean?: string;
   localizacoes: { armazem: string; localizacao: string }[];
   descricao?: string;
-  url_foto?: string;
+  urlFoto?: string;
 }
 
 interface Pedido {
@@ -170,9 +170,7 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
                       <tr key={idx}>
                         <td>
                           <div className="product-info">
-                            {item.url_foto && item.url_foto !== 'n/d' && (
-                              <img src={item.url_foto} alt={item.descricao} className="product-image" />
-                            )}
+                            <img src={item.urlFoto} alt="produto" className="product-image" />
                             <div>
                               <strong>{item.sku}</strong><br />
                               {item.descricao || 'Sem descrição'}
