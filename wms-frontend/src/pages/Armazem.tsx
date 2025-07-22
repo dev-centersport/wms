@@ -136,7 +136,7 @@ const ArmazemPage: React.FC = () => {
   };
 
   return (
-    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} show={false}>
       {/* Título principal */}
       <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
         Armazém
