@@ -46,29 +46,32 @@ type LocalizacaoComQtd = {
 
 /* -------------------------------------------------------------------------- */
 // Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
-const itemsPerPage = 100;
+// const itemsPerPage = 100
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
 
     /* ------------------------- estados globais do hook --F---------------------- */
     const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
+    const [totalItens, setTotalItens] = useState(0); // NOVO!
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
     const [busca, setBusca] = useState('');
+    const [filtroTipo, setFiltroTipo] = useState<string>('');
+    const [filtroArmazem, setFiltroArmazem] = useState<string>('');
+    // Filtros aplicados:
+    const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
+    const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState<string>('');
 
 
     const navigate = useNavigate();
 
     /* ---------------------------- estados locais ----------------------------- */
 
-    const [filtroTipo, setFiltroTipo] = useState<string>('');
-    const [filtroArmazem, setFiltroArmazem] = useState<string>('');
-
     // Adicione no início do componente:
-    const [itemsPerPage, setItemsPerPage] = useState<number>(100);
     // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [selectAll, setSelectAll] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -81,60 +84,33 @@ const Localizacao: React.FC = () => {
     const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{ id: number, nome: string } | null>(null);
 
     useEffect(() => {
-
         const carregar = async () => {
-            try {
-                const [locs, estoque] = await Promise.all([
-                    buscarLocalizacoes(), // lista sem quantidade
-                    buscarConsultaEstoque(), // cada item tem localizacao_id e quantidade
-                ]);
+            const offset = (currentPage - 1) * itemsPerPage;
+            const res = await buscarLocalizacoes(itemsPerPage, offset, busca);
 
-                // soma por localizacao_id
-                const mapa: Record<number, number> = {};
-                estoque.forEach((item: any) => {
-                    const id = item.localizacao_id;
-                    if (!id) return;
-                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-                });
+            // Corrige tipagem aqui
+            const locais: LocalizacaoComQtd[] = res.results.map((item) => ({
+                ...item,
+                total_produtos: Number(item.total_produtos) || 0,
+            }));
 
-                const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
-                    ...l,
-                    total_produtos: mapa[l.localizacao_id] || 0,
-                }));
-
-                setListaLocalizacoes(locsComQtd);
-            } catch (err) {
-                console.error('Erro ao carregar localizações →', err);
-            }
+            setListaLocalizacoes(locais);
+            setTotalItens(res.total);
         };
-
         carregar();
-    }, []);
+    }, [currentPage, itemsPerPage, busca]);
 
-    /* ------------------------------ filtragem ------------------------------ */
-    const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
-    const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState<string>('');
 
-    const filteredIndices = useMemo(() => {
-        return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
-            const termo = busca.trim().toLowerCase();
-            const matchBusca =
-                termo === '' ||
-                [loc.nome, loc.tipo, loc.armazem, loc.ean]
-                    .filter(Boolean)
-                    .some((campo) => campo.toString().toLowerCase().includes(termo));
-
-            const matchTipo = !appliedFiltroTipo || loc.tipo === appliedFiltroTipo;
-            const matchArmazem = !appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem;
-
-            if (matchBusca && matchTipo && matchArmazem) acc.push(idx);
-            return acc;
-        }, []);
-    }, [listaLocalizacoes, busca, appliedFiltroTipo, appliedFiltroArmazem]);
+    const filteredItems = useMemo(() => {
+        return listaLocalizacoes.filter(loc =>
+            (!appliedFiltroTipo || loc.tipo === appliedFiltroTipo) &&
+            (!appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem)
+        );
+    }, [listaLocalizacoes, appliedFiltroTipo, appliedFiltroArmazem]);
 
 
     /* ---------------------------- paginação/ordenanação ---------------------------- */
-    const filteredItems = filteredIndices.map((i) => listaLocalizacoes[i]);
+    // const filteredItems = filteredIndices.map((i) => listaLocalizacoes[i]);
 
     const sortedItems = filteredItems.sort((a, b) => {
         const aValue = a[orderBy];
@@ -147,12 +123,12 @@ const Localizacao: React.FC = () => {
         if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
         return 0;
     });
-
-    const totalPages = Math.ceil(sortedItems.length / itemsPerPage) || 1;
+    
+    const totalPages = Math.ceil(totalItens / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
-    const currentItems = sortedItems.slice(startIndex, endIndex);
+    const currentItems = sortedItems;
 
 
     /* ------------------------- efeitos auxiliares ------------------------ */
@@ -197,17 +173,48 @@ const Localizacao: React.FC = () => {
         setModalOpen(true);
     };
 
+    const carregarDados = async () => {
+    try {
+        const offset = (currentPage - 1) * itemsPerPage;
+        const resp = await buscarLocalizacoes(
+            itemsPerPage,
+            offset,
+            busca,
+        );
+        // Se precisar enriquecer com produtos:
+        const estoque = await buscarConsultaEstoque();
+        const mapa: Record<number, number> = {};
+        estoque.forEach((item: any) => {
+        const id = item.localizacao_id;
+        if (!id) return;
+        mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+        });
+        const locsComQtd: LocalizacaoComQtd[] = resp.results.map((l: any) => ({
+        ...l,
+        total_produtos: mapa[l.localizacao_id] || 0,
+        }));
+        setListaLocalizacoes(locsComQtd);
+        setTotalItens(resp.total);
+    } catch (err) {
+        console.error('Erro ao carregar localizações →', err);
+    }
+    };
+    useEffect(() => {
+        carregarDados();
+    }, [currentPage, itemsPerPage, busca]);
+
+
+
+
     // Função para atualizar a quantidade total após visualização
     const handleQuantidadeAtualizada = async () => {
-        // Recarregar os dados da tabela para atualizar as quantidades
         const carregar = async () => {
             try {
-                const [locs, estoque] = await Promise.all([
-                    buscarLocalizacoes(),
+                const [res, estoque] = await Promise.all([
+                    buscarLocalizacoes(itemsPerPage, 0, busca),
                     buscarConsultaEstoque(),
                 ]);
 
-                // soma por localizacao_id
                 const mapa: Record<number, number> = {};
                 estoque.forEach((item: any) => {
                     const id = item.localizacao_id;
@@ -215,17 +222,16 @@ const Localizacao: React.FC = () => {
                     mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
                 });
 
-                const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
+                const locais: LocalizacaoComQtd[] = res.results.map((l: any) => ({
                     ...l,
-                    total_produtos: mapa[l.localizacao_id] || 0,
+                    total_produtos: Number(mapa[l.localizacao_id]) || 0,
                 }));
 
-                setListaLocalizacoes(locsComQtd);
+                setListaLocalizacoes(locais);
             } catch (err) {
                 console.error('Erro ao carregar localizações →', err);
             }
         };
-
         carregar();
     };
 
@@ -840,7 +846,7 @@ const Localizacao: React.FC = () => {
     };
 
     return (
-        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
           <CarregadorComRetry
             funcaoCarregamento={async () => {
               const [locs, estoque] = await Promise.all([
@@ -855,7 +861,7 @@ const Localizacao: React.FC = () => {
                 mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
               });
 
-              return locs.map((l: any) => ({
+              return locs.results.map((l: any) => ({
                 ...l,
                 total_produtos: mapa[l.localizacao_id] || 0,
               }));
