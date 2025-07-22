@@ -179,7 +179,6 @@ const Localizacao: React.FC = () => {
                     appliedFiltroArmazem ? Number(appliedFiltroArmazem) : undefined,
                     appliedFiltroTipo ? Number(appliedFiltroTipo) : undefined
                 );
-                console.log(resp)
                 
                 const estoque = await buscarConsultaEstoque();
                 const mapa: Record<number, number> = {};
@@ -203,7 +202,6 @@ const Localizacao: React.FC = () => {
         
         carregarDados();
     }, [currentPage, itemsPerPage, busca, appliedFiltroTipo, appliedFiltroArmazem]);
-    // console.log(appliedFiltroTipo)
 
 
 

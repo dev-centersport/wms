@@ -180,7 +180,7 @@ export const buscarLocalizacoes = async (
     const params = new URLSearchParams({
       limit: limit.toString(),
       offset: offset.toString(),
-      busca: encodeURIComponent(busca),
+      search: encodeURIComponent(busca),
       ...(armazemId && { armazemId: armazemId.toString() }),
       ...(tipoId && { tipoId: tipoId.toString() }),
     });
