@@ -196,6 +196,7 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
+
 // Novo: busca uma localização individual
 export const buscarLocalizacao = async (id: number) => {
   const resp = await api.get(`/localizacao/${id}`);
