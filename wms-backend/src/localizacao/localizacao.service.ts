@@ -150,15 +150,21 @@ export class LocalizacaoService {
   }
 
   async encontrarLocalizacaoPorEan(ean: string) {
-    const localizacao = await this.LocalizacaoRepository.findOneBy({
-      ean: ean,
+    const localizacao = await this.LocalizacaoRepository.findOne({
+      where: { ean: ean },
+      relations: ['armazem'],
     });
 
     if (!localizacao) {
       throw new NotFoundException(`Localização com EAN ${ean} não encontrado`);
     }
 
-    return localizacao;
+    return {
+      localizacao_id: localizacao.localizacao_id,
+      localizacao_nome: localizacao.nome,
+      ean: localizacao.ean,
+      armazem_nome: localizacao.armazem.nome,
+    };
   }
 
   async create(

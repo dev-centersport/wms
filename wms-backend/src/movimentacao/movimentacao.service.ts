@@ -171,7 +171,6 @@ export class MovimentacaoService {
             (pe) => ({
               produto_estoque_id: pe.produto_estoque_id,
               produto_id: pe.produto.produto_id,
-              produto_estoque_id: pe.produto.produto_id,
               quantidade: pe.quantidade,
             }),
           );
