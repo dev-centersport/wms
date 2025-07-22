@@ -237,10 +237,23 @@ export async function buscarConsultaEstoque() {
   }
 }
 
-export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
+export const buscarLocalizacoes = async (
+  limit: number = 100,
+  offset: number = 0,
+  busca: string = '',
+  filtroTipo: string = '',
+  filtroArmazem: string = '',
+  orderBy: string = 'nome',
+  orderDirection: string = 'asc'
+): Promise<{ results: Localizacao[]; total: number }> => {
   try {
-    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/localizacao?limit=1000000000000');
-    // console.log(res)
+    const res = await axios.get<{ results: any[]; total: number }>(
+      `http://151.243.0.78:3001/localizacao?limit=${limit}&offset=${offset}` +
+      `&busca=${encodeURIComponent(busca)}` +
+      `&tipo=${encodeURIComponent(filtroTipo)}` +
+      `&armazem=${encodeURIComponent(filtroArmazem)}` +
+      `&orderBy=${orderBy}&orderDirection=${orderDirection}`
+    );
 
     const dados: Localizacao[] = res.data.results.map((item) => ({
       localizacao_id: item.localizacao_id,
@@ -252,7 +265,10 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
       total_produtos: item.total_produtos ?? '',
     }));
 
-    return dados
+    return {
+      results: dados,
+      total: res.data.total
+    };
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);
     throw new Error('Falha ao carregar as localizações do servidor.');

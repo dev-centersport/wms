@@ -46,14 +46,17 @@ type LocalizacaoComQtd = {
 
 /* -------------------------------------------------------------------------- */
 // Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
-const itemsPerPage = 100;
+// const itemsPerPage = 100;
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
 
     /* ------------------------- estados globais do hook --F---------------------- */
     const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
+    const [totalItens, setTotalItens] = useState(0); // Adicionamos estado para o total
     const [busca, setBusca] = useState('');
+    const [itemsPerPage, setItemsPerPage] = useState<number>(100);
+    const [currentPage, setCurrentPage] = useState(1);
 
 
     const navigate = useNavigate();
@@ -64,11 +67,9 @@ const Localizacao: React.FC = () => {
     const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
     // Adicione no início do componente:
-    const [itemsPerPage, setItemsPerPage] = useState<number>(100);
     // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [selectAll, setSelectAll] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -80,36 +81,53 @@ const Localizacao: React.FC = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{ id: number, nome: string } | null>(null);
 
+    // Função para carregar os dados com paginação
+    const carregarDados = async (page: number, limit: number) => {
+        try {
+        const offset = (page - 1) * limit;
+        const [locsData, estoque] = await Promise.all([
+            buscarLocalizacoes(limit, offset),
+            buscarConsultaEstoque(),
+        ]);
+
+        // soma por localizacao_id
+        const mapa: Record<number, number> = {};
+        estoque.forEach((item: any) => {
+            const id = item.localizacao_id;
+            if (!id) return;
+            mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+        });
+
+        const locsComQtd: LocalizacaoComQtd[] = locsData.results.map((l: any) => ({
+            ...l,
+            total_produtos: mapa[l.localizacao_id] || 0,
+        }));
+
+        setListaLocalizacoes(locsComQtd);
+        setTotalItens(locsData.total); // Atualiza o total de itens
+        } catch (err) {
+        console.error('Erro ao carregar localizações →', err);
+        }
+    };
+
+    // Efeito para carregar os dados quando a página ou itemsPerPage mudar
     useEffect(() => {
+        carregarDados(currentPage, itemsPerPage);
+    }, [currentPage, itemsPerPage]);
 
-        const carregar = async () => {
-            try {
-                const [locs, estoque] = await Promise.all([
-                    buscarLocalizacoes(), // lista sem quantidade
-                    buscarConsultaEstoque(), // cada item tem localizacao_id e quantidade
-                ]);
+    // Calcula o total de páginas baseado no total de itens
+    const totalPages = Math.ceil(totalItens / itemsPerPage) || 1;
 
-                // soma por localizacao_id
-                const mapa: Record<number, number> = {};
-                estoque.forEach((item: any) => {
-                    const id = item.localizacao_id;
-                    if (!id) return;
-                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-                });
+    // Função para mudar de página
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
 
-                const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
-                    ...l,
-                    total_produtos: mapa[l.localizacao_id] || 0,
-                }));
-
-                setListaLocalizacoes(locsComQtd);
-            } catch (err) {
-                console.error('Erro ao carregar localizações →', err);
-            }
-        };
-
-        carregar();
-    }, []);
+    // Função para mudar itens por página
+    const handleItemsPerPageChange = (size: number) => {
+        setItemsPerPage(size);
+        setCurrentPage(1); // Reset para a primeira página
+    };
 
     /* ------------------------------ filtragem ------------------------------ */
     const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
@@ -148,7 +166,7 @@ const Localizacao: React.FC = () => {
         return 0;
     });
 
-    const totalPages = Math.ceil(sortedItems.length / itemsPerPage) || 1;
+    // const totalPages = Math.ceil(sortedItems.length / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
@@ -215,7 +233,7 @@ const Localizacao: React.FC = () => {
                     mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
                 });
 
-                const locsComQtd: LocalizacaoComQtd[] = locs.map((l: any) => ({
+                const locsComQtd: LocalizacaoComQtd[] = locs.results.map((l: any) => ({
                     ...l,
                     total_produtos: mapa[l.localizacao_id] || 0,
                 }));
@@ -840,7 +858,13 @@ const Localizacao: React.FC = () => {
     };
 
     return (
-        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+        <Layout 
+            totalPages={totalPages} 
+            currentPage={currentPage} 
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={handleItemsPerPageChange}
+        >
           <CarregadorComRetry
             funcaoCarregamento={async () => {
               const [locs, estoque] = await Promise.all([
@@ -855,7 +879,7 @@ const Localizacao: React.FC = () => {
                 mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
               });
 
-              return locs.map((l: any) => ({
+              return locs.results.map((l: any) => ({
                 ...l,
                 total_produtos: mapa[l.localizacao_id] || 0,
               }));
