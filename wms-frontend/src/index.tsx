@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider, CssBaseline, TextareaAutosize } from '@mui/material';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -9,11 +9,8 @@ import "./index.css";
 
 import Armazem from "./pages/Armazem";
 import Login from "./pages/Login";
-
 import Localizacao from "./pages/Localizacao";
 import CriarLocalizacao from "./pages/CriarLocalizacao";
-// import Layout from "./components/Layout";
-import theme from './components/Theme';
 import CriarArmazem from "./pages/CriarArmazem";
 import EditarLocalizacao from "./pages/EditarLocalizacao"
 import EditarArmazem from "./pages/EditarArmazem"
@@ -27,21 +24,16 @@ import Separacao from "./pages/Separacao";
 import Ocorrencias from "./pages/Ocorrencias";
 import NovaOcorrencia from "./pages/NovaOcorrencia";
 import ConferenciaAudi from "./pages/ConferenciaAudi";
-
-import Sidebar from "./components/Sidebar";
 import Auditoria from "./pages/Auditoria";
 
-
+import theme from './components/Theme';
 
 const container = document.getElementById("root");
-if (!container) {
-  throw new Error("Elemento root não encontrado no HTML.");
-}
+if (!container) throw new Error("Elemento root não encontrado no HTML.");
 
 const root = createRoot(container);
 
 root.render(
-
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -75,8 +67,9 @@ root.render(
           <Route path="/NovaOcorrencia" element={<NovaOcorrencia/>}/>
           <Route path="/ConferenciaAudi/:id" element={<ConferenciaAudi />} />
 
-          {/* Rota padrão redireciona para login */}
-          <Route path="*" element={<Login />} />
+          {/* Redirecionamentos */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

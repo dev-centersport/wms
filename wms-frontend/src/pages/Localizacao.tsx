@@ -195,8 +195,8 @@ const Localizacao: React.FC = () => {
     };
     useEffect(() => {
         carregarDados();
-    }, [currentPage, itemsPerPage, busca, appliedFiltroTipo, appliedFiltroArmazem]);
-    console.log(busca)
+    }, [currentPage, itemsPerPage, busca]);
+    // console.log(busca)
 
 
 
@@ -875,7 +875,7 @@ const Localizacao: React.FC = () => {
                     variant="outlined"
                     size="small"
                     value={buscaInput}
-                    onChange={e => setBuscaInput(e.target.value)}
+                    onChange={e => {setBuscaInput(e.target.value);}}
                     onKeyDown={e => {
                         if (e.key === 'Enter') {
                             setBusca(buscaInput);
