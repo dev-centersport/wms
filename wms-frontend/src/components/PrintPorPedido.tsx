@@ -1,23 +1,16 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
-
-interface Produto {
-  sku: string;
-  descricao?: string;
-  codigo_barras?: string;
-  urlFoto?: string;
-  armazem: string;
-  localizacao: string;
-}
 
 interface Item {
-  produto: Produto;
-  quantidade_pedido: number;
+  sku: string;
+  idItem: string;
+  ean?: string;
+  localizacoes: { armazem: string; localizacao: string }[];
+  descricao?: string;
+  url_foto?: string;
 }
 
 interface Pedido {
-  numero_pedido: string;
-  pedido_id?: string;
+  numeroPedido: string;
   itens: Item[];
 }
 
@@ -29,17 +22,21 @@ interface PrintPorPedidoProps {
 
 const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
   if (!data?.pedidos?.length) {
-    return <Typography>Nenhum pedido encontrado.</Typography>;
+    return <p>Nenhum pedido encontrado.</p>;
   }
 
   const pedidosPorLocalizacao: { [key: string]: Pedido[] } = {};
 
   data.pedidos.forEach((pedido) => {
     pedido.itens.forEach((item) => {
-      const key = `${item.produto.armazem} - ${item.produto.localizacao}`;
+      const key = item.localizacoes?.length
+        ? item.localizacoes.map((loc: any) => `${loc.armazem} - ${loc.localizacao}`).join(', ')
+        : 'Sem localização';
+
       if (!pedidosPorLocalizacao[key]) {
         pedidosPorLocalizacao[key] = [];
       }
+
       if (!pedidosPorLocalizacao[key].includes(pedido)) {
         pedidosPorLocalizacao[key].push(pedido);
       }
@@ -49,75 +46,160 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
   const localizacoesOrdenadas = Object.keys(pedidosPorLocalizacao).sort();
 
   return (
-    <Box sx={{ padding: 2 }}>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h4">RELATÓRIO DE SEPARAÇÃO POR PEDIDO E LOCALIZAÇÃO</Typography>
-        <Typography variant="body2">Gerado em: {new Date().toLocaleString()}</Typography>
-      </Box>
+    <div>
+      <style>{`
+        @page {
+          size: A4;
+          margin: 1cm;
+        }
+        body {
+          font-family: Arial, sans-serif;
+          font-size: 10pt;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 10px;
+          border-bottom: 2px solid #333;
+          padding-bottom: 5px;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 12pt;
+        }
+        .localizacao-section {
+          page-break-inside: avoid;
+        }
+        .pedido-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .pedido-table th, .pedido-table td {
+          border: 1px solid #ddd;
+          padding: 5px;
+          vertical-align: top;
+        }
+        .pedido-table th {
+          background-color: #f2f2f2;
+          text-align: left;
+        }
+        .pedido-header {
+          background-color: #e6e6e6;
+          font-weight: bold;
+        }
+        .product-info {
+          display: flex;
+          align-items: center;
+        }
+        .product-image {
+          height: 40px;
+          width: 40px;
+          margin-right: 5px;
+          object-fit: contain;
+          border: solid 1px rgba(0, 0, 0, 0.5);
+          border-radius: 5px;
+        }
+        .barcode {
+          display: block;
+          width: 100px;
+          height: 40px;
+        }
+        .barcode svg {
+          width: 100%;
+          height: 100%;
+        }
+        .no-print {
+          margin: 10px 0;
+          text-align: center;
+        }
+        @media print {
+          .no-print {
+            display: none;
+          }
+          body {
+            font-size: 8pt;
+          }
+          .pedido-table th, .pedido-table td {
+            padding: 3px;
+          }
+        }
+      `}</style>
 
-      <Box sx={{ display: 'block', mb: 2 }}>
-        <Button variant="contained" onClick={() => window.print()}>Imprimir Relatório</Button>
-      </Box>
+      <div className="header">
+        <h1>RELATÓRIO DE SEPARAÇÃO POR PEDIDO E LOCALIZAÇÃO</h1>
+        <p>Gerado em: {new Date().toLocaleString()}</p>
+      </div>
+
+      <div className="no-print">
+        <button onClick={() => window.print()} style={{ padding: '5px 10px', fontSize: '10pt' }}>
+          Imprimir Relatório
+        </button>
+      </div>
 
       {localizacoesOrdenadas.map((localizacaoKey) => {
         const pedidos = pedidosPorLocalizacao[localizacaoKey].sort((a, b) =>
-          a.numero_pedido.localeCompare(b.numero_pedido)
+          a.numeroPedido.localeCompare(b.numeroPedido)
         );
 
         return (
-          <Box key={localizacaoKey} sx={{ mb: 4 }}>
+          <div className="localizacao-section" key={localizacaoKey}>
             {pedidos.map((pedido) => (
-              <table key={pedido.numero_pedido} style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+              <table className="pedido-table" key={pedido.numeroPedido}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f0f0f0' }}>
-                    <th colSpan={5} style={{ textAlign: 'left', padding: '8px', border: '1px solid #ccc' }}>
-                      PEDIDO: {pedido.numero_pedido} {pedido.pedido_id && `(ID: ${pedido.pedido_id})`}
+                  <tr className="pedido-header">
+                    <th colSpan={5}>
+                      PEDIDO: {pedido.numeroPedido}
                     </th>
                   </tr>
                   <tr>
-                    <th style={{ border: '1px solid #ccc', padding: '8px' }}>Produto</th>
-                    <th style={{ border: '1px solid #ccc', padding: '8px' }}>Qtd.</th>
-                    <th style={{ border: '1px solid #ccc', padding: '8px' }}>Código</th>
-                    <th style={{ border: '1px solid #ccc', padding: '8px' }}>Armazém/Localização</th>
-                    <th style={{ border: '1px solid #ccc', padding: '8px' }}>Anotações</th>
+                    <th style={{ width: '60%' }}>Produto</th>
+                    <th style={{ width: '5%' }}>Qtd.</th>
+                    <th style={{ width: '10%' }}>Código</th>
+                    <th style={{ width: '18%' }}>Armazém/Localização</th>
+                    <th style={{ width: '7%' }}>Anotações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pedido.itens
-                    .filter((item) => `${item.produto.armazem} - ${item.produto.localizacao}` === localizacaoKey)
-                    .sort((a, b) => a.produto.sku.localeCompare(b.produto.sku))
-                    .map((item, idx) => (
+                  {pedido.itens.map((item, idx) => {
+                    const localizacaoTexto = item.localizacoes?.length
+                      ? item.localizacoes.map(loc => `${loc.armazem} - ${loc.localizacao}`).join(', ')
+                      : 'Sem localização';
+
+                    const codigoBarras = (item.ean || item.idItem || '').padStart(12, '0');
+
+                    return (
                       <tr key={idx}>
-                        <td style={{ border: '1px solid #ccc', padding: '8px', display: 'flex', alignItems: 'center' }}>
-                          <div style={{ width: 12, height: 12, backgroundColor: '#000', marginRight: 8 }}></div>
-                          {item.produto.urlFoto && item.produto.urlFoto !== 'n/d' && (
-                            <img src={item.produto.urlFoto} alt={item.produto.descricao} style={{ height: 40, marginRight: 8 }} />
-                          )}
-                          <div>
-                            <strong>{item.produto.sku}</strong><br />
-                            {item.produto.descricao || 'Sem descrição'}
+                        <td>
+                          <div className="product-info">
+                            {item.url_foto && item.url_foto !== 'n/d' && (
+                              <img src={item.url_foto} alt={item.descricao} className="product-image" />
+                            )}
+                            <div>
+                              <strong>{item.sku}</strong><br />
+                              {item.descricao || 'Sem descrição'}
+                            </div>
                           </div>
                         </td>
-                        <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>{item.quantidade_pedido}</td>
-                        <td style={{ border: '1px solid #ccc', padding: '8px' }}>
-                          <div>{item.produto.sku}</div>
-                          {item.produto.codigo_barras ? (
-                            <div style={{ fontSize: '10px' }}>{item.produto.codigo_barras}</div>
-                          ) : (
-                            'N/A'
-                          )}
+                        <td>1</td>
+                        <td>
+                          <div>{item.sku}</div>
+                          <div className="barcode">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50">
+                              <text x="0" y="40" fontFamily="monospace" fontSize="40">{codigoBarras}</text>
+                            </svg>
+                          </div>
                         </td>
-                        <td style={{ border: '1px solid #ccc', padding: '8px' }}>{localizacaoKey}</td>
-                        <td style={{ border: '1px solid #ccc', padding: '8px' }}></td>
+                        <td>{localizacaoTexto}</td>
+                        <td></td>
                       </tr>
-                    ))}
+                    );
+                  })}
                 </tbody>
               </table>
             ))}
-          </Box>
+          </div>
         );
       })}
-    </Box>
+    </div>
   );
 };
 

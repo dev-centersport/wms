@@ -236,12 +236,67 @@ export async function buscarConsultaEstoque() {
     throw new Error('Falha ao carregar os dados de estoque.');
   }
 }
+export interface ItemSeparacao {
+  sku: string;
+  idItem: string;
+  localizacoes: any[];
+  descricao?: string;
+  urlFoto?: string;
+}
+
+export interface PedidoSeparado {
+  numeroPedido: string;
+  itens: ItemSeparacao[];
+}
+
+export interface RespostaSeparacao {
+  pedidos: PedidoSeparado[];
+}
+
+export async function enviarArquivoSeparacao(formData: FormData): Promise<RespostaSeparacao> {
+  try {
+    const response = await axios.post(`${BASE_URL}/separacao/agrupado-pedido`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const pedidos = response.data.pedidos;
+
+    // Buscar todos os produtos disponíveis na base para enriquecimento
+    const produtosRes = await axios.get(`${BASE_URL}/produto`);
+    const produtos = produtosRes.data;
+
+    const pedidosComDescricaoFoto = pedidos.map((pedido: any) => {
+      const itens = pedido.itens.map((item: any) => {
+        const produtoEncontrado = produtos.find((p: any) => p.sku === item.sku);
+
+        return {
+          ...item,
+          descricao: produtoEncontrado?.descricao || '',
+          urlFoto: produtoEncontrado?.urlFoto || '', // ou .imagem se for esse o nome
+        };
+      });
+
+      return {
+        numeroPedido: pedido.numeroPedido,
+        itens,
+      };
+    });
+
+    return { pedidos: pedidosComDescricaoFoto };
+  } catch (err) {
+    console.error('Erro ao enviar arquivo de separação →', err);
+    throw new Error('Falha ao processar o arquivo de separação.');
+  }
+}
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
-    const res = await axios.get<any[]>('http://151.243.0.78:3001/localizacao');
+    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/localizacao?limit=1000000000000');
+    console.log(res)
 
-    const dados: Localizacao[] = res.data.map((item) => ({
+    const dados: Localizacao[] = res.data.results.map((item) => ({
       localizacao_id: item.localizacao_id,
       nome: item.nome,
       tipo: item.tipo?.tipo ?? '',
@@ -251,21 +306,7 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
       total_produtos: item.total_produtos ?? '',
     }));
 
-    return dados.sort((a, b) => {
-      // Remove os prefixos CEN-#A-23, INF e SUP (e possíveis espaços após eles)
-      const removePrefix = (str: string) => str.replace(/^(CEN|INF|SUP)\s*/i, '');
-      
-      const nomeA = removePrefix(a.nome).toUpperCase(); // Ignora maiúsculas/minúsculas
-      const nomeB = removePrefix(b.nome).toUpperCase();
-
-      if (nomeA < nomeB) {
-          return -1;
-      }
-      if (nomeA > nomeB) {
-          return 1;
-      }
-      return 0; // Nomes iguais
-  });
+    return dados
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);
     throw new Error('Falha ao carregar as localizações do servidor.');
