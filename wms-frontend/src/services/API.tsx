@@ -244,7 +244,7 @@ export interface Produto {
 
 export const buscarProdutos = async (): Promise<Produto[]> => {
   try {
-    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/produto?limit=1000000000000');
+    const res = await axios.get<{ results: any[] }>('http://151.243.0.78:3001/produto?limit=1000000000000');
 
     const dados: Produto[] = res.data.results.map((item) => ({
       produto_id: item.produto_id,
@@ -501,30 +501,51 @@ export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao)
   }
 };
 
-export async function buscarProdutoPorEAN(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/produto');
-  const produtos = response.data.results;
+export async function buscarProdutoPorEAN(ean: string, eanLocalizacao?: string) {
+  const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
 
-  const encontrado = produtos.find((p: any) => p.ean === ean.trim());
+  try {
+    const response = await axios.get(`http://151.243.0.78:3001/produto/buscar-por-ean/${eanLimpo}`);
+    const produto = response.data;
 
-  if (!encontrado) {
+    let produto_estoque_id;
+
+    if (eanLocalizacao) {
+      try {
+        const estoque = await buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao, eanLimpo);
+        produto_estoque_id = estoque?.produto_estoque_id;
+      } catch {
+        produto_estoque_id = undefined;
+      }
+    }
+
+    return {
+      produto_id: produto.produto_id,
+      produto_estoque_id,
+      sku: produto.sku || '',
+      ean: produto.ean || '',
+      descricao: produto.descricao || '',
+    };
+  } catch {
     throw new Error('Produto com esse EAN não encontrado.');
   }
-
-  return encontrado;
 }
 
+
 export async function buscarLocalizacaoPorEAN(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/localizacao');
-  const localizacoes = response.data.results;
+  const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
+  const response = await axios.get(`${BASE_URL}/localizacao/buscar-por-ean/${eanLimpo}`);
+  const localizacao = response.data;
 
-  const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
-
-  if (!encontrada) {
-    throw new Error('Localização com esse EAN não encontrada.');
+  if (!localizacao) {
+    throw new Error("Localização com esse EAN não encontrada.");
   }
 
-  return encontrada;
+  return {
+    localizacao_id: localizacao.localizacao_id,
+    nome: localizacao.localizacao_nome,
+    armazem: localizacao.armazem_nome || "",
+  };
 }
 
 export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number) {

@@ -33,9 +33,9 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import axios from 'axios';
 import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN } from '../services/API';
 
-
 interface Item {
   produto_id: number;
+  produto_estoque_id?: number;
   contador?: string;
   descricao?: string;
   sku: string | null;
@@ -44,10 +44,10 @@ interface Item {
   produto?: string;
 }
 
-
 interface LocalizacaoOption {
   id: number;
   nome: string;
+  ean?: string;
 }
 
 const Movimentacao: React.FC = () => {
@@ -67,6 +67,7 @@ const Movimentacao: React.FC = () => {
   const [lista, setLista] = useState<Item[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [contadorTotal, setContadorTotal] = useState(1);
 
   // Confirmação
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -95,12 +96,7 @@ const Movimentacao: React.FC = () => {
 
     const eanLimpo = produto.trim();
 
-    if (lista.some((item) => item.ean === eanLimpo)) {
-      alert('Produto já foi adicionado.');
-      return;
-    }
-
-    const novo = await buscarProdutoPorEAN(eanLimpo);
+    const novo = await buscarProdutoPorEAN(eanLimpo, origem?.ean || localizacao);
 
     if (!novo) {
       alert(`Produto com EAN ${eanLimpo} não encontrado.`);
@@ -112,19 +108,21 @@ const Movimentacao: React.FC = () => {
       const novaLista: Item[] = [
         ...prevLista,
         {
-          produto_id: novo.produto_id, // <- Aqui é essencial
+          produto_id: novo.produto_id,
+          produto_estoque_id: novo.produto_estoque_id, // <- ESSENCIAL
           sku: novo.sku,
           ean: novo.ean,
           descricao: novo.descricao,
           quantidade: 1,
           produto: novo.descricao,
-          contador: '',
+          contador: String(contadorTotal).padStart(3, '0'),
         },
       ];
       setSelectedItems((prev) => [...prev, novaLista.length - 1]);
       return novaLista;
     });
 
+    setContadorTotal((prev) => prev + 1);
     setProduto('');
   };
 
@@ -139,7 +137,11 @@ const Movimentacao: React.FC = () => {
       return;
     }
 
-    setOrigem({ id: resultado.localizacao_id, nome: resultado.nome });
+    setOrigem({
+      id: resultado.localizacao_id,
+      nome: resultado.nome,
+      ean: eanLocalizacao, // armazena o EAN digitado
+    });
     setLocalizacao(''); // limpa o campo digitado
     setLocalizacaoBloqueada(true); // bloqueia o campo
   };
@@ -184,33 +186,34 @@ const Movimentacao: React.FC = () => {
     setConfirmOpen(true);
   };
 
- const montarPayload = () => {
-  const usuario_id = 1;
+  const montarPayload = () => {
+    const usuario_id = 1;
 
-  const payload: any = {
-    tipo: tipo.toLowerCase(), // API espera em minúsculo: 'entrada', 'saida', 'transferencia'
-    usuario_id: usuario_id,
-    itens_movimentacao: lista.map((item) => ({
-      produto_id: item.produto_id, // Usar diretamente o ID correto
-      quantidade: item.quantidade ?? 1,
-    })),
-    localizacao_origem_id: 0,
-    localizacao_destino_id: 0,
+    const payload: any = {
+      tipo: tipo.toLowerCase(), // API espera em minúsculo: 'entrada', 'saida', 'transferencia'
+      usuario_id: usuario_id,
+      itens_movimentacao: lista.map((item) => ({
+        produto_id: Number(item.produto_id),
+        produto_estoque_id: Number(item.produto_estoque_id), // <- AQUI
+        quantidade: Number(item.quantidade ?? 1),
+      })),
+      localizacao_origem_id: 0,
+      localizacao_destino_id: 0,
+    };
+
+    if (tipo === 'entrada') {
+      payload.localizacao_origem_id = 0;
+      payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
+    } else if (tipo === 'saida') {
+      payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
+      payload.localizacao_destino_id = 0;
+    } else if (tipo === 'transferencia') {
+      payload.localizacao_origem_id = origem?.id;
+      payload.localizacao_destino_id = destino?.id;
+    }
+
+    return payload;
   };
-
-  if (tipo === 'entrada') {
-    payload.localizacao_origem_id = 0;
-    payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
-  } else if (tipo === 'saida') {
-    payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
-    payload.localizacao_destino_id = 0;
-  } else if (tipo === 'transferencia') {
-    payload.localizacao_origem_id = origem?.id;
-    payload.localizacao_destino_id = destino?.id;
-  }
-
-  return payload;
-};
 
   const handleConfirmarOperacao = async () => {
     try {
@@ -221,6 +224,7 @@ const Movimentacao: React.FC = () => {
         usuario_id: usuario_id,
         itens_movimentacao: lista.map((item) => ({
           produto_id: Number(item.produto_id),
+          produto_estoque_id: Number(item.produto_estoque_id),
           quantidade: Number(item.quantidade ?? 1),
         })),
         localizacao_origem_id: 0,
@@ -249,6 +253,7 @@ const Movimentacao: React.FC = () => {
       setDestino(null);
       setLocalizacao('');
       setLocalizacaoBloqueada(false);
+      setContadorTotal(1);
     } catch (err: any) {
       console.error('Erro ao enviar movimentacao:', err);
       if (err.response) {
@@ -501,7 +506,7 @@ const Movimentacao: React.FC = () => {
               {lista.map((item, index) => {
                 const isSelected = selectedItems.includes(index);
                 return (
-                  <TableRow key={item.ean || `${item.sku}-${index}`} hover selected={isSelected}>
+                  <TableRow key={`${item.ean}-${index}`} hover selected={isSelected}>
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
