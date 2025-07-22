@@ -835,8 +835,8 @@ const Localizacao: React.FC = () => {
                 const tipos = Array.from(
                 new Map(
                     todos
-                    .filter((l: any) => l.tipo && l.tipo_id) // supondo que existe l.tipo_id!
-                    .map((l: any) => [l.tipo_id, { tipo: l.tipo, id: l.tipo_id }])
+                    .filter((l: any) => l.tipo && l.tipo_localizacao_id) // supondo que existe l.tipo_id!
+                    .map((l: any) => [l.tipo_localizacao_id, { tipo: l.tipo, id: l.tipo_localizacao_id }])
                 ).values()
                 ).sort((a, b) => a.tipo.localeCompare(b.tipo));
 
@@ -848,7 +848,7 @@ const Localizacao: React.FC = () => {
                 ).values()
                 ).sort((a, b) => a.armazem.localeCompare(b.armazem));
 
-                console.log(armazens)
+                console.log('tipos de localizacoes' , tipos)
 
 
                 setTodosTipos(tipos);

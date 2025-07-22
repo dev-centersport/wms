@@ -192,7 +192,9 @@ export const buscarLocalizacoes = async (
     const dados: Localizacao[] = res.data.results.map((item) => ({
       localizacao_id: item.localizacao_id,
       nome: item.nome,
+      tipo_localizacao_id: item.tipo?.tipo_localizacao_id ?? '',
       tipo: item.tipo?.tipo ?? '',
+      armazem_id: item.armazem?.armazem_id ?? '',
       armazem: item.armazem?.nome ?? '',
       ean: item.ean ?? '',
       total_produtos: item.total_produtos ?? 0,
