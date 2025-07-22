@@ -52,7 +52,7 @@ const EditarTipoLocalizacao: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <Layout show={false}>
       <Container>
         <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
             Editar Localização
@@ -65,6 +65,8 @@ const EditarTipoLocalizacao: React.FC = () => {
           onChange={(e) => setTipo(e.target.value)}
           sx={{ mb: 3 }}
         />
+        
+        <Divider sx={{ mt: 20, mb: 3 }} />
 
         <Box display="flex" justifyContent="center" gap={2}>
           <Button

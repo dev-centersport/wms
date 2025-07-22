@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 3.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "autoIncrement": true,
+      "channel": "production",
+      "env": {
+        "EXPO_RUNTIME_VERSION": "1.0.0"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

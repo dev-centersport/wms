@@ -12,6 +12,7 @@ import {
 
 interface ExcelRow {
   'Código (SKU)': string;
+  Descrição: string;
   ID: string | number;
   'Número do pedido': string | number;
   [key: string]: any;
@@ -133,12 +134,7 @@ export class SeparacaoService {
         } else {
           // Cria um novo item no resultado
           resultado.localizacoes.push({
-            armazem: [
-              {
-                armazemID: estoque.localizacao.armazem.armazem_id,
-                armazem: estoque.localizacao.armazem.nome,
-              },
-            ],
+            armazem: estoque.localizacao.armazem.nome,
             localizacao: estoque.localizacao.nome,
             produtoSKU: sku,
             urlFoto: estoque.produto.url_foto,
@@ -178,47 +174,67 @@ export class SeparacaoService {
     arquivo: Express.Multer.File,
     armazemPrioritarioId?: number,
   ): Promise<ResultadoSeparacaoPorPedidoDTO> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const workbook = XLSX.read(arquivo.buffer);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const dados: ExcelRow[] = XLSX.utils.sheet_to_json(worksheet);
 
     const resultado: ResultadoSeparacaoPorPedidoDTO = {
       pedidos: [],
-      produtosNaoEncontrados: [],
+      // produtosNaoEncontrados: [],
     };
 
     // Primeiro agrupamos todos os itens por pedido
     const itensPorPedido = new Map<
       string | number,
-      Array<{
-        sku: string;
-        idItem: string | number;
-      }>
+      {
+        idPedido: string | number;
+        itens: Array<{
+          urlFoto: string;
+          Descrição: string;
+          sku: string;
+          idItem: string | number;
+          ean: string;
+        }>;
+      }
     >();
 
     for (const item of dados) {
       const numPedido = item['Número do pedido'];
-      if (!numPedido) continue;
+      const idPedido = item['ID'];
+      if (!numPedido || !idPedido) continue;
 
       if (!itensPorPedido.has(numPedido)) {
-        itensPorPedido.set(numPedido, []);
+        itensPorPedido.set(numPedido, {
+          idPedido: idPedido,
+          itens: [],
+        });
       }
-      itensPorPedido.get(numPedido)?.push({
-        sku: item['Código (SKU)'],
-        idItem: item.ID,
-      });
+
+      const pedido = itensPorPedido.get(numPedido);
+
+      if (pedido) {
+        pedido.itens.push({
+          urlFoto: '',
+          Descrição: item['Descrição'],
+          sku: item['Código (SKU)'],
+          idItem: item.ID,
+          ean: '',
+        });
+      }
     }
 
     // Processamos cada pedido individualmente
     for (const [numPedido, itens] of itensPorPedido.entries()) {
       const pedidoResultado = {
+        idPedido: itens.idPedido,
         numeroPedido: numPedido,
         itens: [] as Array<{
+          urlFoto: string;
+          descricao: string;
           sku: string;
-          idItem: string | number;
+          ean: string;
           localizacoes: Array<{
-            armazem: { armazemID: number; armazem: string };
+            armazem: string;
             localizacao: string;
             quantidadeSeparada: number;
           }>;
@@ -227,15 +243,16 @@ export class SeparacaoService {
       };
 
       // Processamos cada item do pedido
-      for (const item of itens) {
+      for (const item of itens.itens) {
         const produto = await this.produtoRepository.findOne({
           where: { sku: item.sku },
+          select: ['produto_id', 'ean', 'url_foto', 'descricao'],
         });
 
         if (!produto) {
-          resultado.produtosNaoEncontrados.push(
-            `${item.sku} (Pedido: ${numPedido})`,
-          );
+          // resultado.produtosNaoEncontrados.push(
+          //   `${item.sku} (Pedido: ${numPedido})`,
+          // );
           pedidoResultado.completo = false;
           continue;
         }
@@ -262,7 +279,7 @@ export class SeparacaoService {
         const quantidadeNecessaria = 1; // 1 unidade por item do pedido
         let quantidadeSeparada = 0;
         const localizacoesItem: Array<{
-          armazem: { armazemID: number; armazem: string };
+          armazem: string;
           localizacao: string;
           quantidadeSeparada: number;
         }> = [];
@@ -277,10 +294,7 @@ export class SeparacaoService {
           );
 
           localizacoesItem.push({
-            armazem: {
-              armazemID: estoque.localizacao.armazem.armazem_id,
-              armazem: estoque.localizacao.armazem.nome,
-            },
+            armazem: estoque.localizacao.armazem.nome,
             localizacao: estoque.localizacao.nome,
             quantidadeSeparada: quantidadeASeparar,
           });
@@ -290,14 +304,16 @@ export class SeparacaoService {
 
         if (quantidadeSeparada < quantidadeNecessaria) {
           pedidoResultado.completo = false;
-          resultado.produtosNaoEncontrados.push(
-            `${item.sku} (Pedido: ${numPedido}) - faltam ${quantidadeNecessaria - quantidadeSeparada} unidades`,
-          );
+          // resultado.produtosNaoEncontrados.push(
+          //   `${item.sku} (Pedido: ${numPedido}) - faltam ${quantidadeNecessaria - quantidadeSeparada} unidades`,
+          // );
         }
 
         pedidoResultado.itens.push({
+          urlFoto: produto.url_foto || '',
+          descricao: item.Descrição,
           sku: item.sku,
-          idItem: item.idItem,
+          ean: produto.ean || '',
           localizacoes: localizacoesItem,
         });
       }

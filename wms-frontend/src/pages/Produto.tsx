@@ -14,6 +14,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  TableSortLabel,
 } from '@mui/material';
 import { Search as SearchIcon, CloudUpload, Refresh } from '@mui/icons-material';
 
@@ -38,6 +39,8 @@ const Produto: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderBy, setOrderBy] = useState<keyof Produto>('descricao');
+  const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const carregarProdutos = async () => {
@@ -67,20 +70,47 @@ const Produto: React.FC = () => {
     }, []);
   }, [listaProdutos, busca]);
 
-  const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
+  const handleSort = (property: keyof Produto) => {
+    const isAsc = orderBy === property && orderDirection === 'asc';
+    setOrderDirection(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const filteredItems = listaProdutos.filter((produto) => {
+    const termo = busca.toLowerCase().trim();
+    return (
+      termo === '' ||
+      [produto.descricao, produto.sku, produto.ean].some((campo) =>
+        campo?.toLowerCase().includes(termo)
+      )
+    );
+  });
+
+  const sortedItems = filteredItems.sort((a, b) => {
+    const aValue = a[orderBy];
+    const bValue = b[orderBy];
+
+    const aStr = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
+    const bStr = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
+
+    if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
+    if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedItems.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentIndices = filteredIndices.slice(startIndex, endIndex);
-  const currentItems = currentIndices.map((i) => listaProdutos[i]);
+  const currentItems = sortedItems.slice(startIndex, endIndex);
 
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
-    setSelectedItems(checked ? currentIndices : []);
+    setSelectedItems(checked ? currentItems.map((p) => p.produto_id) : []);
   };
 
-  const handleSelectItem = (originalIndex: number, checked: boolean) => {
+  const handleSelectItem = (id: number, checked: boolean) => {
     setSelectedItems((prev) =>
-      checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
+      checked ? [...prev, id] : prev.filter((pid) => pid !== id)
     );
   };
 
@@ -133,38 +163,64 @@ const Produto: React.FC = () => {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </TableCell>
+
               <TableCell sx={{ fontWeight: 600 }}>Foto</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>SKU</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>EAN</TableCell>
+
+              <TableCell sortDirection={orderBy === 'descricao' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'descricao'}
+                  direction={orderBy === 'descricao' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('descricao')}
+                >
+                  Descrição
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'sku' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'sku'}
+                  direction={orderBy === 'sku' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('sku')}
+                >
+                  SKU
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'ean' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'ean'}
+                  direction={orderBy === 'ean' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('ean')}
+                >
+                  EAN
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {currentItems.length ? (
               currentItems.map((produto, idx) => {
-                const originalIndex = currentIndices[idx];
-                const isSelected = selectedItems.includes(originalIndex);
-
+                const isSelected = selectedItems.includes(produto.produto_id);
                 return (
                   <TableRow key={produto.produto_id} selected={isSelected} hover>
                     <TableCell padding="checkbox">
-                        <Checkbox
+                      <Checkbox
                         checked={isSelected}
-                        onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
-                        />
+                        onChange={(e) => handleSelectItem(produto.produto_id, e.target.checked)}
+                      />
                     </TableCell>
                     <TableCell>
-                        {produto.url_foto ? (
+                      {produto.url_foto ? (
                         <img src={produto.url_foto} alt={produto.descricao} width={50} />
-                        ) : (
+                      ) : (
                         '-'
-                        )}
+                      )}
                     </TableCell>
                     <TableCell>{produto.descricao}</TableCell>
                     <TableCell>{produto.sku}</TableCell>
                     <TableCell>{produto.ean}</TableCell>
                     <TableCell>{produto.quantidade}</TableCell>
-                    </TableRow>
+                  </TableRow>
 
                 );
               })

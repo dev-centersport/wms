@@ -21,6 +21,36 @@ export interface Armazem {
 }
 
 // Adicione esta função ao arquivo API.tsx
+// ✅ ESTA É A FUNÇÃO CERTA PARA USAR:
+
+
+export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
+  return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
+}
+export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) {
+  const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
+  return response.data;
+}
+export async function login(usuario: string, senha: string) {
+  try {
+    const res = await axios.get('http://151.243.0.78:3001/usuario');
+    const usuarios = res.data;
+
+    const encontrado = usuarios.find(
+      (u: any) => u.usuario === usuario && u.senha === senha
+    );
+
+    if (!encontrado) {
+      return { success: false, mensagem: 'Usuário ou senha inválidos.' };
+    }
+
+    return { success: true, usuario: encontrado };
+  } catch (err) {
+    console.error('Erro na função login:', err);
+    throw new Error('Erro inesperado ao tentar login.');
+  }
+}
+
 
 export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
   try {
@@ -379,27 +409,148 @@ export async function buscarLocalizacaoPorEAN(ean: string) {
   return encontrada;
 }
 
-// Enviar movimentação para a API
+export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number) {
+  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacao_id}/produtos`);
+  console.log(
+    '🔍 produtos_estoque[0]:',
+    JSON.stringify(res.data.produtos_estoque[0], null, 2)
+  );
+
+  const dados = res.data?.produtos_estoque || [];
+
+  return dados.map((item: any) => ({
+    produto_estoque_id: item.produto_estoque_id,
+    produto_id: item.produto?.produto_id,
+    descricao: item.produto?.descricao || '',
+    sku: item.produto?.sku || '',
+    ean: item.produto?.ean || '',
+    quantidade: item.quantidade || 0,
+  }));
+}
+
+export async function buscarProdutoEstoquePorId(id: number) {
+  try {
+    const res = await axios.get(`http://151.243.0.78:3001/produto-estoque/${id}`);
+    return res.data;
+  } catch (err: any) {
+    console.error(`❌ Erro ao buscar produto_estoque ID ${id}:`, err);
+    return null;
+  }
+}
+
+
+// Função para envio da movimentação
 export async function enviarMovimentacao(payload: {
   tipo: 'entrada' | 'saida' | 'transferencia';
   usuario_id: number;
   localizacao_origem_id: number;
   localizacao_destino_id: number;
   itens_movimentacao: {
-    produto_id: number; // <- CORRETO
+    produto_estoque_id: number;
     quantidade: number;
   }[];
 }) {
   try {
-    const { data } = await api.post('http://151.243.0.78:3001/movimentacao', payload);
+    const { data } = await axios.post(
+      'http://151.243.0.78:3001/movimentacao',
+      payload
+    );
     return data;
   } catch (err: any) {
-    console.error('Erro ao enviar movimentação:', err);
-    if (err.response) {
-      console.error('📛 Código:', err.response.status);
-      console.error('📦 Dados do erro:', err.response.data);
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        console.error('❌ Status do erro:', err.response.status);
+        console.error('❌ Dados da resposta:', JSON.stringify(err.response.data, null, 2));
+        alert(`Erro ${err.response.status}:\n${JSON.stringify(err.response.data, null, 2)}`);
+      } else if (err.request) {
+        alert('Nenhuma resposta recebida do servidor.');
+      } else {
+        alert('Erro na configuração da requisição.');
+      }
+    } else {
+      alert('Erro inesperado ao enviar movimentação.');
     }
+
+    throw new Error('Falha ao enviar movimentação.');
+  }
+}
+export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao: string, eanProduto: string) {
+  try {
+    const localizacao = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());
+    const produto = await buscarProdutoPorEAN(eanProduto.trim());
+
+    if (!localizacao?.localizacao_id || !produto?.produto_id) {
+      throw new Error('EAN inválido.');
+    }
+
+    const produtoEstoqueRes = await axios.get(`http://151.243.0.78:3001/produto-estoque`);
+    const lista = produtoEstoqueRes.data;
+
+    const encontrado = lista.find(
+      (item: any) =>
+        item.produto?.produto_id === produto.produto_id &&
+        item.localizacao?.localizacao_id === localizacao.localizacao_id
+    );
+
+    if (!encontrado) {
+      throw new Error('Produto não encontrado nesta localização.');
+    }
+
+    return {
+      produto_estoque_id: encontrado.produto_estoque_id,
+      localizacao_id: localizacao.localizacao_id,
+      quantidade: encontrado.quantidade || 0,
+    };
+  } catch (err: any) {
+    console.error('Erro em buscarProdutoEstoquePorLocalizacaoEAN:', err);
     throw err;
+  }
+}
+export async function criarOcorrencia(payload: {
+  usuario_id: number;
+  produto_estoque_id: number;
+  localizacao_id: number;
+  // quantidade: number;
+}) {
+  try {
+    const { data } = await axios.post(`${BASE_URL}/ocorrencia`, {
+      usuario_id: payload.usuario_id,
+      produto_estoque_id: payload.produto_estoque_id,
+      localizacao_id: payload.localizacao_id,
+      // quantidade: payload.quantidade,
+    });
+
+    return data; // opcional, caso queira retornar a ocorrência criada
+  } catch (err: any) {
+    console.error('Erro ao criar ocorrência:', err);
+    throw new Error(err?.response?.data?.message || 'Erro ao registrar ocorrência.');
+  }
+}
+export async function buscarOcorrencias(ativo?: true | false) {
+  try {
+    const query = ativo ? `?ativo=${ativo}` : '';
+    const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
+    console.log(res)
+    console.log(res.data.map((o: any) => ({
+      ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
+      localizacao: o.localizacao || '-',
+      produto: o.nome_produto || '-',
+      sku: o.sku || '-',
+      quantidade: o.quantidade || '-',
+      ativo: o.ativo,
+    })))
+
+    return res.data.map((o: any) => ({
+      ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
+      localizacao: o.localizacao || '-',
+      produto: o.nome_produto || '-',
+      sku: o.sku || '-',
+      quantidade: o.quantidade || '-',
+      ativo: o.ativo,
+    }));
+  } catch (err) {
+    console.error('Erro ao buscar ocorrências:', err);
+    throw new Error('Erro ao buscar ocorrências.');
   }
 }
 
