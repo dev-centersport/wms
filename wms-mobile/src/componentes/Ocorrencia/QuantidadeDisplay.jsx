@@ -5,13 +5,25 @@ export default function QuantidadeDisplay({ quantidade }) {
   if (quantidade === '') return null;
   return (
     <>
-      <Text style={styles.label}>Quantidade</Text>
+      <Text style={styles.label}>Quantidade na Gaveta</Text>
       <View style={styles.readOnlyBox}>
         <Text style={styles.readOnlyText}>{quantidade}</Text>
       </View>
+
+      <Text style={styles.label}>Quantidade Bipado</Text>
+      <TextInput
+        style={styles.input}
+        value={quantidadeBipada}
+        onChangeText={handleQuantidadeBipadaChange}
+        placeholder="Digite a quantidade bipada"
+        keyboardType="numeric"
+        returnKeyType="done"
+        blurOnSubmit={true}
+      />
     </>
   );
 }
+
 
 const styles = StyleSheet.create({
   label: { marginTop: 20, marginBottom: 6, fontWeight: '600', fontSize: 14 },
