@@ -204,10 +204,34 @@ export const criarTipoLocalizacao = async (payload: { tipo: string }): Promise<v
   }
 };
 
-export async function buscarProdutos() {
-  const response = await api.get('/produto');
-  return response.data;
+export interface Produto {
+  produto_id: number;
+  url_foto: string;
+  descricao: string;
+  sku: string;
+  ean: string;
 }
+
+export const buscarProdutos = async (): Promise<Produto[]> => {
+  try {
+    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/produto?limit=1000000000000');
+
+    const dados: Produto[] = res.data.results.map((item) => ({
+      produto_id: item.produto_id,
+      url_foto: item.url_foto ?? '',
+      descricao: item.descricao,
+      sku: item.sku,
+      ean: item.ean ?? '',
+    }));
+
+    console.log(dados)
+
+    return dados
+  } catch (err) {
+    console.error('Erro ao buscar localizações →', err);
+    throw new Error('Falha ao carregar as localizações do servidor.');
+  }
+};
 
 
 export async function buscarConsultaEstoque() {
@@ -239,9 +263,10 @@ export async function buscarConsultaEstoque() {
 
 export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
-    const res = await axios.get<any[]>('http://151.243.0.78:3001/localizacao');
+    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/localizacao?limit=1000000000000');
+    console.log(res)
 
-    const dados: Localizacao[] = res.data.map((item) => ({
+    const dados: Localizacao[] = res.data.results.map((item) => ({
       localizacao_id: item.localizacao_id,
       nome: item.nome,
       tipo: item.tipo?.tipo ?? '',
@@ -251,26 +276,13 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
       total_produtos: item.total_produtos ?? '',
     }));
 
-    return dados.sort((a, b) => {
-      // Remove os prefixos CEN-#A-23, INF e SUP (e possíveis espaços após eles)
-      const removePrefix = (str: string) => str.replace(/^(CEN|INF|SUP)\s*/i, '');
-      
-      const nomeA = removePrefix(a.nome).toUpperCase(); // Ignora maiúsculas/minúsculas
-      const nomeB = removePrefix(b.nome).toUpperCase();
-
-      if (nomeA < nomeB) {
-          return -1;
-      }
-      if (nomeA > nomeB) {
-          return 1;
-      }
-      return 0; // Nomes iguais
-  });
+    return dados
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
+
 // Novo: busca uma localização individual
 export const buscarLocalizacao = async (id: number) => {
   const resp = await api.get(`/localizacao/${id}`);
@@ -429,7 +441,7 @@ export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao)
 
 export async function buscarProdutoPorEAN(ean: string) {
   const response = await axios.get('http://151.243.0.78:3001/produto');
-  const produtos = response.data;
+  const produtos = response.data.results;
 
   const encontrado = produtos.find((p: any) => p.ean === ean.trim());
 
@@ -442,7 +454,7 @@ export async function buscarProdutoPorEAN(ean: string) {
 
 export async function buscarLocalizacaoPorEAN(ean: string) {
   const response = await axios.get('http://151.243.0.78:3001/localizacao');
-  const localizacoes = response.data;
+  const localizacoes = response.data.results;
 
   const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
 
