@@ -140,6 +140,9 @@ export default function Movimentacao() {
 
   const verificarEstoqueAntesDeConfirmar = () => {
     if (tipo === 'saida') {
+
+      console.log("Payload enviado:", JSON.stringify(payload, null, 2));
+
       const contador = {};
       const descricoes = {};
       produtos.forEach((p) => {
@@ -161,6 +164,18 @@ export default function Movimentacao() {
     setMostrarConfirmacao(true);
   };
 
+  const agruparProdutos = (lista) => {
+    const mapa = {};
+    for (const p of lista) {
+      const id = p.produto_id;
+      if (!mapa[id]) {
+        mapa[id] = { produto_id: id, quantidade: 0 };
+      }
+      mapa[id].quantidade += 1;
+    }
+    return Object.values(mapa);
+  };
+
   const handleConfirmar = async () => {
     setMostrarConfirmacao(false);
     try {
@@ -169,11 +184,11 @@ export default function Movimentacao() {
         usuario_id: 1,
         localizacao_origem_id: tipo === 'saida' ? localizacao_id : 0,
         localizacao_destino_id: tipo === 'entrada' ? localizacao_id : 0,
-        itens_movimentacao: produtos.map((p) => ({
-          produto_id: Number(p.produto_id),
-          quantidade: Number(p.quantidade),
-        })),
+        itens_movimentacao: agruparProdutos(produtos),
       };
+
+      console.log('✅ Payload sendo enviado:', JSON.stringify(payload, null, 2));
+
       await enviarMovimentacao(payload);
       Alert.alert('Movimentação salva com sucesso');
       limparTudo();

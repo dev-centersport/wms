@@ -1,8 +1,13 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, TextInput, StyleSheet } from 'react-native';
 
-export default function QuantidadeDisplay({ quantidade }) {
+export default function QuantidadeDisplay({
+  quantidade,
+  quantidadeBipada,
+  handleQuantidadeBipadaChange,
+}) {
   if (quantidade === '') return null;
+
   return (
     <>
       <Text style={styles.label}>Quantidade na Gaveta</Text>
@@ -10,7 +15,7 @@ export default function QuantidadeDisplay({ quantidade }) {
         <Text style={styles.readOnlyText}>{quantidade}</Text>
       </View>
 
-      <Text style={styles.label}>Quantidade Bipado</Text>
+      <Text style={styles.label}>Quantidade Bipada</Text>
       <TextInput
         style={styles.input}
         value={quantidadeBipada}
@@ -24,7 +29,6 @@ export default function QuantidadeDisplay({ quantidade }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   label: { marginTop: 20, marginBottom: 6, fontWeight: '600', fontSize: 14 },
   readOnlyBox: {
@@ -37,5 +41,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '600',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    padding: 12,
+    fontSize: 16,
   },
 });

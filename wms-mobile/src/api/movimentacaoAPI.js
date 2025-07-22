@@ -30,24 +30,23 @@ export async function buscarLocalizacaoPorEAN(ean) {
 
 	return {
 		localizacao_id: localizacao.localizacao_id,
-		nome: localizacao.nome,
-		armazem:
-			typeof localizacao.armazem === "object"
-				? localizacao.armazem.nome
-				: localizacao.armazem || "",
+		nome: localizacao.localizacao_nome, // Corrigido
+		armazem: localizacao.armazem_nome || "", // Corrigido
 	};
 }
 
 // 🚚 Enviar movimentação (entrada / saída)
 export async function enviarMovimentacao(payload) {
 	try {
+		console.log('✅ Payload sendo enviado:', JSON.stringify(payload, null, 2));
 		const { data } = await axios.post(`${BASE_URL}/movimentacao`, payload);
 		return data;
 	} catch (err) {
-		console.error("Erro ao enviar movimentação:", err);
-		throw new Error("Falha ao enviar movimentação.");
+		console.error('❌ Erro ao salvar movimentação:', err);
+		Alert.alert('Erro ao salvar movimentação');
 	}
 }
+
 
 export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
 	const res = await axios.get(

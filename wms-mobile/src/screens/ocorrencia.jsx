@@ -164,23 +164,14 @@ export default function Ocorrencia() {
           />
         )}
 
-        <QuantidadeDisplay quantidade={quantidade} />
-
         {produtoValidado && (
-          <>
-            <Text style={styles.label}>Quantidade Bipado</Text>
-            <TextInput
-              style={styles.input}
-              value={quantidadeBipada}
-              onChangeText={handleQuantidadeBipadaChange}
-              placeholder="Digite a quantidade bipada"
-              keyboardType="numeric"
-              returnKeyType="done"
-              blurOnSubmit={true}
-            />
-          </>
+        <QuantidadeDisplay
+          quantidade={quantidade}
+          quantidadeBipada={quantidadeBipada}
+          handleQuantidadeBipadaChange={handleQuantidadeBipadaChange}
+        />
         )}
-
+        
         <BotoesAcoes onSalvar={handleSalvar} onCancelar={() => setMostrarCancelar(true)} />
       </ScrollView>
 
