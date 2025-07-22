@@ -204,10 +204,34 @@ export const criarTipoLocalizacao = async (payload: { tipo: string }): Promise<v
   }
 };
 
-export async function buscarProdutos() {
-  const response = await api.get('/produto');
-  return response.data;
+export interface Produto {
+  produto_id: number;
+  url_foto: string;
+  descricao: string;
+  sku: string;
+  ean: string;
 }
+
+export const buscarProdutos = async (): Promise<Produto[]> => {
+  try {
+    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/produto?limit=1000000000000');
+
+    const dados: Produto[] = res.data.results.map((item) => ({
+      produto_id: item.produto_id,
+      url_foto: item.url_foto ?? '',
+      descricao: item.descricao,
+      sku: item.sku,
+      ean: item.ean ?? '',
+    }));
+
+    console.log(dados)
+
+    return dados
+  } catch (err) {
+    console.error('Erro ao buscar localizações →', err);
+    throw new Error('Falha ao carregar as localizações do servidor.');
+  }
+};
 
 
 export async function buscarConsultaEstoque() {
@@ -312,6 +336,7 @@ export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
+
 // Novo: busca uma localização individual
 export const buscarLocalizacao = async (id: number) => {
   const resp = await api.get(`/localizacao/${id}`);
@@ -470,7 +495,7 @@ export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao)
 
 export async function buscarProdutoPorEAN(ean: string) {
   const response = await axios.get('http://151.243.0.78:3001/produto');
-  const produtos = response.data;
+  const produtos = response.data.results;
 
   const encontrado = produtos.find((p: any) => p.ean === ean.trim());
 
@@ -483,7 +508,7 @@ export async function buscarProdutoPorEAN(ean: string) {
 
 export async function buscarLocalizacaoPorEAN(ean: string) {
   const response = await axios.get('http://151.243.0.78:3001/localizacao');
-  const localizacoes = response.data;
+  const localizacoes = response.data.results;
 
   const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
 

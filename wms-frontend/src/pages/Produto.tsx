@@ -29,7 +29,6 @@ interface Produto {
   descricao: string;
   sku: string;
   ean: string;
-  quantidade: number;
 }
 
 const Produto: React.FC = () => {
