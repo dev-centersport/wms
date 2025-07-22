@@ -173,11 +173,20 @@ export const buscarLocalizacoes = async (
   limit: number = 100,
   offset: number = 0,
   busca: string = '',
+  armazemId?: number,
+  tipoId?: number,
 ): Promise<{ results: Localizacao[]; total: number }> => {
   try {
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+      busca: encodeURIComponent(busca),
+      ...(armazemId && { armazemId: armazemId.toString() }),
+      ...(tipoId && { tipoId: tipoId.toString() }),
+    });
+
     const res = await axios.get<{ results: any[]; total: number }>(
-      `http://151.243.0.78:3001/localizacao?limit=${limit}&offset=${offset}` +
-      `&busca=${encodeURIComponent(busca)}`
+      `http://151.243.0.78:3001/localizacao?${params.toString()}`
     );
 
     const dados: Localizacao[] = res.data.results.map((item) => ({

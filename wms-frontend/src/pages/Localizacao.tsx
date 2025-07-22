@@ -97,15 +97,16 @@ const Localizacao: React.FC = () => {
     // console.log(listaLocalizacoes)
 
 
-    const filteredItems = useMemo(() => {
-        return listaLocalizacoes.filter(loc =>
-            (!appliedFiltroTipo || loc.tipo === appliedFiltroTipo) &&
-            (!appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem)
-        );
-    }, [listaLocalizacoes, appliedFiltroTipo, appliedFiltroArmazem]);
+    // const filteredItems = useMemo(() => {
+    //     return listaLocalizacoes.filter(loc =>
+    //         (!appliedFiltroTipo || loc.tipo === appliedFiltroTipo) &&
+    //         (!appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem)
+    //     );
+    // }, [listaLocalizacoes, appliedFiltroTipo, appliedFiltroArmazem]);
+    // console.log('itens filtrados', filteredItems)
 
     const sortedItems = useMemo(() => {
-        const arr = [...filteredItems];
+        const arr = [...listaLocalizacoes];
         arr.sort((a, b) => {
             const aValue = a[orderBy];
             const bValue = b[orderBy];
@@ -116,7 +117,7 @@ const Localizacao: React.FC = () => {
             return 0;
         });
         return arr;
-    }, [filteredItems, orderBy, orderDirection]);
+    }, [listaLocalizacoes, orderBy, orderDirection]);
     
     const totalPages = Math.ceil(totalItens / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -167,36 +168,42 @@ const Localizacao: React.FC = () => {
         setModalOpen(true);
     };
 
-    const carregarDados = async () => {
-    try {
-        const offset = (currentPage - 1) * itemsPerPage;
-        const resp = await buscarLocalizacoes(
-            itemsPerPage,
-            offset,
-            busca,
-        );
-        // Se precisar enriquecer com produtos:
-        const estoque = await buscarConsultaEstoque();
-        const mapa: Record<number, number> = {};
-        estoque.forEach((item: any) => {
-        const id = item.localizacao_id;
-        if (!id) return;
-        mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-        });
-        const locsComQtd: LocalizacaoComQtd[] = resp.results.map((l: any) => ({
-        ...l,
-        total_produtos: mapa[l.localizacao_id] || 0,
-        }));
-        setListaLocalizacoes(locsComQtd);
-        setTotalItens(resp.total);
-    } catch (err) {
-        console.error('Erro ao carregar localizações →', err);
-    }
-    };
     useEffect(() => {
+        const carregarDados = async () => {
+            try {
+                const offset = (currentPage - 1) * itemsPerPage;
+                const resp = await buscarLocalizacoes(
+                    itemsPerPage,
+                    offset,
+                    busca,
+                    appliedFiltroArmazem ? Number(appliedFiltroArmazem) : undefined,
+                    appliedFiltroTipo ? Number(appliedFiltroTipo) : undefined
+                );
+                console.log(resp)
+                
+                const estoque = await buscarConsultaEstoque();
+                const mapa: Record<number, number> = {};
+                estoque.forEach((item: any) => {
+                    const id = item.localizacao_id;
+                    if (!id) return;
+                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+                });
+                
+                const locsComQtd: LocalizacaoComQtd[] = resp.results.map((l: any) => ({
+                    ...l,
+                    total_produtos: mapa[l.localizacao_id] || 0,
+                }));
+                
+                setListaLocalizacoes(locsComQtd);
+                setTotalItens(resp.total);
+            } catch (err) {
+                console.error('Erro ao carregar localizações →', err);
+            }
+        };
+        
         carregarDados();
-    }, [currentPage, itemsPerPage, busca]);
-    // console.log(busca)
+    }, [currentPage, itemsPerPage, busca, appliedFiltroTipo, appliedFiltroArmazem]);
+    // console.log(appliedFiltroTipo)
 
 
 
@@ -812,20 +819,64 @@ const Localizacao: React.FC = () => {
     };
 
     /* ---------------------- valores únicos para filtros --------------------- */
-    const tipos = useMemo(
-        () => Array.from(new Set(listaLocalizacoes.map((l) => l.tipo).filter(Boolean))).sort(),
-        [listaLocalizacoes]
-    );
-    const armazens = useMemo(
-        () => Array.from(new Set(listaLocalizacoes.map((l) => l.armazem).filter(Boolean))).sort(),
-        [listaLocalizacoes]
-    );
+    const [todosTipos, setTodosTipos] = useState<{ tipo: string; id: any }[]>([]);
+    const [todosArmazens, setTodosArmazens] = useState<{ armazem: string; id: any }[]>([]);
+
+
+    useEffect(() => {
+        async function buscarFiltros() {
+            try {
+                // Busca "todos" os registros, só para montar os filtros
+                const res = await buscarLocalizacoes(10000, 0); // ou um número que garanta trazer tudo
+                const todos = res.results;
+                console.log(todos)
+
+                // Extrai tipos únicos e armazéns únicos
+                const tipos = Array.from(
+                new Map(
+                    todos
+                    .filter((l: any) => l.tipo && l.tipo_id) // supondo que existe l.tipo_id!
+                    .map((l: any) => [l.tipo_id, { tipo: l.tipo, id: l.tipo_id }])
+                ).values()
+                ).sort((a, b) => a.tipo.localeCompare(b.tipo));
+
+                const armazens = Array.from(
+                new Map(
+                    todos
+                    .filter((l: any) => l.armazem && l.armazem_id)
+                    .map((l: any) => [l.armazem_id, { armazem: l.armazem, id: l.armazem_id }])
+                ).values()
+                ).sort((a, b) => a.armazem.localeCompare(b.armazem));
+
+                console.log(armazens)
+
+
+                setTodosTipos(tipos);
+                setTodosArmazens(armazens);
+            } catch (e) {
+                console.error('Erro ao buscar filtros:', e);
+            }
+        }
+
+        buscarFiltros();
+    }, []);
+
 
     /* --------------------------- handlers menu --------------------------- */
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
 
+    // Atualize a função de aplicar filtros:
+    const handleAplicarFiltro = () => {
+        setCurrentPage(1); // Resetar para a primeira página ao aplicar filtros
+        setAppliedFiltroTipo(filtroTipo);
+        setAppliedFiltroArmazem(filtroArmazem);
+        handleMenuClose();
+    };
+
+    // Atualize a função de limpar filtros:
     const handleLimparFiltros = () => {
+        setCurrentPage(1); // Resetar para a primeira página ao limpar filtros
         setFiltroTipo('');
         setFiltroArmazem('');
         setBusca('');
@@ -834,15 +885,9 @@ const Localizacao: React.FC = () => {
         handleMenuClose();
     };
 
-    const handleAplicarFiltro = () => {
-        setAppliedFiltroTipo(filtroTipo);
-        setAppliedFiltroArmazem(filtroArmazem);
-        handleMenuClose();
-    };
-
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
-          <CarregadorComRetry
+          {/* <CarregadorComRetry
             funcaoCarregamento={async () => {
               const [locs, estoque] = await Promise.all([
                 buscarLocalizacoes(),
@@ -863,7 +908,7 @@ const Localizacao: React.FC = () => {
             }}
             aoCarregar={(dados) => setListaLocalizacoes(dados)}
             onErroFinal={(erro) => console.error('Erro definitivo:', erro)}
-          />
+          /> */}
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
@@ -878,8 +923,8 @@ const Localizacao: React.FC = () => {
                     onChange={e => {setBuscaInput(e.target.value);}}
                     onKeyDown={e => {
                         if (e.key === 'Enter') {
-                            setBusca(buscaInput);
                             setCurrentPage(1);
+                            setBusca(buscaInput);
                         }
                     }}
                     InputProps={{
@@ -911,9 +956,9 @@ const Localizacao: React.FC = () => {
                             sx={{ minWidth: '100%' }}
                         >
                             <MenuItem value="">Todos</MenuItem>
-                            {tipos.map((t) => (
-                                <MenuItem key={t} value={t}>
-                                    {t}
+                            {todosTipos.map((t) => (
+                                <MenuItem key={t.id} value={t.id}>
+                                    {t.tipo}
                                 </MenuItem>
                             ))}
                         </TextField>
@@ -926,9 +971,9 @@ const Localizacao: React.FC = () => {
                             sx={{ minWidth: '100%', mt: 2 }}
                         >
                             <MenuItem value="">Todos</MenuItem>
-                            {armazens.map((a) => (
-                                <MenuItem key={a} value={a}>
-                                    {a}
+                            {todosArmazens.map((a) => (
+                                <MenuItem key={a.id} value={a.id}>
+                                    {a.armazem}
                                 </MenuItem>
                             ))}
                         </TextField>
