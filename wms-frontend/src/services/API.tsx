@@ -243,16 +243,13 @@ export const buscarLocalizacoes = async (
   busca: string = '',
   filtroTipo: string = '',
   filtroArmazem: string = '',
-  orderBy: string = 'nome',
-  orderDirection: string = 'asc'
 ): Promise<{ results: Localizacao[]; total: number }> => {
   try {
     const res = await axios.get<{ results: any[]; total: number }>(
       `http://151.243.0.78:3001/localizacao?limit=${limit}&offset=${offset}` +
       `&busca=${encodeURIComponent(busca)}` +
       `&tipo=${encodeURIComponent(filtroTipo)}` +
-      `&armazem=${encodeURIComponent(filtroArmazem)}` +
-      `&orderBy=${orderBy}&orderDirection=${orderDirection}`
+      `&armazem=${encodeURIComponent(filtroArmazem)}`
     );
 
     const dados: Localizacao[] = res.data.results.map((item) => ({
