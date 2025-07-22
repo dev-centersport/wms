@@ -166,9 +166,39 @@ export interface Localizacao {
   tipo: string;
   armazem: string;
   ean: string;
-  endereco: string;
-  total_produtos: string;
+  total_produtos: number;
 }
+
+export const buscarLocalizacoes = async (
+  limit: number = 100,
+  offset: number = 0,
+  busca: string = '',
+): Promise<{ results: Localizacao[]; total: number }> => {
+  try {
+    const res = await axios.get<{ results: any[]; total: number }>(
+      `http://151.243.0.78:3001/localizacao?limit=${limit}&offset=${offset}` +
+      `&busca=${encodeURIComponent(busca)}`
+    );
+
+    const dados: Localizacao[] = res.data.results.map((item) => ({
+      localizacao_id: item.localizacao_id,
+      nome: item.nome,
+      tipo: item.tipo?.tipo ?? '',
+      armazem: item.armazem?.nome ?? '',
+      ean: item.ean ?? '',
+      total_produtos: item.total_produtos ?? 0,
+    }));
+
+    return {
+      results: dados,
+      total: res.data.total
+    };
+  } catch (err) {
+    console.error('Erro ao buscar localizações →', err);
+    throw new Error('Falha ao carregar as localizações do servidor.');
+  }
+};
+
 export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
   try {
     await api.delete(`/tipo-localizacao/${id}`);
@@ -314,28 +344,6 @@ export async function enviarArquivoSeparacao(formData: FormData): Promise<Respos
     throw new Error('Falha ao processar o arquivo de separação.');
   }
 }
-
-export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
-  try {
-    const res = await axios.get<{results: any[]}>('http://151.243.0.78:3001/localizacao?limit=1000000000000');
-    console.log(res)
-
-    const dados: Localizacao[] = res.data.results.map((item) => ({
-      localizacao_id: item.localizacao_id,
-      nome: item.nome,
-      tipo: item.tipo?.tipo ?? '',
-      armazem: item.armazem?.nome ?? '',
-      ean: item.ean ?? '',
-      endereco: item.armazem?.endereco ?? '',
-      total_produtos: item.total_produtos ?? '',
-    }));
-
-    return dados
-  } catch (err) {
-    console.error('Erro ao buscar localizações →', err);
-    throw new Error('Falha ao carregar as localizações do servidor.');
-  }
-};
 
 // Novo: busca uma localização individual
 export const buscarLocalizacao = async (id: number) => {
