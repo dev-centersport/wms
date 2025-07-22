@@ -101,26 +101,16 @@ const Localizacao: React.FC = () => {
     }, [currentPage, itemsPerPage, busca]);
 
 
-    const filteredIndices = useMemo(() => {
-        return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
-            const termo = busca.trim().toLowerCase();
-            const matchBusca =
-                termo === '' ||
-                [loc.nome, loc.tipo, loc.armazem, loc.ean]
-                    .filter(Boolean)
-                    .some((campo) => campo.toString().toLowerCase().includes(termo));
-
-            const matchTipo = !appliedFiltroTipo || loc.tipo === appliedFiltroTipo;
-            const matchArmazem = !appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem;
-
-            if (matchBusca && matchTipo && matchArmazem) acc.push(idx);
-            return acc;
-        }, []);
-    }, [listaLocalizacoes, busca, appliedFiltroTipo, appliedFiltroArmazem]);
+    const filteredItems = useMemo(() => {
+        return listaLocalizacoes.filter(loc =>
+            (!appliedFiltroTipo || loc.tipo === appliedFiltroTipo) &&
+            (!appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem)
+        );
+    }, [listaLocalizacoes, appliedFiltroTipo, appliedFiltroArmazem]);
 
 
     /* ---------------------------- paginação/ordenanação ---------------------------- */
-    const filteredItems = filteredIndices.map((i) => listaLocalizacoes[i]);
+    // const filteredItems = filteredIndices.map((i) => listaLocalizacoes[i]);
 
     const sortedItems = filteredItems.sort((a, b) => {
         const aValue = a[orderBy];
@@ -138,7 +128,7 @@ const Localizacao: React.FC = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
-    const currentItems = sortedItems.slice(startIndex, endIndex);
+    const currentItems = sortedItems;
 
 
     /* ------------------------- efeitos auxiliares ------------------------ */
