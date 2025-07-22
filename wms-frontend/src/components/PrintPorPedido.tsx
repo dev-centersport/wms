@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import JsBarcode from 'jsbarcode';
 
 interface Item {
   sku: string;
@@ -15,29 +16,66 @@ interface Pedido {
 }
 
 interface PrintPorPedidoProps {
-  data: {
+  data?: {
     pedidos: Pedido[];
   };
 }
 
 const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
-  if (!data?.pedidos?.length) {
-    return <p>Nenhum pedido encontrado.</p>;
-  }
+  const [codigosGerados, setCodigosGerados] = useState(false);
+
+  const gerarTodosCodigos = useCallback(() => {
+    try {
+      const svgs = document.querySelectorAll("svg[data-barcode]");
+      svgs.forEach((svg) => {
+        const value = svg.getAttribute("data-barcode");
+        if (value) {
+          JsBarcode(svg, value, {
+            format: value.length === 13 ? "EAN13" : "CODE128",
+            lineColor: "#000",
+            width: 1,
+            height: 18,
+            displayValue: value.length !== 13,
+            fontSize: 8,
+            margin: 0,
+          });
+        }
+      });
+      setCodigosGerados(true);
+    } catch (error) {
+      console.error("Erro na geração dos códigos de barras:", error);
+      setCodigosGerados(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      gerarTodosCodigos();
+    }, 200);
+    return () => clearTimeout(timeout);
+  }, [gerarTodosCodigos]);
+
+  const handlePrint = () => {
+    if (!codigosGerados) {
+      alert("Aguarde os códigos de barras serem gerados antes de imprimir.");
+      return;
+    }
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
+
+  if (!data?.pedidos?.length)
+    return <p>Nenhum pedido encontrado para impressão.</p>;
 
   const pedidosPorLocalizacao: { [key: string]: Pedido[] } = {};
-
   data.pedidos.forEach((pedido) => {
     pedido.itens.forEach((item) => {
       const key = item.localizacoes?.length
-        ? item.localizacoes.map((loc: any) => `${loc.armazem} - ${loc.localizacao}`).join(', ')
-        : 'Sem localização';
-
-      if (!pedidosPorLocalizacao[key]) {
-        pedidosPorLocalizacao[key] = [];
-      }
-
-      if (!pedidosPorLocalizacao[key].includes(pedido)) {
+        ? item.localizacoes.map((loc) => `${loc.armazem} - ${loc.localizacao}`).join(", ")
+        : "Sem localização";
+      if (!pedidosPorLocalizacao[key]) pedidosPorLocalizacao[key] = [];
+      if (!pedidosPorLocalizacao[key].some((p) => p.numeroPedido === pedido.numeroPedido)) {
         pedidosPorLocalizacao[key].push(pedido);
       }
     });
@@ -46,157 +84,130 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
   const localizacoesOrdenadas = Object.keys(pedidosPorLocalizacao).sort();
 
   return (
-    <div>
+    <div id="relatorio-impressao">
       <style>{`
-        @page {
-          size: A4;
-          margin: 1cm;
-        }
-        body {
-          font-family: Arial, sans-serif;
-          font-size: 10pt;
-        }
-        .header {
-          text-align: center;
-          margin-bottom: 10px;
-          border-bottom: 2px solid #333;
-          padding-bottom: 5px;
-        }
-        .header h1 {
-          margin: 0;
-          font-size: 12pt;
-        }
-        .localizacao-section {
-          page-break-inside: avoid;
+        @page { size: A4 portrait; margin: 1cm; }
+        body { font-family: Arial, sans-serif; font-size: 9pt; }
+        .pedido-header-content {
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
         .pedido-table {
           width: 100%;
           border-collapse: collapse;
+          margin-bottom: 6px;
+          page-break-inside: avoid;
         }
         .pedido-table th, .pedido-table td {
           border: 1px solid #ddd;
-          padding: 5px;
+          padding: 3px 4px;
           vertical-align: top;
-        }
-        .pedido-table th {
-          background-color: #f2f2f2;
-          text-align: left;
-        }
-        .pedido-header {
-          background-color: #e6e6e6;
-          font-weight: bold;
         }
         .product-info {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
         }
         .product-image {
-          height: 40px;
-          width: 40px;
-          margin-right: 5px;
+          height: 32px;
+          width: 32px;
+          margin-right: 4px;
           object-fit: contain;
-          border: solid 1px rgba(0, 0, 0, 0.5);
-          border-radius: 5px;
+          border: 1px solid #000;
+          border-radius: 4px;
         }
-        .barcode {
-          display: block;
-          width: 100px;
-          height: 40px;
+        .codigo-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1px;
         }
-        .barcode svg {
-          width: 100%;
-          height: 100%;
+        svg.barcode {
+          height: 18px !important;
+          margin: 0 !important;
         }
         .no-print {
-          margin: 10px 0;
+          margin: 6px 0;
           text-align: center;
         }
+        .header h1 {
+          margin-bottom: 4px;
+          font-size: 14px;
+        }
         @media print {
-          .no-print {
-            display: none;
-          }
-          body {
-            font-size: 8pt;
-          }
-          .pedido-table th, .pedido-table td {
-            padding: 3px;
+          .no-print { display: none !important; }
+          body * { visibility: hidden; }
+          #relatorio-impressao, #relatorio-impressao * { visibility: visible; }
+          #relatorio-impressao {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white;
           }
         }
       `}</style>
 
-      <div className="header">
-        <h1>RELATÓRIO DE SEPARAÇÃO POR PEDIDO E LOCALIZAÇÃO</h1>
-        <p>Gerado em: {new Date().toLocaleString()}</p>
-      </div>
+      
 
-      <div className="no-print">
-        <button onClick={() => window.print()} style={{ padding: '5px 10px', fontSize: '10pt' }}>
-          Imprimir Relatório
-        </button>
-      </div>
+      {localizacoesOrdenadas.map((localizacaoKey) => (
+        <div className="localizacao-section" key={localizacaoKey}>
+          {pedidosPorLocalizacao[localizacaoKey].map((pedido) => (
+            <table className="pedido-table" key={pedido.numeroPedido}>
+              <thead>
+                <tr className="pedido-header">
+                  <th colSpan={5}>
+                    <div className="pedido-header-content">
+                      <svg data-barcode={pedido.numeroPedido} className="barcode" />
+                      <span><strong>PEDIDO:</strong> {pedido.numeroPedido}</span>
+                    </div>
+                  </th>
+                </tr>
+                <tr>
+                  <th>Produto</th>
+                  <th>Qtd.</th>
+                  <th>SKU/EAN</th>
+                  <th>Localização</th>
+                  <th>Anotações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pedido.itens.map((item, iIndex) => {
+                  const localizacaoTexto = item.localizacoes?.length
+                    ? item.localizacoes.map(loc => `${loc.armazem} - ${loc.localizacao}`).join(', ')
+                    : 'Sem localização';
 
-      {localizacoesOrdenadas.map((localizacaoKey) => {
-        const pedidos = pedidosPorLocalizacao[localizacaoKey].sort((a, b) =>
-          a.numeroPedido.localeCompare(b.numeroPedido)
-        );
-
-        return (
-          <div className="localizacao-section" key={localizacaoKey}>
-            {pedidos.map((pedido) => (
-              <table className="pedido-table" key={pedido.numeroPedido}>
-                <thead>
-                  <tr className="pedido-header">
-                    <th colSpan={5}>
-                      PEDIDO: {pedido.numeroPedido}
-                    </th>
-                  </tr>
-                  <tr>
-                    <th style={{ width: '60%' }}>Produto</th>
-                    <th style={{ width: '5%' }}>Qtd.</th>
-                    <th style={{ width: '10%' }}>Código</th>
-                    <th style={{ width: '18%' }}>Armazém/Localização</th>
-                    <th style={{ width: '7%' }}>Anotações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pedido.itens.map((item, idx) => {
-                    const localizacaoTexto = item.localizacoes?.length
-                      ? item.localizacoes.map(loc => `${loc.armazem} - ${loc.localizacao}`).join(', ')
-                      : 'Sem localização';
-
-                    const codigoBarras = (item.ean || item.idItem || '').padStart(12, '0');
-
-                    return (
-                      <tr key={idx}>
-                        <td>
-                          <div className="product-info">
-                            <img src={item.urlFoto} alt="produto" className="product-image" />
-                            <div>
-                              <strong>{item.sku}</strong><br />
-                              {item.descricao || 'Sem descrição'}
-                            </div>
+                  return (
+                    <tr key={`${pedido.numeroPedido}-${iIndex}`}>
+                      <td>
+                        <div className="product-info">
+                          <img src={item.urlFoto} alt="produto" className="product-image" />
+                          <div>
+                            <strong>{item.sku}</strong><br />
+                            {item.descricao || 'Sem descrição'}
                           </div>
-                        </td>
-                        <td>1</td>
-                        <td>
+                        </div>
+                      </td>
+                      <td>1</td>
+                      <td>
+                        <div className="codigo-container">
                           <div>{item.sku}</div>
-                          <div className="barcode">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50">
-                              <text x="0" y="40" fontFamily="monospace" fontSize="40">{codigoBarras}</text>
-                            </svg>
-                          </div>
-                        </td>
-                        <td>{localizacaoTexto}</td>
-                        <td></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ))}
-          </div>
-        );
-      })}
+                          {item.ean && /^[0-9]{12,13}$/.test(item.ean) && (
+                            <svg data-barcode={item.ean} className="barcode" />
+                          )}
+                          <div>{item.ean || '-'}</div>
+                        </div>
+                      </td>
+                      <td>{localizacaoTexto}</td>
+                      <td></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ))}
+        </div>
+      ))}
     </div>
   );
 };
