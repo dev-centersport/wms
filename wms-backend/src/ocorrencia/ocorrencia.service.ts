@@ -114,7 +114,7 @@ export class OcorrenciaService {
       }),
     ]);
 
-    console.log(produto_estoque);
+    // console.log(produto_estoque);
 
     if (!produto_estoque)
       throw new NotFoundException('Produto estoque não encontrado');
