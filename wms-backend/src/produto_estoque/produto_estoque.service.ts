@@ -38,6 +38,28 @@ export class ProdutoEstoqueService {
     return produto_estoque;
   }
 
+  async encontrarPorEan(ean: string): Promise<ProdutoEstoque> {
+    const produto = await this.ProdutoRepository.findOne({
+      where: { ean: ean },
+    });
+    if (!produto)
+      throw new NotFoundException(
+        `Produto estoque com EAN ${ean} não encontrado`,
+      );
+
+    const produto_estoque = await this.ProdutoEstoqueRepository.findOne({
+      where: { produto: produto },
+      relations: ['produto', 'localizacao'],
+    });
+
+    if (!produto_estoque)
+      throw new NotFoundException(
+        `Produto estoque com produto ${produto.descricao} não encontrado`,
+      );
+
+    return produto_estoque;
+  }
+
   async create(
     createProdutoEstoqueDto: CreateProdutoEstoqueDto,
   ): Promise<ProdutoEstoque> {

@@ -30,6 +30,11 @@ export class ProdutoEstoqueController {
     return this.produtoEstoqueService.findOne(+id);
   }
 
+  @Get('encontrar-por-ean/:ean')
+  encontrarPorEan(@Param('ean') ean: string) {
+    return this.produtoEstoqueService.encontrarPorEan(ean);
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,
