@@ -31,7 +31,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Layout from '../components/Layout';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import axios from 'axios';
-import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN } from '../services/API';
+import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, buscarLocalizacaoGeral, buscarProdutosPorLocalizacaoDireto } from '../services/API';
+import CamposTransferencia from '../components/CamposTransferencia';
+
 
 interface Item {
   produto_id: number;
@@ -75,19 +77,81 @@ const Movimentacao: React.FC = () => {
   const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
 
   // ---------- autocomplete fetch ----------
-  const fetchLocalizacoes = async (query: string) => {
-    if (!query) return setOptions([]);
+
+  const carregarTodasLocalizacoes = async () => {
     try {
       setLoadingOpt(true);
-      const resp = await fetch(`/api/localizacoes?query=${encodeURIComponent(query)}`);
-      const data = await resp.json();
-      setOptions(data); // espere array [{id,nome}]
+      const response = await axios.get('http://151.243.0.78:3001/localizacao?limit=3000');
+
+      const data = response.data;
+      console.log('🔍 Resposta da API /localizacao:', data);
+
+      const todas = Array.isArray(response.data.results) ? response.data.results : [];
+
+      const formatadas = todas.map((l: any) => ({
+        id: l.localizacao_id,
+        nome: l.nome,
+        ean: l.ean,
+        armazem: l.armazem,
+      }));
+
+      setOptions(formatadas);
     } catch (err) {
-      console.error(err);
+      console.error('Erro ao carregar localizações:', err);
+      setOptions([]);
     } finally {
       setLoadingOpt(false);
     }
   };
+
+
+  useEffect(() => {
+    if (tipo === 'transferencia') {
+      carregarTodasLocalizacoes();
+    }
+  }, [tipo]);
+
+  type ProdutoEstoqueDTO = {
+    produto_estoque_id: number;
+    produto_id: number;
+    descricao: string;
+    sku: string;
+    ean: string;
+    quantidade: number;
+  };
+
+
+  useEffect(() => {
+    const carregarProdutosDaOrigem = async () => {
+      if (tipo !== 'transferencia' || !origem?.id) return;
+
+      try {
+        const produtos = await buscarProdutosPorLocalizacaoDireto(origem.id);
+
+        const listaConvertida: Item[] = produtos.map((item: ProdutoEstoqueDTO, index: number) => ({
+          produto_id: item.produto_id,
+          produto_estoque_id: item.produto_estoque_id,
+          sku: item.sku,
+          ean: item.ean,
+          descricao: item.descricao,
+          produto: item.descricao,
+          quantidade: item.quantidade || 0,
+          contador: String(index + 1).padStart(3, '0'),
+        }));
+
+        setLista(listaConvertida);
+        setSelectedItems(listaConvertida.map((_, i) => i));
+        setContadorTotal(listaConvertida.length + 1);
+      } catch (error) {
+        console.error('Erro ao buscar produtos da localização de origem:', error);
+        alert('Erro ao carregar os produtos da localização de origem.');
+      }
+    };
+
+    carregarProdutosDaOrigem();
+  }, [origem, tipo]);
+
+
 
   // ---------- Handlers ----------
 
@@ -113,7 +177,7 @@ const Movimentacao: React.FC = () => {
           sku: novo.sku,
           ean: novo.ean,
           descricao: novo.descricao,
-          quantidade: 1,
+          quantidade: 0,
           produto: novo.descricao,
           contador: String(contadorTotal).padStart(3, '0'),
         },
@@ -130,20 +194,33 @@ const Movimentacao: React.FC = () => {
     if (!localizacao.trim()) return;
 
     const eanLocalizacao = localizacao.trim();
-    const resultado = await buscarLocalizacaoPorEAN(eanLocalizacao);
+    let resultado;
 
-    if (!resultado) {
-      alert(`Localização com EAN ${eanLocalizacao} não encontrada.`);
-      return;
+    try {
+      if (tipo === 'transferencia') {
+        resultado = await buscarLocalizacaoGeral(eanLocalizacao);
+      } else {
+        resultado = await buscarLocalizacaoPorEAN(eanLocalizacao);
+      }
+
+      if (!resultado) {
+        alert(`Localização com EAN ${eanLocalizacao} não encontrada.`);
+        return;
+      }
+
+      setOrigem({
+        id: resultado.localizacao_id,
+        nome: resultado.nome,
+        ean: eanLocalizacao,
+      });
+
+      setLocalizacao('');
+      setLocalizacaoBloqueada(true);
+
+    } catch (err: any) {
+      console.error('Erro ao buscar localização:', err);
+      alert(err?.message || 'Erro ao buscar localização.');
     }
-
-    setOrigem({
-      id: resultado.localizacao_id,
-      nome: resultado.nome,
-      ean: eanLocalizacao, // armazena o EAN digitado
-    });
-    setLocalizacao(''); // limpa o campo digitado
-    setLocalizacaoBloqueada(true); // bloqueia o campo
   };
 
 
@@ -184,35 +261,6 @@ const Movimentacao: React.FC = () => {
     }
     setConfirmMessage(mensagem);
     setConfirmOpen(true);
-  };
-
-  const montarPayload = () => {
-    const usuario_id = 1;
-
-    const payload: any = {
-      tipo: tipo.toLowerCase(), // API espera em minúsculo: 'entrada', 'saida', 'transferencia'
-      usuario_id: usuario_id,
-      itens_movimentacao: lista.map((item) => ({
-        produto_id: Number(item.produto_id),
-        produto_estoque_id: Number(item.produto_estoque_id), // <- AQUI
-        quantidade: Number(item.quantidade ?? 1),
-      })),
-      localizacao_origem_id: 0,
-      localizacao_destino_id: 0,
-    };
-
-    if (tipo === 'entrada') {
-      payload.localizacao_origem_id = 0;
-      payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
-    } else if (tipo === 'saida') {
-      payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
-      payload.localizacao_destino_id = 0;
-    } else if (tipo === 'transferencia') {
-      payload.localizacao_origem_id = origem?.id;
-      payload.localizacao_destino_id = destino?.id;
-    }
-
-    return payload;
   };
 
   const handleConfirmarOperacao = async () => {
@@ -320,97 +368,13 @@ const Movimentacao: React.FC = () => {
 
           {/* Entrada / Saída - Localização simples */}
           {tipo === 'transferencia' && (
-            <>
-              <Box display="flex" flexDirection="column" gap={2}>
-                <Autocomplete
-                  fullWidth
-                  size="small"
-                  options={options}
-                  getOptionLabel={(opt) => opt.nome}
-                  value={origem}
-                  loading={loadingOpt}
-                  onInputChange={(_, val) => fetchLocalizacoes(val)}
-                  onChange={(_, val) => setOrigem(val)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Localização Origem"
-                      sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {loadingOpt ? <CircularProgress size={18} /> : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-
-                <Autocomplete
-                  fullWidth
-                  size="small"
-                  options={options}
-                  getOptionLabel={(opt) => opt.nome}
-                  value={destino}
-                  loading={loadingOpt}
-                  onInputChange={(_, val) => fetchLocalizacoes(val)}
-                  onChange={(_, val) => setDestino(val)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Localização Destino"
-                      sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {loadingOpt ? <CircularProgress size={18} /> : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-              </Box>
-
-              {/* Exibe campos bloqueados após preenchimento */}
-              {origem && destino && (
-                <Box display="flex" gap={2} mt={2}>
-                  <Box
-                    flex={1}
-                    sx={{
-                      backgroundColor: '#d8d8d8',
-                      height: 40,
-                      display: 'flex',
-                      alignItems: 'center',
-                      px: 2,
-                      borderRadius: 1,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {origem.nome}
-                  </Box>
-                  <Box
-                    flex={1}
-                    sx={{
-                      backgroundColor: '#d8d8d8',
-                      height: 40,
-                      display: 'flex',
-                      alignItems: 'center',
-                      px: 2,
-                      borderRadius: 1,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {destino.nome}
-                  </Box>
-                </Box>
-              )}
-            </>
+            <CamposTransferencia
+              tipo={tipo}
+              origem={origem}
+              destino={destino}
+              setOrigem={setOrigem}
+              setDestino={setDestino}
+            />
           )}
 
           {tipo !== 'transferencia' && (

@@ -548,12 +548,18 @@ export async function buscarLocalizacaoPorEAN(ean: string) {
   };
 }
 
-export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number) {
+
+export interface ProdutoEstoqueDTO {
+  produto_estoque_id: number;
+  produto_id: number;
+  descricao: string;
+  sku: string;
+  ean: string;
+  quantidade: number;
+}
+
+export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number): Promise<ProdutoEstoqueDTO[]> {
   const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacao_id}/produtos`);
-  console.log(
-    '🔍 produtos_estoque[0]:',
-    JSON.stringify(res.data.produtos_estoque[0], null, 2)
-  );
 
   const dados = res.data?.produtos_estoque || [];
 
@@ -576,7 +582,6 @@ export async function buscarProdutoEstoquePorId(id: number) {
     return null;
   }
 }
-
 
 // Função para envio da movimentação
 export async function enviarMovimentacao(payload: {
@@ -613,6 +618,20 @@ export async function enviarMovimentacao(payload: {
     throw new Error('Falha ao enviar movimentação.');
   }
 }
+
+export async function buscarLocalizacaoGeral(ean: string) {
+  const response = await axios.get('http://151.243.0.78:3001/localizacao');
+  const localizacoes = response.data.results;
+
+  const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
+
+  if (!encontrada) {
+    throw new Error('Localização com esse EAN não encontrada.');
+  }
+
+  return encontrada;
+}
+
 export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao: string, eanProduto: string) {
   try {
     const localizacao = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());
