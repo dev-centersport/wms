@@ -229,52 +229,53 @@ const Localizacao: React.FC = () => {
         carregar();
     };
 
-    const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
-        const tipoLower = tipo.toLowerCase();
-        if (tipoLower.includes('caixa')) {
-            handleImprimirCaixa(localizacao, ean);
-            return;
-        }
-        const w = window.open('', '_blank');
-        if (!w) return;
+    const handleImprimir = (localizacao: string, ean: string, tipo: string, armazem: string) => {
+      const tipoLower = tipo.toLowerCase();
+      if (tipoLower.includes('caixa')) {
+        handleImprimirCaixa(localizacao, ean, armazem);
+        return;
+      }
+      const w = window.open('', '_blank');
+      if (!w) return;
 
-        /* ------------------------------------------------------------------ */
-        /* 1. Identificação do tipo                                           */
-        /* ------------------------------------------------------------------ */
+      /* ------------------------------------------------------------------ */
+      /* 1. Identificação do tipo                                           */
+      /* ------------------------------------------------------------------ */
+         
+      const isCaixa = tipoLower.includes('caixa');
+      const isPrateleira = tipoLower.includes('prateleira');
 
-        const isCaixa = tipoLower.includes('caixa');
-        const isPrateleira = tipoLower.includes('prateleira');
+      /* ------------------------------------------------------------------ */
+      /* 2. Dimensões, fontes e código de barras                            */
+      /* ------------------------------------------------------------------ */
 
-        /* ------------------------------------------------------------------ */
-        /* 2. Dimensões, fontes e código de barras                            */
-        /* ------------------------------------------------------------------ */
-        const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
-        const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+      const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+      const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-        const fontNome = '120px';                   // tamanho base
-        const barHeight = isCaixa ? 90 : 20;        // altura barra
-        const barFont = isCaixa ? 22 : 10;        // fonte barra
+      const fontNome = '120px';                   // tamanho base
+      const barHeight = isCaixa ? 90 : 20;        // altura barra
+      const barFont = isCaixa ? 22 : 10;          // fonte barra
 
-        /* ------------------------------------------------------------------ */
-        /* 3. Transformação do nome para Prateleira                           */
-        /* ------------------------------------------------------------------ */
-        const nomeImpresso = isPrateleira
-            ? localizacao.replace(/^.*?#/, '')
-            : localizacao;
+      /* ------------------------------------------------------------------ */
+      /* 3. Transformação do nome para Prateleira                           */
+      /* ------------------------------------------------------------------ */
 
+      const nomeImpresso = isPrateleira
+        ? localizacao.replace(/^.*?#/, '')
+        : localizacao;
 
+      /* ------------------------------------------------------------------ */
+      /* 4. Estilos condicionais                                            */
+      /* ------------------------------------------------------------------ */
 
+      const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
+      const nomeMarginTop = isPrateleira ? '-3mm' : '0';          // só prateleira sobe
 
-        /* ------------------------------------------------------------------ */
-        /* 4. Estilos condicionais                                            */
-        /* ------------------------------------------------------------------ */
-        const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
-        const nomeMarginTop = isPrateleira ? '-3mm' : '0';      // só prateleira sobe
+      /* ------------------------------------------------------------------ */
+      /* 5. HTML completo                                                   */
+      /* ------------------------------------------------------------------ */
 
-        /* ------------------------------------------------------------------ */
-        /* 5. HTML completo                                                   */
-        /* ------------------------------------------------------------------ */
-        w.document.write(`
+      w.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
