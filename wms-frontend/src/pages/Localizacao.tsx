@@ -350,95 +350,103 @@ const Localizacao: React.FC = () => {
         w.document.close();
     };
 
-    const handleImprimirCaixa = (localizacao: string, ean: string) => {
-        const w = window.open('', '_blank');
-        if (!w) return;
+    const handleImprimirCaixa = (localizacao: string, ean: string, armazem: string) => {
+      const w = window.open('', '_blank');
+      if (!w) return;
 
-        const largura = '10cm';
-        const altura = '15cm';
-        const fontNome = '120px';
-        const barHeight = 90;
-        const barFont = 22;
+      const largura = '10cm';
+      const altura = '15cm';
+      const fontNome = '120px';
+      const barHeight = 90;
+      const barFont = 22;
+        const armazemEscapado = armazem.replace(/'/g, "\\'");
+      w.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Etiqueta – ${localizacao}</title>
+          <style>
+            @page {
+              size: ${largura} ${altura};
+              margin: 0;
+            }
+            body {
+              width: ${largura};
+              height: ${altura};
+              margin: 0;
+              padding: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-family: Arial, sans-serif;
+              overflow: hidden;
+            }
+            .container {
+              transform: rotate(-90deg);
+              margin-top: 100px;
+              transform-origin: center;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              height: 100%;
+            }
+            #nome {
+              font-weight: bold;
+              font-size: ${fontNome};
+              margin: 0;
+              padding: 0;
+              text-align: center;
+              white-space: nowrap;
+            }
+              
+            #barcode {
+              width: 90%;
+              margin: 0;
+              padding: 0;
+            }
+            #nomeArmazem {
+              font-size: 30px;
+              margin: 0;
+              padding: 0;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div id="nome">${localizacao}</div>
+            <svg id="barcode"></svg>
+            <div id="nomeArmazem">${armazemEscapado}</div>
+          </div>
 
-        w.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Etiqueta – ${localizacao}</title>
-      <style>
-        @page {
-          size: ${largura} ${altura};
-          margin: 0;
-        }
-        body {
-          width: ${largura};
-          height: ${altura};
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: Arial, sans-serif;
-          overflow: hidden;
-        }
-        .container {
-          transform: rotate(-90deg);
-          margin-top: 100px;
-          transform-origin: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-        }
-        #nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: 0;
-          padding: 0;
-          text-align: center;
-          white-space: nowrap;
-        }
-        #barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div id="nome">${localizacao}</div>
-        <svg id="barcode"></svg>
-      </div>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+          <script>
+            const nomeEl = document.getElementById('nome');
+            const texto = '${localizacao}';
+            let tamanho = ${fontNome.replace('px', '')};
 
-      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-      <script>
-        const nomeEl = document.getElementById('nome');
-        const texto = '${localizacao}';
-        let tamanho = ${fontNome.replace('px', '')};
+            if (texto.length > 8)      tamanho = 50;
+            else if (texto.length > 5) tamanho = 180;
 
-        if (texto.length > 8)      tamanho = 50;
-        else if (texto.length > 5) tamanho = 180;
+            nomeEl.style.fontSize = tamanho + 'px';
 
-        nomeEl.style.fontSize = tamanho + 'px';
+            JsBarcode('#barcode', '${ean}', {
+              format: 'ean13',
+              height: ${barHeight},
+              displayValue: true,
+              fontSize: ${barFont}
+            });
 
-        JsBarcode('#barcode', '${ean}', {
-          format: 'ean13',
-          height: ${barHeight},
-          displayValue: true,
-          fontSize: ${barFont}
-        });
-
-        window.onload = () => {
-          window.print();
-          window.onafterprint = () => window.close();
-        };
-      </script>
-    </body>
-    </html>
-  `);
+            window.onload = () => {
+              window.print();
+              window.onafterprint = () => window.close();
+            };
+          </script>
+        </body>
+        </html>
+      `);
 
         w.document.close();
     };
@@ -1111,7 +1119,7 @@ const Localizacao: React.FC = () => {
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip title="Imprimir etiqueta">
-                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
+                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo, item.armazem)}>
                                                         <PrintIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
