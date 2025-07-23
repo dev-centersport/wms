@@ -23,6 +23,7 @@ import {
     Tooltip,
     MenuItem,
     Menu,
+    TableSortLabel,
 } from '@mui/material';
 import { Search as SearchIcon, Delete as DeleteIcon, Print as PrintIcon, List as ListIcon, Add as AddIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 
@@ -31,170 +32,208 @@ import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
+import CarregadorComRetry from '../components/CarregadorComRetry';
 
 type LocalizacaoComQtd = {
-  localizacao_id: number;
-  nome: string;
-  tipo: string;
-  armazem: string;
-  ean: string;
-  total_produtos: number;
+    localizacao_id: number;
+    nome: string;
+    tipo: string;
+    tipo_localizacao_id: any;
+    armazem: string;
+    armazem_id: any;
+    ean: string;
+    total_produtos: number;
 };
 
 /* -------------------------------------------------------------------------- */
+// Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
+const ITEMS_PER_PAGE_DEFAULT = 100;
+/* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
+
     /* ------------------------- estados globais do hook ------------------------- */
     const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
     const [busca, setBusca] = useState('');
 
     const navigate = useNavigate();
 
-    /* ---------------------------- estados locais ---------------------------- */
+    /* ---------------------------- estados locais ----------------------------- */
     const [filtroTipo, setFiltroTipo] = useState<string>('');
     const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
-    // Adicione no início do componente:
-    const [itemsPerPage, setItemsPerPage] = useState<number>(100);
-    // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
-
+    // Paginação e seleção
+    const [itemsPerPage, setItemsPerPage] = useState<number>(ITEMS_PER_PAGE_DEFAULT);
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [selectAll, setSelectAll] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-         
+
+    // Ordenação dos campos da tabela
+    const [orderBy, setOrderBy] = useState<keyof LocalizacaoComQtd>('nome');
+    const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
+
     // Estados para o modal de produtos
     const [modalOpen, setModalOpen] = useState(false);
+    const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{ id: number, nome: string } | null>(null);
 
-    const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{id: number, nome: string} | null>(null);
-
-
-    useEffect(() => {
-      const carregar = async () => {
-        try {
-          const [locs, estoque] = await Promise.all([
-            buscarLocalizacoes(), // lista sem quantidade
-            buscarConsultaEstoque(), // cada item tem localizacao_id e quantidade
-          ]);
-
-          // soma por localizacao_id
-          const mapa: Record<number, number> = {};
-          estoque.forEach((item: any) => {
-            const id = item.localizacao_id;
-            if (!id) return;
-            mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-          });
-
-          const locsComQtd: LocalizacaoComQtd[] = locs.results.map((l: any) => ({
-
-            ...l,
-            total_produtos: mapa[l.localizacao_id] || 0,
-          }));
-
-          setListaLocalizacoes(locsComQtd);
-        } catch (err) {
-          console.error('Erro ao carregar localizações →', err);
-        }
-      };
-
-      carregar();
-    }, []);
+    // Estados para filtros dinâmicos
+    const [todosTipos, setTodosTipos] = useState<{ tipo: string; id: any }[]>([]);
+    const [todosArmazens, setTodosArmazens] = useState<{ armazem: string; id: any }[]>([]);
 
     /* ------------------------------ filtragem ------------------------------ */
     const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
     const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState<string>('');
 
+    // Carregamento inicial de filtros dinâmicos
+    useEffect(() => {
+        async function buscarFiltros() {
+            try {
+                // Busca "todos" os registros, só para montar os filtros
+                const res = await buscarLocalizacoes(10000, 0);
+                const todos = res.results || res;
+
+                // Extrai tipos únicos e armazéns únicos
+                const tipos = Array.from(
+                    new Map(
+                        todos
+                            .filter((l: any) => l.tipo && l.tipo_localizacao_id)
+                            .map((l: any) => [l.tipo_localizacao_id, { tipo: l.tipo, id: l.tipo_localizacao_id }])
+                    ).values()
+                ).sort((a, b) => a.tipo.localeCompare(b.tipo));
+
+                const armazens = Array.from(
+                    new Map(
+                        todos
+                            .filter((l: any) => l.armazem && l.armazem_id)
+                            .map((l: any) => [l.armazem_id, { armazem: l.armazem, id: l.armazem_id }])
+                    ).values()
+                ).sort((a, b) => a.armazem.localeCompare(b.armazem));
+
+                setTodosTipos(tipos);
+                setTodosArmazens(armazens);
+            } catch (e) {
+                console.error('Erro ao buscar filtros:', e);
+            }
+        }
+
+        buscarFiltros();
+    }, []);
+
     const filteredIndices = useMemo(() => {
-      return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
-        const termo = busca.trim().toLowerCase();
-        const matchBusca =
-          termo === '' ||
-          [loc.nome, loc.tipo, loc.armazem, loc.ean]
-            .filter(Boolean)
-            .some((campo) => campo.toString().toLowerCase().includes(termo));
+        return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
+            const termo = busca.trim().toLowerCase();
+            const matchBusca =
+                termo === '' ||
+                [loc.nome, loc.tipo, loc.armazem, loc.ean]
+                    .filter(Boolean)
+                    .some((campo) => campo.toString().toLowerCase().includes(termo));
 
-        const matchTipo = !appliedFiltroTipo || loc.tipo === appliedFiltroTipo;
-        const matchArmazem = !appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem;
+            // Adaptar para usar IDs nos filtros
+            const matchTipo = !appliedFiltroTipo || loc.tipo_localizacao_id === appliedFiltroTipo;
+            const matchArmazem = !appliedFiltroArmazem || loc.armazem_id === appliedFiltroArmazem;
 
-        if (matchBusca && matchTipo && matchArmazem) acc.push(idx);
-        return acc;
-      }, []);
+            if (matchBusca && matchTipo && matchArmazem) acc.push(idx);
+            return acc;
+        }, []);
     }, [listaLocalizacoes, busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
-    /* ---------------------------- paginação ---------------------------- */
-    const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
+    /* ---------------------------- paginação/ordenação ---------------------------- */
+    const filteredItems = filteredIndices.map((i) => listaLocalizacoes[i]);
+
+    const sortedItems = filteredItems.sort((a, b) => {
+        const aValue = a[orderBy];
+        const bValue = b[orderBy];
+
+        const aStr = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
+        const bStr = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
+
+        if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
+        if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const totalPages = Math.ceil(sortedItems.length / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentIndices = filteredIndices.slice(startIndex, endIndex);
-    const currentItems = currentIndices.map((i) => listaLocalizacoes[i]);
+
+    const currentItems = sortedItems.slice(startIndex, endIndex);
 
     /* ------------------------- efeitos auxiliares ------------------------ */
     useEffect(() => {
-      if (currentPage > totalPages) setCurrentPage(totalPages);
-    }, [totalPages]);
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages, currentPage]);
 
     useEffect(() => {
-
-      setCurrentPage(1);
+        setCurrentPage(1);
     }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
-
     useEffect(() => {
-      const allCurrentSelected =
-        currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
-      setSelectAll(allCurrentSelected);
-    }, [selectedItems, currentIndices]);
+        const allCurrentSelected =
+            currentItems.length > 0 &&
+            currentItems.every((item) => selectedItems.includes(item.localizacao_id));
+        setSelectAll(allCurrentSelected);
+    }, [selectedItems, currentItems]);
 
     /* --------------------------- seleção tabela -------------------------- */
     const handleSelectAll = (checked: boolean) => {
-      setSelectAll(checked);
-      setSelectedItems(checked ? currentIndices : []);
+        setSelectAll(checked);
+        setSelectedItems(checked ? currentItems.map((item) => item.localizacao_id) : []);
     };
 
     const handleSelectItem = (originalIndex: number, checked: boolean) => {
-      setSelectedItems((prev) =>
-        checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
-      );
+        setSelectedItems((prev) =>
+            checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
+        );
+    };
+
+    // Função de ordenação
+    const handleSort = (property: keyof LocalizacaoComQtd) => {
+        const isAsc = orderBy === property && orderDirection === 'asc';
+        setOrderDirection(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
     };
 
     // Função para abrir o modal de produtos
     const handleVerProdutos = (id: number, nome: string) => {
-      setLocalizacaoSelecionada({ id, nome });
-      setModalOpen(true);
+        setLocalizacaoSelecionada({ id, nome });
+        setModalOpen(true);
     };
-     
+
     // Função para atualizar a quantidade total após visualização
     const handleQuantidadeAtualizada = async () => {
-      // Recarregar os dados da tabela para atualizar as quantidades
-      const carregar = async () => {
-        try {
-          const [locs, estoque] = await Promise.all([
-            buscarLocalizacoes(),
-            buscarConsultaEstoque(),
-          ]);
+        // Recarregar os dados da tabela para atualizar as quantidades
+        const carregar = async () => {
+            try {
+                const [locs, estoque] = await Promise.all([
+                    buscarLocalizacoes(),
+                    buscarConsultaEstoque(),
+                ]);
 
-          // soma por localizacao_id
-          const mapa: Record<number, number> = {};
-          estoque.forEach((item: any) => {
-            const id = item.localizacao_id;
-            if (!id) return;
-            mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-          });
+                // Adaptação para suportar ambos os formatos de resposta
+                const localizacoes = locs.results || locs;
 
-          const locsComQtd: LocalizacaoComQtd[] = locs.results.map((l: any) => ({
+                // soma por localizacao_id
+                const mapa: Record<number, number> = {};
+                estoque.forEach((item: any) => {
+                    const id = item.localizacao_id;
+                    if (!id) return;
+                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+                });
 
-            ...l,
-            total_produtos: mapa[l.localizacao_id] || 0,
-          }));
+                const locsComQtd: LocalizacaoComQtd[] = localizacoes.map((l: any) => ({
+                    ...l,
+                    total_produtos: mapa[l.localizacao_id] || 0,
+                }));
 
-          setListaLocalizacoes(locsComQtd);
-        } catch (err) {
-          console.error('Erro ao carregar localizações →', err);
-        }
-      };
+                setListaLocalizacoes(locsComQtd);
+            } catch (err) {
+                console.error('Erro ao carregar localizações →', err);
+            }
+        };
 
-      carregar();
+        carregar();
     };
 
     const handleImprimir = (localizacao: string, ean: string, tipo: string, armazem: string) => {
@@ -429,7 +468,7 @@ const Localizacao: React.FC = () => {
         indicesParaImprimir = listaLocalizacoes
           .map((loc, idx) => {
             const tipo = loc.tipo?.toLowerCase() || '';
-            if (tipo.includes('caixa') || tipo.includes('prateleira')) return idx;
+            if (tipo.includes('caixa') || tipo.includes('prateleira')) return loc.localizacao_id;
             return -1;
           })
           .filter((idx) => idx !== -1);
@@ -443,8 +482,13 @@ const Localizacao: React.FC = () => {
         return;
       }
 
-      const tiposSelecionados = indicesParaImprimir.map(
-        (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+      // Encontrar os itens correspondentes aos IDs selecionados
+      const itensSelecionados = listaLocalizacoes.filter(item => 
+        indicesParaImprimir.includes(item.localizacao_id)
+      );
+
+      const tiposSelecionados = itensSelecionados.map(
+        (item) => item.tipo.toLowerCase()
       );
 
       const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
@@ -465,7 +509,7 @@ const Localizacao: React.FC = () => {
       let indicesParaImprimir = selectedItems;
       if (!indicesParaImprimir.length) {
         indicesParaImprimir = listaLocalizacoes
-          .map((loc, idx) => (loc.tipo.toLowerCase().includes('caixa') ? idx : -1))
+          .map((loc) => (loc.tipo.toLowerCase().includes('caixa') ? loc.localizacao_id : -1))
           .filter((idx) => idx !== -1);
 
         setSelectedItems(indicesParaImprimir);
@@ -476,6 +520,11 @@ const Localizacao: React.FC = () => {
         alert('Nenhuma localização do tipo "Caixa" encontrada.');
         return;
       }
+
+      // Encontrar os itens correspondentes aos IDs selecionados
+      const itensSelecionados = listaLocalizacoes.filter(item => 
+        indicesParaImprimir.includes(item.localizacao_id)
+      );
 
       const w = window.open('', '_blank');
       if (!w) return;
@@ -544,8 +593,7 @@ const Localizacao: React.FC = () => {
         <body>
       `);
 
-      indicesParaImprimir.forEach((idx, i) => {
-        const item = listaLocalizacoes[idx];
+      itensSelecionados.forEach((item, i) => {
         const nomeEscapado = item.nome.replace(/'/g, "\\'");
         const armazemEscapado = item.armazem.replace(/'/g, "\\'");
         const eanEscapado = item.ean.replace(/'/g, "\\'");
@@ -600,7 +648,7 @@ const Localizacao: React.FC = () => {
       let indicesParaImprimir = selectedItems;
       if (!indicesParaImprimir.length) {
         indicesParaImprimir = listaLocalizacoes
-          .map((loc, idx) => (loc.tipo.toLowerCase().includes('prateleira') ? idx : -1))
+          .map((loc) => (loc.tipo.toLowerCase().includes('prateleira') ? loc.localizacao_id : -1))
           .filter((idx) => idx !== -1);
 
         setSelectedItems(indicesParaImprimir);
@@ -612,8 +660,13 @@ const Localizacao: React.FC = () => {
         return;
       }
 
-      const tiposSelecionados = indicesParaImprimir.map(
-        (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+      // Encontrar os itens correspondentes aos IDs selecionados
+      const itensSelecionados = listaLocalizacoes.filter(item => 
+        indicesParaImprimir.includes(item.localizacao_id)
+      );
+
+      const tiposSelecionados = itensSelecionados.map(
+        (item) => item.tipo.toLowerCase()
       );
       const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
       if (!tipoUnico) {
@@ -680,8 +733,7 @@ const Localizacao: React.FC = () => {
         <body>
       `);
 
-      indicesParaImprimir.forEach((idx, i) => {
-        const item = listaLocalizacoes[idx];
+      itensSelecionados.forEach((item, i) => {
         const nomeLimpo = isPrateleira ? item.nome.replace(/^.*?#/, '') : item.nome;
         const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
         const eanEscapado = item.ean.replace(/'/g, "\\'");
@@ -749,30 +801,34 @@ const Localizacao: React.FC = () => {
             return;
         }
 
-        const permitidos = selectedItems.filter((idx) => listaLocalizacoes[idx].total_produtos === 0);
-        const bloqueados = selectedItems.filter((idx) => listaLocalizacoes[idx].total_produtos > 0);
+        // Encontrar os itens correspondentes aos IDs selecionados
+        const itensSelecionados = listaLocalizacoes.filter(item => 
+            selectedItems.includes(item.localizacao_id)
+        );
+
+        const permitidos = itensSelecionados.filter((item) => item.total_produtos === 0);
+        const bloqueados = itensSelecionados.filter((item) => item.total_produtos > 0);
 
         if (!permitidos.length) {
             alert('Nenhuma das localizações selecionadas pode ser excluída (quantidade > 0).');
             return;
         }
 
-        const nomesPermitidos = permitidos.map((idx) => listaLocalizacoes[idx].nome);
+        const nomesPermitidos = permitidos.map((item) => item.nome);
         if (!window.confirm(`Tem certeza que deseja excluir:\n\n${nomesPermitidos.join(', ')}`)) return;
 
         const erros: string[] = [];
-        for (const idx of permitidos) {
-            const loc = listaLocalizacoes[idx];
+        for (const item of permitidos) {
             try {
-                await excluirLocalizacao({ localizacao_id: loc.localizacao_id });
+                await excluirLocalizacao({ localizacao_id: item.localizacao_id });
             } catch (err) {
                 console.error(err);
-                erros.push(loc.nome);
+                erros.push(item.nome);
             }
         }
 
         setListaLocalizacoes((prev) =>
-            prev.filter((_, idx) => !permitidos.includes(idx) || erros.includes(prev[idx].nome))
+            prev.filter((item) => !permitidos.map(p => p.localizacao_id).includes(item.localizacao_id) || erros.includes(item.nome))
         );
 
         setSelectedItems([]);
@@ -785,70 +841,16 @@ const Localizacao: React.FC = () => {
         }
 
         if (bloqueados.length) {
-            const nomesBloq = bloqueados.map((idx) => listaLocalizacoes[idx].nome);
+            const nomesBloq = bloqueados.map((item) => item.nome);
             alert(`Estas localizações não puderam ser excluídas por conter produtos:\n\n${nomesBloq.join(', ')}`);
         }
     };
-
-    /* ---------------------- valores únicos para filtros --------------------- */
-    const [todosTipos, setTodosTipos] = useState<{ tipo: string; id: any }[]>([]);
-    const [todosArmazens, setTodosArmazens] = useState<{ armazem: string; id: any }[]>([]);
-
-
-    useEffect(() => {
-        async function buscarFiltros() {
-            try {
-                // Busca "todos" os registros, só para montar os filtros
-                const res = await buscarLocalizacoes(10000, 0); // ou um número que garanta trazer tudo
-                const todos = res.results;
-                console.log(todos)
-
-                // Extrai tipos únicos e armazéns únicos
-                const tipos = Array.from(
-                new Map(
-                    todos
-                    .filter((l: any) => l.tipo && l.tipo_localizacao_id) // supondo que existe l.tipo_id!
-                    .map((l: any) => [l.tipo_localizacao_id, { tipo: l.tipo, id: l.tipo_localizacao_id }])
-                ).values()
-                ).sort((a, b) => a.tipo.localeCompare(b.tipo));
-
-                const armazens = Array.from(
-                new Map(
-                    todos
-                    .filter((l: any) => l.armazem && l.armazem_id)
-                    .map((l: any) => [l.armazem_id, { armazem: l.armazem, id: l.armazem_id }])
-                ).values()
-                ).sort((a, b) => a.armazem.localeCompare(b.armazem));
-
-                console.log('tipos de localizacoes' , tipos)
-
-
-                setTodosTipos(tipos);
-                setTodosArmazens(armazens);
-            } catch (e) {
-                console.error('Erro ao buscar filtros:', e);
-            }
-        }
-
-        buscarFiltros();
-    }, []);
-
 
     /* --------------------------- handlers menu --------------------------- */
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
 
-    // Atualize a função de aplicar filtros:
-    const handleAplicarFiltro = () => {
-        setCurrentPage(1); // Resetar para a primeira página ao aplicar filtros
-        setAppliedFiltroTipo(filtroTipo);
-        setAppliedFiltroArmazem(filtroArmazem);
-        handleMenuClose();
-    };
-
-    // Atualize a função de limpar filtros:
     const handleLimparFiltros = () => {
-        setCurrentPage(1); // Resetar para a primeira página ao limpar filtros
         setFiltroTipo('');
         setFiltroArmazem('');
         setBusca('');
@@ -857,9 +859,45 @@ const Localizacao: React.FC = () => {
         handleMenuClose();
     };
 
-    return (
-        <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
+    const handleAplicarFiltro = () => {
+        setAppliedFiltroTipo(filtroTipo);
+        setAppliedFiltroArmazem(filtroArmazem);
+        handleMenuClose();
+    };
 
+    return (
+        <Layout 
+            totalPages={totalPages} 
+            currentPage={currentPage} 
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={setItemsPerPage}
+        >
+          <CarregadorComRetry
+            funcaoCarregamento={async () => {
+              const [locs, estoque] = await Promise.all([
+                buscarLocalizacoes(),
+                buscarConsultaEstoque(),
+              ]);
+
+              // Adaptação para suportar ambos os formatos de resposta
+              const localizacoes = locs.results || locs;
+
+              const mapa: Record<number, number> = {};
+              estoque.forEach((item: any) => {
+                const id = item.localizacao_id;
+                if (!id) return;
+                mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+              });
+
+              return localizacoes.map((l: any) => ({
+                ...l,
+                total_produtos: mapa[l.localizacao_id] || 0,
+              }));
+            }}
+            aoCarregar={(dados) => setListaLocalizacoes(dados)}
+            onErroFinal={(erro) => console.error('Erro definitivo:', erro)}
+          />
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
@@ -867,14 +905,12 @@ const Localizacao: React.FC = () => {
             {/* Barra de ações */}
             <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
                 <TextField
-                    placeholder="Buscar Localização, tipo, armazém ou EAN"
+                    placeholder="Buscar Localização ou EAN"
                     variant="outlined"
-                    size="small"
-
+                    size='small'
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
                     InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
-
                     sx={{ maxWidth: 480, width: 380 }}
                 />
 
@@ -1020,26 +1056,72 @@ const Localizacao: React.FC = () => {
                                 />
                             </TableCell>
 
-                            <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600 }}>EAN</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
+                            <TableCell sortDirection={orderBy === 'nome' ? orderDirection : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'nome'}
+                                    direction={orderBy === 'nome' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('nome')}
+                                >
+                                    Nome
+                                </TableSortLabel>
+                            </TableCell>
 
+                            <TableCell sortDirection={orderBy === 'tipo' ? orderDirection : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'tipo'}
+                                    direction={orderBy === 'tipo' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('tipo')}
+                                >
+                                    Tipo
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell sortDirection={orderBy === 'armazem' ? orderDirection : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'armazem'}
+                                    direction={orderBy === 'armazem' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('armazem')}
+                                >
+                                    Armazém
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell sortDirection={orderBy === 'ean' ? orderDirection : false} align="center">
+                                <TableSortLabel
+                                    active={orderBy === 'ean'}
+                                    direction={orderBy === 'ean' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('ean')}
+                                >
+                                    EAN
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell sortDirection={orderBy === 'total_produtos' ? orderDirection : false} align="center">
+                                <TableSortLabel
+                                    active={orderBy === 'total_produtos'}
+                                    direction={orderBy === 'total_produtos' ? orderDirection : 'asc'}
+                                    onClick={() => handleSort('total_produtos')}
+                                >
+                                    Quantidade
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>
+                                Ações
+                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {currentItems.length ? (
-                            currentItems.map((item, idx) => {
-                                const originalIndex = currentIndices[idx];
-                                const isSelected = selectedItems.includes(originalIndex);
+                            currentItems.map((item) => {
+                                const isSelected = selectedItems.includes(item.localizacao_id);
                                 return (
-                                    <TableRow key={`${item.nome}-${originalIndex}`} selected={isSelected} hover>
+                                    <TableRow key={`${item.nome}-${item.localizacao_id}`} selected={isSelected} hover>
+
                                         <TableCell padding="checkbox">
                                             <Checkbox
                                                 checked={isSelected}
-                                                onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
+                                                onChange={(e) => handleSelectItem(item.localizacao_id, e.target.checked)}
                                             />
                                         </TableCell>
                                         <TableCell
@@ -1055,8 +1137,8 @@ const Localizacao: React.FC = () => {
                                         <TableCell align="center">
                                             <Box display="flex" justifyContent="center" gap={1}>
                                                 <Tooltip title="Ver produtos">
-                                                    <IconButton 
-                                                        size="small" 
+                                                    <IconButton
+                                                        size="small"
                                                         onClick={() => handleVerProdutos(item.localizacao_id, item.nome)}
                                                     >
                                                         <ListIcon fontSize="small" />
@@ -1078,6 +1160,7 @@ const Localizacao: React.FC = () => {
                                                                 backgroundColor: item.total_produtos > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
                                                             },
                                                         }}
+
                                                     >
                                                         <DeleteIcon fontSize="small" />
                                                     </IconButton>
