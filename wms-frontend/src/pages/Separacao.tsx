@@ -1,14 +1,18 @@
+// Separacao.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Box, Button, MenuItem, Typography, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, TextField, IconButton, Tooltip, Checkbox
+  Box, Button, Typography, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, IconButton, Tooltip, Checkbox
 } from '@mui/material';
-import { CloudUpload, Print, Close } from '@mui/icons-material';
+import { CloudUpload, Print, Close, PictureAsPdf } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import PrintPorPedido from '../components/PrintPorPedido';
 import PrintPorLocalizacao from '../components/PrintPorLocalizacao';
 import axios from 'axios';
 import Layout from '../components/Layout';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ProdutoPlanilha {
   [key: string]: string | number;
@@ -24,74 +28,9 @@ const columns = [
   { key: "Código (SKU)", label: "Código (SKU)" },
 ];
 
-const usePrint = () => {
-  const handlePrint = (contentRef: React.RefObject<HTMLDivElement | null>) => {
-    if (!contentRef.current) return;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const printStyles = `
-      <style>
-        @media print {
-          body {
-            font-family: Arial, sans-serif;
-            font-size: 1pt !important;
-            margin: 10px;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          table {
-            border-collapse: collapse;
-            width: 100%;
-          }
-          th, td {
-            border: 1px solid #ddd;
-            padding: 4px;
-            text-align: center;
-            font-size: 8pt !important;
-          }
-          th {
-            background-color: #f2f2f2 !important;
-          }
-          @page {
-            size: A4;
-            margin: 1cm;
-          }
-        }
-      </style>
-    `;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Documento para Impressão</title>
-          ${printStyles}
-        </head>
-        <body>
-          ${contentRef.current.innerHTML}
-          <script>
-            setTimeout(function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
-              };
-            }, 200);
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
-  return handlePrint;
-};
-
 export default function Separacao() {
   const [produtos, setProdutos] = useState<ProdutoPlanilha[]>([]);
   const [arquivo, setArquivo] = useState<File | null>(null);
-  const [armazem, setArmazem] = useState('');
-  const [armazemId, setArmazemId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [printTipo, setPrintTipo] = useState<'pedido' | 'localizacao' | null>(null);
   const [dadosImpressao, setDadosImpressao] = useState<any>(null);
@@ -99,7 +38,50 @@ export default function Separacao() {
   const [selectAll, setSelectAll] = useState(false);
 
   const printRef = useRef<HTMLDivElement | null>(null);
-  const handlePrint = usePrint();
+
+const imprimirDireto = () => {
+  const content = printRef.current;
+  if (!content) return;
+
+  const printWindow = window.open('', '', 'width=1000,height=700');
+  if (!printWindow) return;
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Relatório de Separação</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          img { max-height: 100px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { border: 1px solid #ccc; padding: 6px; text-align: left; font-size: 12px; }
+          .barcode { margin-top: 4px; }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+      </head>
+      <body>
+        ${content.innerHTML}
+        <script>
+          window.onload = function () {
+            const svgs = document.querySelectorAll('svg[data-barcode]');
+            svgs.forEach(svg => {
+              const value = svg.getAttribute('data-barcode');
+              if (value) {
+                JsBarcode(svg, value, { format: "EAN13", displayValue: true, fontSize: 14, height: 40 });
+              }
+            });
+            window.print();
+            window.close();
+          };
+        </script>
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+};
+
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,63 +112,6 @@ export default function Separacao() {
     );
   };
 
-  const handleImprimirSeparacao = () => {
-    if (!produtos.length) {
-      alert('Nenhum produto carregado.');
-      return;
-    }
-
-    const produtosParaImprimir = selectedItems.length > 0
-      ? selectedItems.map(index => produtos[index])
-      : produtos;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const dataAtual = new Date().toLocaleString('pt-BR');
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Separacao de Produtos</title>
-        <style>
-          @media print {
-            body { font-family: Arial; margin: 10px; -webkit-print-color-adjust: exact; }
-            table { border-collapse: collapse; width: 100%; font-size: 15px; }
-            th, td { border: 1px solid #888; padding: 6px 12px; text-align: left; }
-            th { background: #f0f0f0 !important; }
-            @page { size: auto; margin: 5mm; }
-          }
-          body { font-family: Arial; margin: 18px; }
-        </style>
-      </head>
-      <body>
-        <h2>Separacao de Produtos</h2>
-        <div><b>Armazem:</b> ${armazem || '-'}<br/>Data: ${dataAtual}</div>
-        <table>
-          <thead>
-            <tr>${produtosParaImprimir.length > 0 ? Object.keys(produtosParaImprimir[0]).map(key => `<th>${key}</th>`).join('') : ''}</tr>
-          </thead>
-          <tbody>
-            ${produtosParaImprimir.map(prod => `
-              <tr>${Object.values(prod).map(val => `<td>${val}</td>`).join('')}</tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <script>
-          setTimeout(function() {
-            window.print();
-            window.onafterprint = function() { window.close(); }
-          }, 200);
-        </script>
-      </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-  };
-
   const handleImprimir = async (tipo: 'pedido' | 'localizacao') => {
     if (!arquivo) {
       alert('Faça upload do arquivo.');
@@ -204,16 +129,35 @@ export default function Separacao() {
       const url = tipo === 'pedido' ? ENDPOINT_PEDIDO : ENDPOINT_SKU;
       const { data } = await axios.post(url, form);
 
-      const dadosCorrigidos = {
-        ...data,
-        pedidos: data.pedidos.map((pedido: any) => ({
-          ...pedido,
-          itens: pedido.itens.map((item: any) => ({
-            ...item,
-            urlFoto: item.url_foto || ''
+      let dadosCorrigidos;
+
+      if (tipo === 'pedido') {
+        dadosCorrigidos = {
+          ...data,
+          pedidos: data.pedidos.map((pedido: any) => ({
+            ...pedido,
+            itens: pedido.itens.map((item: any) => ({
+              ...item,
+              urlFoto: item.urlFoto || item.url_foto || ''
+            }))
           }))
+        };
+      } else {
+        dadosCorrigidos = {
+        localizacoes: data.localizacoes.map((loc: any) => ({
+          armazem: loc.armazem,
+          localizacao: loc.localizacao,
+          produtoSKU: loc.sku ?? '',
+          produtoDescricao: loc.descricao ?? '',
+          produtoEAN: loc.ean ?? '',
+          produtoFoto: loc.url_foto ?? '',
+          quantidadeSeparada: loc.quantidadeSeparada ?? 0
         }))
       };
+
+
+
+      }
 
       setDadosImpressao(dadosCorrigidos);
       setPrintTipo(tipo);
@@ -322,16 +266,6 @@ export default function Separacao() {
         >
           Imprimir por Localização
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Print />}
-          onClick={handleImprimirSeparacao}
-          disabled={produtos.length === 0}
-          sx={{ fontWeight: 'bold' }}
-        >
-          {selectedItems.length > 0 ? 'Imprimir Selecionados' : 'Imprimir Separação'}
-        </Button>
       </Box>
 
       {printTipo && dadosImpressao && (
@@ -340,11 +274,18 @@ export default function Separacao() {
             <Close />
           </IconButton>
 
-          <Button variant="outlined" startIcon={<Print />} onClick={() => handlePrint(printRef)} sx={{ mb: 2 }}>
-            Imprimir esta seção
-          </Button>
+          <Box display="flex" gap={2} mb={2}>
+            <Button
+              variant="outlined"
+              startIcon={<Print />}
+              onClick={imprimirDireto}
+            >
+              Imprimir Relatório
+            </Button>
 
-          <div ref={printRef}>
+          </Box>
+
+          <div ref={printRef} id="relatorio-impressao">
             {printTipo === 'pedido' ? (
               <PrintPorPedido data={dadosImpressao} />
             ) : (

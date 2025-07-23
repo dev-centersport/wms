@@ -1,9 +1,14 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
     Box,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
     Button,
+    Container,
     IconButton,
     Paper,
     Table,
@@ -18,269 +23,227 @@ import {
     Tooltip,
     MenuItem,
     Menu,
-    TableSortLabel,
 } from '@mui/material';
 import { Search as SearchIcon, Delete as DeleteIcon, Print as PrintIcon, List as ListIcon, Add as AddIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 
 import Layout from '../components/Layout';
+import { useLocalizacoes } from '../components/ApiComponents';
 import { excluirLocalizacao } from '../services/API';
 import { buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
-import CarregadorComRetry from '../components/CarregadorComRetry';
 
 type LocalizacaoComQtd = {
-    localizacao_id: number;
-    nome: string;
-    tipo: string;
-    armazem: string;
-    ean: string;
-    total_produtos: number;
+  localizacao_id: number;
+  nome: string;
+  tipo: string;
+  armazem: string;
+  ean: string;
+  total_produtos: number;
 };
 
-
-/* -------------------------------------------------------------------------- */
-// Agora mostramos até 50 itens por página, conforme comportamento da Tiny ERP
-// const itemsPerPage = 100
 /* -------------------------------------------------------------------------- */
 
 const Localizacao: React.FC = () => {
-
-    /* ------------------------- estados globais do hook --F---------------------- */
+    /* ------------------------- estados globais do hook ------------------------- */
     const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
-    const [totalItens, setTotalItens] = useState(0); // NOVO!
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(100);
     const [busca, setBusca] = useState('');
-    const [buscaInput, setBuscaInput] = useState('');
-    const [filtroTipo, setFiltroTipo] = useState<string>('');
-    const [filtroArmazem, setFiltroArmazem] = useState<string>('');
-    // Filtros aplicados:
-    const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
-    const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState<string>('');
-
 
     const navigate = useNavigate();
 
-    /* ---------------------------- estados locais ----------------------------- */
+    /* ---------------------------- estados locais ---------------------------- */
+    const [filtroTipo, setFiltroTipo] = useState<string>('');
+    const [filtroArmazem, setFiltroArmazem] = useState<string>('');
 
     // Adicione no início do componente:
+    const [itemsPerPage, setItemsPerPage] = useState<number>(100);
     // const availablePageSizes = [50, 100, 200, 500]; // Opções disponíveis
+
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [selectAll, setSelectAll] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-    // Ordenação dos campos da tabela
-    const [orderBy, setOrderBy] = useState<keyof LocalizacaoComQtd>('nome');
-    const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
-
+         
     // Estados para o modal de produtos
     const [modalOpen, setModalOpen] = useState(false);
-    const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{ id: number, nome: string } | null>(null);
 
-    // useEffect(() => {
-    //     const carregar = async () => {
-    //         const offset = (currentPage - 1) * itemsPerPage;
-    //         const res = await buscarLocalizacoes(itemsPerPage, offset, busca);
+    const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{id: number, nome: string} | null>(null);
 
-    //         // Corrige tipagem aqui
-    //         const locais: LocalizacaoComQtd[] = res.results.map((item) => ({
-    //             ...item,
-    //             total_produtos: Number(item.total_produtos) || 0,
-    //         }));
-
-    //         setListaLocalizacoes(locais);
-    //         setTotalItens(res.total);
-    //     };
-    //     carregar();
-    // }, [currentPage, itemsPerPage, busca]);
-    // console.log(listaLocalizacoes)
-
-
-    // const filteredItems = useMemo(() => {
-    //     return listaLocalizacoes.filter(loc =>
-    //         (!appliedFiltroTipo || loc.tipo === appliedFiltroTipo) &&
-    //         (!appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem)
-    //     );
-    // }, [listaLocalizacoes, appliedFiltroTipo, appliedFiltroArmazem]);
-    // console.log('itens filtrados', filteredItems)
-
-    const sortedItems = useMemo(() => {
-        const arr = [...listaLocalizacoes];
-        arr.sort((a, b) => {
-            const aValue = a[orderBy];
-            const bValue = b[orderBy];
-            const aStr = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
-            const bStr = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
-            if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
-            if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
-            return 0;
-        });
-        return arr;
-    }, [listaLocalizacoes, orderBy, orderDirection]);
-    
-    const totalPages = Math.ceil(totalItens / itemsPerPage) || 1;
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-
-    const currentItems = sortedItems;
-
-
-    /* ------------------------- efeitos auxiliares ------------------------ */
-    // useEffect(() => {
-    //     if (currentPage > totalPages) setCurrentPage(totalPages);
-    // }, [totalPages]);
-
-    // useEffect(() => {
-    //     setCurrentPage(1);
-    // }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
 
     useEffect(() => {
-        const allCurrentSelected =
-            currentItems.length > 0 &&
-            currentItems.every((item) => selectedItems.includes(item.localizacao_id));
-        setSelectAll(allCurrentSelected);
-    }, [selectedItems, currentItems]);
+      const carregar = async () => {
+        try {
+          const [locs, estoque] = await Promise.all([
+            buscarLocalizacoes(), // lista sem quantidade
+            buscarConsultaEstoque(), // cada item tem localizacao_id e quantidade
+          ]);
 
-    /* --------------------------- seleção tabela -------------------------- */
-    const handleSelectAll = useCallback((checked: boolean) => {
-        setSelectAll(checked);
-        setSelectedItems(checked ? sortedItems.map((item) => item.localizacao_id) : []);
-    }, [sortedItems]);
+          // soma por localizacao_id
+          const mapa: Record<number, number> = {};
+          estoque.forEach((item: any) => {
+            const id = item.localizacao_id;
+            if (!id) return;
+            mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+          });
 
-    const handleSelectItem = useCallback((id: number, checked: boolean) => {
-        setSelectedItems((prev) =>
-            checked ? [...prev, id] : prev.filter((idx) => idx !== id)
-        );
+          const locsComQtd: LocalizacaoComQtd[] = locs.results.map((l: any) => ({
+
+            ...l,
+            total_produtos: mapa[l.localizacao_id] || 0,
+          }));
+
+          setListaLocalizacoes(locsComQtd);
+        } catch (err) {
+          console.error('Erro ao carregar localizações →', err);
+        }
+      };
+
+      carregar();
     }, []);
 
-    // Função de ordenação
-    const handleSort = (property: keyof LocalizacaoComQtd) => {
-        const isAsc = orderBy === property && orderDirection === 'asc';
-        setOrderDirection(isAsc ? 'desc' : 'asc');
-        setOrderBy(property);
+    /* ------------------------------ filtragem ------------------------------ */
+    const [appliedFiltroTipo, setAppliedFiltroTipo] = useState<string>('');
+    const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState<string>('');
+
+    const filteredIndices = useMemo(() => {
+      return listaLocalizacoes.reduce<number[]>((acc, loc, idx) => {
+        const termo = busca.trim().toLowerCase();
+        const matchBusca =
+          termo === '' ||
+          [loc.nome, loc.tipo, loc.armazem, loc.ean]
+            .filter(Boolean)
+            .some((campo) => campo.toString().toLowerCase().includes(termo));
+
+        const matchTipo = !appliedFiltroTipo || loc.tipo === appliedFiltroTipo;
+        const matchArmazem = !appliedFiltroArmazem || loc.armazem === appliedFiltroArmazem;
+
+        if (matchBusca && matchTipo && matchArmazem) acc.push(idx);
+        return acc;
+      }, []);
+    }, [listaLocalizacoes, busca, appliedFiltroTipo, appliedFiltroArmazem]);
+
+    /* ---------------------------- paginação ---------------------------- */
+    const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentIndices = filteredIndices.slice(startIndex, endIndex);
+    const currentItems = currentIndices.map((i) => listaLocalizacoes[i]);
+
+    /* ------------------------- efeitos auxiliares ------------------------ */
+    useEffect(() => {
+      if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages]);
+
+    useEffect(() => {
+
+      setCurrentPage(1);
+    }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
+
+
+    useEffect(() => {
+      const allCurrentSelected =
+        currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
+      setSelectAll(allCurrentSelected);
+    }, [selectedItems, currentIndices]);
+
+    /* --------------------------- seleção tabela -------------------------- */
+    const handleSelectAll = (checked: boolean) => {
+      setSelectAll(checked);
+      setSelectedItems(checked ? currentIndices : []);
     };
 
+    const handleSelectItem = (originalIndex: number, checked: boolean) => {
+      setSelectedItems((prev) =>
+        checked ? [...prev, originalIndex] : prev.filter((idx) => idx !== originalIndex)
+      );
+    };
 
     // Função para abrir o modal de produtos
     const handleVerProdutos = (id: number, nome: string) => {
-        setLocalizacaoSelecionada({ id, nome });
-        setModalOpen(true);
+      setLocalizacaoSelecionada({ id, nome });
+      setModalOpen(true);
     };
-
-    useEffect(() => {
-        const carregarDados = async () => {
-            try {
-                const offset = (currentPage - 1) * itemsPerPage;
-                const resp = await buscarLocalizacoes(
-                    itemsPerPage,
-                    offset,
-                    busca,
-                    appliedFiltroArmazem ? Number(appliedFiltroArmazem) : undefined,
-                    appliedFiltroTipo ? Number(appliedFiltroTipo) : undefined
-                );
-                
-                const estoque = await buscarConsultaEstoque();
-                const mapa: Record<number, number> = {};
-                estoque.forEach((item: any) => {
-                    const id = item.localizacao_id;
-                    if (!id) return;
-                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-                });
-                
-                const locsComQtd: LocalizacaoComQtd[] = resp.results.map((l: any) => ({
-                    ...l,
-                    total_produtos: mapa[l.localizacao_id] || 0,
-                }));
-                
-                setListaLocalizacoes(locsComQtd);
-                setTotalItens(resp.total);
-            } catch (err) {
-                console.error('Erro ao carregar localizações →', err);
-            }
-        };
-        
-        carregarDados();
-    }, [currentPage, itemsPerPage, busca, appliedFiltroTipo, appliedFiltroArmazem]);
-
-
-
-
+     
     // Função para atualizar a quantidade total após visualização
     const handleQuantidadeAtualizada = async () => {
-        const carregar = async () => {
-            try {
-                const [res, estoque] = await Promise.all([
-                    buscarLocalizacoes(itemsPerPage, 0, busca),
-                    buscarConsultaEstoque(),
-                ]);
+      // Recarregar os dados da tabela para atualizar as quantidades
+      const carregar = async () => {
+        try {
+          const [locs, estoque] = await Promise.all([
+            buscarLocalizacoes(),
+            buscarConsultaEstoque(),
+          ]);
 
-                const mapa: Record<number, number> = {};
-                estoque.forEach((item: any) => {
-                    const id = item.localizacao_id;
-                    if (!id) return;
-                    mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-                });
+          // soma por localizacao_id
+          const mapa: Record<number, number> = {};
+          estoque.forEach((item: any) => {
+            const id = item.localizacao_id;
+            if (!id) return;
+            mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
+          });
 
-                const locais: LocalizacaoComQtd[] = res.results.map((l: any) => ({
-                    ...l,
-                    total_produtos: Number(mapa[l.localizacao_id]) || 0,
-                }));
+          const locsComQtd: LocalizacaoComQtd[] = locs.results.map((l: any) => ({
 
-                setListaLocalizacoes(locais);
-            } catch (err) {
-                console.error('Erro ao carregar localizações →', err);
-            }
-        };
-        carregar();
+            ...l,
+            total_produtos: mapa[l.localizacao_id] || 0,
+          }));
+
+          setListaLocalizacoes(locsComQtd);
+        } catch (err) {
+          console.error('Erro ao carregar localizações →', err);
+        }
+      };
+
+      carregar();
     };
 
-    const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
-        const tipoLower = tipo.toLowerCase();
-        if (tipoLower.includes('caixa')) {
-            handleImprimirCaixa(localizacao, ean);
-            return;
-        }
-        const w = window.open('', '_blank');
-        if (!w) return;
+    const handleImprimir = (localizacao: string, ean: string, tipo: string, armazem: string) => {
+      const tipoLower = tipo.toLowerCase();
+      if (tipoLower.includes('caixa')) {
+        handleImprimirCaixa(localizacao, ean, armazem);
+        return;
+      }
+      const w = window.open('', '_blank');
+      if (!w) return;
 
-        /* ------------------------------------------------------------------ */
-        /* 1. Identificação do tipo                                           */
-        /* ------------------------------------------------------------------ */
+      /* ------------------------------------------------------------------ */
+      /* 1. Identificação do tipo                                           */
+      /* ------------------------------------------------------------------ */
+         
+      const isCaixa = tipoLower.includes('caixa');
+      const isPrateleira = tipoLower.includes('prateleira');
 
-        const isCaixa = tipoLower.includes('caixa');
-        const isPrateleira = tipoLower.includes('prateleira');
+      /* ------------------------------------------------------------------ */
+      /* 2. Dimensões, fontes e código de barras                            */
+      /* ------------------------------------------------------------------ */
 
-        /* ------------------------------------------------------------------ */
-        /* 2. Dimensões, fontes e código de barras                            */
-        /* ------------------------------------------------------------------ */
-        const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
-        const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+      const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+      const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-        const fontNome = '120px';                   // tamanho base
-        const barHeight = isCaixa ? 90 : 20;        // altura barra
-        const barFont = isCaixa ? 22 : 10;        // fonte barra
+      const fontNome = '120px';                   // tamanho base
+      const barHeight = isCaixa ? 90 : 20;        // altura barra
+      const barFont = isCaixa ? 22 : 10;          // fonte barra
 
-        /* ------------------------------------------------------------------ */
-        /* 3. Transformação do nome para Prateleira                           */
-        /* ------------------------------------------------------------------ */
-        const nomeImpresso = isPrateleira
-            ? localizacao.replace(/^.*?#/, '')
-            : localizacao;
+      /* ------------------------------------------------------------------ */
+      /* 3. Transformação do nome para Prateleira                           */
+      /* ------------------------------------------------------------------ */
 
+      const nomeImpresso = isPrateleira
+        ? localizacao.replace(/^.*?#/, '')
+        : localizacao;
 
+      /* ------------------------------------------------------------------ */
+      /* 4. Estilos condicionais                                            */
+      /* ------------------------------------------------------------------ */
 
+      const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
+      const nomeMarginTop = isPrateleira ? '-3mm' : '0';          // só prateleira sobe
 
-        /* ------------------------------------------------------------------ */
-        /* 4. Estilos condicionais                                            */
-        /* ------------------------------------------------------------------ */
-        const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
-        const nomeMarginTop = isPrateleira ? '-3mm' : '0';      // só prateleira sobe
+      /* ------------------------------------------------------------------ */
+      /* 5. HTML completo                                                   */
+      /* ------------------------------------------------------------------ */
 
-        /* ------------------------------------------------------------------ */
-        /* 5. HTML completo                                                   */
-        /* ------------------------------------------------------------------ */
-        w.document.write(`
+      w.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -350,409 +313,418 @@ const Localizacao: React.FC = () => {
             </script>
         </body>
         </html>
-            `);
+      `);
 
-        w.document.close();
+      w.document.close();
     };
 
-    const handleImprimirCaixa = (localizacao: string, ean: string) => {
-        const w = window.open('', '_blank');
-        if (!w) return;
+    const handleImprimirCaixa = (localizacao: string, ean: string, armazem: string) => {
+      const w = window.open('', '_blank');
+      if (!w) return;
 
-        const largura = '10cm';
-        const altura = '15cm';
-        const fontNome = '120px';
-        const barHeight = 90;
-        const barFont = 22;
+      const largura = '10cm';
+      const altura = '15cm';
+      const fontNome = '120px';
+      const barHeight = 90;
+      const barFont = 22;
+        const armazemEscapado = armazem.replace(/'/g, "\\'");
+      w.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Etiqueta – ${localizacao}</title>
+          <style>
+            @page {
+              size: ${largura} ${altura};
+              margin: 0;
+            }
+            body {
+              width: ${largura};
+              height: ${altura};
+              margin: 0;
+              padding: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-family: Arial, sans-serif;
+              overflow: hidden;
+            }
+            .container {
+              transform: rotate(-90deg);
+              margin-top: 100px;
+              transform-origin: center;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              height: 100%;
+            }
+            #nome {
+              font-weight: bold;
+              font-size: ${fontNome};
+              margin: 0;
+              padding: 0;
+              text-align: center;
+              white-space: nowrap;
+            }
+              
+            #barcode {
+              width: 90%;
+              margin: 0;
+              padding: 0;
+            }
+            #nomeArmazem {
+              font-size: 30px;
+              margin: 0;
+              padding: 0;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div id="nome">${localizacao}</div>
+            <svg id="barcode"></svg>
+            <div id="nomeArmazem">${armazemEscapado}</div>
+          </div>
 
-        w.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Etiqueta – ${localizacao}</title>
-      <style>
-        @page {
-          size: ${largura} ${altura};
-          margin: 0;
-        }
-        body {
-          width: ${largura};
-          height: ${altura};
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: Arial, sans-serif;
-          overflow: hidden;
-        }
-        .container {
-          transform: rotate(-90deg);
-          margin-top: 100px;
-          transform-origin: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-        }
-        #nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: 0;
-          padding: 0;
-          text-align: center;
-          white-space: nowrap;
-        }
-        #barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div id="nome">${localizacao}</div>
-        <svg id="barcode"></svg>
-      </div>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+          <script>
+            const nomeEl = document.getElementById('nome');
+            const texto = '${localizacao}';
+            let tamanho = ${fontNome.replace('px', '')};
 
-      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-      <script>
-        const nomeEl = document.getElementById('nome');
-        const texto = '${localizacao}';
-        let tamanho = ${fontNome.replace('px', '')};
+            if (texto.length > 8)      tamanho = 50;
+            else if (texto.length > 5) tamanho = 180;
 
-        if (texto.length > 8)      tamanho = 50;
-        else if (texto.length > 5) tamanho = 180;
+            nomeEl.style.fontSize = tamanho + 'px';
 
-        nomeEl.style.fontSize = tamanho + 'px';
+            JsBarcode('#barcode', '${ean}', {
+              format: 'ean13',
+              height: ${barHeight},
+              displayValue: true,
+              fontSize: ${barFont}
+            });
 
-        JsBarcode('#barcode', '${ean}', {
-          format: 'ean13',
-          height: ${barHeight},
-          displayValue: true,
-          fontSize: ${barFont}
-        });
+            window.onload = () => {
+              window.print();
+              window.onafterprint = () => window.close();
+            };
+          </script>
+        </body>
+        </html>
+      `);
 
-        window.onload = () => {
-          window.print();
-          window.onafterprint = () => window.close();
-        };
-      </script>
-    </body>
-    </html>
-  `);
-
-        w.document.close();
+      w.document.close();
     };
 
     /* ------------------------------------------------------------------ */
     /* Substitua a função handleImprimirSelecionados pelo código abaixo   */
     /* ------------------------------------------------------------------ */
     const handleImprimirSelecionados = () => {
-        let indicesParaImprimir = selectedItems;
+      let indicesParaImprimir = selectedItems;
 
-        if (!indicesParaImprimir.length) {
-            indicesParaImprimir = listaLocalizacoes
-                .map((loc, idx) => {
-                    const tipo = loc.tipo?.toLowerCase() || '';
-                    if (tipo.includes('caixa') || tipo.includes('prateleira')) return idx;
-                    return -1;
-                })
-                .filter((idx) => idx !== -1);
+      if (!indicesParaImprimir.length) {
+        indicesParaImprimir = listaLocalizacoes
+          .map((loc, idx) => {
+            const tipo = loc.tipo?.toLowerCase() || '';
+            if (tipo.includes('caixa') || tipo.includes('prateleira')) return idx;
+            return -1;
+          })
+          .filter((idx) => idx !== -1);
 
-            setSelectedItems(indicesParaImprimir);
-            setSelectAll(false);
-        }
+        setSelectedItems(indicesParaImprimir);
+        setSelectAll(false);
+      }
 
-        if (!indicesParaImprimir.length) {
-            alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
-            return;
-        }
+      if (!indicesParaImprimir.length) {
+        alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
+        return;
+      }
 
-        const tiposSelecionados = indicesParaImprimir.map(
-            (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
-        );
+      const tiposSelecionados = indicesParaImprimir.map(
+        (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+      );
 
-        const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
-        if (!tipoUnico) {
-            alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
-            return;
-        }
+      const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
+      if (!tipoUnico) {
+        alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+        return;
+      }
 
-        const tipoAtual = tiposSelecionados[0];
-        if (tipoAtual.includes('caixa')) {
-            handleImprimirSelecionadosCaixa();
-        } else {
-            handleImprimirSelecionadosPrateleira();
-        }
+      const tipoAtual = tiposSelecionados[0];
+      if (tipoAtual.includes('caixa')) {
+        handleImprimirSelecionadosCaixa();
+      } else {
+        handleImprimirSelecionadosPrateleira();
+      }
     };
 
     const handleImprimirSelecionadosCaixa = () => {
-        let indicesParaImprimir = selectedItems;
-        if (!indicesParaImprimir.length) {
-            indicesParaImprimir = listaLocalizacoes
-                .map((loc, idx) => loc.tipo.toLowerCase().includes('caixa') ? idx : -1)
-                .filter((idx) => idx !== -1);
+      let indicesParaImprimir = selectedItems;
+      if (!indicesParaImprimir.length) {
+        indicesParaImprimir = listaLocalizacoes
+          .map((loc, idx) => (loc.tipo.toLowerCase().includes('caixa') ? idx : -1))
+          .filter((idx) => idx !== -1);
 
-            setSelectedItems(indicesParaImprimir);
-            setSelectAll(false);
-        }
+        setSelectedItems(indicesParaImprimir);
+        setSelectAll(false);
+      }
 
-        if (!indicesParaImprimir.length) {
-            alert('Nenhuma localização do tipo "Caixa" encontrada.');
-            return;
-        }
+      if (!indicesParaImprimir.length) {
+        alert('Nenhuma localização do tipo "Caixa" encontrada.');
+        return;
+      }
 
-        const w = window.open('', '_blank');
-        if (!w) return;
+      const w = window.open('', '_blank');
+      if (!w) return;
 
-        const largura = '10cm';
-        const altura = '15cm';
-        const fontNome = '120px';
-        const barHeight = 90;
-        const barFont = 22;
+      const largura = '10cm';
+      const altura = '15cm';
+      const fontNome = '120px';
+      const barHeight = 90;
+      const barFont = 22;
 
+      w.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Etiquetas – Caixas</title>
+          <style>
+            @page {
+              size: ${largura} ${altura};
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+            }
+            .etiqueta {
+              width: ${largura};
+              height: ${altura};
+              position: relative;
+              page-break-after: always;
+            }
+            .container {
+              transform: rotate(-90deg);
+              transform-origin: left top;
+              position: absolute;
+              top: ${altura};
+              left: 0;
+              width: ${altura};
+              height: ${largura};
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              font-family: Arial, sans-serif;
+            }
+            .nome {
+              font-weight: bold;
+              font-size: ${fontNome};
+              margin: 0;
+              padding: 0;
+              text-align: center;
+              white-space: nowrap;
+            }
+            .barcode {
+              width: 90%;
+              margin: 0;
+              padding: 0;
+            }
+            .nomeArmazem {
+              font-size: 10px;
+              margin: 0;
+              padding: 0;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+      `);
+
+      indicesParaImprimir.forEach((idx, i) => {
+        const item = listaLocalizacoes[idx];
+        const nomeEscapado = item.nome.replace(/'/g, "\\'");
+        const eanEscapado = item.ean.replace(/'/g, "\\'");
+        const armazemEscapado = item.armazem.replace(/'/g, "\\'");
         w.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Etiquetas – Caixas</title>
-      <style>
-        @page {
-          size: ${largura} ${altura};
-          margin: 0;
-        }
-        body {
-          margin: 0;
-          padding: 0;
-        }
-        .etiqueta {
-          width: ${largura};
-          height: ${altura};
-          position: relative;
-          page-break-after: always;
-        }
-        .container {
-          transform: rotate(-90deg);
-          transform-origin: left top;
-          position: absolute;
-          top: ${altura};
-          left: 0;
-          width: ${altura};
-          height: ${largura};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          font-family: Arial, sans-serif;
-        }
-        .nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: 0;
-          padding: 0;
-          text-align: center;
-          white-space: nowrap;
-        }
-        .barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
-        }
-      </style>
-    </head>
-    <body>
-  `);
+          <div class="etiqueta" data-ean="${eanEscapado}">
+            <div class="container">
+              <div class="nome" id="nome-${i}">${nomeEscapado}</div>
+              <svg class="barcode" id="barcode-${i}"></svg>
+              <div class="nomeArmazem">${armazemEscapado}</div>
+            </div>
+          </div>
+        `);
+      });
 
-        indicesParaImprimir.forEach((idx, i) => {
-            const item = listaLocalizacoes[idx];
-            const nomeEscapado = item.nome.replace(/'/g, "\\'");
-            const eanEscapado = item.ean.replace(/'/g, "\\'");
-            w.document.write(`
-      <div class="etiqueta" data-ean="${eanEscapado}">
-        <div class="container">
-          <div class="nome" id="nome-${i}">${nomeEscapado}</div>
-          <svg class="barcode" id="barcode-${i}"></svg>
-        </div>
-      </div>
-    `);
-        });
+      w.document.write(`
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script>
+          window.onload = () => {
+            document.querySelectorAll('.etiqueta').forEach((div, index) => {
+              const nome = div.querySelector('.nome').innerText;
+              const svg = div.querySelector('.barcode');
+              const ean = div.dataset.ean;
 
-        w.document.write(`
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <script>
-      window.onload = () => {
-        document.querySelectorAll('.etiqueta').forEach((div, index) => {
-          const nome = div.querySelector('.nome').innerText;
-          const svg = div.querySelector('.barcode');
-          const ean = div.dataset.ean;
+              let tamanho = ${fontNome.replace('px', '')};
+              if (nome.length > 8)      tamanho = 50;
+              else if (nome.length > 5) tamanho = 140;
 
-          let tamanho = ${fontNome.replace('px', '')};
-          if (nome.length > 8)      tamanho = 50;
-          else if (nome.length > 5) tamanho = 140;
+              document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+              JsBarcode(svg, ean, {
+                format: 'ean13',
+                height: ${barHeight},
+                displayValue: true,
+                fontSize: ${barFont}
+              });
+            });
 
-          JsBarcode(svg, ean, {
-            format: 'ean13',
-            height: ${barHeight},
-            displayValue: true,
-            fontSize: ${barFont}
-          });
-        });
+            window.print();
+            window.onafterprint = () => window.close();
+          };
+        </script>
+        </body>
+        </html>
+      `);
 
-        window.print();
-        window.onafterprint = () => window.close();
-      };
-    </script>
-    </body>
-    </html>
-  `);
-
-        w.document.close();
+      w.document.close();
     };
-
 
     const handleImprimirSelecionadosPrateleira = () => {
-        let indicesParaImprimir = selectedItems;
-        if (!indicesParaImprimir.length) {
-            indicesParaImprimir = listaLocalizacoes
-                .map((loc, idx) =>
-                    loc.tipo.toLowerCase().includes('prateleira') ? idx : -1
-                )
-                .filter((idx) => idx !== -1);
+      let indicesParaImprimir = selectedItems;
+      if (!indicesParaImprimir.length) {
+        indicesParaImprimir = listaLocalizacoes
+          .map((loc, idx) => (loc.tipo.toLowerCase().includes('prateleira') ? idx : -1))
+          .filter((idx) => idx !== -1);
 
-            setSelectedItems(indicesParaImprimir);
-            setSelectAll(false);
-        }
+        setSelectedItems(indicesParaImprimir);
+        setSelectAll(false);
+      }
 
-        if (!indicesParaImprimir.length) {
-            alert('Nenhuma localização do tipo "Prateleira" encontrada.');
-            return;
-        }
+      if (!indicesParaImprimir.length) {
+        alert('Nenhuma localização do tipo "Prateleira" encontrada.');
+        return;
+      }
 
-        const tiposSelecionados = indicesParaImprimir.map(
-            (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
-        );
-        const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
-        if (!tipoUnico) {
-            alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
-            return;
-        }
+      const tiposSelecionados = indicesParaImprimir.map(
+        (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+      );
+      const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
+      if (!tipoUnico) {
+        alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+        return;
+      }
 
-        const tipoAtual = tiposSelecionados[0];
-        const isCaixa = tipoAtual.includes('caixa');
-        const isPrateleira = tipoAtual.includes('prateleira');
+      const tipoAtual = tiposSelecionados[0];
+      const isCaixa = tipoAtual.includes('caixa');
+      const isPrateleira = tipoAtual.includes('prateleira');
 
-        const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
-        const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
-        const fontNome = '120px';
-        const barHeight = isCaixa ? 90 : 20;
-        const barFont = isCaixa ? 22 : 10;
-        const bodyJustify = isPrateleira ? 'flex-start' : 'center';
-        const nomeMarginTop = isPrateleira ? '-3mm' : '0';
+      const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+      const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+      const fontNome = '120px';
+      const barHeight = isCaixa ? 90 : 20;
+      const barFont = isCaixa ? 22 : 10;
+      const bodyJustify = isPrateleira ? 'flex-start' : 'center';
+      const nomeMarginTop = isPrateleira ? '-3mm' : '0';
 
-        const w = window.open('', '_blank');
-        if (!w) return;
+      const w = window.open('', '_blank');
+      if (!w) return;
 
-        w.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Etiquetas</title>
-      <style>
-        @page {
-          size: ${largura} ${altura};
-          margin: 0;
-        }
-        body {
-          margin: 0;
-          padding: 0;
-        }
-        .etiqueta {
-          width: ${largura};
-          height: ${altura};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: ${bodyJustify};
-          font-family: Arial, sans-serif;
-          page-break-after: always;
-        }
-        .nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: ${nomeMarginTop} 0 0 0;
-          padding: 0;
-          line-height: 1;
-          width: 100%;
-          text-align: center;
-          word-break: break-word;
-        }
-        .barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
-        }
-      </style>
-    </head>
-    <body>
-  `);
+      w.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Etiquetas</title>
+          <style>
+            @page {
+              size: ${largura} ${altura};
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+            }
+            .etiqueta {
+              width: ${largura};
+              height: ${altura};
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: ${bodyJustify};
+              font-family: Arial, sans-serif;
+              page-break-after: always;
+            }
+            .nome {
+              font-weight: bold;
+              font-size: ${fontNome};
+              margin: ${nomeMarginTop} 0 0 0;
+              padding: 0;
+              line-height: 1;
+              width: 100%;
+              text-align: center;
+              word-break: break-word;
+            }
+            .barcode {
+              width: 90%;
+              margin: 0;
+              padding: 0;
+            }
+          </style>
+        </head>
+        <body>
+      `);
 
-        indicesParaImprimir.forEach((idx, i) => {
-            const item = listaLocalizacoes[idx];
-            const nomeLimpo = isPrateleira
-                ? item.nome.replace(/^.*?#/, '')
-                : item.nome;
-            const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
-            const eanEscapado = item.ean.replace(/'/g, "\\'");
-
-            w.document.write(`
-      <div class="etiqueta" data-ean="${eanEscapado}">
-        <div class="nome" id="nome-${i}">${nomeEscapado}</div>
-        <svg class="barcode" id="barcode-${i}"></svg>
-      </div>
-    `);
-        });
+      indicesParaImprimir.forEach((idx, i) => {
+        const item = listaLocalizacoes[idx];
+        const nomeLimpo = isPrateleira ? item.nome.replace(/^.*?#/, '') : item.nome;
+        const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
+        const eanEscapado = item.ean.replace(/'/g, "\\'");
 
         w.document.write(`
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <script>
-      window.onload = () => {
-        document.querySelectorAll('.etiqueta').forEach((div, index) => {
-          const nome = div.querySelector('.nome').innerText;
-          const svg = div.querySelector('.barcode');
-          const ean = div.dataset.ean;
+          <div class="etiqueta" data-ean="${eanEscapado}">
+            <div class="nome" id="nome-${i}">${nomeEscapado}</div>
+            <svg class="barcode" id="barcode-${i}"></svg>
+          </div>
+        `);
+      });
 
-          let tamanho = ${fontNome.replace('px', '')};
-          if (nome.length > 8)      tamanho = 50;
-          else if (nome.length > 6) tamanho = 90;
+      w.document.write(`
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script>
+          window.onload = () => {
+            document.querySelectorAll('.etiqueta').forEach((div, index) => {
+              const nome = div.querySelector('.nome').innerText;
+              const svg = div.querySelector('.barcode');
+              const ean = div.dataset.ean;
 
-          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+              let tamanho = ${fontNome.replace('px', '')};
+              if (nome.length > 8)      tamanho = 50;
+              else if (nome.length > 6) tamanho = 90;
 
-          JsBarcode(svg, ean, {
-            format: 'ean13',
-            height: ${barHeight},
-            displayValue: true,
-            fontSize: ${barFont}
-          });
-        });
+              document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-        window.print();
-        window.onafterprint = () => window.close();
-      };
-    </script>
-    </body>
-    </html>
-  `);
+              JsBarcode(svg, ean, {
+                format: 'ean13',
+                height: ${barHeight},
+                displayValue: true,
+                fontSize: ${barFont}
+              });
+            });
 
-        w.document.close();
+            window.print();
+            window.onafterprint = () => window.close();
+          };
+        </script>
+        </body>
+        </html>
+      `);
+
+      w.document.close();
     };
-
-
 
     /* ------------------------- exclusão ------------------------- */
     const handleExcluir = async (id: number, nome: string, quantidade: number) => {
@@ -885,28 +857,7 @@ const Localizacao: React.FC = () => {
 
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
-          {/* <CarregadorComRetry
-            funcaoCarregamento={async () => {
-              const [locs, estoque] = await Promise.all([
-                buscarLocalizacoes(),
-                buscarConsultaEstoque(),
-              ]);
 
-              const mapa: Record<number, number> = {};
-              estoque.forEach((item: any) => {
-                const id = item.localizacao_id;
-                if (!id) return;
-                mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-              });
-
-              return locs.results.map((l: any) => ({
-                ...l,
-                total_produtos: mapa[l.localizacao_id] || 0,
-              }));
-            }}
-            aoCarregar={(dados) => setListaLocalizacoes(dados)}
-            onErroFinal={(erro) => console.error('Erro definitivo:', erro)}
-          /> */}
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
@@ -917,17 +868,11 @@ const Localizacao: React.FC = () => {
                     placeholder="Buscar Localização, tipo, armazém ou EAN"
                     variant="outlined"
                     size="small"
-                    value={buscaInput}
-                    onChange={e => {setBuscaInput(e.target.value);}}
-                    onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                            setCurrentPage(1);
-                            setBusca(buscaInput);
-                        }
-                    }}
-                    InputProps={{
-                        startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                    }}
+
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
+
                     sx={{ maxWidth: 480, width: 380 }}
                 />
 
@@ -1046,7 +991,7 @@ const Localizacao: React.FC = () => {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => navigate('/localizacao/criar')}
+                        onClick={() => navigate('/CriarLocalizacao')}
                         sx={{
                             backgroundColor: '#61de27',
                             color: '#000',
@@ -1073,66 +1018,26 @@ const Localizacao: React.FC = () => {
                                 />
                             </TableCell>
 
-                            <TableCell sortDirection={orderBy === 'nome' ? orderDirection : false}>
-                                <TableSortLabel
-                                    active={orderBy === 'nome'}
-                                    direction={orderBy === 'nome' ? orderDirection : 'asc'}
-                                    onClick={() => handleSort('nome')}
-                                >
-                                    Nome
-                                </TableSortLabel>
-                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>EAN</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
 
-                            <TableCell sortDirection={orderBy === 'tipo' ? orderDirection : false}>
-                                <TableSortLabel
-                                    active={orderBy === 'tipo'}
-                                    direction={orderBy === 'tipo' ? orderDirection : 'asc'}
-                                    onClick={() => handleSort('tipo')}
-                                >
-                                    Tipo
-                                </TableSortLabel>
-                            </TableCell>
-
-                            <TableCell sortDirection={orderBy === 'armazem' ? orderDirection : false}>
-                                <TableSortLabel
-                                    active={orderBy === 'armazem'}
-                                    direction={orderBy === 'armazem' ? orderDirection : 'asc'}
-                                    onClick={() => handleSort('armazem')}
-                                >
-                                    Armazém
-                                </TableSortLabel>
-                            </TableCell>
-
-                            <TableCell sortDirection={orderBy === 'ean' ? orderDirection : false} align="center">
-                                EAN
-                            </TableCell>
-
-                            <TableCell sortDirection={orderBy === 'total_produtos' ? orderDirection : false} align="center">
-                                <TableSortLabel
-                                    active={orderBy === 'total_produtos'}
-                                    direction={orderBy === 'total_produtos' ? orderDirection : 'asc'}
-                                    onClick={() => handleSort('total_produtos')}
-                                >
-                                    Quantidade
-                                </TableSortLabel>
-                            </TableCell>
-
-                            <TableCell align="center" sx={{ fontWeight: 600 }}>
-                                Ações
-                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {currentItems.length ? (
                             currentItems.map((item, idx) => {
-                                const isSelected = selectedItems.includes(item.localizacao_id);
+                                const originalIndex = currentIndices[idx];
+                                const isSelected = selectedItems.includes(originalIndex);
                                 return (
-                                    <TableRow key={`${item.nome}-${item.localizacao_id}`} selected={isSelected} hover>
-
+                                    <TableRow key={`${item.nome}-${originalIndex}`} selected={isSelected} hover>
                                         <TableCell padding="checkbox">
                                             <Checkbox
                                                 checked={isSelected}
-                                                onChange={(e) => handleSelectItem(item.localizacao_id, e.target.checked)}
+                                                onChange={(e) => handleSelectItem(originalIndex, e.target.checked)}
                                             />
                                         </TableCell>
                                         <TableCell
@@ -1148,15 +1053,15 @@ const Localizacao: React.FC = () => {
                                         <TableCell align="center">
                                             <Box display="flex" justifyContent="center" gap={1}>
                                                 <Tooltip title="Ver produtos">
-                                                    <IconButton
-                                                        size="small"
+                                                    <IconButton 
+                                                        size="small" 
                                                         onClick={() => handleVerProdutos(item.localizacao_id, item.nome)}
                                                     >
                                                         <ListIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip title="Imprimir etiqueta">
-                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
+                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo, item.armazem)}>
                                                         <PrintIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
@@ -1171,7 +1076,6 @@ const Localizacao: React.FC = () => {
                                                                 backgroundColor: item.total_produtos > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
                                                             },
                                                         }}
-
                                                     >
                                                         <DeleteIcon fontSize="small" />
                                                     </IconButton>
