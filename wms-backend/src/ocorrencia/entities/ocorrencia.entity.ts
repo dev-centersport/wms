@@ -25,6 +25,9 @@ export class Ocorrencia {
   @Column({ type: 'boolean', default: true })
   ativo: boolean;
 
+  @Column({ type: 'int' })
+  quantidade_esperada: number;
+
   @ManyToOne(() => ProdutoEstoque, (pe) => pe.ocorrencias)
   @JoinColumn()
   produto_estoque: ProdutoEstoque;

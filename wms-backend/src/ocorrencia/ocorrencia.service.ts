@@ -114,9 +114,11 @@ export class OcorrenciaService {
       }),
     ]);
 
+    console.log(produto_estoque);
+
     if (!produto_estoque)
       throw new NotFoundException('Produto estoque não encontrado');
-    if (!usuario) throw new NotFoundException('Produto estoque não encontrado');
+    if (!usuario) throw new NotFoundException('PUsuário não encontrado');
     if (!localizacao) throw new NotFoundException('Localização não encontrado');
 
     const ocorrencia = this.ocorrenciaRepository.create({
