@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProdutoEstoqueService } from './produto_estoque.service';
 import { CreateProdutoEstoqueDto } from './dto/create-produto_estoque.dto';
@@ -25,14 +26,20 @@ export class ProdutoEstoqueController {
     return this.produtoEstoqueService.findAll();
   }
 
+  @Get('pesquisar')
+  async search(@Query('search') search?: string) {
+    const dados = await this.produtoEstoqueService.search(search);
+
+    if (search) {
+      return dados;
+    } else {
+      return [];
+    }
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.produtoEstoqueService.findOne(+id);
-  }
-
-  @Get('encontrar-por-ean/:ean')
-  encontrarPorEan(@Param('ean') ean: string) {
-    return this.produtoEstoqueService.encontrarPorEan(ean);
   }
 
   @Patch(':id')
