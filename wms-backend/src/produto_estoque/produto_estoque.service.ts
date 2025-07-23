@@ -85,7 +85,7 @@ export class ProdutoEstoqueService {
   }
 
   async update(
-    produto_estoque_id: number,,
+    produto_estoque_id: number,
     updateProdutoEstoqueDto: UpdateProdutoEstoqueDto,
   ): Promise<ProdutoEstoque> {
     const produtoEstoque = await this.findOne(produto_estoque_id);
