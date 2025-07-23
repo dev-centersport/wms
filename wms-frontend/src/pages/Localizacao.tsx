@@ -385,8 +385,8 @@ const Localizacao: React.FC = () => {
         <body>
           <div class="container">
             <div id="nome">${localizacao}</div>
-            <svg id="barcode"></svg>
             <div id="nomeArmazem">${armazemEscapado}</div>
+            <svg id="barcode"></svg>
           </div>
 
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -534,7 +534,7 @@ const Localizacao: React.FC = () => {
               padding: 0;
             }
             .nomeArmazem {
-              font-size: 10px;
+              font-size: 30px;
               margin: 0;
               padding: 0;
               text-align: center;
@@ -547,14 +547,16 @@ const Localizacao: React.FC = () => {
       indicesParaImprimir.forEach((idx, i) => {
         const item = listaLocalizacoes[idx];
         const nomeEscapado = item.nome.replace(/'/g, "\\'");
-        const eanEscapado = item.ean.replace(/'/g, "\\'");
         const armazemEscapado = item.armazem.replace(/'/g, "\\'");
+        const eanEscapado = item.ean.replace(/'/g, "\\'");
+        
         w.document.write(`
           <div class="etiqueta" data-ean="${eanEscapado}">
             <div class="container">
               <div class="nome" id="nome-${i}">${nomeEscapado}</div>
-              <svg class="barcode" id="barcode-${i}"></svg>
               <div class="nomeArmazem">${armazemEscapado}</div>
+              <svg class="barcode" id="barcode-${i}"></svg>
+
             </div>
           </div>
         `);
