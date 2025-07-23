@@ -870,7 +870,7 @@ const Localizacao: React.FC = () => {
             {/* Barra de ações */}
             <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
                 <TextField
-                    placeholder="Buscar Localização, tipo, armazém ou EAN"
+                    placeholder="Buscar Localização ou EAN"
                     variant="outlined"
                     size='small'
                     value={busca}

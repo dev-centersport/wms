@@ -7,7 +7,7 @@ import { CreateLocalizacaoDto } from './dto/create-localizacao.dto';
 import { UpdateLocalizacaoDto } from './dto/update-localizacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Localizacao, StatusPrateleira } from './entities/localizacao.entity';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.entity';
 import { Armazem } from 'src/armazem/entities/armazem.entity';
 import { EAN13Generator } from 'src/utils/ean13.generator';
@@ -99,9 +99,15 @@ export class LocalizacaoService {
       .addGroupBy('armazem.armazem_id');
 
     if (search) {
-      query.andWhere('localizacao.nome ILIKE :search', {
-        search: `%${search}%`,
-      });
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('localizacao.nome ILIKE :search', {
+            search: `%${search}%`,
+          }).orWhere('localizacao.ean ILIKE :search', {
+            search: `%${search}%`,
+          });
+        }),
+      );
     }
     if (status) {
       query.andWhere('localizacao.status = :status', { status });
