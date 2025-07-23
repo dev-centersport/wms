@@ -517,45 +517,44 @@ const Localizacao: React.FC = () => {
     <title>Etiquetas – Caixas</title>
     <style>
         @page {
-        size: ${largura} ${altura};
-        margin: 0;
+            size: ${largura} ${altura} !important;
+            margin: 0;
         }
         body {
-        margin: 0;
-        padding: 0;
+            width: 100vw;
+            height: 100vh;
         }
         .etiqueta {
-        width: ${largura};
-        height: ${altura};
-        position: relative;
-        page-break-after: always;
+            width: ${largura};
+            height: ${altura};
+            position: relative;
+            page-break-after: always;
+            overflow: hidden;
         }
         .container {
-        transform: rotate(-90deg);
-        transform-origin: left top;
-        position: absolute;
-        top: ${altura};
-        left: 0;
-        width: ${altura};
-        height: ${largura};
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-family: Arial, sans-serif;
+            transform: rotate(-90deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
         }
         .nome {
-        font-weight: bold;
-        font-size: ${fontNome};
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        white-space: nowrap;
+            font-weight: bold;
+            font-size: ${fontNome};
+            text-align: center;
+            white-space: nowrap;
         }
         .barcode {
-        width: 90%;
-        margin: 0;
-        padding: 0;
+            width: 90%;
+            margin: 10px 0;
+            padding: 0;
+        }
+        #nomeArmazem {
+            font-size: 30px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
         }
     </style>
     </head>
@@ -566,10 +565,12 @@ const Localizacao: React.FC = () => {
             const item = listaLocalizacoes[idx];
             const nomeEscapado = item.nome.replace(/'/g, "\\'");
             const eanEscapado = item.ean.replace(/'/g, "\\'");
+            const armazemEscapado = item.armazem.replace(/'/g, "\\'");
             w.document.write(`
     <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="container">
         <div class="nome" id="nome-${i}">${nomeEscapado}</div>
+        <div class="nome" id="nomeArmazem">${armazemEscapado}</div>
         <svg class="barcode" id="barcode-${i}"></svg>
         </div>
     </div>
@@ -610,7 +611,7 @@ const Localizacao: React.FC = () => {
         w.document.close();
     };
 
-
+    // Prateleira
     const handleImprimirSelecionadosPrateleira = () => {
         let indicesParaImprimir = selectedItems;
         if (!indicesParaImprimir.length) {
