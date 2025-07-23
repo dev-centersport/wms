@@ -26,6 +26,11 @@ export class ProdutoEstoqueController {
     return this.produtoEstoqueService.findAll();
   }
 
+  @Get('relatorio')
+  relatorioConsulta() {
+    return this.produtoEstoqueService.relatorioConsulta();
+  }
+
   @Get('pesquisar')
   async search(@Query('search') search?: string) {
     const dados = await this.produtoEstoqueService.search(search);

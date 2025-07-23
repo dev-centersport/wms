@@ -81,6 +81,36 @@ export class ProdutoEstoqueService {
     return { results };
   }
 
+  async relatorioConsulta(): Promise<any> {
+    const produto_estoque = await this.ProdutoEstoqueRepository.find({
+      relations: ['produto', 'localizacao.tipo', 'localizacao.armazem'],
+    });
+    console.log(produto_estoque);
+
+    if (!produto_estoque)
+      throw new NotFoundException('Nenhum prodtuo no estoque foi encontrado!');
+
+    const result = produto_estoque.map((item) => ({
+      localizacao: {
+        armazem_id: item.localizacao.armazem.armazem_id,
+        armazem: item.localizacao.armazem.nome,
+        localizacao_id: item.localizacao.localizacao_id,
+        nome: item.localizacao.nome,
+        ean: item.localizacao.ean,
+        tipo: item.localizacao.tipo.tipo,
+      },
+      produto: {
+        produto_id: item.produto.produto_id,
+        descricao: item.produto.descricao,
+        sku: item.produto.sku,
+        ean: item.produto.ean,
+      },
+      quantidade: item.quantidade,
+    }));
+
+    return result;
+  }
+
   async create(
     createProdutoEstoqueDto: CreateProdutoEstoqueDto,
   ): Promise<ProdutoEstoque> {
