@@ -26,7 +26,7 @@ const menuItems = [
   { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
   { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <AssignmentIcon />,         path: '/TipoLocalizacao' },
+  { label: 'Tipo de Localização', icon: <AssignmentIcon />,         path: '/tipo-localizacao' },
   { label: 'Produto',             icon: <ViewInArIcon />,     path: '/produto' },
   { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
   { label: 'Movimentação',        icon: <TrolleyIcon />,    path: '/movimentacao' },

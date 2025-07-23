@@ -17,7 +17,11 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "axios": "^1.10.0",
+    "html2canvas": "^1.4.1",
     "jsbarcode": "^3.12.1",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^4.12.0",
@@ -51,5 +55,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/html2canvas": "^0.5.35",
+    "@types/qrcode": "^1.5.5",
+    "eslint-config-react-app": "^7.0.1"
   }
 }

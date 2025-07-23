@@ -14,8 +14,6 @@ import {
 } from '@mui/material';
 
 
-import api from '../services/API';
-
 import {
     buscarLocalizacao,
     buscarTiposDeLocalizacao,
@@ -105,7 +103,7 @@ const EditarLocalizacao: React.FC = () => {
         console.log('Payload enviado para PATCH:', payload);
 
         try {
-            await api.patch(`/localizacao/${id}`, payload);
+            await atualizarLocalizacao(Number(id), payload); // ✅
             alert('Localização atualizada com sucesso!');
             navigate('/localizacao');
         } catch (err: any) {
