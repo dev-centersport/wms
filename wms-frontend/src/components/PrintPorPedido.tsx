@@ -181,7 +181,7 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
                     <tr key={`${pedido.numeroPedido}-${iIndex}`}>
                       <td>
                         <div className="product-info">
-                          <img src={item.urlFoto} alt="produto" className="product-image" />
+                          <img src={item.url_foto} alt="produto" className="product-image" />
                           <div>
                             <strong>{item.sku}</strong><br />
                             {item.descricao || 'Sem descrição'}
