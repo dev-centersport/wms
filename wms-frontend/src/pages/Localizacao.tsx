@@ -230,52 +230,52 @@ const Localizacao: React.FC = () => {
     };
 
     const handleImprimir = (localizacao: string, ean: string, tipo: string, armazem: string) => {
-      const tipoLower = tipo.toLowerCase();
-      if (tipoLower.includes('caixa')) {
+    const tipoLower = tipo.toLowerCase();
+    if (tipoLower.includes('caixa')) {
         handleImprimirCaixa(localizacao, ean, armazem);
         return;
-      }
-      const w = window.open('', '_blank');
-      if (!w) return;
+    }
+    const w = window.open('', '_blank');
+    if (!w) return;
 
-      /* ------------------------------------------------------------------ */
-      /* 1. Identificação do tipo                                           */
-      /* ------------------------------------------------------------------ */
-         
-      const isCaixa = tipoLower.includes('caixa');
-      const isPrateleira = tipoLower.includes('prateleira');
+    /* ------------------------------------------------------------------ */
+    /* 1. Identificação do tipo                                           */
+    /* ------------------------------------------------------------------ */
+        
+    const isCaixa = tipoLower.includes('caixa');
+    const isPrateleira = tipoLower.includes('prateleira');
 
-      /* ------------------------------------------------------------------ */
-      /* 2. Dimensões, fontes e código de barras                            */
-      /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------ */
+    /* 2. Dimensões, fontes e código de barras                            */
+    /* ------------------------------------------------------------------ */
 
-      const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
-      const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+    const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+    const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-      const fontNome = '120px';                   // tamanho base
-      const barHeight = isCaixa ? 90 : 20;        // altura barra
-      const barFont = isCaixa ? 22 : 10;          // fonte barra
+    const fontNome = '120px';                   // tamanho base
+    const barHeight = isCaixa ? 90 : 20;        // altura barra
+    const barFont = isCaixa ? 22 : 10;          // fonte barra
 
-      /* ------------------------------------------------------------------ */
-      /* 3. Transformação do nome para Prateleira                           */
-      /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------ */
+    /* 3. Transformação do nome para Prateleira                           */
+    /* ------------------------------------------------------------------ */
 
-      const nomeImpresso = isPrateleira
+    const nomeImpresso = isPrateleira
         ? localizacao.replace(/^.*?#/, '')
         : localizacao;
 
-      /* ------------------------------------------------------------------ */
-      /* 4. Estilos condicionais                                            */
-      /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------ */
+    /* 4. Estilos condicionais                                            */
+    /* ------------------------------------------------------------------ */
 
-      const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
-      const nomeMarginTop = isPrateleira ? '-3mm' : '0';          // só prateleira sobe
+    const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
+    const nomeMarginTop = isPrateleira ? '-3mm' : '0';          // só prateleira sobe
 
-      /* ------------------------------------------------------------------ */
-      /* 5. HTML completo                                                   */
-      /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------ */
+    /* 5. HTML completo                                                   */
+    /* ------------------------------------------------------------------ */
 
-      w.document.write(`
+    w.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -350,7 +350,7 @@ const Localizacao: React.FC = () => {
         w.document.close();
     };
 
-    const handleImprimirCaixa = (localizacao: string, ean: string) => {
+    const handleImprimirCaixa = (localizacao: string, ean: string, armazem: string) => {
         const w = window.open('', '_blank');
         if (!w) return;
 
@@ -364,57 +364,57 @@ const Localizacao: React.FC = () => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Etiqueta – ${localizacao}</title>
-      <style>
+    <title>Etiqueta – ${localizacao}</title>
+    <style>
         @page {
-          size: ${largura} ${altura};
-          margin: 0;
+        size: ${largura} ${altura};
+        margin: 0;
         }
         body {
-          width: ${largura};
-          height: ${altura};
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: Arial, sans-serif;
-          overflow: hidden;
+        width: ${largura};
+        height: ${altura};
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
         }
         .container {
-          transform: rotate(-90deg);
-          margin-top: 100px;
-          transform-origin: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
+        transform: rotate(-90deg);
+        margin-top: 100px;
+        transform-origin: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
         }
         #nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: 0;
-          padding: 0;
-          text-align: center;
-          white-space: nowrap;
+        font-weight: bold;
+        font-size: ${fontNome};
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        white-space: nowrap;
         }
         #barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
+        width: 90%;
+        margin: 0;
+        padding: 0;
         }
-      </style>
+    </style>
     </head>
     <body>
-      <div class="container">
+    <div class="container">
         <div id="nome">${localizacao}</div>
         <svg id="barcode"></svg>
-      </div>
+    </div>
 
-      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-      <script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
         const nomeEl = document.getElementById('nome');
         const texto = '${localizacao}';
         let tamanho = ${fontNome.replace('px', '')};
@@ -425,20 +425,20 @@ const Localizacao: React.FC = () => {
         nomeEl.style.fontSize = tamanho + 'px';
 
         JsBarcode('#barcode', '${ean}', {
-          format: 'ean13',
-          height: ${barHeight},
-          displayValue: true,
-          fontSize: ${barFont}
+        format: 'ean13',
+        height: ${barHeight},
+        displayValue: true,
+        fontSize: ${barFont}
         });
 
         window.onload = () => {
-          window.print();
-          window.onafterprint = () => window.close();
+        window.print();
+        window.onafterprint = () => window.close();
         };
-      </script>
+    </script>
     </body>
     </html>
-  `);
+`);
 
         w.document.close();
     };
@@ -514,98 +514,98 @@ const Localizacao: React.FC = () => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Etiquetas – Caixas</title>
-      <style>
+    <title>Etiquetas – Caixas</title>
+    <style>
         @page {
-          size: ${largura} ${altura};
-          margin: 0;
+        size: ${largura} ${altura};
+        margin: 0;
         }
         body {
-          margin: 0;
-          padding: 0;
+        margin: 0;
+        padding: 0;
         }
         .etiqueta {
-          width: ${largura};
-          height: ${altura};
-          position: relative;
-          page-break-after: always;
+        width: ${largura};
+        height: ${altura};
+        position: relative;
+        page-break-after: always;
         }
         .container {
-          transform: rotate(-90deg);
-          transform-origin: left top;
-          position: absolute;
-          top: ${altura};
-          left: 0;
-          width: ${altura};
-          height: ${largura};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          font-family: Arial, sans-serif;
+        transform: rotate(-90deg);
+        transform-origin: left top;
+        position: absolute;
+        top: ${altura};
+        left: 0;
+        width: ${altura};
+        height: ${largura};
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
         }
         .nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: 0;
-          padding: 0;
-          text-align: center;
-          white-space: nowrap;
+        font-weight: bold;
+        font-size: ${fontNome};
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        white-space: nowrap;
         }
         .barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
+        width: 90%;
+        margin: 0;
+        padding: 0;
         }
-      </style>
+    </style>
     </head>
     <body>
-  `);
+`);
 
         indicesParaImprimir.forEach((idx, i) => {
             const item = listaLocalizacoes[idx];
             const nomeEscapado = item.nome.replace(/'/g, "\\'");
             const eanEscapado = item.ean.replace(/'/g, "\\'");
             w.document.write(`
-      <div class="etiqueta" data-ean="${eanEscapado}">
+    <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="container">
-          <div class="nome" id="nome-${i}">${nomeEscapado}</div>
-          <svg class="barcode" id="barcode-${i}"></svg>
+        <div class="nome" id="nome-${i}">${nomeEscapado}</div>
+        <svg class="barcode" id="barcode-${i}"></svg>
         </div>
-      </div>
+    </div>
     `);
         });
 
         w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
-      window.onload = () => {
+    window.onload = () => {
         document.querySelectorAll('.etiqueta').forEach((div, index) => {
-          const nome = div.querySelector('.nome').innerText;
-          const svg = div.querySelector('.barcode');
-          const ean = div.dataset.ean;
+        const nome = div.querySelector('.nome').innerText;
+        const svg = div.querySelector('.barcode');
+        const ean = div.dataset.ean;
 
-          let tamanho = ${fontNome.replace('px', '')};
-          if (nome.length > 8)      tamanho = 50;
-          else if (nome.length > 5) tamanho = 140;
+        let tamanho = ${fontNome.replace('px', '')};
+        if (nome.length > 8)      tamanho = 50;
+        else if (nome.length > 5) tamanho = 140;
 
-          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+        document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-          JsBarcode(svg, ean, {
+        JsBarcode(svg, ean, {
             format: 'ean13',
             height: ${barHeight},
             displayValue: true,
             fontSize: ${barFont}
-          });
+        });
         });
 
         window.print();
         window.onafterprint = () => window.close();
-      };
+    };
     </script>
     </body>
     </html>
-  `);
+`);
 
         w.document.close();
     };
@@ -657,45 +657,45 @@ const Localizacao: React.FC = () => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Etiquetas</title>
-      <style>
+    <title>Etiquetas</title>
+    <style>
         @page {
-          size: ${largura} ${altura};
-          margin: 0;
+        size: ${largura} ${altura};
+        margin: 0;
         }
         body {
-          margin: 0;
-          padding: 0;
+        margin: 0;
+        padding: 0;
         }
         .etiqueta {
-          width: ${largura};
-          height: ${altura};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: ${bodyJustify};
-          font-family: Arial, sans-serif;
-          page-break-after: always;
+        width: ${largura};
+        height: ${altura};
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: ${bodyJustify};
+        font-family: Arial, sans-serif;
+        page-break-after: always;
         }
         .nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: ${nomeMarginTop} 0 0 0;
-          padding: 0;
-          line-height: 1;
-          width: 100%;
-          text-align: center;
-          word-break: break-word;
+        font-weight: bold;
+        font-size: ${fontNome};
+        margin: ${nomeMarginTop} 0 0 0;
+        padding: 0;
+        line-height: 1;
+        width: 100%;
+        text-align: center;
+        word-break: break-word;
         }
         .barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
+        width: 90%;
+        margin: 0;
+        padding: 0;
         }
-      </style>
+    </style>
     </head>
     <body>
-  `);
+`);
 
         indicesParaImprimir.forEach((idx, i) => {
             const item = listaLocalizacoes[idx];
@@ -706,43 +706,43 @@ const Localizacao: React.FC = () => {
             const eanEscapado = item.ean.replace(/'/g, "\\'");
 
             w.document.write(`
-      <div class="etiqueta" data-ean="${eanEscapado}">
+    <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="nome" id="nome-${i}">${nomeEscapado}</div>
         <svg class="barcode" id="barcode-${i}"></svg>
-      </div>
+    </div>
     `);
         });
 
         w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
-      window.onload = () => {
+    window.onload = () => {
         document.querySelectorAll('.etiqueta').forEach((div, index) => {
-          const nome = div.querySelector('.nome').innerText;
-          const svg = div.querySelector('.barcode');
-          const ean = div.dataset.ean;
+        const nome = div.querySelector('.nome').innerText;
+        const svg = div.querySelector('.barcode');
+        const ean = div.dataset.ean;
 
-          let tamanho = ${fontNome.replace('px', '')};
-          if (nome.length > 8)      tamanho = 50;
-          else if (nome.length > 6) tamanho = 90;
+        let tamanho = ${fontNome.replace('px', '')};
+        if (nome.length > 8)      tamanho = 50;
+        else if (nome.length > 6) tamanho = 90;
 
-          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+        document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-          JsBarcode(svg, ean, {
+        JsBarcode(svg, ean, {
             format: 'ean13',
             height: ${barHeight},
             displayValue: true,
             fontSize: ${barFont}
-          });
+        });
         });
 
         window.print();
         window.onafterprint = () => window.close();
-      };
+    };
     </script>
     </body>
     </html>
-  `);
+`);
 
         w.document.close();
     };
@@ -842,28 +842,28 @@ const Localizacao: React.FC = () => {
 
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
-          <CarregadorComRetry
+        <CarregadorComRetry
             funcaoCarregamento={async () => {
-              const [locs, estoque] = await Promise.all([
+            const [locs, estoque] = await Promise.all([
                 buscarLocalizacoes(),
                 buscarConsultaEstoque(),
-              ]);
+            ]);
 
-              const mapa: Record<number, number> = {};
-              estoque.forEach((item: any) => {
+            const mapa: Record<number, number> = {};
+            estoque.forEach((item: any) => {
                 const id = item.localizacao_id;
                 if (!id) return;
                 mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-              });
+            });
 
-              return locs.map((l: any) => ({
+            return locs.map((l: any) => ({
                 ...l,
                 total_produtos: mapa[l.localizacao_id] || 0,
-              }));
+            }));
             }}
             aoCarregar={(dados) => setListaLocalizacoes(dados)}
             onErroFinal={(erro) => console.error('Erro definitivo:', erro)}
-          />
+        />
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
@@ -1111,7 +1111,7 @@ const Localizacao: React.FC = () => {
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip title="Imprimir etiqueta">
-                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
+                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo, item.armazem)}>
                                                         <PrintIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
