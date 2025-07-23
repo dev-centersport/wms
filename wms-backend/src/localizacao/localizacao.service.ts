@@ -109,6 +109,7 @@ export class LocalizacaoService {
         }),
       );
     }
+
     if (status) {
       query.andWhere('localizacao.status = :status', { status });
     }
