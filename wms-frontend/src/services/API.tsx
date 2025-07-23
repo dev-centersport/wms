@@ -306,6 +306,39 @@ export interface PedidoSeparado {
 export interface RespostaSeparacao {
   pedidos: PedidoSeparado[];
 }
+export interface ItemAgrupadoProduto {
+  urlFoto: string;
+  descricao: string;
+  eanProduto: string;
+  quantidadeSeparada: number;
+  armazem: string;
+  localizacao: string;
+  pedidosAtendidos: {
+    pedidoId: string;
+    numeroPedido: string;
+  }[];
+}
+
+export interface RespostaSeparacaoProduto {
+  localizacoes: ItemAgrupadoProduto[];
+  produtosNaoEncontrados: any[];
+}
+
+export async function enviarArquivoSeparacaoPorProduto(formData: FormData): Promise<RespostaSeparacaoProduto> {
+  try {
+    const response = await axios.post(`${BASE_URL}/separacao/agrupado-produto`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data as RespostaSeparacaoProduto;
+  } catch (err) {
+    console.error('Erro ao enviar arquivo de separação por produto →', err);
+    throw new Error('Falha ao processar o arquivo de separação por produto.');
+  }
+}
+
 
 export async function enviarArquivoSeparacao(formData: FormData): Promise<RespostaSeparacao> {
   try {

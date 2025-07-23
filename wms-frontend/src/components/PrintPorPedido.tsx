@@ -7,7 +7,7 @@ interface Item {
   ean?: string;
   localizacoes: { armazem: string; localizacao: string }[];
   descricao?: string;
-  url_foto?: string;
+  urlFoto?: string;
 }
 
 interface Pedido {

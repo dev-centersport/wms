@@ -3,10 +3,9 @@ import React from 'react';
 interface LocalizacaoItem {
   armazem: string;
   localizacao: string;
-  produtoSKU: string;
-  produtoDescricao: string;
-  produtoEAN: string;
-  produtoFoto?: string;
+  descricao: string;
+  eanProduto: string;
+  urlFoto?: string; // ✅ Corrigido
   quantidadeSeparada: number;
 }
 
@@ -62,7 +61,6 @@ const PrintPorLocalizacao: React.FC<PrintPorLocalizacaoProps> = ({ data }) => {
             <thead>
               <tr>
                 <th>Imagem</th>
-                <th>SKU</th>
                 <th>Descrição</th>
                 <th>EAN</th>
                 <th>Qtd</th>
@@ -72,16 +70,14 @@ const PrintPorLocalizacao: React.FC<PrintPorLocalizacaoProps> = ({ data }) => {
               {agrupado[locKey].map((item, idx) => (
                 <tr key={idx}>
                   <td>
-                    {item.produtoFoto ? (
-                      <img src={item.produtoFoto} alt="produto" />
+                    {item.urlFoto ? (
+                      <img src={item.urlFoto} alt="produto" className="product-image" />
                     ) : (
                       <span style={{ fontSize: '10px', color: '#999' }}>Sem imagem</span>
                     )}
                   </td>
-
-                  <td>{item.produtoSKU}</td>
-                  <td>{item.produtoDescricao}</td>
-                  <td>{item.produtoEAN}</td>
+                  <td>{item.descricao}</td>
+                  <td>{item.eanProduto}</td>
                   <td>{item.quantidadeSeparada}</td>
                 </tr>
               ))}

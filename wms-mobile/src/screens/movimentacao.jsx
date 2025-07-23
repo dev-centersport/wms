@@ -75,6 +75,7 @@ export default function Movimentacao() {
       setProdutosNaLocalizacao(produtosExistentes);
       requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
+      setEanLocalizacao('');
       Alert.alert('Erro ao buscar localização');
     }
   };
