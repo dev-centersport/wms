@@ -14,24 +14,34 @@ export async function buscarLocalizacaoPorEAN(ean) {
   try {
     const eanLimpo = limparCodigo(ean);
 
-    const response = await axios.get(`${BASE_URL}/localizacao/buscar-por-ean/${eanLimpo}`);
-    const loc = response.data;
+    if (!cacheMapLocalizacoes) {
+      const response = await axios.get(`${BASE_URL}/localizacao`);
+      const lista = response.data;
 
-    if (!loc || !loc.localizacao_id) {
+      cacheMapLocalizacoes = new Map(
+        lista.map((loc) => [limparCodigo(loc.ean), loc])
+      );
+    }
+
+    const encontrada = cacheMapLocalizacoes.get(eanLimpo);
+
+    if (!encontrada) {
       throw new Error('Localização com esse EAN não encontrada.');
     }
 
     return {
-      localizacao_id: loc.localizacao_id,
-      nome: loc.nome || loc.localizacao_nome || '',
-      armazem: loc.armazem_nome || '', // caso queira incluir o nome do armazém
+      localizacao_id: encontrada.localizacao_id,
+      nome: encontrada.nome,
+      armazem:
+        typeof encontrada.armazem === 'object'
+          ? encontrada.armazem.nome
+          : encontrada.armazem || '',
     };
   } catch (err) {
     console.error('Erro ao buscar localização:', err);
     throw err;
   }
 }
-
 
 // 🔍 Buscar produto na localização com cache e sanitização
 const cacheProdutosPorLocalizacao = new Map();

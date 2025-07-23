@@ -83,47 +83,28 @@ export default function Movimentacao() {
     const ean = limparCodigo(eanBipado || eanProduto);
     if (!localizacao_id) {
       Alert.alert('Bipe uma localização antes de bipar produtos.');
-      setEanProduto('');
       return;
     }
-
     try {
       const produto = await buscarProdutoPorEAN(ean);
       if (!produto || !produto.produto_id) {
         Alert.alert('Produto inválido');
-        setEanProduto('');
         return;
       }
-
-      // Verifica se o produto existe na localização atual
-      const estoque = produtosNaLocalizacao.find(
-        (p) => Number(p.produto_id) === Number(produto.produto_id)
-      );
-
-      if (tipo === 'saida' && !estoque) {
-        Alert.alert('Produto não localizado na gaveta, portanto foi excluído da lista.');
-        setEanProduto('');
-        requestAnimationFrame(() => produtoRef.current?.focus());
-        return;
-      }
-
       const produtoFormatado = {
         produto_id: produto.produto_id,
-        produto_estoque_id: estoque?.produto_estoque_id || null, // ⬅️ ESSENCIAL
         descricao: produto.descricao,
         ean: produto.ean,
         sku: produto.sku,
         url_foto: produto.url_foto,
         quantidade: 1,
-        estoque_localizacao: estoque?.quantidade || 0,
+        estoque_localizacao: produto.estoque || 0,
       };
-
       setProdutos((prev) => [...prev, produtoFormatado]);
       setEanProduto('');
       requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
       Alert.alert('Produto não encontrado');
-      setEanProduto('');
     }
   };
 
@@ -142,29 +123,15 @@ export default function Movimentacao() {
 
   const verificarEstoqueAntesDeConfirmar = () => {
     if (tipo === 'saida') {
-      const payload = {
-        tipo,
-        usuario_id: 1,
-        localizacao_origem_id: localizacao_id,
-        localizacao_destino_id: 0,
-        itens_movimentacao: agruparProdutos(produtos),
-      };
-
-      console.log("📦 Payload (pré-verificação):", JSON.stringify(payload, null, 2));
-
       const contador = {};
       const descricoes = {};
       produtos.forEach((p) => {
         contador[p.produto_id] = (contador[p.produto_id] || 0) + 1;
         descricoes[p.produto_id] = p.descricao;
       });
-
       for (const [produto_id, bipadoQtd] of Object.entries(contador)) {
-        const existente = produtosNaLocalizacao.find(
-          (p) => Number(p.produto_id) === Number(produto_id)
-        );
+        const existente = produtosNaLocalizacao.find(p => Number(p.produto_id) === Number(produto_id));
         const estoque = existente?.quantidade ?? 0;
-
         if (bipadoQtd > estoque) {
           Alert.alert(
             '⚠️ Estoque insuficiente',
@@ -174,93 +141,27 @@ export default function Movimentacao() {
         }
       }
     }
-
     setMostrarConfirmacao(true);
   };
 
-
-  const agruparProdutos = (lista) => {
-    const mapa = {};
-    for (const p of lista) {
-      const id = p.produto_id;
-      if (!id) continue;
-
-      if (!mapa[id]) {
-        mapa[id] = {
-          produto_id: Number(p.produto_id),
-          produto_estoque_id: Number(p.produto_estoque_id),
-          quantidade: 0,
-        };
-      }
-      mapa[id].quantidade += 1;
-    }
-    return Object.values(mapa);
-  };
-
-
   const handleConfirmar = async () => {
     setMostrarConfirmacao(false);
-
     try {
-      // 🚨 Verificações explícitas antes do payload
-      if (!tipo) {
-        console.error('❌ Tipo de movimentação não definido');
-        Alert.alert('Tipo de movimentação inválido');
-        return;
-      }
-
-      if (!localizacao_id || isNaN(Number(localizacao_id))) {
-        console.error('❌ ID de localização inválido:', localizacao_id);
-        Alert.alert('Localização inválida ou não encontrada');
-        return;
-      }
-
-      if (!Array.isArray(produtos) || produtos.length === 0) {
-        console.error('❌ Nenhum produto bipado para movimentação');
-        Alert.alert('Nenhum produto foi bipado');
-        return;
-      }
-
-      // 🔄 Agrupar produtos antes de montar payload
-      const itensAgrupados = agruparProdutos(produtos);
-      console.log('📦 Produtos agrupados:', JSON.stringify(itensAgrupados, null, 2));
-
-      // 🎯 Definição explícita dos campos de localização
-      const localizacao_origem_id = tipo === 'saida' ? localizacao_id : 0;
-      const localizacao_destino_id = tipo === 'entrada' ? localizacao_id : 0;
-
-      console.log(`➡️ tipo: ${tipo}`);
-      console.log(`➡️ localizacao_origem_id (${typeof localizacao_origem_id}):`, localizacao_origem_id);
-      console.log(`➡️ localizacao_destino_id (${typeof localizacao_destino_id}):`, localizacao_destino_id);
-
-      // 🧾 Payload final
       const payload = {
         tipo,
         usuario_id: 1,
-        localizacao_origem_id,
-        localizacao_destino_id,
-        itens_movimentacao: itensAgrupados,
+        localizacao_origem_id: tipo === 'saida' ? localizacao_id : 0,
+        localizacao_destino_id: tipo === 'entrada' ? localizacao_id : 0,
+        itens_movimentacao: produtos.map((p) => ({
+          produto_id: Number(p.produto_id),
+          quantidade: Number(p.quantidade),
+        })),
       };
-
-      console.log('✅ Payload final a ser enviado:', JSON.stringify(payload, null, 2));
-
-      const resposta = await enviarMovimentacao(payload);
-
-      console.log('✅ Movimentação salva com sucesso:', resposta);
+      await enviarMovimentacao(payload);
       Alert.alert('Movimentação salva com sucesso');
       limparTudo();
-
-    } catch (err) {
-      console.error('❌ Erro ao salvar movimentação:', err);
-
-      if (err.response?.data) {
-        console.error('🔍 Detalhe do erro:', JSON.stringify(err.response.data, null, 2));
-        Alert.alert('Erro:', err.response.data?.message?.[0] || 'Erro ao salvar movimentação');
-      } else if (err.message) {
-        Alert.alert('Erro:', err.message);
-      } else {
-        Alert.alert('Erro ao salvar movimentação');
-      }
+    } catch {
+      Alert.alert('Erro ao salvar movimentação');
     }
   };
 
@@ -293,7 +194,7 @@ export default function Movimentacao() {
           localizacao_id={localizacao_id}
           eanLocalizacao={eanLocalizacao}
           setEanLocalizacao={(v) => setEanLocalizacao(limparCodigo(v))}
-          handleBuscarLocalizacao={handleBuscarLocalizacao}
+          handleBuscarLocalizacao={({ nativeEvent }) => handleBuscarLocalizacao(nativeEvent.text)}
           nomeLocalizacao={nomeLocalizacao}
           eanProduto={eanProduto}
           setEanProduto={(v) => setEanProduto(limparCodigo(v))}
@@ -302,7 +203,6 @@ export default function Movimentacao() {
           produtoRef={produtoRef}
           produtos={produtos}
         />
-
 
         {produtos.length > 0 && (
           <View style={styles.resumoSKUs}>

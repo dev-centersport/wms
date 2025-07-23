@@ -63,7 +63,7 @@ const CriarLocalizacao: React.FC = () => {
 
         setTipos(listaTipos);
         setArmazens(listaArmazens);
-        setListaLocalizacoes(localizacoesExistentes.results);
+        setListaLocalizacoes(localizacoesExistentes);
       } catch (err) {
         alert('Erro ao carregar dados iniciais.');
         console.error(err);

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, Text, TextInput, View } from 'react-native';
+import { StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import Header from '../componentes/Ocorrencia/Header';
@@ -20,18 +20,15 @@ export default function Ocorrencia() {
   const [localizacao, setLocalizacao] = useState('');
   const [sku, setSku] = useState('');
   const [quantidade, setQuantidade] = useState('');
-  const [quantidadeBipada, setQuantidadeBipada] = useState('');
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
-  const [produtoValidado, setProdutoValidado] = useState(false);
-
-  const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
-  const [skuBloqueado, setSkuBloqueado] = useState(true);
-
   const navigation = useNavigation();
   const localizacaoRef = useRef(null);
   const skuRef = useRef(null);
+
+  const [localizacaoBloqueada, setLocalizacaoBloqueada] = useState(false);
+  const [skuBloqueado, setSkuBloqueado] = useState(true);
 
   const limparCodigo = (valor) => valor.replace(/[\n\r\t\s]/g, '').trim();
 
@@ -69,46 +66,30 @@ export default function Ocorrencia() {
       const dados = await buscarProdutoEstoquePorLocalizacaoEAN(eanLocal, eanProduto);
       setSku(eanProduto);
       setQuantidade(String(dados.quantidade));
-      setProdutoValidado(true);
       setSkuBloqueado(true);
     } catch (err) {
       setQuantidade('');
-      setProdutoValidado(false);
       Alert.alert('Erro', err.message || 'Produto não encontrado nesta localização.');
     }
   };
 
-  const handleQuantidadeBipadaChange = (valor) => {
-    const somenteNumeros = valor.replace(/[^0-9]/g, '');
-    setQuantidadeBipada(somenteNumeros);
-  };
-
   const handleSalvar = () => {
-    if (!localizacaoBloqueada) {
-      Alert.alert('Atenção', 'Você precisa validar a localização.');
+    if (!localizacao || !sku) {
+      Alert.alert('Atenção', 'Preencha a localização e o SKU/EAN.');
       return;
     }
-
-    if (!produtoValidado) {
-      Alert.alert('Atenção', 'Você precisa validar o SKU/EAN dando Enter após digitar.');
-      return;
-    }
-
-    if (!quantidadeBipada || isNaN(quantidadeBipada) || Number(quantidadeBipada) <= 0) {
-      Alert.alert('Atenção', 'Informe uma quantidade bipada válida (número maior que 0).');
-      return;
-    }
-
     setMostrarConfirmacao(true);
   };
 
   const confirmarSalvar = async () => {
+    const eanLocal = limparCodigo(localizacao);
+    const eanProduto = limparCodigo(sku);
     try {
+      const dados = await buscarProdutoEstoquePorLocalizacaoEAN(eanLocal, eanProduto);
       const payload = {
         usuario_id: 1,
-        localizacao_id: Number(localizacaoBloqueada ? (await buscarLocalizacaoPorEAN(localizacao)).localizacao_id : 0),
-        produto_estoque_id: Number((await buscarProdutoEstoquePorLocalizacaoEAN(localizacao, sku)).produto_estoque_id),
-        quantidade_bipada: Number(quantidadeBipada),
+        localizacao_id: dados.localizacao_id,
+        produto_estoque_id: dados.produto_estoque_id,
       };
       await criarOcorrencia(payload);
       Alert.alert('Sucesso', 'Ocorrência registrada com sucesso!');
@@ -124,11 +105,9 @@ export default function Ocorrencia() {
     setLocalizacao('');
     setSku('');
     setQuantidade('');
-    setQuantidadeBipada('');
     setNomeLocalizacao('');
     setLocalizacaoBloqueada(false);
     setSkuBloqueado(true);
-    setProdutoValidado(false);
     requestAnimationFrame(() => localizacaoRef.current?.focus());
   };
 
@@ -164,14 +143,8 @@ export default function Ocorrencia() {
           />
         )}
 
-        {produtoValidado && (
-        <QuantidadeDisplay
-          quantidade={quantidade}
-          quantidadeBipada={quantidadeBipada}
-          handleQuantidadeBipadaChange={handleQuantidadeBipadaChange}
-        />
-        )}
-        
+        <QuantidadeDisplay quantidade={quantidade} />
+
         <BotoesAcoes onSalvar={handleSalvar} onCancelar={() => setMostrarCancelar(true)} />
       </ScrollView>
 
@@ -201,19 +174,5 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     backgroundColor: '#fff',
     flexGrow: 1,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  label: {
-    marginTop: 20,
-    marginBottom: 6,
-    fontWeight: '600',
-    fontSize: 14,
   },
 });

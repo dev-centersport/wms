@@ -43,64 +43,66 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
-          />
-          <Text style={styles.brand}>WMS</Text>
-          <Text style={styles.welcome}>Bem Vindo!</Text>
-
-          <Text style={styles.label}>Usuário</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Usuário"
-              value={usuario}
-              onChangeText={setUsuario}
-              style={styles.input}
-              placeholderTextColor="#888"
+        <View style={styles.container}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Image
+              source={require('../../assets/images/logo01.png')}
+              style={styles.logo}
             />
-            <Icon name="user" size={20} color="#888" style={styles.icon} />
-          </View>
+            <Text style={styles.brand}>WMS</Text>
+            <Text style={styles.welcome}>Bem Vindo!</Text>
 
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!mostrarSenha}
-              style={styles.input}
-              placeholderTextColor="#888"
-            />
-            <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
-              <Icon
-                name={mostrarSenha ? 'eye' : 'eye-slash'}
-                size={20}
-                color="#888"
-                style={styles.icon}
+            <Text style={styles.label}>Usuário</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Usuário"
+                value={usuario}
+                onChangeText={setUsuario}
+                style={styles.input}
+                placeholderTextColor="#888"
               />
+              <Icon name="user" size={20} color="#888" style={styles.icon} />
+            </View>
+
+            <Text style={styles.label}>Senha</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Senha"
+                value={senha}
+                onChangeText={setSenha}
+                secureTextEntry={!mostrarSenha}
+                style={styles.input}
+                placeholderTextColor="#888"
+              />
+              <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+                <Icon
+                  name={mostrarSenha ? 'eye' : 'eye-slash'}
+                  size={20}
+                  color="#888"
+                  style={styles.icon}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={handleLogin} style={styles.button}>
+              <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.footer}>
-            <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
-              "Otimizando a gestão de armazém com tecnologia eficiente"
+            <Text style={styles.footer}>
+              <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
+                "Otimizando a gestão de armazém com tecnologia eficiente"
+              </Text>
             </Text>
-          </Text>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
@@ -113,10 +115,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    justifyContent: 'center',
+    padding: 20,
   },
   logo: {
     width: 150,
@@ -163,6 +164,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     paddingVertical: 12,
+    paddingHorizontal: 0,
   },
   icon: {
     fontSize: 20,
@@ -187,6 +189,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
     textAlign: 'center',
-    paddingBottom: 20,
   },
 });

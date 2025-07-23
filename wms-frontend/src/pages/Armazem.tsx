@@ -156,7 +156,7 @@ const ArmazemPage: React.FC = () => {
           sx={{ maxWidth: 480, width: 380 }}
         />
 
-        {/* <Button
+        <Button
           variant="outlined"
           startIcon={<FilterListIcon />}
           sx={{ minWidth: 110 }}
@@ -165,6 +165,7 @@ const ArmazemPage: React.FC = () => {
           Filtro
         </Button>
 
+        {/* Menu de filtros */}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <Box sx={{ p: 2, width: 300 }}>
             <TextField
@@ -217,6 +218,7 @@ const ArmazemPage: React.FC = () => {
           </Box>
         </Menu>
 
+        {/* Botão limpar filtros fora do menu */}
         {(filtroEndereco || filtroNome) && (
           <Button
             variant="outlined"
@@ -225,8 +227,9 @@ const ArmazemPage: React.FC = () => {
           >
             Limpar Filtros
           </Button>
-        )} */}
+        )}
 
+        {/* Botão novo armazém */}
         <Button
           variant="contained"
           onClick={() => navigate("/criar-armazem")}
@@ -294,11 +297,11 @@ const ArmazemPage: React.FC = () => {
                     </TableCell>
                     <TableCell>{item.endereco}</TableCell>
                     <TableCell align="center">
-                      {/* <Tooltip title="Editar armazém">
+                      <Tooltip title="Editar armazém">
                         <IconButton onClick={() => navigate(`/armazem/${item.armazem_id}/editar/`)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
-                      </Tooltip> */}
+                      </Tooltip>
                       <Tooltip title="Excluir armazém">
                         <IconButton onClick={() => handleExcluir(item.armazem_id)}>
                           <DeleteIcon fontSize="small" />

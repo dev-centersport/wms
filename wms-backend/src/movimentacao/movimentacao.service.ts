@@ -88,7 +88,7 @@ export class MovimentacaoService {
       CreateMovimentacaoDto.itens_movimentacao = produtosEstoque.map(
         (item) => ({
           produto_id: item.produto.produto_id,
-          produto_estoque_id: item.produto_estoque_id,
+          produto_estoque_id: item.produto.produto_id,
           quantidade: item.quantidade, // Transfere TODA a quantidade disponível
         }),
       );

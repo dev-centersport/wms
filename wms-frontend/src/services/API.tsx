@@ -166,39 +166,9 @@ export interface Localizacao {
   tipo: string;
   armazem: string;
   ean: string;
-  total_produtos: number;
+  endereco: string;
+  total_produtos: string;
 }
-
-export const buscarLocalizacoes = async (
-  limit: number = 100,
-  offset: number = 0,
-  busca: string = '',
-): Promise<{ results: Localizacao[]; total: number }> => {
-  try {
-    const res = await axios.get<{ results: any[]; total: number }>(
-      `http://151.243.0.78:3001/localizacao?limit=${limit}&offset=${offset}` +
-      `&busca=${encodeURIComponent(busca)}`
-    );
-
-    const dados: Localizacao[] = res.data.results.map((item) => ({
-      localizacao_id: item.localizacao_id,
-      nome: item.nome,
-      tipo: item.tipo?.tipo ?? '',
-      armazem: item.armazem?.nome ?? '',
-      ean: item.ean ?? '',
-      total_produtos: item.total_produtos ?? 0,
-    }));
-
-    return {
-      results: dados,
-      total: res.data.total
-    };
-  } catch (err) {
-    console.error('Erro ao buscar localizações →', err);
-    throw new Error('Falha ao carregar as localizações do servidor.');
-  }
-};
-
 export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
   try {
     await api.delete(`/tipo-localizacao/${id}`);
@@ -234,34 +204,10 @@ export const criarTipoLocalizacao = async (payload: { tipo: string }): Promise<v
   }
 };
 
-export interface Produto {
-  produto_id: number;
-  url_foto: string;
-  descricao: string;
-  sku: string;
-  ean: string;
+export async function buscarProdutos() {
+  const response = await api.get('/produto');
+  return response.data;
 }
-
-export const buscarProdutos = async (): Promise<Produto[]> => {
-  try {
-    const res = await axios.get<{ results: any[] }>('http://151.243.0.78:3001/produto?limit=1000000000000');
-
-    const dados: Produto[] = res.data.results.map((item) => ({
-      produto_id: item.produto_id,
-      url_foto: item.url_foto ?? '',
-      descricao: item.descricao,
-      sku: item.sku,
-      ean: item.ean ?? '',
-    }));
-
-    console.log(dados)
-
-    return dados
-  } catch (err) {
-    console.error('Erro ao buscar localizações →', err);
-    throw new Error('Falha ao carregar as localizações do servidor.');
-  }
-};
 
 
 export async function buscarConsultaEstoque() {
@@ -290,61 +236,41 @@ export async function buscarConsultaEstoque() {
     throw new Error('Falha ao carregar os dados de estoque.');
   }
 }
-export interface ItemSeparacao {
-  sku: string;
-  idItem: string;
-  localizacoes: any[];
-  descricao?: string;
-  urlFoto?: string;
-}
 
-export interface PedidoSeparado {
-  numeroPedido: string;
-  itens: ItemSeparacao[];
-}
-
-export interface RespostaSeparacao {
-  pedidos: PedidoSeparado[];
-}
-
-export async function enviarArquivoSeparacao(formData: FormData): Promise<RespostaSeparacao> {
+export const buscarLocalizacoes = async (): Promise<Localizacao[]> => {
   try {
-    const response = await axios.post(`${BASE_URL}/separacao/agrupado-pedido`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const res = await axios.get<any[]>('http://151.243.0.78:3001/localizacao');
 
-    const pedidos = response.data.pedidos;
+    const dados: Localizacao[] = res.data.map((item) => ({
+      localizacao_id: item.localizacao_id,
+      nome: item.nome,
+      tipo: item.tipo?.tipo ?? '',
+      armazem: item.armazem?.nome ?? '',
+      ean: item.ean ?? '',
+      endereco: item.armazem?.endereco ?? '',
+      total_produtos: item.total_produtos ?? '',
+    }));
 
-    // Buscar todos os produtos disponíveis na base para enriquecimento
-    const produtosRes = await axios.get(`${BASE_URL}/produto`);
-    const produtos = produtosRes.data;
+    return dados.sort((a, b) => {
+      // Remove os prefixos CEN-#A-23, INF e SUP (e possíveis espaços após eles)
+      const removePrefix = (str: string) => str.replace(/^(CEN|INF|SUP)\s*/i, '');
+      
+      const nomeA = removePrefix(a.nome).toUpperCase(); // Ignora maiúsculas/minúsculas
+      const nomeB = removePrefix(b.nome).toUpperCase();
 
-    const pedidosComDescricaoFoto = pedidos.map((pedido: any) => {
-      const itens = pedido.itens.map((item: any) => {
-        const produtoEncontrado = produtos.find((p: any) => p.sku === item.sku);
-
-        return {
-          ...item,
-          descricao: produtoEncontrado?.descricao || '',
-          urlFoto: produtoEncontrado?.urlFoto || '', // ou .imagem se for esse o nome
-        };
-      });
-
-      return {
-        numeroPedido: pedido.numeroPedido,
-        itens,
-      };
-    });
-
-    return { pedidos: pedidosComDescricaoFoto };
+      if (nomeA < nomeB) {
+          return -1;
+      }
+      if (nomeA > nomeB) {
+          return 1;
+      }
+      return 0; // Nomes iguais
+  });
   } catch (err) {
-    console.error('Erro ao enviar arquivo de separação →', err);
-    throw new Error('Falha ao processar o arquivo de separação.');
+    console.error('Erro ao buscar localizações →', err);
+    throw new Error('Falha ao carregar as localizações do servidor.');
   }
-}
-
+};
 // Novo: busca uma localização individual
 export const buscarLocalizacao = async (id: number) => {
   const resp = await api.get(`/localizacao/${id}`);
@@ -501,65 +427,38 @@ export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao)
   }
 };
 
-export async function buscarProdutoPorEAN(ean: string, eanLocalizacao?: string) {
-  const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
+export async function buscarProdutoPorEAN(ean: string) {
+  const response = await axios.get('http://151.243.0.78:3001/produto');
+  const produtos = response.data;
 
-  try {
-    const response = await axios.get(`http://151.243.0.78:3001/produto/buscar-por-ean/${eanLimpo}`);
-    const produto = response.data;
+  const encontrado = produtos.find((p: any) => p.ean === ean.trim());
 
-    let produto_estoque_id;
-
-    if (eanLocalizacao) {
-      try {
-        const estoque = await buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao, eanLimpo);
-        produto_estoque_id = estoque?.produto_estoque_id;
-      } catch {
-        produto_estoque_id = undefined;
-      }
-    }
-
-    return {
-      produto_id: produto.produto_id,
-      produto_estoque_id,
-      sku: produto.sku || '',
-      ean: produto.ean || '',
-      descricao: produto.descricao || '',
-    };
-  } catch {
+  if (!encontrado) {
     throw new Error('Produto com esse EAN não encontrado.');
   }
-}
 
+  return encontrado;
+}
 
 export async function buscarLocalizacaoPorEAN(ean: string) {
-  const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
-  const response = await axios.get(`${BASE_URL}/localizacao/buscar-por-ean/${eanLimpo}`);
-  const localizacao = response.data;
+  const response = await axios.get('http://151.243.0.78:3001/localizacao');
+  const localizacoes = response.data;
 
-  if (!localizacao) {
-    throw new Error("Localização com esse EAN não encontrada.");
+  const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
+
+  if (!encontrada) {
+    throw new Error('Localização com esse EAN não encontrada.');
   }
 
-  return {
-    localizacao_id: localizacao.localizacao_id,
-    nome: localizacao.localizacao_nome,
-    armazem: localizacao.armazem_nome || "",
-  };
+  return encontrada;
 }
 
-
-export interface ProdutoEstoqueDTO {
-  produto_estoque_id: number;
-  produto_id: number;
-  descricao: string;
-  sku: string;
-  ean: string;
-  quantidade: number;
-}
-
-export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number): Promise<ProdutoEstoqueDTO[]> {
+export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number) {
   const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacao_id}/produtos`);
+  console.log(
+    '🔍 produtos_estoque[0]:',
+    JSON.stringify(res.data.produtos_estoque[0], null, 2)
+  );
 
   const dados = res.data?.produtos_estoque || [];
 
@@ -582,6 +481,7 @@ export async function buscarProdutoEstoquePorId(id: number) {
     return null;
   }
 }
+
 
 // Função para envio da movimentação
 export async function enviarMovimentacao(payload: {
@@ -618,20 +518,6 @@ export async function enviarMovimentacao(payload: {
     throw new Error('Falha ao enviar movimentação.');
   }
 }
-
-export async function buscarLocalizacaoGeral(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/localizacao');
-  const localizacoes = response.data.results;
-
-  const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
-
-  if (!encontrada) {
-    throw new Error('Localização com esse EAN não encontrada.');
-  }
-
-  return encontrada;
-}
-
 export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao: string, eanProduto: string) {
   try {
     const localizacao = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());

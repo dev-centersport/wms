@@ -1,95 +1,65 @@
 import React from 'react';
-
-interface LocalizacaoItem {
-  armazem: string;
-  localizacao: string;
-  produtoSKU: string;
-  produtoDescricao: string;
-  produtoEAN: string;
-  produtoFoto?: string;
-  quantidadeSeparada: number;
-}
+import { Typography, Table, TableHead, TableRow, TableCell, TableBody, Box, Paper } from '@mui/material';
 
 interface PrintPorLocalizacaoProps {
   data: {
-    localizacoes: LocalizacaoItem[];
+    localizacoes: {
+      armazem: { armazemID: number; armazem: string; }[];
+      localizacao: string;
+      produtoSKU: string;
+      quantidadeSeparada: number;
+      pedidosAtendidos: { pedidoId: string; numeroPedido: string }[];
+    }[];
+    produtosNaoEncontrados?: string[];
   };
 }
 
 const PrintPorLocalizacao: React.FC<PrintPorLocalizacaoProps> = ({ data }) => {
-  if (!data?.localizacoes?.length) {
-    return <p>Nenhuma localização encontrada para impressão.</p>;
-  }
-
-  const agrupado = data.localizacoes.reduce((acc: { [key: string]: LocalizacaoItem[] }, item) => {
-    const key = `${item.armazem} - ${item.localizacao}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {});
-
-  const localizacoesOrdenadas = Object.keys(agrupado).sort();
-
   return (
-    <div id="relatorio-impressao">
-      <style>{`
-        @page { size: A4 portrait; margin: 1cm; }
-        body { font-family: Arial, sans-serif; font-size: 9pt; }
-        .header h1 { margin-bottom: 5px; font-size: 18px; }
-        .localizacao-block { margin-bottom: 25px; page-break-inside: avoid; }
-        .localizacao-titulo { font-weight: bold; background-color: #e0e0e0; padding: 6px; margin-bottom: 8px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-        th, td { border: 1px solid #ccc; padding: 4px; text-align: left; vertical-align: middle; }
-        img { width: 45px; height: 45px; object-fit: contain; border: 1px solid #ccc; border-radius: 4px; }
+    <Box>
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+        Impressão por Localização
+      </Typography>
+      {data.localizacoes?.length ? (
+        <Table size="small" sx={{ mb: 3 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Armazém</TableCell>
+              <TableCell>Localização</TableCell>
+              <TableCell>SKU</TableCell>
+              <TableCell>Qtd Separada</TableCell>
+              <TableCell>Pedidos Atendidos</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.localizacoes.map((loc, idx) => (
+              <TableRow key={`${loc.localizacao}-${loc.produtoSKU}`}>
+                <TableCell>{loc.armazem?.map(a => a.armazem).join(', ')}</TableCell>
+                <TableCell>{loc.localizacao}</TableCell>
+                <TableCell>{loc.produtoSKU}</TableCell>
+                <TableCell>{loc.quantidadeSeparada}</TableCell>
+                <TableCell>
+                  {loc.pedidosAtendidos.map(pa => pa.numeroPedido).join(', ')}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <Typography>Nenhuma localização encontrada.</Typography>
+      )}
 
-        @media print {
-          .no-print { display: none !important; }
-          body * { visibility: hidden; }
-          #relatorio-impressao, #relatorio-impressao * { visibility: visible; }
-          #relatorio-impressao { position: absolute; left: 0; top: 0; width: 100%; background: white; }
-        }
-      `}</style>
-
-      <div className="header">
-        <h1>RELATÓRIO DE SEPARAÇÃO POR LOCALIZAÇÃO</h1>
-        <p>Gerado em: {new Date().toLocaleString()}</p>
-      </div>
-
-      {localizacoesOrdenadas.map((locKey) => (
-        <div key={locKey} className="localizacao-block">
-          <div className="localizacao-titulo">Localização: {locKey}</div>
-          <table>
-            <thead>
-              <tr>
-                <th>Imagem</th>
-                <th>SKU</th>
-                <th>Descrição</th>
-                <th>EAN</th>
-                <th>Qtd</th>
-              </tr>
-            </thead>
-            <tbody>
-              {agrupado[locKey].map((item, idx) => (
-                <tr key={idx}>
-                  <td>
-                    {item.produtoFoto ? (
-                      <img src={item.produtoFoto} alt="produto" />
-                    ) : (
-                      <span style={{ fontSize: '10px', color: '#999' }}>Sem imagem</span>
-                    )}
-                  </td>
-
-                  <td>{item.produtoSKU}</td>
-                  <td>{item.produtoDescricao}</td>
-                  <td>{item.produtoEAN}</td>
-                  <td>{item.quantidadeSeparada}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
-    </div>
+      {Array.isArray(data.produtosNaoEncontrados) && data.produtosNaoEncontrados.length > 0 && (
+        <Paper sx={{ mt: 3, p: 2, backgroundColor: '#ffeaea' }}>
+            <Typography sx={{ fontWeight: 600 }}>Produtos Não Encontrados:</Typography>
+            <ul>
+            {data.produtosNaoEncontrados.map((item, idx) => (
+                <li key={idx}>{item}</li>
+            ))}
+            </ul>
+        </Paper>
+        )}
+    </Box>
   );
 };
 
