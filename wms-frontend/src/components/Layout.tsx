@@ -9,7 +9,7 @@ interface LayoutProps {
   totalPages?: number;
   currentPage?: number;
   show?: boolean;
-  onPageChange?: (page: number) => void; // Tornado opcional
+  onPageChange?: (page: number) => void;
   itemsPerPage?: number;
   onItemsPerPageChange?: (size: number) => void;
 }
@@ -19,30 +19,10 @@ const Layout: React.FC<LayoutProps> = ({
   totalPages = 1,
   currentPage = 1,
   show = true,
-  onPageChange = () => {}, // Função vazia como padrão
+  onPageChange = () => {},
   itemsPerPage = 50,
   onItemsPerPageChange,
 }) => {
-  // const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  // const [pageInput, setPageInput] = useState('');
-
-  // const popoverOpen = Boolean(anchorEl);
-
-  // const handleOpenPopover = (event: React.MouseEvent<HTMLElement>) => {
-  //   setAnchorEl(event.currentTarget);
-  //   setPageInput('');
-  // };
-
-  // const handleClosePopover = () => setAnchorEl(null);
-
-  // const handleGoToPage = () => {
-  //   const pageNum = Number(pageInput);
-  //   if (pageNum >= 1 && pageNum <= totalPages) {
-  //     onPageChange(pageNum);
-  //   }
-  //   handleClosePopover();
-  // };
-
   return (
     <Sidebar>
       <Box sx={{ 
@@ -65,7 +45,7 @@ const Layout: React.FC<LayoutProps> = ({
           currentPage={currentPage}
           onPageChange={onPageChange}
           itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={onItemsPerPageChange} // Passando a função para atualizar
+          onItemsPerPageChange={onItemsPerPageChange}
         />
       </Box>
     </Sidebar>

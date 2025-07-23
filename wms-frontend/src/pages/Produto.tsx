@@ -53,6 +53,8 @@ const Produto: React.FC = () => {
     carregarProdutos();
   }, []);
 
+  console.log("teste")
+
   const filteredIndices = useMemo(() => {
     return listaProdutos.reduce<number[]>((acc, produto, idx) => {
       const termo = busca.toLowerCase().trim();

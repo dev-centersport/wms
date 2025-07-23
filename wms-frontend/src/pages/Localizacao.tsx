@@ -66,7 +66,9 @@ const Localizacao: React.FC = () => {
          
     // Estados para o modal de produtos
     const [modalOpen, setModalOpen] = useState(false);
+
     const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState<{id: number, nome: string} | null>(null);
+
 
     useEffect(() => {
       const carregar = async () => {
@@ -133,8 +135,10 @@ const Localizacao: React.FC = () => {
     }, [totalPages]);
 
     useEffect(() => {
+
       setCurrentPage(1);
     }, [busca, appliedFiltroTipo, appliedFiltroArmazem]);
+
 
     useEffect(() => {
       const allCurrentSelected =
@@ -785,20 +789,64 @@ const Localizacao: React.FC = () => {
     };
 
     /* ---------------------- valores únicos para filtros --------------------- */
-    const tipos = useMemo(
-        () => Array.from(new Set(listaLocalizacoes.map((l) => l.tipo).filter(Boolean))).sort(),
-        [listaLocalizacoes]
-    );
-    const armazens = useMemo(
-        () => Array.from(new Set(listaLocalizacoes.map((l) => l.armazem).filter(Boolean))).sort(),
-        [listaLocalizacoes]
-    );
+    const [todosTipos, setTodosTipos] = useState<{ tipo: string; id: any }[]>([]);
+    const [todosArmazens, setTodosArmazens] = useState<{ armazem: string; id: any }[]>([]);
+
+
+    useEffect(() => {
+        async function buscarFiltros() {
+            try {
+                // Busca "todos" os registros, só para montar os filtros
+                const res = await buscarLocalizacoes(10000, 0); // ou um número que garanta trazer tudo
+                const todos = res.results;
+                console.log(todos)
+
+                // Extrai tipos únicos e armazéns únicos
+                const tipos = Array.from(
+                new Map(
+                    todos
+                    .filter((l: any) => l.tipo && l.tipo_localizacao_id) // supondo que existe l.tipo_id!
+                    .map((l: any) => [l.tipo_localizacao_id, { tipo: l.tipo, id: l.tipo_localizacao_id }])
+                ).values()
+                ).sort((a, b) => a.tipo.localeCompare(b.tipo));
+
+                const armazens = Array.from(
+                new Map(
+                    todos
+                    .filter((l: any) => l.armazem && l.armazem_id)
+                    .map((l: any) => [l.armazem_id, { armazem: l.armazem, id: l.armazem_id }])
+                ).values()
+                ).sort((a, b) => a.armazem.localeCompare(b.armazem));
+
+                console.log('tipos de localizacoes' , tipos)
+
+
+                setTodosTipos(tipos);
+                setTodosArmazens(armazens);
+            } catch (e) {
+                console.error('Erro ao buscar filtros:', e);
+            }
+        }
+
+        buscarFiltros();
+    }, []);
+
 
     /* --------------------------- handlers menu --------------------------- */
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
 
+    // Atualize a função de aplicar filtros:
+    const handleAplicarFiltro = () => {
+        setCurrentPage(1); // Resetar para a primeira página ao aplicar filtros
+        setAppliedFiltroTipo(filtroTipo);
+        setAppliedFiltroArmazem(filtroArmazem);
+        handleMenuClose();
+    };
+
+    // Atualize a função de limpar filtros:
     const handleLimparFiltros = () => {
+        setCurrentPage(1); // Resetar para a primeira página ao limpar filtros
         setFiltroTipo('');
         setFiltroArmazem('');
         setBusca('');
@@ -807,14 +855,9 @@ const Localizacao: React.FC = () => {
         handleMenuClose();
     };
 
-    const handleAplicarFiltro = () => {
-        setAppliedFiltroTipo(filtroTipo);
-        setAppliedFiltroArmazem(filtroArmazem);
-        handleMenuClose();
-    };
-
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
+
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
@@ -825,9 +868,11 @@ const Localizacao: React.FC = () => {
                     placeholder="Buscar Localização, tipo, armazém ou EAN"
                     variant="outlined"
                     size="small"
+
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
                     InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
+
                     sx={{ maxWidth: 480, width: 380 }}
                 />
 
@@ -854,9 +899,9 @@ const Localizacao: React.FC = () => {
                             sx={{ minWidth: '100%' }}
                         >
                             <MenuItem value="">Todos</MenuItem>
-                            {tipos.map((t) => (
-                                <MenuItem key={t} value={t}>
-                                    {t}
+                            {todosTipos.map((t) => (
+                                <MenuItem key={t.id} value={t.id}>
+                                    {t.tipo}
                                 </MenuItem>
                             ))}
                         </TextField>
@@ -869,9 +914,9 @@ const Localizacao: React.FC = () => {
                             sx={{ minWidth: '100%', mt: 2 }}
                         >
                             <MenuItem value="">Todos</MenuItem>
-                            {armazens.map((a) => (
-                                <MenuItem key={a} value={a}>
-                                    {a}
+                            {todosArmazens.map((a) => (
+                                <MenuItem key={a.id} value={a.id}>
+                                    {a.armazem}
                                 </MenuItem>
                             ))}
                         </TextField>
@@ -972,12 +1017,14 @@ const Localizacao: React.FC = () => {
                                     onChange={(e) => handleSelectAll(e.target.checked)}
                                 />
                             </TableCell>
+
                             <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Armazém</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 600 }}>EAN</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 600 }}>Ações</TableCell>
+
                         </TableRow>
                     </TableHead>
                     <TableBody>
