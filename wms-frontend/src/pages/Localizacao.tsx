@@ -1104,13 +1104,7 @@ const Localizacao: React.FC = () => {
                             </TableCell>
 
                             <TableCell sortDirection={orderBy === 'ean' ? orderDirection : false} align="center">
-                                <TableSortLabel
-                                    active={orderBy === 'ean'}
-                                    direction={orderBy === 'ean' ? orderDirection : 'asc'}
-                                    onClick={() => handleSort('ean')}
-                                >
-                                    EAN
-                                </TableSortLabel>
+                                EAN
                             </TableCell>
 
                             <TableCell sortDirection={orderBy === 'total_produtos' ? orderDirection : false} align="center">
