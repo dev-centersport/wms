@@ -26,14 +26,29 @@ export class ProdutoEstoqueController {
     return this.produtoEstoqueService.findAll();
   }
 
+  @Get('listar-todos')
+  listarTudo() {
+    return this.produtoEstoqueService.listarTudo();
+  }
+
   @Get('relatorio')
   relatorioConsulta() {
     return this.produtoEstoqueService.relatorioConsulta();
   }
 
   @Get('pesquisar')
-  async search(@Query('search') search?: string) {
-    const dados = await this.produtoEstoqueService.search(search);
+  async search(
+    @Query('search') search?: string,
+    @Query('offset') offset?: string,
+    @Query('tipoId') tipoId?: number,
+    @Query('armazemId') armazemId?: number,
+  ) {
+    const dados = await this.produtoEstoqueService.search(
+      search,
+      Number(offset) || 0,
+      tipoId ? Number(tipoId) : undefined,
+      armazemId ? Number(armazemId) : undefined,
+    );
 
     if (search) {
       return dados;
