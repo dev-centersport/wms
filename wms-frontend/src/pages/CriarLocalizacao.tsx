@@ -94,24 +94,26 @@ const CriarLocalizacao: React.FC = () => {
   };
 
     const validarCampos = (): boolean => {
-    if (!formData.nome || !formData.tipo) {
-      alert('Preencha o nome e selecione o tipo de localização.');
-      return false;
-    }
+  if (!formData.nome || !formData.tipo || !formData.armazem) {
+    alert('Preencha o nome, tipo e armazém da localização.');
+    return false;
+  }
 
-    const nomeExisteNoMesmoArmazem = listaLocalizacoes.some(
-      (loc) =>
-        loc.nome?.trim().toLowerCase() === formData.nome.trim().toLowerCase() &&
-        loc.armazem?.trim().toLowerCase() === formData.armazem.trim().toLowerCase()
-    );
+  const nomeExisteNoMesmoArmazemEMesmoTipo = listaLocalizacoes.some(
+    (loc) =>
+      loc.nome?.trim().toLowerCase() === formData.nome.trim().toLowerCase() &&
+      loc.armazem?.trim().toLowerCase() === formData.armazem.trim().toLowerCase() &&
+      loc.tipo?.trim().toLowerCase() === formData.tipo.trim().toLowerCase()
+  );
 
-    if (nomeExisteNoMesmoArmazem) {
-      alert('Já existe uma localização com este nome neste armazém. Escolha outro nome ou armazém.');
-      return false;
-    }
+  if (nomeExisteNoMesmoArmazemEMesmoTipo) {
+    alert('Já existe uma localização com este nome, tipo e armazém. Escolha outro nome ou tipo.');
+    return false;
+  }
 
-    return true;
-  };
+  return true;
+};
+  
 
   const handleSalvar = async () => {
     if (!validarCampos()) return;

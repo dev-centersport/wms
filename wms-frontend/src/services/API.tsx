@@ -59,6 +59,7 @@ export async function buscarAuditoria(): Promise<AuditoriaItem[]> {
 export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
   return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
 }
+
 export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) {
   const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
   return response.data;
@@ -86,7 +87,7 @@ export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
     return todos
       .filter((item: any) => item.localizacao_id === localizacao_id)
       .map((item: any) => ({
-        produto_id: item.produto_id,
+        produto_id: item.produto?.produto_id ?? null,
         descricao: item.descricao || '',
         sku: item.sku || '',
         ean: item.ean || '',
@@ -166,7 +167,7 @@ export interface Localizacao {
 }
 
 export const buscarLocalizacoes = async (
-  limit: number = 300,
+  limit: number = 5000,
   offset: number = 0,
   busca: string = '',
   armazemId?: number,
@@ -212,8 +213,6 @@ export const buscarLocalizacoes = async (
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
-
-
 
 export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
   try {
@@ -278,34 +277,43 @@ export const buscarProdutos = async (): Promise<Produto[]> => {
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
-
-
 export async function buscarConsultaEstoque() {
   try {
-    const [estoqueRes, localizacoes] = await Promise.all([
-      axios.get('http://151.243.0.78:3001/produto-estoque'),
-      buscarLocalizacoes(),
-    ]);
+    const todos: any[] = [];
+    const limite = 1000;
+    let offset = 0;
+    let total = Infinity;
 
-    const dados = estoqueRes.data.map((item: any) => {
-      return {
-        produto_id: item.produto_id,
-        localizacao_id: item.localizacao?.localizacao_id ?? null,  // ESSENCIAL
+    while (todos.length < total) {
+      const res = await axios.get('http://151.243.0.78:3001/produto-estoque', {
+        params: { limit: limite, offset: offset }
+      });
+
+      const results = res.data?.results || res.data;
+      const formatados = results.map((item: any) => ({
+        produto_estoque_id: item.produto_estoque_id ?? null,
+        produto_id: item.produto?.produto_id ?? `sem-id-${item.produto?.sku}-${item.localizacao?.localizacao_id}`,
         descricao: item.produto?.descricao || '',
         sku: item.produto?.sku || '',
         ean: item.produto?.ean || '',
-        armazem: item.localizacao?.armazem?.nome || '',
-        localizacao: item.localizacao?.nome || '',
         quantidade: item.quantidade || 0,
-      };
-    });
+        localizacao_id: item.localizacao?.localizacao_id ?? null,
+        localizacao: item.localizacao?.nome || '',
+        armazem: item.localizacao?.armazem?.nome || '',
+      }));
 
-    return dados;
+      todos.push(...formatados);
+      total = res.data?.total ?? results.length;
+      offset += limite;
+    }
+
+    return todos;
   } catch (err) {
     console.error('Erro ao buscar consulta de estoque →', err);
     throw new Error('Falha ao carregar os dados de estoque.');
   }
 }
+
 export interface ItemSeparacao {
   sku: string;
   idItem: string;

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+// screens/ConsultaScreen.js
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { buscarConsultaEstoque } from '../api/consultaAPI';
 
@@ -8,12 +9,11 @@ import HeaderConsulta from '../componentes/Consulta/HeaderConsulta';
 import SearchBarConsulta from '../componentes/Consulta/SearchBarConsulta';
 import { TableHeader, TableBody } from '../componentes/Consulta/TableConsulta';
 import PaginacaoConsulta from '../componentes/Consulta/PaginacaoConsulta';
+import EmptyState from '../componentes/Consulta/EmptyState';
 
 export default function ConsultaScreen({ navigation }) {
   const [busca, setBusca] = useState('');
   const [dados, setDados] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [inputPagina, setInputPagina] = useState('');
@@ -21,39 +21,22 @@ export default function ConsultaScreen({ navigation }) {
 
   const itensPorPagina = 50;
 
-  useEffect(() => {
-    async function carregar() {
-      try {
-        const resposta = await buscarConsultaEstoque();
-        setDados(resposta);
-      } catch (err) {
-        console.error('Erro ao buscar dados:', err);
-      } finally {
-        setCarregando(false);
-      }
+  const realizarBusca = async () => {
+    if (busca.trim().length < 2) return;
+
+    try {
+      const resultado = await buscarConsultaEstoque(busca);
+      setDados(resultado);
+      setPaginaAtual(1);
+      setTotalPaginas(Math.ceil(resultado.length / itensPorPagina));
+    } catch (err) {
+      console.error('Erro ao buscar dados:', err);
     }
-    carregar();
-  }, []);
-
-  useEffect(() => {
-    setTotalPaginas(Math.ceil(filtrarDados().length / itensPorPagina));
-    setPaginaAtual(1);
-  }, [dados, busca]);
-
-  const filtrarDados = () => {
-    const termo = busca.toLowerCase();
-    return dados.filter(
-      (item) =>
-        item.sku.toLowerCase().includes(termo) ||
-        item.ean.toLowerCase().includes(termo) ||
-        item.descricao.toLowerCase().includes(termo)
-    );
   };
 
   const dadosPaginados = () => {
-    const filtrado = filtrarDados();
     const inicio = (paginaAtual - 1) * itensPorPagina;
-    return filtrado.slice(inicio, inicio + itensPorPagina);
+    return dados.slice(inicio, inicio + itensPorPagina);
   };
 
   const irParaPagina = (numero) => {
@@ -68,25 +51,30 @@ export default function ConsultaScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <HeaderConsulta onClose={() => navigation.goBack()} />
-      <SearchBarConsulta value={busca} onChange={setBusca} />
-      <TableHeader />
+      <SearchBarConsulta value={busca} onChange={setBusca} onSubmit={realizarBusca} />
+      <View style={{ flex: 1, marginTop: dados.length > 0 ? 8 : 60 }}>
+        {dados.length === 0 ? (
+          <EmptyState texto="Digite e pressione Enter para pesquisar um produto." />
+        ) : (
+          <>
+            <TableHeader />
+            <TableBody data={dadosPaginados()} />
+          </>
+        )}
+      </View>
 
-      {carregando ? (
-        <ActivityIndicator size="large" color="green" style={{ marginTop: 40 }} />
-      ) : (
-        <TableBody data={dadosPaginados()} />
+      {dados.length > 0 && (
+        <PaginacaoConsulta
+          paginaAtual={paginaAtual}
+          totalPaginas={totalPaginas}
+          setPaginaAtual={setPaginaAtual}
+          modalVisivel={modalVisivel}
+          setModalVisivel={setModalVisivel}
+          inputPagina={inputPagina}
+          setInputPagina={setInputPagina}
+          irParaPagina={irParaPagina}
+        />
       )}
-
-      <PaginacaoConsulta
-        paginaAtual={paginaAtual}
-        totalPaginas={totalPaginas}
-        setPaginaAtual={setPaginaAtual}
-        modalVisivel={modalVisivel}
-        setModalVisivel={setModalVisivel}
-        inputPagina={inputPagina}
-        setInputPagina={setInputPagina}
-        irParaPagina={irParaPagina}
-      />
     </SafeAreaView>
   );
 }

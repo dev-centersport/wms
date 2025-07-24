@@ -77,7 +77,7 @@ const TipoLocalizacaoPage: React.FC = () => {
         />
         <Button
           variant="contained"
-          onClick={() => navigate('/CriarTipoLocalizacao')}
+          onClick={() => navigate('/tipo-localizacao/criar')}
           startIcon={<AddIcon />}
           sx={{ backgroundColor: '#59e60d', color: '#000', fontWeight: 'bold' }}
         >
@@ -101,7 +101,7 @@ const TipoLocalizacaoPage: React.FC = () => {
                   <TableCell padding="checkbox"><Checkbox /></TableCell>
                   <TableCell>{tipo.tipo}</TableCell>
                   <TableCell align="center">
-                    <IconButton onClick={() => navigate(`/tipo-localizacao/${tipo.tipo_localizacao_id}/editar`)}>
+                    <IconButton onClick={() => navigate(`/EditarTipoLocalizacao/${tipo.tipo_localizacao_id}/editar`)}>
                       <EditIcon />
                     </IconButton>
                     <IconButton onClick={() => handleExcluir(tipo.tipo_localizacao_id)}>

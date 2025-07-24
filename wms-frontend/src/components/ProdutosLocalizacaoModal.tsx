@@ -53,7 +53,7 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
     if (open && localizacao_id) {
       carregarProdutos();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, localizacao_id]);
 
   const carregarProdutos = async () => {
@@ -61,13 +61,19 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
       setLoading(true);
       setError(null);
       const data = await buscarProdutosPorLocalizacao(localizacao_id);
+
+      console.log('Produtos carregados:', data);
+      console.log('IDs encontrados:', data.map((p: any) => p.produto_id));
+      const ids = data.map((p: any) => p.produto_id);
+      const duplicados = ids.filter((id: number, idx: number) => ids.indexOf(id) !== idx);
+      if (duplicados.length) {
+        console.warn('IDs duplicados detectados:', duplicados);
+      }
+
       setProdutos(data);
-      
-      // Calcular quantidade total
       const total = data.reduce((sum: number, item: Produto) => sum + (item.quantidade || 0), 0);
       setQuantidadeTotal(total);
-      
-      // Opcional: Atualizar a quantidade total na tabela principal
+
       if (onQuantidadeAtualizada) {
         onQuantidadeAtualizada();
       }
@@ -79,9 +85,10 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
     }
   };
 
+
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       fullWidth
       maxWidth="md"
@@ -92,9 +99,9 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
         }
       }}
     >
-      <DialogTitle sx={{ 
-        backgroundColor: '#f5f5f5', 
-        display: 'flex', 
+      <DialogTitle sx={{
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         borderBottom: '1px solid #e0e0e0'
@@ -106,7 +113,7 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent sx={{ p: 0 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
@@ -124,9 +131,9 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
           </Box>
         ) : (
           <>
-            <Box sx={{ 
-              p: 2, 
-              backgroundColor: '#f9f9f9', 
+            <Box sx={{
+              p: 2,
+              backgroundColor: '#f9f9f9',
               borderBottom: '1px solid #e0e0e0',
               display: 'flex',
               justifyContent: 'space-between'
@@ -149,16 +156,16 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {produtos.map((produto) => (
-                    <TableRow key={produto.produto_id} hover>
+                  {produtos.map((produto, index) => (
+                    <TableRow key={produto.produto_id || `produto-${index}`} hover>
                       <TableCell>{produto.descricao}</TableCell>
                       <TableCell>{produto.sku}</TableCell>
                       <TableCell>{produto.ean}</TableCell>
                       <TableCell align="center">
-                        <Typography 
-                          sx={{ 
-                            fontWeight: 600, 
-                            color: produto.quantidade > 0 ? '#59e60d' : '#ff3d00'
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            color: produto.quantidade > 0 ? '#59e60d' : '#ff3d00',
                           }}
                         >
                           {produto.quantidade}
@@ -167,17 +174,18 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
                     </TableRow>
                   ))}
                 </TableBody>
+
               </Table>
             </TableContainer>
           </>
         )}
       </DialogContent>
-      
+
       <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-        <Button 
-          onClick={onClose} 
+        <Button
+          onClick={onClose}
           variant="outlined"
-          sx={{ 
+          sx={{
             minWidth: 100,
             fontWeight: 500
           }}
