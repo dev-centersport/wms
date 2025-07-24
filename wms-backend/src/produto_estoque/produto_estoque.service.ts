@@ -3,7 +3,7 @@ import { CreateProdutoEstoqueDto } from './dto/create-produto_estoque.dto';
 import { UpdateProdutoEstoqueDto } from './dto/update-produto_estoque.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProdutoEstoque } from './entities/produto_estoque.entity';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Produto } from 'src/produto/entities/produto.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 
@@ -36,6 +36,79 @@ export class ProdutoEstoqueService {
       );
 
     return produto_estoque;
+  }
+
+  async search(search?: string): Promise<{ results: any[] }> {
+    const query = this.ProdutoEstoqueRepository.createQueryBuilder(
+      'produto_estoque',
+    )
+      .leftJoin('produto_estoque.produto', 'produto')
+      .leftJoin('produto_estoque.localizacao', 'localizacao')
+      .select(['produto_estoque', 'produto', 'localizacao'])
+      .groupBy('produto_estoque.produto_estoque_id')
+      .addGroupBy('produto.produto_id')
+      .addGroupBy('localizacao.localizacao_id');
+
+    if (search) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('produto.sku ILIKE :search', {
+            search: `%${search}%`,
+          })
+            .orWhere('produto.ean ILIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('localizacao.nome ILIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('localizacao.ean ILIKE :search', {
+              search: `%${search}%`,
+            });
+        }),
+      );
+    }
+
+    // const total = await query.getCount();
+
+    query.addOrderBy('localizacao.nome', 'ASC');
+
+    const entities = await query.getRawAndEntities();
+
+    const results = entities.entities.map((produto_estoque) => ({
+      ...produto_estoque,
+    }));
+
+    return { results };
+  }
+
+  async relatorioConsulta(): Promise<any> {
+    const produto_estoque = await this.ProdutoEstoqueRepository.find({
+      relations: ['produto', 'localizacao.tipo', 'localizacao.armazem'],
+    });
+    console.log(produto_estoque);
+
+    if (!produto_estoque)
+      throw new NotFoundException('Nenhum prodtuo no estoque foi encontrado!');
+
+    const result = produto_estoque.map((item) => ({
+      localizacao: {
+        armazem_id: item.localizacao.armazem.armazem_id,
+        armazem: item.localizacao.armazem.nome,
+        localizacao_id: item.localizacao.localizacao_id,
+        nome: item.localizacao.nome,
+        ean: item.localizacao.ean,
+        tipo: item.localizacao.tipo.tipo,
+      },
+      produto: {
+        produto_id: item.produto.produto_id,
+        descricao: item.produto.descricao,
+        sku: item.produto.sku,
+        ean: item.produto.ean,
+      },
+      quantidade: item.quantidade,
+    }));
+
+    return result;
   }
 
   async create(

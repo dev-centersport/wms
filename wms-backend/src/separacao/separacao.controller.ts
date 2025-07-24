@@ -17,7 +17,7 @@ import {
 export class SeparacaoController {
   constructor(private readonly separacaoService: SeparacaoService) {}
 
-  @Post('agrupado-sku')
+  @Post('agrupado-produto')
   @UseInterceptors(FileInterceptor('arquivo'))
   async processarSeparacao(
     @UploadedFile() arquivo: Express.Multer.File,

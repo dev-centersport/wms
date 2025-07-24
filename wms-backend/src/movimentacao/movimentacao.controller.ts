@@ -12,6 +12,16 @@ export class MovimentacaoController {
     return movimentacao;
   }
 
+  @Get('abrir-localizacao/:ean')
+  abrirLocalizacao(@Param('ean') ean: string) {
+    return this.movimentacaoService.abrirLocalizacao(ean);
+  }
+
+  @Get('fechar-localizacao/:ean')
+  fecharLocalizacao(@Param('ean') ean: string) {
+    return this.movimentacaoService.fecharLocalizacao(ean);
+  }
+
   @Get()
   findAll() {
     return this.movimentacaoService.findAll();
