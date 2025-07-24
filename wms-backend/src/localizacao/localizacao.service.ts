@@ -197,6 +197,7 @@ export class LocalizacaoService {
       where: {
         nome: createLocalizacaoDto.nome,
         armazem: { armazem_id: createLocalizacaoDto.armazem_id }, // Assumindo que há um relacionamento
+        tipo: { tipo_localizacao_id: createLocalizacaoDto.tipo_localizacao_id },
       },
     });
 
