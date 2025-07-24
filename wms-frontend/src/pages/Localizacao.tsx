@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
+
   Box,
   Button,
   Checkbox,
@@ -20,6 +21,7 @@ import {
   Typography,
   Tooltip,
   TableSortLabel
+
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,11 +35,13 @@ import {
 import Layout from '../components/Layout';
 import { excluirLocalizacao, buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
+import CarregadorComRetry from '../components/CarregadorComRetry';
 
 const normalizar = (s: string) =>
   s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 
 type LocalizacaoComQtd = {
+
   localizacao_id: number;
   nome: string;
   tipo: string;
@@ -82,6 +86,7 @@ const Localizacao: React.FC = () => {
           total = res.total; // ✅ aqui está o total de localizações na API
           offset += limite;
         }
+
 
         const estoque = await buscarConsultaEstoque();
 
@@ -243,6 +248,7 @@ const currentItems = currentIndices
     }
     const w = window.open('', '_blank');
     if (!w) return;
+
 
     /* ------------------------------------------------------------------ */
     /* 1. Identificação do tipo                                           */
@@ -423,8 +429,8 @@ const currentItems = currentIndices
         <body>
           <div class="container">
             <div id="nome">${localizacao}</div>
-            <svg id="barcode"></svg>
             <div id="nomeArmazem">${armazemEscapado}</div>
+            <svg id="barcode"></svg>
           </div>
 
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -453,6 +459,7 @@ const currentItems = currentIndices
         </body>
         </html>
       `);
+
 
     w.document.close();
   };
@@ -572,7 +579,7 @@ const currentItems = currentIndices
               padding: 0;
             }
             .nomeArmazem {
-              font-size: 10px;
+              font-size: 30px;
               margin: 0;
               padding: 0;
               text-align: center;
@@ -582,17 +589,20 @@ const currentItems = currentIndices
         <body>
       `);
 
+
     indicesParaImprimir.forEach((idx, i) => {
       const item = listaLocalizacoes[idx];
       const nomeEscapado = item.nome.replace(/'/g, "\\'");
       const eanEscapado = item.ean.replace(/'/g, "\\'");
       const armazemEscapado = item.armazem.replace(/'/g, "\\'");
       w.document.write(`
+
           <div class="etiqueta" data-ean="${eanEscapado}">
             <div class="container">
               <div class="nome" id="nome-${i}">${nomeEscapado}</div>
-              <svg class="barcode" id="barcode-${i}"></svg>
               <div class="nomeArmazem">${armazemEscapado}</div>
+              <svg class="barcode" id="barcode-${i}"></svg>
+
             </div>
           </div>
         `);
@@ -629,6 +639,7 @@ const currentItems = currentIndices
         </html>
       `);
 
+
     w.document.close();
   };
 
@@ -638,6 +649,7 @@ const currentItems = currentIndices
       indicesParaImprimir = listaLocalizacoes
         .map((loc, idx) => (loc.tipo.toLowerCase().includes('prateleira') ? idx : -1))
         .filter((idx) => idx !== -1);
+
 
       setSelectedItems(indicesParaImprimir);
       setSelectAll(false);
@@ -716,11 +728,13 @@ const currentItems = currentIndices
         <body>
       `);
 
+
     indicesParaImprimir.forEach((idx, i) => {
       const item = listaLocalizacoes[idx];
       const nomeLimpo = isPrateleira ? item.nome.replace(/^.*?#/, '') : item.nome;
       const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
       const eanEscapado = item.ean.replace(/'/g, "\\'");
+
 
       w.document.write(`
           <div class="etiqueta" data-ean="${eanEscapado}">
@@ -760,6 +774,7 @@ const currentItems = currentIndices
         </body>
         </html>
       `);
+
 
     w.document.close();
   };
@@ -999,6 +1014,7 @@ const currentItems = currentIndices
                   checked={selectAll}
                   indeterminate={selectedItems.length > 0 && !selectAll}
                   onChange={(e) => handleSelectAll(e.target.checked)}
+
                 />
               </TableCell>
 
@@ -1108,6 +1124,7 @@ const currentItems = currentIndices
                                 backgroundColor: item.total_produtos > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',
                               },
                             }}
+
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -1125,6 +1142,7 @@ const currentItems = currentIndices
                   </Typography>
                 </TableCell>
               </TableRow>
+
             )}
           </TableBody>
         </Table>
