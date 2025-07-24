@@ -487,6 +487,10 @@ const currentItems = currentIndices
       alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
       return;
     }
+    const itens = indicesParaImprimir.map(
+      (idx) => listaLocalizacoes[idx]
+    );
+    console.log(itens)
 
     const tiposSelecionados = indicesParaImprimir.map(
       (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
