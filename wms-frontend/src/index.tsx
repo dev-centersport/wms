@@ -25,6 +25,10 @@ import Ocorrencias from "./pages/Ocorrencias";
 import NovaOcorrencia from "./pages/NovaOcorrencia";
 import ConferenciaAudi from "./pages/ConferenciaAudi";
 import Auditoria from "./pages/Auditoria";
+import Relatorio from "./pages/Relatorio";
+
+
+
 
 import theme from './components/Theme';
 
@@ -64,6 +68,7 @@ root.render(
           <Route path="/separacao" element={<Separacao/>}/>
           <Route path="/ocorrencias" element={<Ocorrencias/>}/>
           <Route path="/Auditoria" element={<Auditoria/>}/>
+          <Route path="/Relatorio" element={<Relatorio/>}/>
           <Route path="/NovaOcorrencia" element={<NovaOcorrencia/>}/>
           <Route path="/ConferenciaAudi/:id" element={<ConferenciaAudi />} />
 
