@@ -1018,7 +1018,7 @@ const Localizacao: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/CriarLocalizacao')}
+            onClick={() => navigate('/localizacao/criar')}
             sx={{
               backgroundColor: '#61de27',
               color: '#000',

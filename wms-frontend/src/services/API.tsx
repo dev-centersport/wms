@@ -59,6 +59,7 @@ export async function buscarAuditoria(): Promise<AuditoriaItem[]> {
 export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
   return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
 }
+
 export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) {
   const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
   return response.data;

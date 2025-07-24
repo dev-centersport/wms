@@ -77,7 +77,7 @@ const TipoLocalizacaoPage: React.FC = () => {
         />
         <Button
           variant="contained"
-          onClick={() => navigate('/CriarTipoLocalizacao')}
+          onClick={() => navigate('/tipo-localizacao/criar')}
           startIcon={<AddIcon />}
           sx={{ backgroundColor: '#59e60d', color: '#000', fontWeight: 'bold' }}
         >
