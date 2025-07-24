@@ -92,19 +92,8 @@ export class ProdutoService {
 
     await this.produtoRepository.remove(produto);
   }
-  // create(createProdutoDto: CreateProdutoDto) {
-  //   return 'This action adds a new produto';
-  // }
-  // findAll() {
-  //   return `This action returns all produto`;
-  // }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} produto`;
-  // }
-  // update(id: number, updateProdutoDto: UpdateProdutoDto) {
-  //   return `This action updates a #${id} produto`;
-  // }
-  // remove(id: number) {
-  //   return `This action removes a #${id} produto`;
+
+  // async atualizarProdutoViaAPI(token: string): Promise<void> {
+
   // }
 }
