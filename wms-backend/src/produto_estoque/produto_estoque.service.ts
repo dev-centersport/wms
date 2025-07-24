@@ -131,6 +131,7 @@ export class ProdutoEstoqueService {
         tipo: item.localizacao.tipo.tipo,
       },
       produto: {
+        id_tiny: item.produto.id_tiny,
         produto_id: item.produto.produto_id,
         descricao: item.produto.descricao,
         sku: item.produto.sku,
