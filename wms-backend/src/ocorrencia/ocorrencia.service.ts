@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateOcorrenciaDto } from './dto/create-ocorrencia.dto';
 import { Ocorrencia } from './entities/ocorrencia.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -101,16 +105,35 @@ export class OcorrenciaService {
     return ocorrencia;
   }
 
-  async create(CreateOcorrenciaDto: CreateOcorrenciaDto): Promise<Ocorrencia> {
+  async create(CreateOcorrenciaDto: CreateOcorrenciaDto): Promise<{
+    ocorrencia_id: number;
+    usuario: string;
+    dataHora: Date;
+    ativo: boolean;
+    quantidade_esperada: number;
+    quantidade_sistemas: number;
+    diferenca_quantidade: number;
+    produto_estoque: {
+      produto_estoque_id: number;
+      produto: string;
+      sku: string;
+      ean: string;
+      quantidade: number;
+      localizacao: string;
+      armazem: string;
+    };
+  }> {
     const [produto_estoque, usuario, localizacao] = await Promise.all([
       this.produtoEstoqueRepository.findOne({
         where: { produto_estoque_id: CreateOcorrenciaDto.produto_estoque_id },
+        relations: ['localizacao.armazem', 'produto'],
       }),
       this.usuarioRepository.findOne({
         where: { usuario_id: CreateOcorrenciaDto.usuario_id },
       }),
       this.localizacaoRepository.findOne({
         where: { localizacao_id: CreateOcorrenciaDto.localizacao_id },
+        relations: ['produtos_estoque'],
       }),
     ]);
 
@@ -118,17 +141,53 @@ export class OcorrenciaService {
 
     if (!produto_estoque)
       throw new NotFoundException('Produto estoque não encontrado');
-    if (!usuario) throw new NotFoundException('PUsuário não encontrado');
+    if (!usuario) throw new NotFoundException('Usuário não encontrado');
     if (!localizacao) throw new NotFoundException('Localização não encontrado');
 
-    const ocorrencia = this.ocorrenciaRepository.create({
+    // Verifica se o produto está na localização
+    const produtoNaLocalizacao = localizacao.produtos_estoque.some(
+      (prod) =>
+        prod.produto_estoque_id === CreateOcorrenciaDto.produto_estoque_id,
+    );
+
+    if (!produtoNaLocalizacao)
+      throw new BadRequestException(
+        'O produto não está presente na localização especificada',
+      );
+
+    if (CreateOcorrenciaDto.quantidade_esperada === produto_estoque.quantidade)
+      throw new BadRequestException(
+        'A localização possui a quantidade igual a informada',
+      );
+
+    const ocorrenciaCriada = this.ocorrenciaRepository.create({
       ...CreateOcorrenciaDto,
       produto_estoque,
       usuario,
       localizacao,
     });
 
-    return await this.ocorrenciaRepository.save(ocorrencia);
+    const ocorrencia = await this.ocorrenciaRepository.save(ocorrenciaCriada);
+
+    // return await this.ocorrenciaRepository.save(ocorrencia);
+    return {
+      ocorrencia_id: ocorrencia.ocorrencia_id,
+      usuario: ocorrencia.usuario.usuario,
+      dataHora: ocorrencia.dataHora,
+      ativo: ocorrencia.ativo,
+      quantidade_esperada: ocorrencia.quantidade_esperada,
+      quantidade_sistemas: ocorrencia.quantidade_sistemas,
+      diferenca_quantidade: ocorrencia.diferenca_quantidade,
+      produto_estoque: {
+        produto_estoque_id: ocorrencia.produto_estoque.produto_estoque_id,
+        produto: ocorrencia.produto_estoque.produto.descricao,
+        sku: ocorrencia.produto_estoque.produto.sku,
+        ean: ocorrencia.produto_estoque.produto.ean || 'S/EAN',
+        quantidade: ocorrencia.produto_estoque.quantidade,
+        localizacao: ocorrencia.produto_estoque.localizacao.nome,
+        armazem: ocorrencia.produto_estoque.localizacao.armazem.nome,
+      },
+    };
   }
 
   async update(

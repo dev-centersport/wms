@@ -43,8 +43,10 @@ export class ProdutoEstoqueController {
     @Query('tipoId') tipoId?: number,
     @Query('armazemId') armazemId?: number,
     @Query('relatorio') relatorio?: string,
+    @Query('show') show?: string,
   ) {
     const relatorioBool = String(relatorio).toLowerCase() === 'true';
+    const showBool = String(show).toLowerCase() === 'false';
 
     const dados = await this.produtoEstoqueService.search(
       search,
@@ -52,14 +54,18 @@ export class ProdutoEstoqueController {
       30,
       tipoId ? Number(tipoId) : undefined,
       armazemId ? Number(armazemId) : undefined,
-      relatorioBool,
+      relatorioBool || false,
     );
 
-    if (search) {
-      return dados;
-    } else {
-      return [];
+    if (showBool) {
+      if (search) {
+        return dados;
+      } else {
+        return [];
+      }
     }
+
+    return dados;
   }
 
   @Get(':id')
