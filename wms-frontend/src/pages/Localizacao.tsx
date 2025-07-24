@@ -72,32 +72,63 @@ const Localizacao: React.FC = () => {
 
   const navigate = useNavigate();
 
+  // Localizações selecionadas do tipo 'caixa'
+  const selectedCaixas = useMemo(() => {
+    return selectedItems
+      .map((idx) => listaLocalizacoes[idx])
+      .filter((loc) => loc.tipo.toLowerCase().includes('caixa'));
+  }, [selectedItems, listaLocalizacoes]);
+
+  // Localizações selecionadas do tipo 'prateleira'
+  const selectedPrateleiras = useMemo(() => {
+    return selectedItems
+      .map((idx) => listaLocalizacoes[idx])
+      .filter((loc) => loc.tipo.toLowerCase().includes('prateleira'));
+  }, [selectedItems, listaLocalizacoes]);
+
+  // Filtros ativos (útil para estilizar botões, chips, etc)
+  const filtrosAtivos = useMemo(() => {
+    return {
+      tipo: appliedFiltroTipo !== '',
+      armazem: appliedFiltroArmazem !== '',
+      algum: appliedFiltroTipo !== '' || appliedFiltroArmazem !== ''
+    };
+  }, [appliedFiltroTipo, appliedFiltroArmazem]);
+
+  const gerarMapaEstoque = (estoque: any[]): Record<number, number> => {
+    const mapa: Record<number, number> = {};
+    estoque.forEach(({ localizacao_id, quantidade }) => {
+      if (localizacao_id) {
+        mapa[localizacao_id] = (mapa[localizacao_id] || 0) + (quantidade || 0);
+      }
+    });
+    return mapa;
+  };
+
+  const carregarTodasLocalizacoes = async (): Promise<any[]> => {
+    const todasLocalizacoes: any[] = [];
+    const limite = 500;
+    let offset = 0;
+    let total = Infinity;
+
+    while (todasLocalizacoes.length < total) {
+      const res = await buscarLocalizacoes(limite, offset);
+      todasLocalizacoes.push(...res.results);
+      total = res.total;
+      offset += limite;
+    }
+
+    return todasLocalizacoes;
+  };
+
   useEffect(() => {
     const carregar = async () => {
       try {
-        const todasLocalizacoes: any[] = [];
-        const limite = 500; // ou 1000 se preferir
-        let offset = 0;
-        let total = Infinity;
-
-        while (todasLocalizacoes.length < total) {
-          const res = await buscarLocalizacoes(limite, offset);
-          todasLocalizacoes.push(...res.results);
-          total = res.total; // ✅ aqui está o total de localizações na API
-          offset += limite;
-        }
-
-
+        const localizacoes = await carregarTodasLocalizacoes();
         const estoque = await buscarConsultaEstoque();
+        const mapa = gerarMapaEstoque(estoque);
 
-        const mapa: Record<number, number> = {};
-        estoque.forEach((item: any) => {
-          const id = item.localizacao_id;
-          if (!id) return;
-          mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-        });
-
-        const locsComQtd: LocalizacaoComQtd[] = todasLocalizacoes.map((l: any) => ({
+        const locsComQtd: LocalizacaoComQtd[] = localizacoes.map((l: any) => ({
           ...l,
           total_produtos: mapa[l.localizacao_id] || 0,
         }));
@@ -154,26 +185,24 @@ const Localizacao: React.FC = () => {
     setOrderBy(property);
   };
 
-const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
-const startIndex = (currentPage - 1) * itemsPerPage;
-const endIndex = startIndex + itemsPerPage;
+  const totalPages = Math.ceil(filteredIndices.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
 
-const currentIndices = filteredIndices.slice(startIndex, endIndex); // recupera os índices
+  const currentIndices = filteredIndices.slice(startIndex, endIndex); // recupera os índices
+  const currentItems = useMemo(() => {
+    const lista = currentIndices.map((i) => listaLocalizacoes[i]);
+    return [...lista].sort((a, b) => {
+      const aVal = a[orderBy];
+      const bVal = b[orderBy];
+      const aStr = typeof aVal === 'string' ? aVal.toLowerCase() : aVal;
+      const bStr = typeof bVal === 'string' ? bVal.toLowerCase() : bVal;
 
-const currentItems = currentIndices
-  .map((i) => listaLocalizacoes[i])
-  .sort((a, b) => {
-    const aVal = a[orderBy];
-    const bVal = b[orderBy];
-
-    const aStr = typeof aVal === 'string' ? aVal.toLowerCase() : aVal;
-    const bStr = typeof bVal === 'string' ? bVal.toLowerCase() : bVal;
-
-    if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
-    if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-
+      if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
+      if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [currentIndices, listaLocalizacoes, orderBy, orderDirection]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -184,9 +213,8 @@ const currentItems = currentIndices
   }, [totalPages]);
 
   useEffect(() => {
-    const allCurrentSelected =
-      currentIndices.length > 0 && currentIndices.every((idx) => selectedItems.includes(idx));
-    setSelectAll(allCurrentSelected);
+    const allSelected = currentIndices.length > 0 && currentIndices.every(idx => selectedItems.includes(idx));
+    setSelectAll(allSelected);
   }, [selectedItems, currentIndices]);
 
   /* --------------------------- seleção tabela -------------------------- */
@@ -874,24 +902,24 @@ const currentItems = currentIndices
           onClick={handleMenuOpen}
           sx={{
             minWidth: 110,
-            backgroundColor: appliedFiltroTipo || appliedFiltroArmazem ? '#f0f0f0' : 'transparent',
-            borderColor: appliedFiltroTipo || appliedFiltroArmazem ? '#999' : undefined,
-            color: appliedFiltroTipo || appliedFiltroArmazem ? '#333' : undefined,
-            fontWeight: appliedFiltroTipo || appliedFiltroArmazem ? 'bold' : 'normal',
+            backgroundColor: filtrosAtivos.algum ? '#f0f0f0' : 'transparent',
+            borderColor: filtrosAtivos.algum ? '#999' : undefined,
+            color: filtrosAtivos.algum ? '#333' : undefined,
+            fontWeight: filtrosAtivos.algum ? 'bold' : 'normal',
           }}
         >
           Filtro
         </Button>
 
-        {(appliedFiltroTipo || appliedFiltroArmazem) && (
+        {filtrosAtivos.algum && (
           <>
-            {appliedFiltroTipo && (
+            {filtrosAtivos.tipo && (
               <Chip
                 label={`Filtro: Tipo - ${appliedFiltroTipo}`}
                 sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold', mx: 0.5 }}
               />
             )}
-            {appliedFiltroArmazem && (
+            {filtrosAtivos.armazem && (
               <Chip
                 label={`Filtro: Armazém - ${appliedFiltroArmazem}`}
                 sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold', mx: 0.5 }}

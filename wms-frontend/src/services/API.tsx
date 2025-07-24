@@ -170,7 +170,7 @@ export interface Localizacao {
 }
 
 export const buscarLocalizacoes = async (
-  limit: number = 300,
+  limit: number = 5000,
   offset: number = 0,
   busca: string = '',
   armazemId?: number,
