@@ -21,14 +21,14 @@ export class ProdutoEstoqueController {
     return this.produtoEstoqueService.create(createProdutoEstoqueDto);
   }
 
-  @Get()
-  findAll() {
-    return this.produtoEstoqueService.findAll();
-  }
-
   @Get('listar-todos')
   listarTudo() {
     return this.produtoEstoqueService.listarTudo();
+  }
+
+  @Get()
+  findAll() {
+    return this.produtoEstoqueService.findAll();
   }
 
   @Get('relatorio')
