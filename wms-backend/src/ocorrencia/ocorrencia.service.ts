@@ -128,7 +128,8 @@ export class OcorrenciaService {
       localizacao,
     });
 
-    return await this.ocorrenciaRepository.save(ocorrencia);
+    // return await this.ocorrenciaRepository.save(ocorrencia);
+    return ocorrencia;
   }
 
   async update(
