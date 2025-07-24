@@ -27,13 +27,13 @@ export class Ocorrencia {
   @Column({ type: 'boolean', default: true })
   ativo: boolean;
 
-  @Column({ type: 'int', nullable: true })
-  quantidade_esperada?: number;
+  @Column({ type: 'int' })
+  quantidade_esperada: number;
 
-  @Column({ type: 'int', nullable: true })
-  quantidade_sistemas?: number;
+  @Column({ type: 'int' })
+  quantidade_sistemas: number;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: 'int' })
   diferenca_quantidade: number;
 
   @ManyToOne(() => ProdutoEstoque, (pe) => pe.ocorrencias)
