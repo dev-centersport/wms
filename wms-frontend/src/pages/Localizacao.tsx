@@ -487,10 +487,10 @@ const currentItems = currentIndices
       alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
       return;
     }
-    const itens = indicesParaImprimir.map(
-      (idx) => listaLocalizacoes[idx]
-    );
-    console.log(itens)
+    // const itens = indicesParaImprimir.map(
+    //   (idx) => listaLocalizacoes[idx]
+    // );
+    // console.log(itens)
 
     const tiposSelecionados = indicesParaImprimir.map(
       (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
@@ -499,6 +499,16 @@ const currentItems = currentIndices
     const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
     if (!tipoUnico) {
       alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+      return;
+    }
+
+    const armazemSelecionados = indicesParaImprimir.map(
+      (idx) => listaLocalizacoes[idx].armazem.toLowerCase()
+    );
+
+    const armazemUnico = armazemSelecionados.every((t) => t === armazemSelecionados[0]);
+    if (!armazemUnico) {
+      alert('Imprima apenas etiquetas de um mesmo armazém.');
       return;
     }
 
