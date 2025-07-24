@@ -3,7 +3,7 @@ import { CreateProdutoEstoqueDto } from './dto/create-produto_estoque.dto';
 import { UpdateProdutoEstoqueDto } from './dto/update-produto_estoque.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProdutoEstoque } from './entities/produto_estoque.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, MoreThan, Repository } from 'typeorm';
 import { Produto } from 'src/produto/entities/produto.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 
@@ -19,6 +19,13 @@ export class ProdutoEstoqueService {
   ) {}
 
   async findAll(): Promise<ProdutoEstoque[]> {
+    return await this.ProdutoEstoqueRepository.find({
+      where: { quantidade: MoreThan(0) },
+      relations: ['produto', 'localizacao.armazem', 'localizacao.tipo'],
+    });
+  }
+
+  async listarTudo(): Promise<ProdutoEstoque[]> {
     return await this.ProdutoEstoqueRepository.find({
       relations: ['produto', 'localizacao.armazem', 'localizacao.tipo'],
     });
@@ -38,24 +45,40 @@ export class ProdutoEstoqueService {
     return produto_estoque;
   }
 
-  async search(search?: string): Promise<{ results: any[] }> {
+  async search(
+    search?: string,
+    offset = 0,
+    limit = 30,
+    tipoId?: number,
+    armazemId?: number,
+    relatorio: boolean = false,
+  ): Promise<{ results: any[] }> {
     const query = this.ProdutoEstoqueRepository.createQueryBuilder(
       'produto_estoque',
     )
       .leftJoin('produto_estoque.produto', 'produto')
       .leftJoin('produto_estoque.localizacao', 'localizacao')
-      .select(['produto_estoque', 'produto', 'localizacao'])
+      .leftJoin('localizacao.tipo', 'tipo')
+      .leftJoin('localizacao.armazem', 'armazem')
+      .select(['produto_estoque', 'produto', 'localizacao', 'armazem'])
       .groupBy('produto_estoque.produto_estoque_id')
       .addGroupBy('produto.produto_id')
-      .addGroupBy('localizacao.localizacao_id');
+      .addGroupBy('localizacao.localizacao_id')
+      .addGroupBy('tipo.tipo_localizacao_id')
+      .addGroupBy('armazem.armazem_id');
+
+    if (!relatorio) query.where('produto_estoque.quantidade > 0');
 
     if (search) {
       query.andWhere(
         new Brackets((qb) => {
-          qb.where('produto.sku ILIKE :search', {
+          qb.where('produto.descricao ILIKE :search', {
             search: `%${search}%`,
           })
             .orWhere('produto.ean ILIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('produto.sku ILIKE :search', {
               search: `%${search}%`,
             })
             .orWhere('localizacao.nome ILIKE :search', {
@@ -63,14 +86,25 @@ export class ProdutoEstoqueService {
             })
             .orWhere('localizacao.ean ILIKE :search', {
               search: `%${search}%`,
+            })
+            .orWhere('tipo.tipo ILIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('armazem.nome ILIKE :search', {
+              search: `%${search}%`,
             });
         }),
       );
     }
 
+    if (tipoId)
+      query.andWhere('tipo.tipo_localizacao_id = :tipoId', { tipoId });
+    if (armazemId)
+      query.andWhere('armazem.armazem_id = :armazemId', { armazemId });
+
     // const total = await query.getCount();
 
-    query.addOrderBy('localizacao.nome', 'ASC');
+    query.addOrderBy('localizacao.nome', 'ASC').offset(offset).limit(limit);
 
     const entities = await query.getRawAndEntities();
 
@@ -100,6 +134,7 @@ export class ProdutoEstoqueService {
         tipo: item.localizacao.tipo.tipo,
       },
       produto: {
+        id_tiny: item.produto.id_tiny,
         produto_id: item.produto.produto_id,
         descricao: item.produto.descricao,
         sku: item.produto.sku,

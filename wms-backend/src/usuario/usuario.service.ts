@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -49,6 +54,34 @@ export class UsuarioService {
     });
 
     return await this.UsuarioRepository.save(usuario);
+  }
+
+  async validarUsuario(
+    usuario: string,
+    senha: string,
+  ): Promise<{ status: number; message: string }> {
+    const usuarioEncontrado = await this.UsuarioRepository.findOne({
+      where: { usuario: usuario },
+    });
+
+    if (!usuarioEncontrado)
+      return {
+        status: HttpStatus.NOT_FOUND,
+        message: 'Usuário não encontrado',
+      };
+
+    const validacao = usuarioEncontrado.senha === senha;
+
+    if (!validacao)
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Senha inválida',
+      };
+
+    return {
+      status: HttpStatus.OK,
+      message: 'Usuário logado com sucesso',
+    };
   }
 
   async update(

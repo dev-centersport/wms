@@ -21,6 +21,11 @@ export class ProdutoEstoqueController {
     return this.produtoEstoqueService.create(createProdutoEstoqueDto);
   }
 
+  @Get('listar-todos')
+  listarTudo() {
+    return this.produtoEstoqueService.listarTudo();
+  }
+
   @Get()
   findAll() {
     return this.produtoEstoqueService.findAll();
@@ -32,14 +37,35 @@ export class ProdutoEstoqueController {
   }
 
   @Get('pesquisar')
-  async search(@Query('search') search?: string) {
-    const dados = await this.produtoEstoqueService.search(search);
+  async search(
+    @Query('search') search?: string,
+    @Query('offset') offset?: string,
+    @Query('tipoId') tipoId?: number,
+    @Query('armazemId') armazemId?: number,
+    @Query('relatorio') relatorio?: string,
+    @Query('show') show?: string,
+  ) {
+    const relatorioBool = String(relatorio).toLowerCase() === 'true';
+    const showBool = String(show).toLowerCase() === 'false';
 
-    if (search) {
-      return dados;
-    } else {
-      return [];
+    const dados = await this.produtoEstoqueService.search(
+      search,
+      Number(offset) || 0,
+      30,
+      tipoId ? Number(tipoId) : undefined,
+      armazemId ? Number(armazemId) : undefined,
+      relatorioBool || false,
+    );
+
+    if (showBool) {
+      if (search) {
+        return dados;
+      } else {
+        return [];
+      }
     }
+
+    return dados;
   }
 
   @Get(':id')
