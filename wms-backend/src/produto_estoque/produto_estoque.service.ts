@@ -119,7 +119,6 @@ export class ProdutoEstoqueService {
     const produto_estoque = await this.ProdutoEstoqueRepository.find({
       relations: ['produto', 'localizacao.tipo', 'localizacao.armazem'],
     });
-    console.log(produto_estoque);
 
     if (!produto_estoque)
       throw new NotFoundException('Nenhum prodtuo no estoque foi encontrado!');
@@ -129,7 +128,6 @@ export class ProdutoEstoqueService {
         armazem_id: item.localizacao.armazem.armazem_id,
         armazem: item.localizacao.armazem.nome,
         localizacao_id: item.localizacao.localizacao_id,
-        nome: item.localizacao.nome,
         ean: item.localizacao.ean,
         tipo: item.localizacao.tipo.tipo,
       },
@@ -232,19 +230,4 @@ export class ProdutoEstoqueService {
 
     await this.ProdutoEstoqueRepository.remove(produto_estoque);
   }
-  // create(createProdutoEstoqueDto: CreateProdutoEstoqueDto) {
-  //   return 'This action adds a new produtoEstoque';
-  // }
-  // findAll() {
-  //   return `This action returns all produtoEstoque`;
-  // }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} produtoEstoque`;
-  // }
-  // update(id: number, updateProdutoEstoqueDto: UpdateProdutoEstoqueDto) {
-  //   return `This action updates a #${id} produtoEstoque`;
-  // }
-  // remove(id: number) {
-  //   return `This action removes a #${id} produtoEstoque`;
-  // }
 }
