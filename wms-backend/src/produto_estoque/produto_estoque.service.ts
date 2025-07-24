@@ -60,6 +60,7 @@ export class ProdutoEstoqueService {
       .leftJoin('localizacao.tipo', 'tipo')
       .leftJoin('localizacao.armazem', 'armazem')
       .select(['produto_estoque', 'produto', 'localizacao', 'armazem'])
+      .where('produto_estoque.quantidade > 0')
       .groupBy('produto_estoque.produto_estoque_id')
       .addGroupBy('produto.produto_id')
       .addGroupBy('localizacao.localizacao_id')
