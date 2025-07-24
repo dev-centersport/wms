@@ -51,6 +51,7 @@ export class ProdutoEstoqueService {
     limit = 30,
     tipoId?: number,
     armazemId?: number,
+    relatorio: boolean = false,
   ): Promise<{ results: any[] }> {
     const query = this.ProdutoEstoqueRepository.createQueryBuilder(
       'produto_estoque',
@@ -60,12 +61,13 @@ export class ProdutoEstoqueService {
       .leftJoin('localizacao.tipo', 'tipo')
       .leftJoin('localizacao.armazem', 'armazem')
       .select(['produto_estoque', 'produto', 'localizacao', 'armazem'])
-      .where('produto_estoque.quantidade > 0')
       .groupBy('produto_estoque.produto_estoque_id')
       .addGroupBy('produto.produto_id')
       .addGroupBy('localizacao.localizacao_id')
       .addGroupBy('tipo.tipo_localizacao_id')
       .addGroupBy('armazem.armazem_id');
+
+    if (!relatorio) query.where('produto_estoque.quantidade > 0');
 
     if (search) {
       query.andWhere(

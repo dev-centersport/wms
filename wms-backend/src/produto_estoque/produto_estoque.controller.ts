@@ -42,12 +42,17 @@ export class ProdutoEstoqueController {
     @Query('offset') offset?: string,
     @Query('tipoId') tipoId?: number,
     @Query('armazemId') armazemId?: number,
+    @Query('relatorio') relatorio?: string,
   ) {
+    const relatorioBool = String(relatorio).toLowerCase() === 'true';
+
     const dados = await this.produtoEstoqueService.search(
       search,
       Number(offset) || 0,
+      30,
       tipoId ? Number(tipoId) : undefined,
       armazemId ? Number(armazemId) : undefined,
+      relatorioBool,
     );
 
     if (search) {
