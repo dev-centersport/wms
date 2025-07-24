@@ -7,6 +7,7 @@ import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -19,6 +20,8 @@ export enum StatusPrateleira {
 }
 
 @Entity()
+@Index(['nome'])
+@Index(['ean'])
 export class Localizacao {
   @PrimaryGeneratedColumn()
   localizacao_id: number;
@@ -47,6 +50,8 @@ export class Localizacao {
 
   // @BeforeInsert() hooks cannot be async, so ensure EAN is generated before saving the entity.
   // Remove this method and generate EAN in the service before saving the entity.
+
+  // Relações
 
   @ManyToOne(() => TipoLocalizacao, (tipo) => tipo.localizacoes)
   @JoinColumn()

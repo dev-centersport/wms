@@ -7,7 +7,10 @@ import { CreateMovimentacaoDto } from './dto/create-movimentacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Movimentacao, TipoMovimentacao } from './entities/movimentacao.entity';
 import { EntityManager, MoreThan, Repository } from 'typeorm';
-import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
+import {
+  Localizacao,
+  StatusPrateleira,
+} from 'src/localizacao/entities/localizacao.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { ItemMovimentacao } from 'src/item_movimentacao/entities/item_movimentacao.entity';
@@ -169,8 +172,8 @@ export class MovimentacaoService {
         ) {
           CreateMovimentacaoDto.itens_movimentacao = produtosEstoque.map(
             (pe) => ({
+              produto_estoque_id: pe.produto_estoque_id,
               produto_id: pe.produto.produto_id,
-              produto_estoque_id: pe.produto.produto_id,
               quantidade: pe.quantidade,
             }),
           );
@@ -446,6 +449,40 @@ export class MovimentacaoService {
         }
       }
     });
+  }
+
+  async abrirLocalizacao(ean: string): Promise<string> {
+    const localizacao = await this.localizacaoRepository.findOne({
+      where: { ean: ean },
+    });
+    if (!localizacao)
+      throw new NotFoundException(
+        `Localização com EAN ${ean} não foi encontrada`,
+      );
+    if (localizacao.status !== StatusPrateleira.FECHADA)
+      throw new BadRequestException(
+        'Localização já aberta ou com status desconhecido',
+      );
+
+    localizacao.status = StatusPrateleira.ABERTA;
+    return `Localização ${localizacao.nome} foi aberta`;
+  }
+
+  async fecharLocalizacao(ean: string): Promise<string> {
+    const localizacao = await this.localizacaoRepository.findOne({
+      where: { ean: ean },
+    });
+    if (!localizacao)
+      throw new NotFoundException(
+        `Localização com EAN ${ean} não foi encontrada`,
+      );
+    if (localizacao.status !== StatusPrateleira.ABERTA)
+      throw new BadRequestException(
+        'Localização já fechada ou com status desconhecido',
+      );
+
+    localizacao.status = StatusPrateleira.ABERTA;
+    return `Localização ${localizacao.nome} foi fechada com sucesso`;
   }
 
   async findAll(): Promise<Movimentacao[]> {

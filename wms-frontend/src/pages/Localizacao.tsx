@@ -35,7 +35,7 @@ import {
 import Layout from '../components/Layout';
 import { excluirLocalizacao, buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
-import CarregadorComRetry from '../components/CarregadorComRetry';
+
 
 const normalizar = (s: string) =>
   s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
@@ -523,6 +523,16 @@ const Localizacao: React.FC = () => {
     const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
     if (!tipoUnico) {
       alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
+      return;
+    }
+
+    const armazemSelecionados = indicesParaImprimir.map(
+      (idx) => listaLocalizacoes[idx].armazem.toLowerCase()
+    );
+
+    const armazemUnico = armazemSelecionados.every((t) => t === armazemSelecionados[0]);
+    if (!armazemUnico) {
+      alert('Imprima apenas etiquetas de um mesmo armazém.');
       return;
     }
 

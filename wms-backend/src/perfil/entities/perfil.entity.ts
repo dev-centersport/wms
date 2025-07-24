@@ -9,8 +9,8 @@ export class Perfil {
   @Column({ type: 'varchar', length: 50 })
   nome: string;
 
-  @Column({ type: 'text' })
-  descricao: string;
+  @Column({ type: 'text', nullable: true })
+  descricao?: string;
 
   @Column({ type: 'boolean', default: true })
   pode_ver: boolean;

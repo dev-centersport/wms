@@ -10,10 +10,12 @@ export class SeparacaoUploadDTO {
 
 export class ResultadoSeparacaoDTO {
   localizacoes: Array<{
-    armazem: Array<{ armazemID: number; armazem: string }>;
-    localizacao: string;
-    produtoSKU: string;
     urlFoto: string | null;
+    descricao: string;
+    // produtoSKU: string;
+    eanProduto: string | null;
+    armazem: string;
+    localizacao: string;
     quantidadeSeparada: number;
     pedidosAtendidos: Array<{
       pedidoId: string | number;
@@ -27,15 +29,18 @@ export class ResultadoSeparacaoPorPedidoDTO {
   pedidos: Array<{
     numeroPedido: string | number;
     itens: Array<{
+      // idItem: string | number;
+      urlFoto: string;
+      descricao: string;
       sku: string;
-      idItem: string | number;
+      ean: string;
       localizacoes: Array<{
-        armazem: { armazemID: number; armazem: string };
+        armazem: string;
         localizacao: string;
         quantidadeSeparada: number;
       }>;
     }>;
     completo: boolean;
   }>;
-  produtosNaoEncontrados: string[];
+  // produtosNaoEncontrados: string[];
 }
