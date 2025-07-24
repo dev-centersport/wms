@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, CloudUpload, Refresh } from '@mui/icons-material';
 
-
 import Layout from '../components/Layout';
 import { buscarProdutos } from '../services/API'; // crie essa função no backend se ainda não tiver
 
@@ -30,7 +29,6 @@ interface Produto {
   descricao: string;
   sku: string;
   ean: string;
-  quantidade: number;
 }
 
 const Produto: React.FC = () => {
@@ -54,6 +52,8 @@ const Produto: React.FC = () => {
 
     carregarProdutos();
   }, []);
+
+  console.log("teste")
 
   const filteredIndices = useMemo(() => {
     return listaProdutos.reduce<number[]>((acc, produto, idx) => {
@@ -219,7 +219,7 @@ const Produto: React.FC = () => {
                     <TableCell>{produto.descricao}</TableCell>
                     <TableCell>{produto.sku}</TableCell>
                     <TableCell>{produto.ean}</TableCell>
-                    <TableCell>{produto.quantidade}</TableCell>
+                    {/* <TableCell>{produto.quantidade}</TableCell> */}
                   </TableRow>
 
                 );

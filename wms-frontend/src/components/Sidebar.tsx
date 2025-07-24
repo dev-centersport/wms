@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import image from '../img/image.png'
+import image from '../img/image.png';
 import {
   Box,
   Drawer,
@@ -34,13 +34,14 @@ const menuItems = [
   // { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
   // { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
 ];
-// ✅ Adicione essa interface
+
 interface SidebarProps {
   children: React.ReactNode;
 }
 
-// ✅ Atualize para aceitar children
+// NÃO precisa mais da interface SidebarProps ou do children
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
+// const Sidebar = () => {
   const location = useLocation();
 
   return (
@@ -73,7 +74,8 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
 
         <List disablePadding>
           {menuItems.map(({ label, icon, path }) => {
-            const isActive = location.pathname.startsWith(path);
+            // Considera ativo se o início da rota bate com o path
+            const isActive = location.pathname === path || location.pathname.startsWith(path + '/');
             return (
               <ListItemButton
                 key={path}
@@ -115,7 +117,6 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
         </List>
       </Drawer>
 
-      {/* ✅ Aqui o conteúdo principal da página */}
       <Box component="main" width="100%">
         {children}
       </Box>

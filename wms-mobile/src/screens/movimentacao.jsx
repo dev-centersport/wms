@@ -1,17 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   Alert,
-  FlatList,
-  Image,
-  Modal,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
+  FlatList,
+  StyleSheet,
+  Text,
+  Dimensions
 } from 'react-native';
 import {
   buscarLocalizacaoPorEAN,
@@ -20,7 +16,14 @@ import {
   buscarProdutosPorLocalizacaoDireto,
 } from '../api/movimentacaoAPI';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons'; // certifique-se que este está no topo
+
+import HeaderMovimentacao from '../componentes/Movimentacao/HeaderMovimentacao';
+import InputLocalizacaoProduto from '../componentes/Movimentacao/InputLocalizacaoProduto';
+import ListaProdutos from '../componentes/Movimentacao/ListaProdutos';
+import BotoesMovimentacao from '../componentes/Movimentacao/BotoesMovimentacao';
+import ModalConfirmacao from '../componentes/Movimentacao/ModalConfirmacao';
+import ModalCancelar from '../componentes/Movimentacao/ModalCancelar';
+import ModalExcluirProduto from '../componentes/Movimentacao/ModalExcluirProduto';
 
 export default function Movimentacao() {
   const [tipo, setTipo] = useState('entrada');
@@ -30,18 +33,22 @@ export default function Movimentacao() {
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [eanProduto, setEanProduto] = useState('');
   const [produtos, setProdutos] = useState([]);
+  const [produtosNaLocalizacao, setProdutosNaLocalizacao] = useState([]);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
-  const [produtosNaLocalizacao, setProdutosNaLocalizacao] = useState([]);
-  const navigation = useNavigation();
+  const [indexExcluir, setIndexExcluir] = useState(null);
+  const [mostrarModalExcluir, setMostrarModalExcluir] = useState(false);
 
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
   const flatListRef = useRef(null);
+  const navigation = useNavigation();
+
+  const limparCodigo = (valor) => valor.replace(/[\n\r\t\s]/g, '').trim();
 
   useEffect(() => {
     if (!tipoBloqueado && localizacaoRef.current) {
-      localizacaoRef.current.focus();
+      requestAnimationFrame(() => localizacaoRef.current.focus());
     }
   }, [tipo, tipoBloqueado]);
 
@@ -51,138 +58,210 @@ export default function Movimentacao() {
     }
   }, [produtos]);
 
-  const handleTipoChange = (novoTipo) => {
-    if (tipoBloqueado) return;
-    setTipo(novoTipo);
-    setEanLocalizacao('');
-    setlocalizacao_id(null);
-    setNomeLocalizacao('');
-    setProdutos([]);
-    setTimeout(() => {
-      localizacaoRef.current?.focus();
-    }, 100);
-  };
-
-  const handleBuscarLocalizacao = async () => {
+  const handleBuscarLocalizacao = async (eanBipado) => {
+    const ean = limparCodigo(eanBipado || eanLocalizacao);
+    if (!ean) return;
     try {
-      const loc = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());
+      const loc = await buscarLocalizacaoPorEAN(ean);
       if (!loc || !loc.localizacao_id) {
         Alert.alert('Localização não encontrada');
         return;
       }
-
       setlocalizacao_id(loc.localizacao_id);
       setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
       setTipoBloqueado(true);
       setEanLocalizacao('');
-
-      // 🔽 Aqui você busca os produtos que estão na localização:
       const produtosExistentes = await buscarProdutosPorLocalizacaoDireto(loc.localizacao_id);
       setProdutosNaLocalizacao(produtosExistentes);
-      ;
-
-      setTimeout(() => {
-        produtoRef.current?.focus();
-      }, 100);
+      requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
+      setEanLocalizacao('');
       Alert.alert('Erro ao buscar localização');
     }
   };
 
-  const handleAdicionarProduto = async () => {
+  const handleAdicionarProduto = async (eanBipado) => {
+    const ean = limparCodigo(eanBipado || eanProduto);
     if (!localizacao_id) {
       Alert.alert('Bipe uma localização antes de bipar produtos.');
+      setEanProduto('');
       return;
     }
 
     try {
-      const produto = await buscarProdutoPorEAN(eanProduto.trim());
+      const produto = await buscarProdutoPorEAN(ean);
       if (!produto || !produto.produto_id) {
         Alert.alert('Produto inválido');
+        setEanProduto('');
+        return;
+      }
+
+      // Verifica se o produto existe na localização atual
+      const estoque = produtosNaLocalizacao.find(
+        (p) => Number(p.produto_id) === Number(produto.produto_id)
+      );
+
+      if (tipo === 'saida' && !estoque) {
+        Alert.alert('Produto não localizado na gaveta, portanto foi excluído da lista.');
+        setEanProduto('');
+        requestAnimationFrame(() => produtoRef.current?.focus());
         return;
       }
 
       const produtoFormatado = {
         produto_id: produto.produto_id,
+        produto_estoque_id: estoque?.produto_estoque_id || null, // ⬅️ ESSENCIAL
         descricao: produto.descricao,
         ean: produto.ean,
         sku: produto.sku,
         url_foto: produto.url_foto,
         quantidade: 1,
-        estoque_localizacao: produto.estoque || 0,
+        estoque_localizacao: estoque?.quantidade || 0,
       };
-
-      // 🔍 Apenas log para debug, sem bloqueio
-      console.log('🔍 Produto bipado:', JSON.stringify(produtoFormatado, null, 2));
 
       setProdutos((prev) => [...prev, produtoFormatado]);
       setEanProduto('');
-      setTimeout(() => {
-        produtoRef.current?.focus();
-      }, 100);
+      requestAnimationFrame(() => produtoRef.current?.focus());
     } catch {
       Alert.alert('Produto não encontrado');
+      setEanProduto('');
     }
   };
 
+  const handleLongPressExcluir = (index) => {
+    setIndexExcluir(index);
+    setMostrarModalExcluir(true);
+  };
+
+  const confirmarExclusao = () => {
+    if (indexExcluir !== null) {
+      setProdutos((prev) => prev.filter((_, i) => i !== indexExcluir));
+      setIndexExcluir(null);
+      setMostrarModalExcluir(false);
+    }
+  };
 
   const verificarEstoqueAntesDeConfirmar = () => {
     if (tipo === 'saida') {
-      const contadorPorProduto = {};
-      const descricoes = {};
+      const payload = {
+        tipo,
+        usuario_id: 1,
+        localizacao_origem_id: localizacao_id,
+        localizacao_destino_id: 0,
+        itens_movimentacao: agruparProdutos(produtos),
+      };
 
+      console.log("📦 Payload (pré-verificação):", JSON.stringify(payload, null, 2));
+
+      const contador = {};
+      const descricoes = {};
       produtos.forEach((p) => {
-        const id = p.produto_id;
-        contadorPorProduto[id] = (contadorPorProduto[id] || 0) + 1;
-        descricoes[id] = p.descricao;
+        contador[p.produto_id] = (contador[p.produto_id] || 0) + 1;
+        descricoes[p.produto_id] = p.descricao;
       });
 
-      console.log('📊 Contagem de bipagens:', contadorPorProduto);
-      console.log('📦 Estoque atual na localização:', produtosNaLocalizacao);
-
-      for (const [produto_id, bipadoQtd] of Object.entries(contadorPorProduto)) {
+      for (const [produto_id, bipadoQtd] of Object.entries(contador)) {
         const existente = produtosNaLocalizacao.find(
           (p) => Number(p.produto_id) === Number(produto_id)
         );
         const estoque = existente?.quantidade ?? 0;
-        const descricao = descricoes[produto_id] || 'Produto desconhecido';
 
-        // ✅ SOMENTE valida estoque insuficiente — produto pode não estar na localização
         if (bipadoQtd > estoque) {
           Alert.alert(
             '⚠️ Estoque insuficiente',
-            `📦 Produto: ${descricao}\n🔢 Bipagens: ${bipadoQtd}\n📉 Estoque disponível: ${estoque}`,
-            [{ text: 'Entendi', style: 'default' }]
+            `📦 Produto: ${descricoes[produto_id]}\n🔢 Bipagens: ${bipadoQtd}\n📉 Estoque disponível: ${estoque}`
           );
-          return; // ❌ bloqueia confirmação
+          return;
         }
       }
     }
 
-    // ✅ Tudo ok, mostra modal de confirmação
     setMostrarConfirmacao(true);
   };
 
+
+  const agruparProdutos = (lista) => {
+    const mapa = {};
+    for (const p of lista) {
+      const id = p.produto_id;
+      if (!id) continue;
+
+      if (!mapa[id]) {
+        mapa[id] = {
+          produto_id: Number(p.produto_id),
+          produto_estoque_id: Number(p.produto_estoque_id),
+          quantidade: 0,
+        };
+      }
+      mapa[id].quantidade += 1;
+    }
+    return Object.values(mapa);
+  };
+
+
   const handleConfirmar = async () => {
     setMostrarConfirmacao(false);
-    try {
-      console.log('🔁 Verificando estoque para saída', produtos, produtosNaLocalizacao);
 
+    try {
+      // 🚨 Verificações explícitas antes do payload
+      if (!tipo) {
+        console.error('❌ Tipo de movimentação não definido');
+        Alert.alert('Tipo de movimentação inválido');
+        return;
+      }
+
+      if (!localizacao_id || isNaN(Number(localizacao_id))) {
+        console.error('❌ ID de localização inválido:', localizacao_id);
+        Alert.alert('Localização inválida ou não encontrada');
+        return;
+      }
+
+      if (!Array.isArray(produtos) || produtos.length === 0) {
+        console.error('❌ Nenhum produto bipado para movimentação');
+        Alert.alert('Nenhum produto foi bipado');
+        return;
+      }
+
+      // 🔄 Agrupar produtos antes de montar payload
+      const itensAgrupados = agruparProdutos(produtos);
+      console.log('📦 Produtos agrupados:', JSON.stringify(itensAgrupados, null, 2));
+
+      // 🎯 Definição explícita dos campos de localização
+      const localizacao_origem_id = tipo === 'saida' ? localizacao_id : 0;
+      const localizacao_destino_id = tipo === 'entrada' ? localizacao_id : 0;
+
+      console.log(`➡️ tipo: ${tipo}`);
+      console.log(`➡️ localizacao_origem_id (${typeof localizacao_origem_id}):`, localizacao_origem_id);
+      console.log(`➡️ localizacao_destino_id (${typeof localizacao_destino_id}):`, localizacao_destino_id);
+
+      // 🧾 Payload final
       const payload = {
         tipo,
         usuario_id: 1,
-        localizacao_origem_id: tipo === 'saida' ? localizacao_id : 0,
-        localizacao_destino_id: tipo === 'entrada' ? localizacao_id : 0,
-        itens_movimentacao: produtos.map((p) => ({
-          produto_id: Number(p.produto_id),
-          quantidade: Number(p.quantidade),
-        })),
+        localizacao_origem_id,
+        localizacao_destino_id,
+        itens_movimentacao: itensAgrupados,
       };
-      await enviarMovimentacao(payload);
+
+      console.log('✅ Payload final a ser enviado:', JSON.stringify(payload, null, 2));
+
+      const resposta = await enviarMovimentacao(payload);
+
+      console.log('✅ Movimentação salva com sucesso:', resposta);
       Alert.alert('Movimentação salva com sucesso');
       limparTudo();
-    } catch {
-      Alert.alert('Erro ao salvar movimentação');
+
+    } catch (err) {
+      console.error('❌ Erro ao salvar movimentação:', err);
+
+      if (err.response?.data) {
+        console.error('🔍 Detalhe do erro:', JSON.stringify(err.response.data, null, 2));
+        Alert.alert('Erro:', err.response.data?.message?.[0] || 'Erro ao salvar movimentação');
+      } else if (err.message) {
+        Alert.alert('Erro:', err.message);
+      } else {
+        Alert.alert('Erro ao salvar movimentação');
+      }
     }
   };
 
@@ -193,330 +272,120 @@ export default function Movimentacao() {
     setEanLocalizacao('');
     setEanProduto('');
     setTipoBloqueado(false);
-    setTimeout(() => {
-      localizacaoRef.current?.focus();
-    }, 100);
+    requestAnimationFrame(() => localizacaoRef.current?.focus());
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={80}
-    >
-      <FlatList
-        ref={flatListRef}
-        data={produtos}
-        keyExtractor={(_, index) => index.toString()}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.container}
-        ListHeaderComponent={
-          <>
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Movimentação - {tipo.toUpperCase()}</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  if (localizacao_id) {
-                    Alert.alert(
-                      'Movimentação pendente',
-                      `Movimentação do tipo ${tipo.toUpperCase()} está em andamento.\nFinalize ou cancele antes de sair.`
-                    );
-                  } else {
-                    navigation.navigate('Home');
-                  }
-                }}
-              >
-                <Ionicons name="close" size={28} color="#000" />
-              </TouchableOpacity>
-            </View>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <View style={styles.container}>
+        <HeaderMovimentacao
+          tipo={tipo}
+          setTipo={setTipo}
+          tipoBloqueado={tipoBloqueado}
+          localizacao_id={localizacao_id}
+          setEanLocalizacao={setEanLocalizacao}
+          setlocalizacao_id={setlocalizacao_id}
+          setNomeLocalizacao={setNomeLocalizacao}
+          setProdutos={setProdutos}
+          localizacaoRef={localizacaoRef}
+        />
 
-            <View style={[styles.toggleContainer, { marginTop: 20 }]}>
-              <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'entrada' && styles.active]}
-                onPress={() => handleTipoChange('entrada')}
-                disabled={tipoBloqueado}
-              >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
-                  ENTRADA
-                </Text>
-              </TouchableOpacity>
+        <InputLocalizacaoProduto
+          localizacao_id={localizacao_id}
+          eanLocalizacao={eanLocalizacao}
+          setEanLocalizacao={(v) => setEanLocalizacao(limparCodigo(v))}
+          handleBuscarLocalizacao={handleBuscarLocalizacao}
+          nomeLocalizacao={nomeLocalizacao}
+          eanProduto={eanProduto}
+          setEanProduto={(v) => setEanProduto(limparCodigo(v))}
+          handleAdicionarProduto={({ nativeEvent }) => handleAdicionarProduto(nativeEvent.text)}
+          localizacaoRef={localizacaoRef}
+          produtoRef={produtoRef}
+          produtos={produtos}
+        />
 
-              <TouchableOpacity
-                style={[styles.toggleBtn, tipo === 'saida' && styles.active]}
-                onPress={() => handleTipoChange('saida')}
-                disabled={tipoBloqueado}
-              >
-                <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
-                  SAÍDA
-                </Text>
-              </TouchableOpacity>
-            </View>
 
-            {!localizacao_id && (
-              <TextInput
-                ref={localizacaoRef}
-                value={eanLocalizacao}
-                onChangeText={setEanLocalizacao}
-                onSubmitEditing={handleBuscarLocalizacao}
-                placeholder="Bipe a Localização"
-                style={styles.input}
-                keyboardType="numeric"
-                showSoftInputOnFocus={false}
-              />
-            )}
-
-            {nomeLocalizacao !== '' && (
-              <Text style={styles.localizacaoInfo}>{nomeLocalizacao}</Text>
-            )}
-
-            {/* ⬇️ Campo de bipar produto mostrado só se localização estiver definida */}
-            {localizacao_id && (
-              <TextInput
-                ref={produtoRef}
-                value={eanProduto}
-                onChangeText={setEanProduto}
-                onSubmitEditing={handleAdicionarProduto}
-                placeholder="Bipe o Produto"
-                style={styles.input}
-                keyboardType="numeric"
-                showSoftInputOnFocus={false}
-              />
-            )}
-
-            {/* ⬇️ Total de produtos bipados, se houver */}
-            {produtos.length > 0 && (
-              <Text style={styles.totalSKU}>Total: {produtos.length} SKU</Text>
-            )}
-          </>
-        }
-
-        renderItem={({ item, index }) => (
-          <View style={styles.produtoItem}>
-            <Text style={styles.contador}>{index + 1}</Text>
-            {item.url_foto && (
-              <Image
-                source={{ uri: item.url_foto }}
-                style={styles.foto}
-                resizeMode="cover"
-              />
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.produtoNome}>{item.descricao}</Text>
-              <Text style={styles.produtoSKU}>SKU: {item.sku}</Text>
-            </View>
+        {produtos.length > 0 && (
+          <View style={styles.resumoSKUs}>
+            <Text style={styles.totalTexto}>
+            </Text>
+            <Text style={styles.totalTexto}>
+              {produtos.length} produto(s) bipado(s)
+            </Text>
           </View>
         )}
-        ListFooterComponent={
-          <>
-            {localizacao_id && (
-              <View style={styles.botoesFlexiveis}>
-                <TouchableOpacity style={styles.btnSalvar} onPress={verificarEstoqueAntesDeConfirmar}>
-                  <Text style={styles.salvarText}>Salvar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnCancelar} onPress={() => setMostrarCancelar(true)}>
-                  <Text style={styles.cancelarText}>Cancelar</Text>
-                </TouchableOpacity>
-              </View>
+
+        <View style={styles.listaContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={produtos}
+            keyExtractor={(_, index) => index.toString()}
+            keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            renderItem={({ item, index }) => (
+              <ListaProdutos produto={item} index={index} onLongPress={handleLongPressExcluir} />
             )}
+          />
+        </View>
 
-            {/* Modal Confirmar */}
-            <Modal transparent visible={mostrarConfirmacao} animationType="fade">
-              <View style={styles.overlay}>
-                <View style={styles.modalBox}>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Confirmação</Text>
-                    <TouchableOpacity onPress={() => setMostrarConfirmacao(false)}>
-                      <Text style={styles.modalClose}>×</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.modalContent}>
-                    <Text style={styles.alertIcon}>❗</Text>
-                    <Text style={styles.modalMessage}>
-                      Confirma a {tipo === 'entrada' ? 'Entrada' : 'Saída'} de {produtos.length} SKU?
-                    </Text>
-                    <TouchableOpacity style={styles.btnConfirmar} onPress={handleConfirmar}>
-                      <Text style={styles.confirmarText}>Confirmar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
+        <BotoesMovimentacao
+          visible={!!localizacao_id}
+          onSalvar={verificarEstoqueAntesDeConfirmar}
+          onCancelar={() => setMostrarCancelar(true)}
+        />
 
-            {/* Modal Cancelar */}
-            <Modal transparent visible={mostrarCancelar} animationType="fade">
-              <View style={styles.overlay}>
-                <View style={styles.modalBox}>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Cancelar</Text>
-                    <TouchableOpacity onPress={() => setMostrarCancelar(false)}>
-                      <Text style={styles.modalClose}>×</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.modalContent}>
-                    <Text style={styles.alertIcon}>⚠️</Text>
-                    <Text style={styles.modalMessage}>Deseja realmente cancelar a {tipo}?</Text>
-                    <TouchableOpacity
-                      style={styles.btnConfirmar}
-                      onPress={() => {
-                        setMostrarCancelar(false);
-                        limparTudo();
-                      }}
-                    >
-                      <Text style={styles.confirmarText}>Sim, Cancelar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          </>
-        }
-      />
+        <ModalConfirmacao
+          visible={mostrarConfirmacao}
+          onClose={() => setMostrarConfirmacao(false)}
+          onConfirmar={handleConfirmar}
+          tipo={tipo}
+          quantidade={produtos.length}
+        />
+
+        <ModalCancelar
+          visible={mostrarCancelar}
+          onClose={() => setMostrarCancelar(false)}
+          onCancelar={() => {
+            setMostrarCancelar(false);
+            limparTudo();
+          }}
+          tipo={tipo}
+        />
+
+        <ModalExcluirProduto
+          visible={mostrarModalExcluir}
+          onConfirmar={confirmarExclusao}
+          onClose={() => setMostrarModalExcluir(false)}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 }
+
+const screenHeight = Dimensions.get('window').height;
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  toggleContainer: { flexDirection: 'row', marginBottom: 10 },
-  toggleBtn: {
-    flex: 1,
-    backgroundColor: '#ccc',
-    padding: 12,
-    marginHorizontal: 5,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  active: { backgroundColor: '#4CAF50' },
-  toggleText: { color: '#fff', fontWeight: 'bold' },
-  disabledText: { opacity: 0.5 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 16,
-    marginVertical: 6,
-  },
-  localizacaoInfo: {
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    backgroundColor: '#eee',
-    padding: 6,
-    borderRadius: 4,
-    marginBottom: 6,
-  },
-  produtoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  contador: {
-    fontWeight: 'bold',
-    width: 20,
-    marginRight: 6,
-    textAlign: 'center',
-  },
-  foto: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
-    borderRadius: 6,
-    backgroundColor: '#f0f0f0',
-  },
-  produtoNome: { fontSize: 16, fontWeight: '600', color: '#333' },
-  produtoSKU: { fontSize: 12, color: '#888' },
-  totalSKU: {
-    textAlign: 'right',
-    marginTop: 10,
-    fontWeight: 'bold',
-    color: '#555',
-  },
-  botoesFlexiveis: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    marginBottom: 40, // espaço extra para não colar no fundo
-    paddingHorizontal: 10,
-  },
-  btnSalvar: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 14,
-    flex: 1,
-    marginRight: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  btnCancelar: {
-    borderColor: '#4CAF50',
-    borderWidth: 2,
-    paddingVertical: 14,
-    flex: 1,
-    marginLeft: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  salvarText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  cancelarText: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: '#000000aa',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    backgroundColor: '#fff',
-    width: '80%',
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderColor: '#4CAF50',
-    borderWidth: 1,
-  },
-  modalHeader: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalTitle: { color: '#000', fontWeight: 'bold', fontSize: 16 },
-  modalClose: { color: '#fff', fontSize: 18 },
-  modalContent: { alignItems: 'center', padding: 20 },
-  alertIcon: { fontSize: 40, marginBottom: 10 },
-  modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
-  btnConfirmar: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-  },
-  confirmarText: { color: '#fff', fontSize: 16 },
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-    paddingTop: 40, // importante para alinhar com consulta e ocorrência
+    paddingTop: 40,
   },
-  header: {
-    marginTop: 40,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+  resumoSKUs: {
+    marginTop: 10,
+    marginBottom: 6,
+    alignItems: 'flex-end',
   },
-
-  headerTitle: {
-    fontSize: 20,
+  totalTexto: {
     fontWeight: 'bold',
-    color: '#000',
+    fontSize: 14,
+    color: '#333',
+  },
+  listaContainer: {
+    flexGrow: 1,
+    maxHeight: screenHeight * 0.37, // 40% da altura da tela (ajuste se necessário)
+    borderTopWidth: 1,
+    borderColor: '#eee',
+    marginBottom: 10,
   },
 });

@@ -21,7 +21,7 @@ interface CustomPaginationProps {
   currentPage: number;
   show?: boolean;
   itemsPerPage: number;
-  onPageChange: (page: number) => void; // Mantido como obrigatório
+  onPageChange: (page: number) => void;
   onItemsPerPageChange?: (itemsPerPage: number) => void;
 }
 
