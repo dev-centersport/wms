@@ -67,11 +67,11 @@ const Login: React.FC = () => {
     try {
       const resultado = await login(usuario, senha);
 
-      if (resultado.success) {
-        console.log('Login OK', resultado.usuario);
+      if (resultado.status === 200) {
+        console.log('Login OK', resultado.message);
         navigate('/armazem');
       } else {
-        alert(resultado.mensagem || 'Usuário ou senha inválidos.');
+        alert(`${resultado.status} ${resultado.message}`);
       }
     } catch (err) {
       alert('Erro inesperado ao tentar login.');
