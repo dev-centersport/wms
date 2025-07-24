@@ -170,20 +170,27 @@ export interface Localizacao {
 }
 
 export const buscarLocalizacoes = async (
-  limit: number = 100,
+  limit: number = 300,
   offset: number = 0,
   busca: string = '',
   armazemId?: number,
   tipoId?: number,
 ): Promise<{ results: Localizacao[]; total: number }> => {
   try {
-    const params = new URLSearchParams({
-      limit: limit.toString(),
-      offset: offset.toString(),
-      search: encodeURIComponent(busca),
-      ...(armazemId && { armazemId: armazemId.toString() }),
-      ...(tipoId && { tipoId: tipoId.toString() }),
-    });
+    const params = new URLSearchParams();
+
+    params.set('limit', String(limit));
+    params.set('offset', String(offset));
+
+    if (busca?.trim()) {
+      params.set('search', busca.trim());
+    }
+    if (typeof armazemId === 'number') {
+      params.set('armazemId', armazemId.toString());
+    }
+    if (typeof tipoId === 'number') {
+      params.set('tipoId', tipoId.toString());
+    }
 
     const res = await axios.get<{ results: any[]; total: number }>(
       `http://151.243.0.78:3001/localizacao?${params.toString()}`
@@ -209,6 +216,8 @@ export const buscarLocalizacoes = async (
     throw new Error('Falha ao carregar as localizações do servidor.');
   }
 };
+
+
 
 export const excluirTipoLocalizacao = async (id: number): Promise<void> => {
   try {
