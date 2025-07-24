@@ -229,52 +229,53 @@ const Localizacao: React.FC = () => {
         carregar();
     };
 
-    const handleImprimir = (localizacao: string, ean: string, tipo: string) => {
-        const tipoLower = tipo.toLowerCase();
-        if (tipoLower.includes('caixa')) {
-            handleImprimirCaixa(localizacao, ean);
-            return;
-        }
-        const w = window.open('', '_blank');
-        if (!w) return;
+    const handleImprimir = (localizacao: string, ean: string, tipo: string, armazem: string) => {
+    const tipoLower = tipo.toLowerCase();
+    if (tipoLower.includes('caixa')) {
+        handleImprimirCaixa(localizacao, ean, armazem);
+        return;
+    }
+    const w = window.open('', '_blank');
+    if (!w) return;
 
-        /* ------------------------------------------------------------------ */
-        /* 1. Identificação do tipo                                           */
-        /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------ */
+    /* 1. Identificação do tipo                                           */
+    /* ------------------------------------------------------------------ */
+        
+    const isCaixa = tipoLower.includes('caixa');
+    const isPrateleira = tipoLower.includes('prateleira');
 
-        const isCaixa = tipoLower.includes('caixa');
-        const isPrateleira = tipoLower.includes('prateleira');
+    /* ------------------------------------------------------------------ */
+    /* 2. Dimensões, fontes e código de barras                            */
+    /* ------------------------------------------------------------------ */
 
-        /* ------------------------------------------------------------------ */
-        /* 2. Dimensões, fontes e código de barras                            */
-        /* ------------------------------------------------------------------ */
-        const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
-        const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+    const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+    const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-        const fontNome = '120px';                   // tamanho base
-        const barHeight = isCaixa ? 90 : 20;        // altura barra
-        const barFont = isCaixa ? 22 : 10;        // fonte barra
+    const fontNome = '120px';                   // tamanho base
+    const barHeight = isCaixa ? 90 : 20;        // altura barra
+    const barFont = isCaixa ? 22 : 10;          // fonte barra
 
-        /* ------------------------------------------------------------------ */
-        /* 3. Transformação do nome para Prateleira                           */
-        /* ------------------------------------------------------------------ */
-        const nomeImpresso = isPrateleira
-            ? localizacao.replace(/^.*?#/, '')
-            : localizacao;
+    /* ------------------------------------------------------------------ */
+    /* 3. Transformação do nome para Prateleira                           */
+    /* ------------------------------------------------------------------ */
 
+    const nomeImpresso = isPrateleira
+        ? localizacao.replace(/^.*?#/, '')
+        : localizacao;
 
+    /* ------------------------------------------------------------------ */
+    /* 4. Estilos condicionais                                            */
+    /* ------------------------------------------------------------------ */
 
+    const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
+    const nomeMarginTop = isPrateleira ? '-3mm' : '0';          // só prateleira sobe
 
-        /* ------------------------------------------------------------------ */
-        /* 4. Estilos condicionais                                            */
-        /* ------------------------------------------------------------------ */
-        const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
-        const nomeMarginTop = isPrateleira ? '-3mm' : '0';      // só prateleira sobe
+    /* ------------------------------------------------------------------ */
+    /* 5. HTML completo                                                   */
+    /* ------------------------------------------------------------------ */
 
-        /* ------------------------------------------------------------------ */
-        /* 5. HTML completo                                                   */
-        /* ------------------------------------------------------------------ */
-        w.document.write(`
+    w.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -349,99 +350,110 @@ const Localizacao: React.FC = () => {
         w.document.close();
     };
 
-    const handleImprimirCaixa = (localizacao: string, ean: string) => {
+    const handleImprimirCaixa = (localizacao: string, ean: string, armazem: string) => {
         const w = window.open('', '_blank');
         if (!w) return;
 
-        const largura = '10cm';
-        const altura = '15cm';
-        const fontNome = '120px';
-        const barHeight = 90;
-        const barFont = 22;
+        // Dimensões ajustadas (em mm para melhor compatibilidade com impressoras)
+        const largura = '100mm';
+        const altura = '150mm';
+        const fontNomePadrao = '20mm'; // Tamanho padrão da fonte
+        const barHeight = '90mm'; // Altura do código de barras
+        const barFont = '25mm'; // Fonte do texto do código de barras
 
         w.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Etiqueta – ${localizacao}</title>
-      <style>
-        @page {
-          size: ${largura} ${altura};
-          margin: 0;
-        }
-        body {
-          width: ${largura};
-          height: ${altura};
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: Arial, sans-serif;
-          overflow: hidden;
-        }
-        .container {
-          transform: rotate(-90deg);
-          margin-top: 100px;
-          transform-origin: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-        }
-        #nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: 0;
-          padding: 0;
-          text-align: center;
-          white-space: nowrap;
-        }
-        #barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div id="nome">${localizacao}</div>
-        <svg id="barcode"></svg>
-      </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Etiqueta – ${localizacao}</title>
+                <style>
+                    @page {
+                        size: ${largura} ${altura} !important;
+                        margin: 0;
+                    }
+                    body {
+                        width: 100vw;
+                        height: 100vh;
+                        font-family: Arial, sans-serif;
+                    }
+                    .etiqueta {
+                        width: ${largura};
+                        height: ${altura};
+                        position: relative;
+                        page-break-after: always;
+                        overflow: hidden;
+                    }
+                    .container {
+                        transform: rotate(-90deg);
+                        transform-origin: center;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        width: 100%;
+                        height: 100%;
+                    }
+                    #nome {
+                        font-weight: bold;
+                        font-size: ${fontNomePadrao};
+                        text-align: center;
+                        white-space: nowrap;
+                    }
+                    .barcode {
+                        width: 90%;
+                        margin: 10px 0;
+                        padding: 0;
+                    }
+                    #nomeArmazem {
+                        font-weight: bold;
+                        font-size: 8mm;
+                        margin: 0;
+                        padding: 0;
+                        text-align: center;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="etiqueta">
+                    <div class="container">
+                        <div id="nome">${localizacao}</div>
+                        <div id="nomeArmazem">${armazem}</div>
+                        <svg id="barcode"></svg>
+                    </div>
+                </div>
+                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+                <script>
+                    window.onload = () => {
+                        const nomeEl = document.getElementById('nome');
+                        const texto = '${localizacao}';  // Isso será substituído pelo valor real
+                        let novoTamanho = ${fontNomePadrao.replace('mm', '')};  // Valor inicial em mm (sem unidade)
 
-      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-      <script>
-        const nomeEl = document.getElementById('nome');
-        const texto = '${localizacao}';
-        let tamanho = ${fontNome.replace('px', '')};
+                        // Ajusta o tamanho da fonte com base no comprimento do texto
+                        if (texto.length > 8) novoTamanho = 13;
+                        else if (texto.length > 5) novoTamanho = 37;
 
-        if (texto.length > 8)      tamanho = 50;
-        else if (texto.length > 5) tamanho = 180;
+                        nomeEl.style.fontSize = novoTamanho + 'mm';
 
-        nomeEl.style.fontSize = tamanho + 'px';
+                        // Gera o código de barras
+                        JsBarcode('#barcode', '${ean}', {  // EAN dinâmico
+                            format: 'ean13',
+                            height: ${barHeight.replace('mm', '')},  // Remove 'mm' pois JsBarcode usa pixels
+                            displayValue: true,
+                            fontSize: ${barFont.replace('mm', '')}   // Remove 'mm' aqui também
+                        });
 
-        JsBarcode('#barcode', '${ean}', {
-          format: 'ean13',
-          height: ${barHeight},
-          displayValue: true,
-          fontSize: ${barFont}
-        });
-
-        window.onload = () => {
-          window.print();
-          window.onafterprint = () => window.close();
-        };
-      </script>
-    </body>
-    </html>
-  `);
-
+                        // Imprime e fecha a janela
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 100);
+                    };
+                </script>
+            </body>
+            </html>
+        `);
         w.document.close();
     };
-
     /* ------------------------------------------------------------------ */
     /* Substitua a função handleImprimirSelecionados pelo código abaixo   */
     /* ------------------------------------------------------------------ */
@@ -478,8 +490,10 @@ const Localizacao: React.FC = () => {
 
         const tipoAtual = tiposSelecionados[0];
         if (tipoAtual.includes('caixa')) {
+            console.log(tipoAtual)
             handleImprimirSelecionadosCaixa();
         } else {
+            console.log(tipoAtual)
             handleImprimirSelecionadosPrateleira();
         }
     };
@@ -513,103 +527,110 @@ const Localizacao: React.FC = () => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Etiquetas – Caixas</title>
-      <style>
+    <title>Etiquetas – Caixas</title>
+    <style>
         @page {
-          size: ${largura} ${altura};
-          margin: 0;
+            size: ${largura} ${altura} !important;
+            margin: 0;
         }
         body {
-          margin: 0;
-          padding: 0;
+            width: 100vw;
+            height: 100vh;
         }
         .etiqueta {
-          width: ${largura};
-          height: ${altura};
-          position: relative;
-          page-break-after: always;
+            width: ${largura};
+            height: ${altura};
+            position: relative;
+            page-break-after: always;
+            overflow: hidden;
         }
         .container {
-          transform: rotate(-90deg);
-          transform-origin: left top;
-          position: absolute;
-          top: ${altura};
-          left: 0;
-          width: ${altura};
-          height: ${largura};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          font-family: Arial, sans-serif;
+            transform: rotate(-90deg);
+            transform-origin: left top;
+            position: absolute;
+            top: ${altura};
+            left: 0;
+            width: ${altura};
+            height: ${largura};
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
         }
         .nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: 0;
-          padding: 0;
-          text-align: center;
-          white-space: nowrap;
+            font-weight: bold;
+            font-size: ${fontNome};
+            text-align: center;
+            white-space: nowrap;
         }
         .barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
+            width: 90%;
+            margin: 10px 0;
+            padding: 0;
         }
-      </style>
+        #nomeArmazem {
+            font-size: 30px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+    </style>
     </head>
     <body>
-  `);
+`);
 
         indicesParaImprimir.forEach((idx, i) => {
             const item = listaLocalizacoes[idx];
             const nomeEscapado = item.nome.replace(/'/g, "\\'");
             const eanEscapado = item.ean.replace(/'/g, "\\'");
+            const armazemEscapado = item.armazem.replace(/'/g, "\\'");
             w.document.write(`
-      <div class="etiqueta" data-ean="${eanEscapado}">
+    <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="container">
-          <div class="nome" id="nome-${i}">${nomeEscapado}</div>
-          <svg class="barcode" id="barcode-${i}"></svg>
+            <div class="nome" id="nome-${i}">${nomeEscapado}</div>
+            <div class="nome" id="nomeArmazem">${armazemEscapado}</div>
+            <svg class="barcode" id="barcode-${i}"></svg>
         </div>
-      </div>
+    </div>
     `);
         });
 
         w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
-      window.onload = () => {
+    window.onload = () => {
         document.querySelectorAll('.etiqueta').forEach((div, index) => {
-          const nome = div.querySelector('.nome').innerText;
-          const svg = div.querySelector('.barcode');
-          const ean = div.dataset.ean;
+        const nome = div.querySelector('.nome').innerText;
+        const svg = div.querySelector('.barcode');
+        const ean = div.dataset.ean;
 
-          let tamanho = ${fontNome.replace('px', '')};
-          if (nome.length > 8)      tamanho = 50;
-          else if (nome.length > 5) tamanho = 140;
+        let tamanho = ${fontNome.replace('px', '')};
+        if (nome.length > 8)      tamanho = 50;
+        else if (nome.length > 5) tamanho = 140;
 
-          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+        document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-          JsBarcode(svg, ean, {
+        JsBarcode(svg, ean, {
             format: 'ean13',
             height: ${barHeight},
             displayValue: true,
             fontSize: ${barFont}
-          });
+        });
         });
 
         window.print();
         window.onafterprint = () => window.close();
-      };
+    };
     </script>
     </body>
     </html>
-  `);
+`);
 
         w.document.close();
     };
 
-
+    // Prateleira
     const handleImprimirSelecionadosPrateleira = () => {
         let indicesParaImprimir = selectedItems;
         if (!indicesParaImprimir.length) {
@@ -656,45 +677,45 @@ const Localizacao: React.FC = () => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Etiquetas</title>
-      <style>
+    <title>Etiquetas</title>
+    <style>
         @page {
-          size: ${largura} ${altura};
-          margin: 0;
+        size: ${largura} ${altura};
+        margin: 0;
         }
         body {
-          margin: 0;
-          padding: 0;
+        margin: 0;
+        padding: 0;
         }
         .etiqueta {
-          width: ${largura};
-          height: ${altura};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: ${bodyJustify};
-          font-family: Arial, sans-serif;
-          page-break-after: always;
+        width: ${largura};
+        height: ${altura};
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: ${bodyJustify};
+        font-family: Arial, sans-serif;
+        page-break-after: always;
         }
         .nome {
-          font-weight: bold;
-          font-size: ${fontNome};
-          margin: ${nomeMarginTop} 0 0 0;
-          padding: 0;
-          line-height: 1;
-          width: 100%;
-          text-align: center;
-          word-break: break-word;
+        font-weight: bold;
+        font-size: ${fontNome};
+        margin: ${nomeMarginTop} 0 0 0;
+        padding: 0;
+        line-height: 1;
+        width: 100%;
+        text-align: center;
+        word-break: break-word;
         }
         .barcode {
-          width: 90%;
-          margin: 0;
-          padding: 0;
+        width: 90%;
+        margin: 0;
+        padding: 0;
         }
-      </style>
+    </style>
     </head>
     <body>
-  `);
+`);
 
         indicesParaImprimir.forEach((idx, i) => {
             const item = listaLocalizacoes[idx];
@@ -705,43 +726,43 @@ const Localizacao: React.FC = () => {
             const eanEscapado = item.ean.replace(/'/g, "\\'");
 
             w.document.write(`
-      <div class="etiqueta" data-ean="${eanEscapado}">
+    <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="nome" id="nome-${i}">${nomeEscapado}</div>
         <svg class="barcode" id="barcode-${i}"></svg>
-      </div>
+    </div>
     `);
         });
 
         w.document.write(`
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
-      window.onload = () => {
+    window.onload = () => {
         document.querySelectorAll('.etiqueta').forEach((div, index) => {
-          const nome = div.querySelector('.nome').innerText;
-          const svg = div.querySelector('.barcode');
-          const ean = div.dataset.ean;
+        const nome = div.querySelector('.nome').innerText;
+        const svg = div.querySelector('.barcode');
+        const ean = div.dataset.ean;
 
-          let tamanho = ${fontNome.replace('px', '')};
-          if (nome.length > 8)      tamanho = 50;
-          else if (nome.length > 6) tamanho = 90;
+        let tamanho = ${fontNome.replace('px', '')};
+        if (nome.length > 8)      tamanho = 50;
+        else if (nome.length > 6) tamanho = 90;
 
-          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+        document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-          JsBarcode(svg, ean, {
+        JsBarcode(svg, ean, {
             format: 'ean13',
             height: ${barHeight},
             displayValue: true,
             fontSize: ${barFont}
-          });
+        });
         });
 
         window.print();
         window.onafterprint = () => window.close();
-      };
+    };
     </script>
     </body>
     </html>
-  `);
+`);
 
         w.document.close();
     };
@@ -841,28 +862,28 @@ const Localizacao: React.FC = () => {
 
     return (
         <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
-          <CarregadorComRetry
+        <CarregadorComRetry
             funcaoCarregamento={async () => {
-              const [locs, estoque] = await Promise.all([
+            const [locs, estoque] = await Promise.all([
                 buscarLocalizacoes(),
                 buscarConsultaEstoque(),
-              ]);
+            ]);
 
-              const mapa: Record<number, number> = {};
-              estoque.forEach((item: any) => {
+            const mapa: Record<number, number> = {};
+            estoque.forEach((item: any) => {
                 const id = item.localizacao_id;
                 if (!id) return;
                 mapa[id] = (mapa[id] || 0) + (item.quantidade || 0);
-              });
+            });
 
-              return locs.map((l: any) => ({
+            return locs.map((l: any) => ({
                 ...l,
                 total_produtos: mapa[l.localizacao_id] || 0,
-              }));
+            }));
             }}
             aoCarregar={(dados) => setListaLocalizacoes(dados)}
             onErroFinal={(erro) => console.error('Erro definitivo:', erro)}
-          />
+        />
             <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
                 Localização
             </Typography>
@@ -1110,7 +1131,7 @@ const Localizacao: React.FC = () => {
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip title="Imprimir etiqueta">
-                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo)}>
+                                                    <IconButton size="small" onClick={() => handleImprimir(item.nome, item.ean, item.tipo, item.armazem)}>
                                                         <PrintIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
