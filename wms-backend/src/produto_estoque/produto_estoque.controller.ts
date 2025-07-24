@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProdutoEstoqueService } from './produto_estoque.service';
 import { CreateProdutoEstoqueDto } from './dto/create-produto_estoque.dto';
@@ -23,6 +24,22 @@ export class ProdutoEstoqueController {
   @Get()
   findAll() {
     return this.produtoEstoqueService.findAll();
+  }
+
+  @Get('relatorio')
+  relatorioConsulta() {
+    return this.produtoEstoqueService.relatorioConsulta();
+  }
+
+  @Get('pesquisar')
+  async search(@Query('search') search?: string) {
+    const dados = await this.produtoEstoqueService.search(search);
+
+    if (search) {
+      return dados;
+    } else {
+      return [];
+    }
   }
 
   @Get(':id')

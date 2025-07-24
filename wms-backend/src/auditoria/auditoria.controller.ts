@@ -14,7 +14,7 @@ import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 import { StatusAuditoria } from './entities/auditoria.entity';
 
-@Controller('auditorias')
+@Controller('auditoria')
 export class AuditoriaController {
   constructor(private readonly auditoriaService: AuditoriaService) {}
 

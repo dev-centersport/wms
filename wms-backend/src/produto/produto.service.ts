@@ -12,8 +12,36 @@ export class ProdutoService {
     private readonly produtoRepository: Repository<Produto>,
   ) {}
 
-  async findAll() {
-    return await this.produtoRepository.find();
+  // async findAll() {
+  //   return await this.produtoRepository.find();
+  // }
+
+  async search(
+    search?: string,
+    offset = 0,
+    limit = 50,
+  ): Promise<{ results: any[]; total: number }> {
+    const query = this.produtoRepository
+      .createQueryBuilder('produto')
+      .groupBy('produto.produto_id');
+
+    if (search) {
+      query.andWhere('produto.descricao ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    // Total para paginação
+    const total = await query.getCount();
+
+    // Paginação e ordenação
+    query.addOrderBy('produto.descricao', 'ASC').offset(offset).limit(limit);
+
+    const { entities } = await query.getRawAndEntities();
+
+    const results = entities.map((produto) => produto);
+
+    return { results, total };
   }
 
   async findOne(produto_id: number) {
