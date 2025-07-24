@@ -354,95 +354,106 @@ const Localizacao: React.FC = () => {
         const w = window.open('', '_blank');
         if (!w) return;
 
-        const largura = '10cm';
-        const altura = '15cm';
-        const fontNome = '120px';
-        const barHeight = 90;
-        const barFont = 22;
+        // Dimensões ajustadas (em mm para melhor compatibilidade com impressoras)
+        const largura = '100mm';
+        const altura = '150mm';
+        const fontNomePadrao = '20mm'; // Tamanho padrão da fonte
+        const barHeight = '90mm'; // Altura do código de barras
+        const barFont = '25mm'; // Fonte do texto do código de barras
 
         w.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <title>Etiqueta – ${localizacao}</title>
-    <style>
-        @page {
-        size: ${largura} ${altura};
-        margin: 0;
-        }
-        body {
-        width: ${largura};
-        height: ${altura};
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: Arial, sans-serif;
-        overflow: hidden;
-        }
-        .container {
-        transform: rotate(-90deg);
-        margin-top: 100px;
-        transform-origin: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        }
-        #nome {
-        font-weight: bold;
-        font-size: ${fontNome};
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        white-space: nowrap;
-        }
-        #barcode {
-        width: 90%;
-        margin: 0;
-        padding: 0;
-        }
-    </style>
-    </head>
-    <body>
-    <div class="container">
-        <div id="nome">${localizacao}</div>
-        <svg id="barcode"></svg>
-    </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Etiqueta – ${localizacao}</title>
+                <style>
+                    @page {
+                        size: ${largura} ${altura} !important;
+                        margin: 0;
+                    }
+                    body {
+                        width: 100vw;
+                        height: 100vh;
+                        font-family: Arial, sans-serif;
+                    }
+                    .etiqueta {
+                        width: ${largura};
+                        height: ${altura};
+                        position: relative;
+                        page-break-after: always;
+                        overflow: hidden;
+                    }
+                    .container {
+                        transform: rotate(-90deg);
+                        transform-origin: center;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        width: 100%;
+                        height: 100%;
+                    }
+                    #nome {
+                        font-weight: bold;
+                        font-size: ${fontNomePadrao};
+                        text-align: center;
+                        white-space: nowrap;
+                    }
+                    .barcode {
+                        width: 90%;
+                        margin: 10px 0;
+                        padding: 0;
+                    }
+                    #nomeArmazem {
+                        font-weight: bold;
+                        font-size: 8mm;
+                        margin: 0;
+                        padding: 0;
+                        text-align: center;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="etiqueta">
+                    <div class="container">
+                        <div id="nome">${localizacao}</div>
+                        <div id="nomeArmazem">${armazem}</div>
+                        <svg id="barcode"></svg>
+                    </div>
+                </div>
+                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+                <script>
+                    window.onload = () => {
+                        const nomeEl = document.getElementById('nome');
+                        const texto = '${localizacao}';  // Isso será substituído pelo valor real
+                        let novoTamanho = ${fontNomePadrao.replace('mm', '')};  // Valor inicial em mm (sem unidade)
 
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <script>
-        const nomeEl = document.getElementById('nome');
-        const texto = '${localizacao}';
-        let tamanho = ${fontNome.replace('px', '')};
+                        // Ajusta o tamanho da fonte com base no comprimento do texto
+                        if (texto.length > 8) novoTamanho = 13;
+                        else if (texto.length > 5) novoTamanho = 37;
 
-        if (texto.length > 8)      tamanho = 50;
-        else if (texto.length > 5) tamanho = 180;
+                        nomeEl.style.fontSize = novoTamanho + 'mm';
 
-        nomeEl.style.fontSize = tamanho + 'px';
+                        // Gera o código de barras
+                        JsBarcode('#barcode', '${ean}', {  // EAN dinâmico
+                            format: 'ean13',
+                            height: ${barHeight.replace('mm', '')},  // Remove 'mm' pois JsBarcode usa pixels
+                            displayValue: true,
+                            fontSize: ${barFont.replace('mm', '')}   // Remove 'mm' aqui também
+                        });
 
-        JsBarcode('#barcode', '${ean}', {
-        format: 'ean13',
-        height: ${barHeight},
-        displayValue: true,
-        fontSize: ${barFont}
-        });
-
-        window.onload = () => {
-        window.print();
-        window.onafterprint = () => window.close();
-        };
-    </script>
-    </body>
-    </html>
-`);
-
+                        // Imprime e fecha a janela
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 100);
+                    };
+                </script>
+            </body>
+            </html>
+        `);
         w.document.close();
     };
-
     /* ------------------------------------------------------------------ */
     /* Substitua a função handleImprimirSelecionados pelo código abaixo   */
     /* ------------------------------------------------------------------ */
@@ -479,8 +490,10 @@ const Localizacao: React.FC = () => {
 
         const tipoAtual = tiposSelecionados[0];
         if (tipoAtual.includes('caixa')) {
+            console.log(tipoAtual)
             handleImprimirSelecionadosCaixa();
         } else {
+            console.log(tipoAtual)
             handleImprimirSelecionadosPrateleira();
         }
     };
@@ -533,6 +546,12 @@ const Localizacao: React.FC = () => {
         }
         .container {
             transform: rotate(-90deg);
+            transform-origin: left top;
+            position: absolute;
+            top: ${altura};
+            left: 0;
+            width: ${altura};
+            height: ${largura};
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -569,9 +588,9 @@ const Localizacao: React.FC = () => {
             w.document.write(`
     <div class="etiqueta" data-ean="${eanEscapado}">
         <div class="container">
-        <div class="nome" id="nome-${i}">${nomeEscapado}</div>
-        <div class="nome" id="nomeArmazem">${armazemEscapado}</div>
-        <svg class="barcode" id="barcode-${i}"></svg>
+            <div class="nome" id="nome-${i}">${nomeEscapado}</div>
+            <div class="nome" id="nomeArmazem">${armazemEscapado}</div>
+            <svg class="barcode" id="barcode-${i}"></svg>
         </div>
     </div>
     `);
