@@ -2,26 +2,15 @@ import axios from 'axios';
 
 const BASE_URL = 'http://151.243.0.78:3001';
 
-export async function buscarLocalizacoes() {
-  try {
-    const response = await axios.get(`${BASE_URL}/localizacao`);
-    return response.data;
-  } catch (err) {
-    console.error('Erro ao buscar localizações:', err);
-    return [];
-  }
-}
-
 // ---------- CONSULTA DE ESTOQUE ----------
-export async function buscarConsultaEstoque() {
+export async function buscarConsultaEstoque(termoBusca) {
   try {
-    const [estoqueRes, localizacoes] = await Promise.all([
-      axios.get(`${BASE_URL}/produto-estoque`),
-      buscarLocalizacoes(),
-    ]);
+    const response = await axios.get(`${BASE_URL}/produto-estoque/pesquisar?search=${encodeURIComponent(termoBusca)}`);
 
-    return estoqueRes.data.map((item) => ({
-      produto_id: item.produto_id,
+    const resultados = response.data.results || [];
+
+    return resultados.map((item) => ({
+      produto_id: item.produto?.produto_id,
       localizacao_id: item.localizacao?.localizacao_id ?? null,
       descricao: item.produto?.descricao || '',
       sku: item.produto?.sku || '',
