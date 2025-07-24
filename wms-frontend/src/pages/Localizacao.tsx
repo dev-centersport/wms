@@ -87,9 +87,6 @@ const Localizacao: React.FC = () => {
           offset += limite;
         }
 
-    const nomeImpresso = isPrateleira
-        ? localizacao.replace(/^.*?#/, '')
-        : localizacao;
 
         const estoque = await buscarConsultaEstoque();
 
@@ -114,8 +111,6 @@ const Localizacao: React.FC = () => {
     carregar();
   }, []);
 
-    const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
-    const nomeMarginTop = isPrateleira ? '-3mm' : '0';          // só prateleira sobe
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -492,10 +487,6 @@ const currentItems = currentIndices
       alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
       return;
     }
-    // const itens = indicesParaImprimir.map(
-    //   (idx) => listaLocalizacoes[idx]
-    // );
-    // console.log(itens)
 
     const tiposSelecionados = indicesParaImprimir.map(
       (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
@@ -1009,7 +1000,7 @@ const currentItems = currentIndices
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/CriarLocalizacao')}
+            onClick={() => navigate('/localizacao/criar')}
             sx={{
               backgroundColor: '#61de27',
               color: '#000',
