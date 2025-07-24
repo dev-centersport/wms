@@ -23,16 +23,16 @@ import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const menuItems = [
-  { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
+  // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
   { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <AssignmentIcon />,         path: '/TipoLocalizacao' },
-  { label: 'Produto',             icon: <ViewInArIcon />,     path: '/produto' },
-  { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
-  { label: 'Movimentação',        icon: <TrolleyIcon />,    path: '/movimentacao' },
-  { label: 'Separação',          icon: <LocalShippingIcon />, path: '/separacao' },
-  { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
-  { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
+  { label: 'Tipo de Localização', icon: <AssignmentIcon />,         path: '/tipo-localizacao' },
+  // { label: 'Produto',             icon: <ViewInArIcon />,     path: '/produto' },
+  // { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
+  // { label: 'Movimentação',        icon: <TrolleyIcon />,    path: '/movimentacao' },
+  // { label: 'Separação',          icon: <LocalShippingIcon />, path: '/separacao' },
+  // { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  // { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
 ];
 // ✅ Adicione essa interface
 interface SidebarProps {
