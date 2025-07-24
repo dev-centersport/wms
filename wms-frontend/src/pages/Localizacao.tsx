@@ -35,7 +35,7 @@ import {
 import Layout from '../components/Layout';
 import { excluirLocalizacao, buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
-import CarregadorComRetry from '../components/CarregadorComRetry';
+
 
 const normalizar = (s: string) =>
   s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
