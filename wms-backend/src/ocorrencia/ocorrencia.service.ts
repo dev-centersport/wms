@@ -100,7 +100,7 @@ export class OcorrenciaService {
               qtd_ocorrencias: 1,
             });
           } else {
-            produtoExistente.qtd_ocorrencias += 1;
+            produtoExistente.qtd_ocorrencias++;
           }
 
           grupo.quantidade++;
