@@ -1056,7 +1056,7 @@ const Localizacao: React.FC = () => {
                 />
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'nome' ? orderDirection : false}>
+              <TableCell align='center' sortDirection={orderBy === 'nome' ? orderDirection : false}>
                 <TableSortLabel
                   active={orderBy === 'nome'}
                   direction={orderBy === 'nome' ? orderDirection : 'asc'}
@@ -1066,7 +1066,7 @@ const Localizacao: React.FC = () => {
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'tipo' ? orderDirection : false}>
+              <TableCell align='center' sortDirection={orderBy === 'tipo' ? orderDirection : false}>
                 <TableSortLabel
                   active={orderBy === 'tipo'}
                   direction={orderBy === 'tipo' ? orderDirection : 'asc'}
@@ -1076,7 +1076,7 @@ const Localizacao: React.FC = () => {
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'armazem' ? orderDirection : false}>
+              <TableCell align='center' sortDirection={orderBy === 'armazem' ? orderDirection : false}>
                 <TableSortLabel
                   active={orderBy === 'armazem'}
                   direction={orderBy === 'armazem' ? orderDirection : 'asc'}
@@ -1086,17 +1086,11 @@ const Localizacao: React.FC = () => {
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell align="center" sortDirection={orderBy === 'ean' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'ean'}
-                  direction={orderBy === 'ean' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('ean')}
-                >
-                  <strong>EAN</strong>
-                </TableSortLabel>
+              <TableCell align='center' sortDirection={orderBy === 'ean' ? orderDirection : false}>
+                <strong>EAN</strong>
               </TableCell>
 
-              <TableCell align="center" sortDirection={orderBy === 'total_produtos' ? orderDirection : false}>
+              <TableCell align='center' sortDirection={orderBy === 'total_produtos' ? orderDirection : false}>
                 <TableSortLabel
                   active={orderBy === 'total_produtos'}
                   direction={orderBy === 'total_produtos' ? orderDirection : 'asc'}
@@ -1106,7 +1100,7 @@ const Localizacao: React.FC = () => {
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell align="center">
+              <TableCell align='center'>
                 <strong>Ações</strong>
               </TableCell>
 
@@ -1127,16 +1121,18 @@ const Localizacao: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell
-                      sx={{ fontWeight: 500, cursor: 'pointer' }}
+                      align='center'
+                      sx={{ fontWeight: 500, cursor: 'pointer', pr: orderBy === 'nome' ? 'auto' : '35px' }}
                       onClick={() => navigate(`/localizacao/${item.localizacao_id}/editar`)}
+                      
                     >
                       {item.nome}
                     </TableCell>
-                    <TableCell>{item.tipo}</TableCell>
-                    <TableCell>{item.armazem}</TableCell>
+                    <TableCell align='center' sx={{ pr: orderBy === 'tipo' ? 'auto' : '35px' }}>{item.tipo}</TableCell>
+                    <TableCell align='center' sx={{ pr: orderBy === 'armazem' ? 'auto' : '35px' }}>{item.armazem}</TableCell>
                     <TableCell align="center">{item.ean}</TableCell>
-                    <TableCell align="center">{item.total_produtos}</TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ pr: orderBy === 'total_produtos' ? 'auto' : '35px' }}>{item.total_produtos}</TableCell>
+                    <TableCell>
                       <Box display="flex" justifyContent="center" gap={1}>
                         <Tooltip title="Ver produtos">
                           <IconButton

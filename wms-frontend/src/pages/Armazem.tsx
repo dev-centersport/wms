@@ -251,16 +251,16 @@ const ArmazemPage: React.FC = () => {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
+              {/* <TableCell padding="checkbox">
                 <Checkbox
                   checked={selectAll}
                   indeterminate={selectedItems.length > 0 && !selectAll}
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
-              </TableCell>
-              <TableCell align="left" sx={{ fontWeight: 600 }}>Armazém</TableCell>
-              <TableCell align="left" sx={{ fontWeight: 600 }}>Capacidade</TableCell>
-              <TableCell align="left" sx={{ fontWeight: 600 }}>Endereço</TableCell>
+              </TableCell> */}
+              <TableCell align="center" sx={{ fontWeight: 600 }}>Armazém</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 600 }}>Capacidade</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 600 }}>Endereço</TableCell>
               <TableCell align="center" sx={{ fontWeight: 600 }}>
                 Ações
               </TableCell>
@@ -274,25 +274,25 @@ const ArmazemPage: React.FC = () => {
 
                 return (
                   <TableRow key={item.armazem_id} selected={isSelected} hover>
-                    <TableCell padding="checkbox">
+                    {/* <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
                         onChange={(e) => handleSelectItem(originalIdx, e.target.checked)}
                       />
-                    </TableCell>
+                    </TableCell> */}
 
                     <TableCell
-                      align='left'
+                      align='center'
                       sx={{ fontWeight: 500, cursor: "pointer" }}
                       onClick={() => navigate(`/armazem/${item.armazem_id}/editar/`)}
                     >
                       {item.nome}
                     </TableCell>
 
-                    <TableCell align="left" sx={{ pl: "55px" }}>
+                    <TableCell align="center">
                       {item.capacidade ?? "-"}
                     </TableCell>
-                    <TableCell>{item.endereco}</TableCell>
+                    <TableCell align='center'>{item.endereco}</TableCell>
                     <TableCell align="center">
                       {/* <Tooltip title="Editar armazém">
                         <IconButton onClick={() => navigate(`/armazem/${item.armazem_id}/editar/`)}>
