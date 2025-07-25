@@ -7,7 +7,7 @@ import { CreateLocalizacaoDto } from './dto/create-localizacao.dto';
 import { UpdateLocalizacaoDto } from './dto/update-localizacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Localizacao, StatusPrateleira } from './entities/localizacao.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, Repository } from 'typeorm';
 import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.entity';
 import { Armazem } from 'src/armazem/entities/armazem.entity';
 import { EAN13Generator } from 'src/utils/ean13.generator';

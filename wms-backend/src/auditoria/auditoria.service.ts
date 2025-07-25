@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
+import {
+  Repository,
+  FindOneOptions,
+  FindManyOptions,
+  In,
+  Brackets,
+} from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
@@ -9,6 +15,7 @@ import { Usuario } from '../usuario/entities/usuario.entity';
 import { Ocorrencia } from '../ocorrencia/entities/ocorrencia.entity';
 import { Localizacao } from '../localizacao/entities/localizacao.entity';
 import { ItemAuditoria } from '../item_auditoria/entities/item_auditoria.entity';
+import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
 
 @Injectable()
 export class AuditoriaService {
@@ -26,7 +33,7 @@ export class AuditoriaService {
   ) {}
 
   async create(createAuditoriaDto: CreateAuditoriaDto): Promise<Auditoria> {
-    // Verificar se o usuário existe
+    // Verifica usuário
     const usuario = await this.usuarioRepository.findOne({
       where: { usuario_id: createAuditoriaDto.usuario_id },
     });
@@ -36,17 +43,7 @@ export class AuditoriaService {
       );
     }
 
-    // Verificar se a ocorrência existe
-    const ocorrencia = await this.ocorrenciaRepository.findOne({
-      where: { ocorrencia_id: createAuditoriaDto.ocorrencia_id },
-    });
-    if (!ocorrencia) {
-      throw new NotFoundException(
-        `Ocorrência com ID ${createAuditoriaDto.ocorrencia_id} não encontrada`,
-      );
-    }
-
-    // Verificar se a localização existe
+    // Verifica localização
     const localizacao = await this.localizacaoRepository.findOne({
       where: { localizacao_id: createAuditoriaDto.localizacao_id },
     });
@@ -56,21 +53,95 @@ export class AuditoriaService {
       );
     }
 
+    // Verifica ocorrências
+    const ocorrenciasIds = createAuditoriaDto.ocorrencias.map(
+      (o) => o.ocorrencia_id,
+    );
+    if (ocorrenciasIds.length === 0) {
+      throw new NotFoundException(
+        'A lista de ocorrências não pode estar vazia',
+      );
+    }
+
+    let ocorrencias: Ocorrencia[] = [];
+
+    // Caso especial: única ocorrência com ID 0
+    if (ocorrenciasIds.length === 1 && ocorrenciasIds[0] === 0) {
+      // Cria uma ocorrência "fake" (não salva no banco, só para vincular)
+      ocorrencias = [this.ocorrenciaRepository.create({ ocorrencia_id: 0 })];
+    } else {
+      // Busca ocorrências válidas no banco
+      const ocorrenciasExistentes = await this.ocorrenciaRepository.findBy({
+        ocorrencia_id: In(ocorrenciasIds),
+      });
+
+      // Verifica se todas existem
+      if (ocorrenciasExistentes.length !== ocorrenciasIds.length) {
+        const encontrados = ocorrenciasExistentes.map((o) => o.ocorrencia_id);
+        const naoEncontrados = ocorrenciasIds.filter(
+          (id) => !encontrados.includes(id),
+        );
+        throw new NotFoundException(
+          `Ocorrências com IDs ${naoEncontrados.join(', ')} não encontradas`,
+        );
+      }
+      ocorrencias = ocorrenciasExistentes;
+    }
+
+    // Cria a auditoria
     const auditoria = this.auditoriaRepository.create({
-      ...createAuditoriaDto,
       usuario,
-      ocorrencia,
       localizacao,
+      ocorrencias, // Aqui o TypeORM fará o vínculo automaticamente
     });
 
     return this.auditoriaRepository.save(auditoria);
   }
 
-  async findAll(options?: FindManyOptions<Auditoria>): Promise<Auditoria[]> {
-    return this.auditoriaRepository.find({
-      ...options,
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
-    });
+  async search(
+    search?: string,
+    offset = 0,
+    limit = 50,
+    status?: StatusAuditoria,
+  ): Promise<{ results: any[]; total_auditoria: number }> {
+    const query = this.auditoriaRepository
+      .createQueryBuilder('auditoria')
+      .leftJoin('auditoria.usuario', 'usuario')
+      .leftJoinAndSelect('auditoria.localizacao', 'localizacao')
+      .select(['auditoria', 'usuario', 'localizacao'])
+      .groupBy('auditoria.auditoria_id')
+      .addGroupBy('usuario.usuario_id')
+      .addGroupBy('localizacao.localizacao_id');
+
+    if (search) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('usuario.responsavel ILIKE :search', {
+            search: `${search}`,
+          }).orWhere('localizacao.nome ILIKE :search', {
+            search: `${search}`,
+          });
+        }),
+      );
+    }
+
+    if (status) {
+      query.andWhere('auditoria.status = :status', { status });
+    }
+
+    const total_auditoria = await query.getCount();
+
+    query.addOrderBy('localizacao.nome', 'ASC').offset(offset).limit(limit);
+
+    const { entities, raw } = await query.getRawAndEntities();
+
+    const results = entities.map((localizacao, index) => ({
+      ...localizacao,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      total_auditoria: parseFloat(raw[index].total_auditoria) || 0,
+    }));
+
+    return { results, total_auditoria };
   }
 
   async findOne(
@@ -100,24 +171,22 @@ export class AuditoriaService {
       const usuario = await this.usuarioRepository.findOne({
         where: { usuario_id: updateAuditoriaDto.usuario_id },
       });
-      if (!usuario) {
+
+      if (!usuario)
         throw new NotFoundException(
-          `Usuário com ID ${updateAuditoriaDto.usuario_id} não encontrado`,
+          `Usuário com ID ${updateAuditoriaDto.usuario_id} não foi encontrado`,
         );
-      }
+
       auditoria.usuario = usuario;
     }
 
-    if (updateAuditoriaDto.ocorrencia_id) {
-      const ocorrencia = await this.ocorrenciaRepository.findOne({
-        where: { ocorrencia_id: updateAuditoriaDto.ocorrencia_id },
+    if (updateAuditoriaDto.ocorrencias) {
+      const ocorrenciasIds = updateAuditoriaDto.ocorrencias.map(
+        (o) => o.ocorrencia_id,
+      );
+      auditoria.ocorrencias = await this.ocorrenciaRepository.findBy({
+        ocorrencia_id: In(ocorrenciasIds),
       });
-      if (!ocorrencia) {
-        throw new NotFoundException(
-          `Ocorrência com ID ${updateAuditoriaDto.ocorrencia_id} não encontrada`,
-        );
-      }
-      auditoria.ocorrencia = ocorrencia;
     }
 
     if (updateAuditoriaDto.localizacao_id) {
@@ -154,6 +223,8 @@ export class AuditoriaService {
     await this.auditoriaRepository.remove(auditoria);
   }
 
+  // Funções unícas para auditoria
+
   async iniciarAuditoria(id: number): Promise<Auditoria> {
     const auditoria = await this.findOne(id);
 
@@ -169,9 +240,15 @@ export class AuditoriaService {
   async concluirAuditoria(
     id: number,
     conclusao: string,
-    itens: ItemAuditoria[],
+    itens: CreateItemAuditoriaDto[],
   ): Promise<Auditoria> {
-    const auditoria = await this.findOne(id);
+    const auditoria = await this.auditoriaRepository.findOne({
+      where: { auditoria_id: id },
+      relations: ['ocorrencias'],
+    });
+
+    if (!auditoria)
+      throw new NotFoundException(`Auditoria com ID ${id} não foi encontrada`);
 
     if (auditoria.status !== StatusAuditoria.EM_ANDAMENTO) {
       throw new Error(
@@ -194,6 +271,20 @@ export class AuditoriaService {
       }),
     );
 
+    const ocorrencias = auditoria.ocorrencias.map((o) => {
+      return o;
+    });
+
+    if (ocorrencias.length > 0 && ocorrencias[0].ocorrencia_id !== 0) {
+      // Extrai os IDs das ocorrências
+      const ocorrenciaIds = ocorrencias.map((o) => o.ocorrencia_id);
+
+      // Atualiza TODAS em uma única query
+      await this.ocorrenciaRepository.update(
+        { ocorrencia_id: In(ocorrenciaIds) }, // WHERE ocorrencia_id IN (ids...)
+        { ativo: false }, // SET ativo = false
+      );
+    }
     auditoria.itens_auditoria = itensSalvos;
 
     return this.auditoriaRepository.save(auditoria);
@@ -231,7 +322,7 @@ export class AuditoriaService {
 
   async findByOcorrencia(ocorrencia_id: number): Promise<Auditoria[]> {
     return this.auditoriaRepository.find({
-      where: { ocorrencia: { ocorrencia_id: ocorrencia_id } },
+      where: { ocorrencias: { ocorrencia_id: ocorrencia_id } },
       relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
     });
   }
