@@ -20,6 +20,11 @@ export class UsuarioController {
     return this.usuarioService.create(createUsuarioDto);
   }
 
+  @Post('validar-usuario')
+  validarUsuario(@Body() body: { usuario: string; senha: string }) {
+    return this.usuarioService.validarUsuario(body.usuario, body.senha);
+  }
+
   @Get()
   findAll() {
     return this.usuarioService.findAll();
