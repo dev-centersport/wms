@@ -24,21 +24,19 @@ export class AuditoriaController {
   }
 
   @Get()
-  findAll(
+  async search(
+    @Query('search') search?: string,
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
     @Query('status') status?: StatusAuditoria,
-    @Query('usuario_id') usuario_id?: number,
-    @Query('ocorrencia_id') ocorrencia_id?: number,
   ) {
-    if (status) {
-      return this.auditoriaService.findByStatus(status);
-    }
-    if (usuario_id) {
-      return this.auditoriaService.findByUsuario(+usuario_id);
-    }
-    if (ocorrencia_id) {
-      return this.auditoriaService.findByOcorrencia(+ocorrencia_id);
-    }
-    return this.auditoriaService.findAll();
+    const results = await this.auditoriaService.search(
+      search,
+      Number(offset) || 0,
+      Number(limit) || 50,
+      status,
+    );
+    return results;
   }
 
   @Get('em-andamento')
