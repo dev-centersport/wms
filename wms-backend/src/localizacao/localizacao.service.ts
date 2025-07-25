@@ -133,13 +133,7 @@ export class LocalizacaoService {
     const { entities, raw } = await query.getRawAndEntities();
 
     const results = entities.map((localizacao, index) => ({
-      localizacao_id: localizacao.localizacao_id,
-      nome: localizacao.nome,
-      tipo_localizacao_id: localizacao.tipo.tipo_localizacao_id,
-      tipo: localizacao.tipo.tipo,
-      armazem_id: localizacao.armazem.armazem_id,
-      armazem: localizacao.armazem.nome,
-      ean: localizacao.ean,
+      ...localizacao,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       total_produtos: parseFloat(raw[index].total_produtos) || 0,
     }));
