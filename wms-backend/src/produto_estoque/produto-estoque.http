@@ -17,8 +17,8 @@ content-type: application/json
 
 {
     "quantidade": 20,
-    "produto_id": 1,
-    "localizacao_id": 1
+    "produto_id": 515,
+    "localizacao_id": 2
 }
 
 ###

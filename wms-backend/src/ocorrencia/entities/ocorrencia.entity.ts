@@ -3,6 +3,8 @@ import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import {
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   Entity,
   JoinColumn,
@@ -18,15 +20,21 @@ export class Ocorrencia {
 
   @Column({
     type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP)',
+    default: () => 'CURRENT_TIMESTAMP',
   })
   dataHora: Date;
 
   @Column({ type: 'boolean', default: true })
   ativo: boolean;
 
-  @Column({ type: 'int', nullable: true })
-  quantidade_esperada?: number;
+  @Column({ type: 'int' })
+  quantidade_esperada: number;
+
+  @Column({ type: 'int' })
+  quantidade_sistemas: number;
+
+  @Column({ type: 'int' })
+  diferenca_quantidade: number;
 
   @ManyToOne(() => ProdutoEstoque, (pe) => pe.ocorrencias)
   @JoinColumn()
@@ -42,4 +50,20 @@ export class Ocorrencia {
 
   @OneToMany(() => Auditoria, (a) => a.ocorrencia)
   auditorias: Auditoria[];
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  calculateQuantities() {
+    // Define quantidade_sistemas com base no produto_estoque
+    if (this.produto_estoque && this.produto_estoque.quantidade !== undefined)
+      this.quantidade_sistemas = this.produto_estoque.quantidade;
+
+    // Calcula a diferença entre a quantidade fisíca e do sistema
+    if (
+      this.quantidade_esperada !== undefined &&
+      this.quantidade_sistemas !== undefined
+    )
+      this.diferenca_quantidade =
+        this.quantidade_sistemas - this.quantidade_esperada;
+  }
 }

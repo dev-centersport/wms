@@ -63,15 +63,16 @@ const Login: React.FC = () => {
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
     try {
       const resultado = await login(usuario, senha);
 
-      if (resultado.success) {
-        console.log('Login OK', resultado.usuario);
+      if (resultado.status === 200) {
+        console.log('Login OK', resultado.message);
         navigate('/armazem');
       } else {
-        alert(resultado.mensagem || 'Usuário ou senha inválidos.');
+        alert(`${resultado.message}`);
       }
     } catch (err) {
       alert('Erro inesperado ao tentar login.');
@@ -88,70 +89,72 @@ const Login: React.FC = () => {
           </Typography>
         </StyledLogoContainer>
 
-        <TextField
-          label="Usuário"
-          variant="outlined"
-          fullWidth
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <FaUser color="rgba(0, 0, 0, 1)" />
-              </InputAdornment>
-            )
-          }}
-          sx={{
-            mb: 3,
-            "& .MuiOutlinedInput-root": {
-              backgroundColor: "white",
-              borderRadius: "10px",
-              "& fieldset": {
-                border: "none"
+        <form onSubmit={handleLogin}>
+          <TextField
+            label="Usuário"
+            variant="outlined"
+            fullWidth
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <FaUser color="rgba(0, 0, 0, 1)" />
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              mb: 3,
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "white",
+                borderRadius: "10px",
+                "& fieldset": {
+                  border: "none"
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
 
-        <TextField
-          label="Senha"
-          variant="outlined"
-          fullWidth
-          type={mostrarSenha ? "text" : "password"}
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setMostrarSenha(!mostrarSenha)}
-                  edge="end"
-                  aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                >
-                  {mostrarSenha ? (
-                    <FaEyeSlash color="rgba(0, 0, 0, 1)" />
-                  ) : (
-                    <FaEye color="rgba(0, 0, 0, 1)" />
-                  )}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-          sx={{
-            mb: 3,
-            "& .MuiOutlinedInput-root": {
-              backgroundColor: "white",
-              borderRadius: "10px",
-              "& fieldset": {
-                border: "none"
+          <TextField
+            label="Senha"
+            variant="outlined"
+            fullWidth
+            type={mostrarSenha ? "text" : "password"}
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setMostrarSenha(!mostrarSenha)}
+                    edge="end"
+                    aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                  >
+                    {mostrarSenha ? (
+                      <FaEyeSlash color="rgba(0, 0, 0, 1)" />
+                    ) : (
+                      <FaEye color="rgba(0, 0, 0, 1)" />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              mb: 3,
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "white",
+                borderRadius: "10px",
+                "& fieldset": {
+                  border: "none"
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
 
-        <StyledButton variant="contained" onClick={handleLogin}>
-          Entrar
-        </StyledButton>
+          <StyledButton variant="contained" type="submit">
+            Entrar
+          </StyledButton>
+        </form>
 
         <Typography
           variant="body1"
