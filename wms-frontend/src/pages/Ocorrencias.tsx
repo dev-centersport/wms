@@ -34,6 +34,7 @@ interface ProdutoDaOcorrencia {
   qtd_esperada: number;
   diferenca: number;
   qtd_ocorrencias: number;
+  qtd_ocorrencias_produto: number
 }
 
 interface OcorrenciaItem {
@@ -89,6 +90,7 @@ export default function Ocorrencias() {
             qtd_sistema: Number(curr.qtd_sistema),
             diferenca: Number(curr.diferenca),
             qtd_ocorrencias: Number(curr.qtd_ocorrencias),
+            qtd_ocorrencias_produto: Number(curr.qtd_ocorrencias_produto),
           };
 
           if (existente) {
@@ -324,7 +326,7 @@ export default function Ocorrencias() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sortDirection={orderBy === 'localizacao' ? orderDirection : false}>
+              <TableCell align='center' sortDirection={orderBy === 'localizacao' ? orderDirection : false}>
                 <TableSortLabel
                   active={orderBy === 'localizacao'}
                   direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
@@ -370,9 +372,9 @@ export default function Ocorrencias() {
           <TableBody>
             {exibidos.map((item, idx) => (
               <TableRow key={idx}>
-                <TableCell>{item.armazem} - {item.localizacao}</TableCell>
-                <TableCell align="center">{item.qtd_ocorrencias}</TableCell>
-                <TableCell align="center">
+                <TableCell align='center' sx={{pr: orderBy === 'localizacao' ? 'auto' : '33px'}}>{item.armazem} - {item.localizacao}</TableCell>
+                <TableCell align="center" sx={{pr: orderBy === 'qtd_ocorrencias' ? 'auto' : '33px'}}>{item.qtd_ocorrencias}</TableCell>
+                <TableCell align="center"  sx={{pr: orderBy === 'prioridade' ? 'auto' : '33px'}}>
                   <Chip
                     label={item.prioridade}
                     sx={{
@@ -385,7 +387,7 @@ export default function Ocorrencias() {
                     }}
                   />
                 </TableCell>
-                <TableCell align="center">
+                <TableCell align="center" sx={{pr: orderBy === 'ativo' ? 'auto' : '33px'}}>
                   <Chip
                     label={item.ativo ? 'Pendente' : 'Concluído'}
                     size="small"

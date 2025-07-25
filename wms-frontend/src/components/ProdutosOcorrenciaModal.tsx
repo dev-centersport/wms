@@ -26,6 +26,7 @@ interface ProdutoDaOcorrencia {
     qtd_sistema: number;
     qtd_esperada: number;
     diferenca: number;
+    qtd_ocorrencias_produto: number;
 }
 
 interface ProdutosOcorrenciaModalProps {
@@ -56,7 +57,7 @@ const ProdutosOcorrenciaModal: React.FC<ProdutosOcorrenciaModalProps> = ({
                 alignItems: 'center',
                 borderBottom: '1px solid #e0e0e0'
             }}>
-                <Typography variant="h6" fontWeight={600}>
+                <Typography fontWeight={600}>
                     Produtos na Ocorrência {ocorrenciaNome}
                 </Typography>
                 <IconButton onClick={onClose} size="small">
@@ -74,12 +75,13 @@ const ProdutosOcorrenciaModal: React.FC<ProdutosOcorrenciaModalProps> = ({
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#f9f9f9' }}>
-                                    <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>EAN</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>SKU</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }} align='center'>Descrição</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }} align='center'>EAN</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }} align='center'>SKU</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }} align="center">Qtd. Sistema</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }} align="center">Qtd. Gaveta</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }} align="center">Diferença</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }} align="center">Qtd. Ocorrências Produto</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -97,6 +99,14 @@ const ProdutosOcorrenciaModal: React.FC<ProdutosOcorrenciaModalProps> = ({
                                                 sx={{ mr: p.diferenca < 0 ? 0.72 : 0 }}
                                             >
                                                 {p.diferenca < 0 ? `- ${Math.abs(p.diferenca)}` : p.diferenca}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Typography
+                                                fontWeight={600}
+                                                color={'error'}
+                                            >
+                                                {p.qtd_ocorrencias_produto}
                                             </Typography>
                                         </TableCell>
                                     </TableRow>
