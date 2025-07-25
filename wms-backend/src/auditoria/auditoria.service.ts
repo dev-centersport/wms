@@ -1,12 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Repository,
-  FindOneOptions,
-  FindManyOptions,
-  In,
-  Brackets,
-} from 'typeorm';
+import { Repository, FindOneOptions, In, Brackets } from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
@@ -306,32 +300,32 @@ export class AuditoriaService {
     return this.auditoriaRepository.save(auditoria);
   }
 
-  async findByStatus(status: StatusAuditoria): Promise<Auditoria[]> {
-    return this.auditoriaRepository.find({
-      where: { status },
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
-    });
-  }
+  // async findByStatus(status: StatusAuditoria): Promise<Auditoria[]> {
+  //   return this.auditoriaRepository.find({
+  //     where: { status },
+  //     relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
+  //   });
+  // }
 
-  async findByUsuario(usuario_id: number): Promise<Auditoria[]> {
-    return this.auditoriaRepository.find({
-      where: { usuario: { usuario_id: usuario_id } },
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
-    });
-  }
+  // async findByUsuario(usuario_id: number): Promise<Auditoria[]> {
+  //   return this.auditoriaRepository.find({
+  //     where: { usuario: { usuario_id: usuario_id } },
+  //     relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
+  //   });
+  // }
 
-  async findByOcorrencia(ocorrencia_id: number): Promise<Auditoria[]> {
-    return this.auditoriaRepository.find({
-      where: { ocorrencias: { ocorrencia_id: ocorrencia_id } },
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
-    });
-  }
+  // async findByOcorrencia(ocorrencia_id: number): Promise<Auditoria[]> {
+  //   return this.auditoriaRepository.find({
+  //     where: { ocorrencias: { ocorrencia_id: ocorrencia_id } },
+  //     relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
+  //   });
+  // }
 
-  async findAuditoriasEmAndamento(): Promise<Auditoria[]> {
-    return this.findByStatus(StatusAuditoria.EM_ANDAMENTO);
-  }
+  // async findAuditoriasEmAndamento(): Promise<Auditoria[]> {
+  //   return this.findByStatus(StatusAuditoria.EM_ANDAMENTO);
+  // }
 
-  async findAuditoriasConcluidas(): Promise<Auditoria[]> {
-    return this.findByStatus(StatusAuditoria.CONCLUIDA);
-  }
+  // async findAuditoriasConcluidas(): Promise<Auditoria[]> {
+  //   return this.findByStatus(StatusAuditoria.CONCLUIDA);
+  // }
 }
