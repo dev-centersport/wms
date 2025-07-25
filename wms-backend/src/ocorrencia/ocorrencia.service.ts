@@ -45,6 +45,7 @@ export class OcorrenciaService {
         qtd_esperada: number;
         diferenca: number;
         ativo: boolean;
+        qtd_ocorrencias: number;
       }[];
     }[]
   > {
@@ -96,9 +97,13 @@ export class OcorrenciaService {
               qtd_esperada: ocorrencia.quantidade_esperada,
               diferenca: ocorrencia.diferenca_quantidade,
               ativo: ocorrencia.ativo,
+              qtd_ocorrencias: 1,
             });
-            grupo.quantidade++;
+          } else {
+            produtoExistente.qtd_ocorrencias += 1;
           }
+
+          grupo.quantidade++;
         }
 
         return acc;
@@ -116,6 +121,7 @@ export class OcorrenciaService {
           qtd_esperada: number;
           diferenca: number;
           ativo: boolean;
+          qtd_ocorrencias: number;
         }[];
       }[],
     );
