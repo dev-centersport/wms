@@ -35,10 +35,10 @@ export class OcorrenciaController {
     return this.ocorrenciaService.findOne(+id);
   }
 
-  // @Get(':id/listar-produtos')
-  // listarProdutosDaOcorrencia(@Param('id') id: string) {
-  //   return this.ocorrenciaService.listarProdutosDaOcorrencia(+id);
-  // }
+  @Get(':id/listar-produtos')
+  listarProdutosDaOcorrencia(@Param('id') id: string) {
+    return this.ocorrenciaService.listarProdutosDaOcorrencia(+id);
+  }
 
   @Patch(':id')
   update(

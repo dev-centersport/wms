@@ -36,70 +36,44 @@ export class OcorrenciaService {
       armazem: string | null;
       localizacao: string | null;
       quantidade: number;
-      produto: {
-        produto_id: number;
-        descricao: string;
-        ean: string;
-        sku: string;
-        qtd_sistema: number;
-        qtd_esperada: number;
-        diferenca: number;
-        ativo: boolean;
-      }[];
+      nome_produto: string;
+      sku: string;
+      ativo: boolean;
+      ocorrencias: Ocorrencia[];
     }[]
   > {
-    // Busca todas as ocorrências com as relações necessárias
     const ocorrencias = await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque.produto', 'localizacao.armazem'],
+      relations: ['produto_estoque.produto', 'usuario', 'localizacao.armazem'],
     });
 
     // Agrupa as ocorrências por localização
     const agrupamento = ocorrencias.reduce(
       (acc, ocorrencia) => {
+        // Verifica se a ocorrência tem localizações (considerando que é um array)
         const primeiraLocalizacao = ocorrencia.localizacao;
-        if (!primeiraLocalizacao) return acc;
-
-        const armazemNome = primeiraLocalizacao.armazem?.nome || null;
-        const localizacaoNome = primeiraLocalizacao.nome || null;
+        const armazemNome = primeiraLocalizacao?.armazem.nome;
+        const localizacaoNome = primeiraLocalizacao?.nome || null;
+        const nomeProduto = ocorrencia.produto_estoque.produto.descricao;
+        const skuProduto = ocorrencia.produto_estoque.produto.sku;
 
         // Encontra ou cria o grupo para esta localização
-        let grupo = acc.find(
-          (g) => g.localizacao === localizacaoNome && g.armazem === armazemNome,
-        );
-
+        let grupo = acc.find((g) => g.localizacao === localizacaoNome);
         if (!grupo) {
           grupo = {
             armazem: armazemNome,
             localizacao: localizacaoNome,
             quantidade: 0,
-            produto: [],
+            nome_produto: nomeProduto,
+            sku: skuProduto,
+            ativo: ocorrencia.ativo,
+            ocorrencias: [],
           };
           acc.push(grupo);
         }
 
-        // Adiciona o produto ao grupo se existir
-        if (ocorrencia.produto_estoque?.produto) {
-          const produto = ocorrencia.produto_estoque.produto;
-
-          // Verifica se o produto já está na lista
-          const produtoExistente = grupo.produto.find(
-            (p) => p.produto_id === produto.produto_id,
-          );
-
-          if (!produtoExistente) {
-            grupo.produto.push({
-              produto_id: produto.produto_id,
-              descricao: produto.descricao,
-              ean: produto.ean || 'S/EAN',
-              sku: produto.sku,
-              qtd_sistema: ocorrencia.quantidade_sistemas,
-              qtd_esperada: ocorrencia.quantidade_esperada,
-              diferenca: ocorrencia.diferenca_quantidade,
-              ativo: ocorrencia.ativo,
-            });
-            grupo.quantidade++;
-          }
-        }
+        // Adiciona a ocorrência ao grupo
+        grupo.quantidade++;
+        grupo.ocorrencias.push(ocorrencia);
 
         return acc;
       },
@@ -107,18 +81,62 @@ export class OcorrenciaService {
         armazem: string | null;
         localizacao: string | null;
         quantidade: number;
-        produto: {
-          produto_id: number;
-          descricao: string;
-          ean: string;
-          sku: string;
-          qtd_sistema: number;
-          qtd_esperada: number;
-          diferenca: number;
-          ativo: boolean;
-        }[];
+        nome_produto: string;
+        sku: string;
+        ativo: boolean;
+        ocorrencias: Ocorrencia[];
       }[],
     );
+
+    return agrupamento;
+  }
+
+  async listarProdutosDaOcorrencia(localizacao_id: number): Promise<
+    {
+      ocorrencia_id: number;
+      produto_id: number;
+      ean: string;
+      sku: string;
+      descricao: string;
+      qtd_sistema: number;
+      qtd_esperada: number;
+      diferenca: number;
+    }[]
+  > {
+    const localizacao = await this.localizacaoRepository.findOne({
+      where: { localizacao_id: localizacao_id },
+    });
+
+    if (!localizacao)
+      throw new NotFoundException(
+        `Localização com ID ${localizacao_id} não foi encontrada`,
+      );
+
+    const ocorrencias = await this.ocorrenciaRepository.find({
+      where: { localizacao: localizacao, ativo: true },
+      relations: ['produto_estoque.produto'],
+    });
+
+    if (!ocorrencias || ocorrencias.length === 0)
+      throw new NotFoundException(
+        'Nenhuma ocorrência foi encontrada nesta localização',
+      );
+
+    const agrupamento = ocorrencias.map((o) => {
+      const pe = o.produto_estoque;
+      const produto = pe.produto;
+
+      return {
+        ocorrencia_id: o.ocorrencia_id,
+        produto_id: produto.produto_id,
+        ean: produto.ean || 'S/EAN',
+        sku: produto.sku,
+        descricao: produto.descricao,
+        qtd_sistema: o.quantidade_sistemas,
+        qtd_esperada: o.quantidade_esperada,
+        diferenca: o.diferenca_quantidade,
+      };
+    });
 
     return agrupamento;
   }
