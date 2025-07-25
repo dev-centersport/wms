@@ -13,6 +13,7 @@ import { AuditoriaService } from './auditoria.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 import { StatusAuditoria } from './entities/auditoria.entity';
+import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
 
 @Controller('auditoria')
 export class AuditoriaController {
@@ -75,7 +76,7 @@ export class AuditoriaController {
   @Post(':id/concluir')
   concluir(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { conclusao: string; itens: any[] },
+    @Body() body: { conclusao: string; itens: CreateItemAuditoriaDto[] },
   ) {
     return this.auditoriaService.concluirAuditoria(
       id,
