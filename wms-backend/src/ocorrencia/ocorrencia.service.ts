@@ -91,6 +91,56 @@ export class OcorrenciaService {
     return agrupamento;
   }
 
+  async listarProdutosDaOcorrencia(localizacao_id: number): Promise<
+    {
+      ocorrencia_id: number;
+      produto_id: number;
+      ean: string;
+      sku: string;
+      descricao: string;
+      qtd_sistema: number;
+      qtd_esperada: number;
+      diferenca: number;
+    }[]
+  > {
+    const localizacao = await this.localizacaoRepository.findOne({
+      where: { localizacao_id: localizacao_id },
+    });
+
+    if (!localizacao)
+      throw new NotFoundException(
+        `Localização com ID ${localizacao_id} não foi encontrada`,
+      );
+
+    const ocorrencias = await this.ocorrenciaRepository.find({
+      where: { localizacao: localizacao, ativo: true },
+      relations: ['produto_estoque.produto'],
+    });
+
+    if (!ocorrencias || ocorrencias.length === 0)
+      throw new NotFoundException(
+        'Nenhuma ocorrência foi encontrada nesta localização',
+      );
+
+    const agrupamento = ocorrencias.map((o) => {
+      const pe = o.produto_estoque;
+      const produto = pe.produto;
+
+      return {
+        ocorrencia_id: o.ocorrencia_id,
+        produto_id: produto.produto_id,
+        ean: produto.ean || 'S/EAN',
+        sku: produto.sku,
+        descricao: produto.descricao,
+        qtd_sistema: o.quantidade_sistemas,
+        qtd_esperada: o.quantidade_esperada,
+        diferenca: o.diferenca_quantidade,
+      };
+    });
+
+    return agrupamento;
+  }
+
   async findOne(ocorrencia_id: number): Promise<Ocorrencia> {
     const ocorrencia = await this.ocorrenciaRepository.findOne({
       where: { ocorrencia_id },
