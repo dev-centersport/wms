@@ -80,30 +80,32 @@ export class OcorrenciaService {
 
         // Adiciona o produto ao grupo se existir
         if (ocorrencia.produto_estoque?.produto) {
-          const produto = ocorrencia.produto_estoque.produto;
+          if (ocorrencia.ativo !== false) {
+            const produto = ocorrencia.produto_estoque.produto;
 
-          // Verifica se o produto já está na lista
-          const produtoExistente = grupo.produto.find(
-            (p) => p.produto_id === produto.produto_id,
-          );
+            // Verifica se o produto já está na lista
+            const produtoExistente = grupo.produto.find(
+              (p) => p.produto_id === produto.produto_id,
+            );
 
-          if (!produtoExistente) {
-            grupo.produto.push({
-              produto_id: produto.produto_id,
-              descricao: produto.descricao,
-              ean: produto.ean || 'S/EAN',
-              sku: produto.sku,
-              qtd_sistema: ocorrencia.quantidade_sistemas,
-              qtd_esperada: ocorrencia.quantidade_esperada,
-              diferenca: ocorrencia.diferenca_quantidade,
-              ativo: ocorrencia.ativo,
-              qtd_ocorrencias: 1,
-            });
-          } else {
-            produtoExistente.qtd_ocorrencias++;
+            if (!produtoExistente) {
+              grupo.produto.push({
+                produto_id: produto.produto_id,
+                descricao: produto.descricao,
+                ean: produto.ean || 'S/EAN',
+                sku: produto.sku,
+                qtd_sistema: ocorrencia.quantidade_sistemas,
+                qtd_esperada: ocorrencia.quantidade_esperada,
+                diferenca: ocorrencia.diferenca_quantidade,
+                ativo: ocorrencia.ativo,
+                qtd_ocorrencias: 1,
+              });
+            } else {
+              produtoExistente.qtd_ocorrencias++;
+            }
+
+            grupo.quantidade++;
           }
-
-          grupo.quantidade++;
         }
 
         return acc;
