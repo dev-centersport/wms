@@ -43,9 +43,8 @@ export class Auditoria {
   @JoinColumn()
   usuario: Usuario;
 
-  @ManyToOne(() => Ocorrencia, (o) => o.auditorias)
-  @JoinColumn()
-  ocorrencia: Ocorrencia;
+  @OneToMany(() => Ocorrencia, (o) => o.auditoria)
+  ocorrencias: Ocorrencia[];
 
   @ManyToOne(() => Localizacao, (loc) => loc.auditorias)
   @JoinColumn()

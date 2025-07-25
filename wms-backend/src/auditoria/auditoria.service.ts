@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
+import { Repository, FindOneOptions, FindManyOptions, In } from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
@@ -26,7 +26,7 @@ export class AuditoriaService {
   ) {}
 
   async create(createAuditoriaDto: CreateAuditoriaDto): Promise<Auditoria> {
-    // Verificar se o usuário existe
+    // Verifica usuário
     const usuario = await this.usuarioRepository.findOne({
       where: { usuario_id: createAuditoriaDto.usuario_id },
     });
@@ -36,17 +36,7 @@ export class AuditoriaService {
       );
     }
 
-    // Verificar se a ocorrência existe
-    const ocorrencia = await this.ocorrenciaRepository.findOne({
-      where: { ocorrencia_id: createAuditoriaDto.ocorrencia_id },
-    });
-    if (!ocorrencia) {
-      throw new NotFoundException(
-        `Ocorrência com ID ${createAuditoriaDto.ocorrencia_id} não encontrada`,
-      );
-    }
-
-    // Verificar se a localização existe
+    // Verifica localização
     const localizacao = await this.localizacaoRepository.findOne({
       where: { localizacao_id: createAuditoriaDto.localizacao_id },
     });
@@ -56,11 +46,46 @@ export class AuditoriaService {
       );
     }
 
+    // Verifica ocorrências
+    const ocorrenciasIds = createAuditoriaDto.ocorrencias.map(
+      (o) => o.ocorrencia_id,
+    );
+    if (ocorrenciasIds.length === 0) {
+      throw new NotFoundException(
+        'A lista de ocorrências não pode estar vazia',
+      );
+    }
+
+    let ocorrencias: Ocorrencia[] = [];
+
+    // Caso especial: única ocorrência com ID 0
+    if (ocorrenciasIds.length === 1 && ocorrenciasIds[0] === 0) {
+      // Cria uma ocorrência "fake" (não salva no banco, só para vincular)
+      ocorrencias = [this.ocorrenciaRepository.create({ ocorrencia_id: 0 })];
+    } else {
+      // Busca ocorrências válidas no banco
+      const ocorrenciasExistentes = await this.ocorrenciaRepository.findBy({
+        ocorrencia_id: In(ocorrenciasIds),
+      });
+
+      // Verifica se todas existem
+      if (ocorrenciasExistentes.length !== ocorrenciasIds.length) {
+        const encontrados = ocorrenciasExistentes.map((o) => o.ocorrencia_id);
+        const naoEncontrados = ocorrenciasIds.filter(
+          (id) => !encontrados.includes(id),
+        );
+        throw new NotFoundException(
+          `Ocorrências com IDs ${naoEncontrados.join(', ')} não encontradas`,
+        );
+      }
+      ocorrencias = ocorrenciasExistentes;
+    }
+
+    // Cria a auditoria
     const auditoria = this.auditoriaRepository.create({
-      ...createAuditoriaDto,
       usuario,
-      ocorrencia,
       localizacao,
+      ocorrencias, // Aqui o TypeORM fará o vínculo automaticamente
     });
 
     return this.auditoriaRepository.save(auditoria);
@@ -100,24 +125,22 @@ export class AuditoriaService {
       const usuario = await this.usuarioRepository.findOne({
         where: { usuario_id: updateAuditoriaDto.usuario_id },
       });
-      if (!usuario) {
+
+      if (!usuario)
         throw new NotFoundException(
-          `Usuário com ID ${updateAuditoriaDto.usuario_id} não encontrado`,
+          `Usuário com ID ${updateAuditoriaDto.usuario_id} não foi encontrado`,
         );
-      }
+
       auditoria.usuario = usuario;
     }
 
-    if (updateAuditoriaDto.ocorrencia_id) {
-      const ocorrencia = await this.ocorrenciaRepository.findOne({
-        where: { ocorrencia_id: updateAuditoriaDto.ocorrencia_id },
+    if (updateAuditoriaDto.ocorrencias) {
+      const ocorrenciasIds = updateAuditoriaDto.ocorrencias.map(
+        (o) => o.ocorrencia_id,
+      );
+      auditoria.ocorrencias = await this.ocorrenciaRepository.findBy({
+        ocorrencia_id: In(ocorrenciasIds),
       });
-      if (!ocorrencia) {
-        throw new NotFoundException(
-          `Ocorrência com ID ${updateAuditoriaDto.ocorrencia_id} não encontrada`,
-        );
-      }
-      auditoria.ocorrencia = ocorrencia;
     }
 
     if (updateAuditoriaDto.localizacao_id) {
