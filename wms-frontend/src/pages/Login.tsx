@@ -69,15 +69,16 @@ const Login: React.FC = () => {
       const resultado = await login(usuario, senha);
 
       if (resultado.status === 200) {
-        console.log('Login OK', resultado.message);
+        console.log('Login OK');
         navigate('/armazem');
       } else {
         alert(`${resultado.message}`);
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Erro no login:', err);
       alert('Erro inesperado ao tentar login.');
     }
-  };
+  }
 
   return (
     <StyledLoginContainer>
@@ -172,4 +173,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Login

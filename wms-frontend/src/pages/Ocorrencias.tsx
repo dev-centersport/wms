@@ -22,6 +22,7 @@ import { Search, Add, CheckCircle, Cancel } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { buscarOcorrencias } from '../services/API';
 import { useNavigate } from 'react-router-dom';
+import ProdutosOcorrenciaModal from '../components/ProdutosOcorrenciaModal'; // ajuste o caminho conforme sua estrutura
 
 interface OcorrenciaItem {
   id: number;
@@ -44,6 +45,8 @@ export default function Ocorrencias() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [orderBy, setOrderBy] = useState<keyof OcorrenciaItem>('localizacao');
   const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
+  const [modalAberto, setModalAberto] = useState(false);
+  const [ocorrenciaSelecionada, setOcorrenciaSelecionada] = useState<{ id: number, nome: string } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -169,15 +172,6 @@ export default function Ocorrencias() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  checked={selecionados.length === exibidos.length && exibidos.length > 0}
-                  indeterminate={selecionados.length > 0 && selecionados.length < exibidos.length}
-                  onChange={(e) =>
-                    setSelecionados(e.target.checked ? exibidos.map((a) => a.id) : [])
-                  }
-                />
-              </TableCell>
               <TableCell sortDirection={orderBy === 'localizacao' ? orderDirection : false}>
                 <TableSortLabel
                   active={orderBy === 'localizacao'}
@@ -185,24 +179,6 @@ export default function Ocorrencias() {
                   onClick={() => handleSort('localizacao')}
                 >
                   Localização
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sortDirection={orderBy === 'produto' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'produto'}
-                  direction={orderBy === 'produto' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('produto')}
-                >
-                  Nome do Produto
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sortDirection={orderBy === 'sku' ? orderDirection : false} align="center">
-                <TableSortLabel
-                  active={orderBy === 'sku'}
-                  direction={orderBy === 'sku' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('sku')}
-                >
-                  SKU
                 </TableSortLabel>
               </TableCell>
               <TableCell sortDirection={orderBy === 'quantidade' ? orderDirection : false} align="center">
@@ -232,20 +208,13 @@ export default function Ocorrencias() {
                   Status
                 </TableSortLabel>
               </TableCell>
+              <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {exibidos.map((item) => (
               <TableRow key={item.id}>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selecionados.includes(item.id)}
-                    onChange={() => toggleSelecionado(item.id)}
-                  />
-                </TableCell>
-                <TableCell>{item.localizacao} - {item.armazem}</TableCell>
-                <TableCell>{item.produto}</TableCell>
-                <TableCell align='center'>{item.sku}</TableCell>
+                <TableCell>{item.armazem} - {item.localizacao}</TableCell>
                 <TableCell align='center'>{item.quantidade}</TableCell>
 
                 <TableCell align='center'>
@@ -257,9 +226,9 @@ export default function Ocorrencias() {
                   )}
                   {item.prioridade === 'alta' && (
                     <Chip label="Alta" sx={{ backgroundColor: '#F44336', color: '#fff', fontWeight: 600, px: 2 }} />
-
                   )}
                 </TableCell>
+
                 <TableCell align='center'>
                   <Chip
                     label={!item.ativo ? 'Concluído' : 'Pendente'}
@@ -272,30 +241,32 @@ export default function Ocorrencias() {
                     }}
                   />
                 </TableCell>
+
+                <TableCell align="center">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      setOcorrenciaSelecionada({ id: item.id, nome: `${item.armazem} - ${item.localizacao}` });
+                      setModalAberto(true);
+                    }}
+                  >
+                    Produtos na Ocorrência
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Box display="flex" mt={3} gap={2}>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<CheckCircle />}
-          disabled={selecionados.length === 0}
-        >
-          Conferir Selecionado
-        </Button>
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Cancel />}
-          onClick={() => setSelecionados([])}
-        >
-          Cancelar
-        </Button>
-      </Box>
+      {ocorrenciaSelecionada && (
+        <ProdutosOcorrenciaModal
+          open={modalAberto}
+          onClose={() => setModalAberto(false)}
+          ocorrenciaId={ocorrenciaSelecionada.id}
+          ocorrenciaNome={ocorrenciaSelecionada.nome}
+        />
+      )}
     </Layout>
   );
 }

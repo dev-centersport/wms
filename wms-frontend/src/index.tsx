@@ -27,9 +27,6 @@ import ConferenciaAudi from "./pages/ConferenciaAudi";
 import Auditoria from "./pages/Auditoria";
 import Relatorio from "./pages/Relatorio";
 
-
-
-
 import theme from './components/Theme';
 
 const container = document.getElementById("root");
@@ -58,8 +55,8 @@ root.render(
 
           {/* Páginas de Tipo de localização */}
           <Route path="/tipo-localizacao" element={<TipoLocalizacao />}/>
-          <Route path="/EditarTipoLocalizacao/:id/editar" element={<EditarTipoLocalizacao />} />
-          <Route path="/CriarTipoLocalizacao" element={<CriarTipoLocalizacao />} />
+          <Route path="/tipo-localizacao/:id/editar" element={<EditarTipoLocalizacao />} />
+          <Route path="/tipo-localizacao/criar" element={<CriarTipoLocalizacao />} />
 
           {/* {/ Pagina de Produto} s */}
           <Route path="/produto" element={<Produto />}/>
@@ -71,7 +68,6 @@ root.render(
           <Route path="/Relatorio" element={<Relatorio/>}/>
           <Route path="/NovaOcorrencia" element={<NovaOcorrencia/>}/>
           <Route path="/ConferenciaAudi/:id" element={<ConferenciaAudi />} />
-          <Route path="/CriarLocalizacao" element={<CriarLocalizacao />} />
 
           {/* Redirecionamentos */}
           <Route path="/" element={<Navigate to="/login" replace />} />
