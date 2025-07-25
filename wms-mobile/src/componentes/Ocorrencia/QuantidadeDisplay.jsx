@@ -3,24 +3,24 @@ import { Text, View, TextInput, StyleSheet } from 'react-native';
 
 export default function QuantidadeDisplay({
   quantidade,
-  quantidadeBipada,
-  handleQuantidadeBipadaChange,
+  quantidadeEsperada,
+  handleQuantidadeEsperadaChange,
 }) {
   if (quantidade === '') return null;
 
   return (
     <>
-      <Text style={styles.label}>Quantidade na Gaveta</Text>
+      <Text style={styles.label}>Quantidade no Sistema</Text>
       <View style={styles.readOnlyBox}>
         <Text style={styles.readOnlyText}>{quantidade}</Text>
       </View>
 
-      <Text style={styles.label}>Quantidade Bipada</Text>
+      <Text style={styles.label}>Quantidade na Gaveta</Text>
       <TextInput
         style={styles.input}
-        value={quantidadeBipada}
-        onChangeText={handleQuantidadeBipadaChange}
-        placeholder="Digite a quantidade bipada"
+        value={quantidadeEsperada}
+        onChangeText={handleQuantidadeEsperadaChange}
+        placeholder="Digite a quantidade que encontrou na gaveta"
         keyboardType="numeric"
         returnKeyType="done"
         blurOnSubmit={true}
