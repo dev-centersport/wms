@@ -3,8 +3,9 @@ module.exports = {
 		{
 			name: "wms-frontend",
 			script: "npx", // Usa o npx para executar pacotes locais
-			args: "serve -s build -l 3000", // Mesmo comando que você já usa
-			cwd: "/root/wms/wms-frontend", // Ajuste para o path do seu frontend
+			args: ["serve", "-s", "build", "-l", "3000"], // Mesmo comando que você já usa
+			cron_restart: "0 1 * * *",
+			// cwd: "/root/wms/wms-frontend", // Ajuste para o path do seu frontend
 			exec_mode: "fork", // Não precisa de cluster para frontend estático
 			instances: 1, // Apenas uma instância
 			autorestart: true,
