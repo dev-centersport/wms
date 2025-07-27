@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { TimezoneInterceptor } from './interceptors/timezone.interceptor';
+import { Request, Response } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -29,6 +30,37 @@ async function bootstrap() {
   //   credentials: true, // Permite cookies e autenticação
   // });
 
-  await app.listen(3001);
+  app.use('/health', (req: Request, res: Response) => {
+    try {
+      res.status(200).json({
+        status: 'OK',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      res.status(503).json({
+        status: 'DOWN',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  await app.listen(3001, () => {
+    // Sinaliza prontidão para o PM2
+    if (process.send) {
+      process.send('ready');
+    }
+    console.log('✅ Aplicação pronta');
+  });
+
+  // Tratamento de erros não capturados
+  process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection:', reason);
+  });
+
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+  });
 }
 bootstrap();
