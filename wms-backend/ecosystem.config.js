@@ -12,6 +12,8 @@ module.exports = {
       instances: 'max',
       exec_mode: 'cluster',
       autorestart: true,
+      cron_restart: '0 1 * * *',
+      restart_delay: 5000,
       watch: false,
       max_memory_restart: '800M',
       wait_ready: true,
