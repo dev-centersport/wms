@@ -145,7 +145,7 @@ export class AuditoriaService {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: id },
       ...options,
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
+      relations: ['usuario', 'ocorrencias', 'localizacao', 'itens_auditoria'],
     });
 
     if (!auditoria) {
