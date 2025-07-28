@@ -14,4 +14,9 @@ export class RelatorioController {
   gerarConsulta() {
     return this.relatorioService.gerarConsulta();
   }
+
+  @Get('gerar-auditoria')
+  gerarRelatorioAuditoria() {
+    return this.relatorioService.gerarRelatorioAuditoria();
+  }
 }

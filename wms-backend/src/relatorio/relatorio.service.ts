@@ -1,5 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  Auditoria,
+  StatusAuditoria,
+} from 'src/auditoria/entities/auditoria.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Produto } from 'src/produto/entities/produto.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
@@ -14,6 +18,8 @@ export class RelatorioService {
     private readonly ProdutoRepository: Repository<Produto>,
     @InjectRepository(Localizacao)
     private readonly LocalizacaoRepository: Repository<Localizacao>,
+    @InjectRepository(Auditoria)
+    private readonly AuditoriaRepository: Repository<Auditoria>,
   ) {}
 
   async gerarConsulta(): Promise<any> {
@@ -98,5 +104,39 @@ export class RelatorioService {
     });
 
     return result;
+  }
+
+  async gerarRelatorioAuditoria(): Promise<any> {
+    const auditoria = await this.AuditoriaRepository.find();
+
+    if (!auditoria || auditoria.length === 0)
+      throw new NotFoundException('Não foi encontrada nenhuma auditoria');
+
+    const auditoriasPendentes: Auditoria[] = [];
+    const auditoriasEmAndamento: Auditoria[] = [];
+    const auditoriasCanceladas: Auditoria[] = [];
+    const auditoriasConcluidas: Auditoria[] = [];
+
+    auditoria.map((a) => {
+      if (a.status === StatusAuditoria.PENDENTE) {
+        auditoriasPendentes.push(a);
+      }
+      if (a.status === StatusAuditoria.EM_ANDAMENTO) {
+        auditoriasEmAndamento.push(a);
+      }
+      if (a.status === StatusAuditoria.CANCELADA) {
+        auditoriasCanceladas.push(a);
+      }
+      if (a.status === StatusAuditoria.CONCLUIDA) {
+        auditoriasConcluidas.push(a);
+      }
+    });
+
+    return {
+      auditoriasPendentes: auditoriasPendentes,
+      auditoriasEmAndamento: auditoriasEmAndamento,
+      auditoriasCanceladas: auditoriasCanceladas,
+      auditoriasConcluidas: auditoriasConcluidas,
+    };
   }
 }

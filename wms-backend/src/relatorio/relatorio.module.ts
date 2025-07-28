@@ -5,9 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Produto } from 'src/produto/entities/produto.entity';
+import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProdutoEstoque, Localizacao, Produto])],
+  imports: [
+    TypeOrmModule.forFeature([ProdutoEstoque, Localizacao, Produto, Auditoria]),
+  ],
   controllers: [RelatorioController],
   providers: [RelatorioService],
 })
