@@ -75,12 +75,12 @@ export class AuditoriaController {
   }
 
   @Post(':id/iniciar')
-  iniciar(@Param('id', ParseIntPipe) id: number) {
+  iniciarAuditoria(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.iniciarAuditoria(id);
   }
 
   @Post(':id/concluir')
-  concluir(
+  concluirAuditoria(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { conclusao: string; itens: CreateItemAuditoriaDto[] },
   ) {
@@ -92,7 +92,7 @@ export class AuditoriaController {
   }
 
   @Post(':id/cancelar')
-  cancelar(@Param('id', ParseIntPipe) id: number) {
+  cancelarAuditoria(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.cancelarAuditoria(id);
   }
 
