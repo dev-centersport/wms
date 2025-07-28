@@ -62,6 +62,7 @@ export class OcorrenciaService {
 
         const armazemNome = primeiraLocalizacao.armazem?.nome || null;
         const localizacaoNome = primeiraLocalizacao.nome || null;
+        const localizacaoId = primeiraLocalizacao.localizacao_id || null;
 
         // Encontra ou cria o grupo para esta localização
         let grupo = acc.find(
@@ -71,6 +72,7 @@ export class OcorrenciaService {
         if (!grupo) {
           grupo = {
             armazem: armazemNome,
+            localizacao_id: localizacaoId,
             localizacao: localizacaoNome,
             quantidade: 0,
             produto: [],
