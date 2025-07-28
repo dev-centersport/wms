@@ -112,6 +112,7 @@ export class OcorrenciaService {
       },
       [] as {
         armazem: string | null;
+        localizacao_id: number | null;
         localizacao: string | null;
         quantidade: number;
         produto: {

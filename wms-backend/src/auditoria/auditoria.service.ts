@@ -354,6 +354,7 @@ export class AuditoriaService {
 
     return [
       {
+        auditoria_id: auditoria.auditoria_id,
         armazem: ocorrencias[0].localizacao.armazem?.nome || null,
         localizacao: ocorrencias[0].localizacao?.nome || null,
         quantidade: ocorrencias.length,
