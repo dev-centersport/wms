@@ -37,14 +37,6 @@ export class RelatorioService {
       // Se não houver estoque, retorna o produto com quantidade zero e campos vazios
       if (!estoqueDoProduto) {
         return {
-          localizacao: {
-            armazem_id: null,
-            armazem: null,
-            localizacao_id: null,
-            nome: null,
-            ean: null,
-            tipo: null,
-          },
           produto: {
             id_tiny: produto.id_tiny,
             produto_id: produto.produto_id,
@@ -58,14 +50,6 @@ export class RelatorioService {
 
       // Se houver estoque, retorna com todas as informações
       return {
-        localizacao: {
-          armazem_id: estoqueDoProduto.localizacao.armazem.armazem_id,
-          armazem: estoqueDoProduto.localizacao.armazem.nome,
-          localizacao_id: estoqueDoProduto.localizacao.localizacao_id,
-          nome: estoqueDoProduto.localizacao.nome,
-          ean: estoqueDoProduto.localizacao.ean,
-          tipo: estoqueDoProduto.localizacao.tipo.tipo,
-        },
         produto: {
           id_tiny: produto.id_tiny,
           produto_id: produto.produto_id,
