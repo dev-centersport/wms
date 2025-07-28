@@ -6,7 +6,12 @@ export class RelatorioController {
   constructor(private readonly relatorioService: RelatorioService) {}
 
   @Get('gerar-inventario')
-  relatorioConsulta() {
-    return this.relatorioService.relatorioConsulta();
+  gerarInventario() {
+    return this.relatorioService.gerarInventario();
+  }
+
+  @Get('gerar-consulta')
+  gerarConsulta() {
+    return this.relatorioService.gerarConsulta();
   }
 }
