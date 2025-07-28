@@ -74,33 +74,49 @@ export default function Auditoria() {
   useEffect(() => {
     async function carregar() {
       try {
-        const dados = await buscarAuditoria();
+        const dados = await buscarAuditoria({
+          search: busca,
+          offset: (paginaAtual - 1) * ITEMS_PER_PAGE,
+          limit: ITEMS_PER_PAGE,
+          status: aba === 'pendente' || aba === 'concluido' ? aba : undefined,
+        });
 
-        const auditoriasComArmazem = await Promise.all(dados.map(async (aud) => {
-          let nomeArmazem = '-';
+        console.log('🔍 Resposta buscarAuditoria:', dados); // Debug
 
-          if (aud.localizacao.ean) {
-            const armazemEncontrado = await buscarArmazemPorEAN(aud.localizacao.ean);
-            nomeArmazem = armazemEncontrado?.nome || '-';
-          }
+        // Garante que será um array
+        const lista: AuditoriaItem[] = Array.isArray(dados)
+          ? dados
+          : Array.isArray(dados.results)
+            ? dados.results
+            : [];
 
-          return {
-            ...aud,
-            data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
-            data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
-            localizacao: {
-              nome: aud.localizacao.nome || '-',
-              ean: aud.localizacao.ean || '',
-            },
-            armazem: {
-              nome: nomeArmazem,
-            },
-            ocorrencias: aud.ocorrencias?.map(oc => ({
-              ...oc,
-              dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
-            })) || [],
-          };
-        }));
+        const auditoriasComArmazem = await Promise.all(
+          lista.map(async (aud: AuditoriaItem) => {
+            let nomeArmazem = '-';
+
+            if (aud.localizacao.ean) {
+              const armazemEncontrado = await buscarArmazemPorEAN(aud.localizacao.ean);
+              nomeArmazem = armazemEncontrado?.nome || '-';
+            }
+
+            return {
+              ...aud,
+              data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
+              data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
+              localizacao: {
+                nome: aud.localizacao.nome || '-',
+                ean: aud.localizacao.ean || '',
+              },
+              armazem: {
+                nome: nomeArmazem,
+              },
+              ocorrencias: aud.ocorrencias?.map((oc: Ocorrencia) => ({
+                ...oc,
+                dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
+              })) || [],
+            };
+          })
+        );
 
         setAuditorias(auditoriasComArmazem);
         setSelecionados([]);
@@ -111,8 +127,7 @@ export default function Auditoria() {
     }
 
     carregar();
-  }, [aba]);
-
+  }, [aba, busca, paginaAtual]); // <- inclua dependências relevantes
 
   function formatarData(dataString: string | Date) {
     const data = new Date(dataString);

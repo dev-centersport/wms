@@ -1,4 +1,5 @@
 import axios from 'axios'
+import Ocorrencia from '../pages/NovaOcorrencia';
 
 const BASE_URL = 'http://151.243.0.78:3001';
 
@@ -45,25 +46,67 @@ export interface AuditoriaItem {
   ocorrencias: Ocorrencia[];
 }
 
-// ✅ Agora exportando corretamente
-export async function buscarAuditoria(): Promise<AuditoriaItem[]> {
+export type StatusAuditoria = 'pendente' | 'concluido';
+
+export async function buscarAuditoria(params?: {
+  search?: string;
+  offset?: number;
+  limit?: number;
+  status?: StatusAuditoria;
+}) {
   try {
-    const res = await axios.get('http://151.243.0.78:3001/auditoria');
-    return res.data;
-  } catch (err) {
-    console.error('Erro ao buscar auditorias →', err);
-    throw new Error('Falha ao carregar as auditorias do servidor.');
+    const queryParams: Record<string, any> = {};
+
+    if (params?.search) {
+      queryParams.search = params.search;
+    }
+
+    queryParams.offset = String(params?.offset ?? 0);
+    queryParams.limit = String(params?.limit ?? 50);
+
+    if (params?.status === 'pendente' || params?.status === 'concluido') {
+      queryParams.status = params.status;
+    }
+
+    const response = await axios.get(`${BASE_URL}/auditoria`, {
+      params: queryParams,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar auditorias:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Status:', error.response.status);
+    }
+    throw new Error('Falha ao carregar as auditorias.');
   }
 }
 
-export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
-  return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
+
+export interface ItemAuditoriaPayload {
+  produto_estoque_id: number;
+  quantidade: number;
+  quantidades_sistema: number;
+  quantidades_fisico: number;
+  motivo_diferenca: string;
+  acao_corretiva: string;
+  estoque_anterior: number;
+  estoque_novo: number;
+  mais_informacoes?: string;
 }
 
-export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) {
-  const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
-  return response.data;
+export async function registrarConferenciaAuditoria(
+  auditoriaId: number,
+  conclusao: string,
+  itens: ItemAuditoriaPayload[]
+) {
+  return await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/concluir`, {
+    conclusao,
+    itens,
+  });
 }
+
 export async function login(usuario: string, senha: string) {
   try {
     const res = await axios.post(`${BASE_URL}/usuario/validar-usuario`, {
@@ -98,7 +141,6 @@ export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
     throw err;
   }
 }
-
 
 
 // ---------- POST /armazem ----------
@@ -776,6 +818,7 @@ export async function buscarOcorrencias(ativo?: true | false) {
     return res.data.flatMap((o: any) =>
       o.produto.map((p: any) => ({
         localizacao: o.localizacao || '-',
+        localizacao_id: o.localizacao_id, // ✅ Adicionado aqui
         armazem: o.armazem || '-',
         produto: p.descricao || '-',
         sku: p.sku || '-',
@@ -787,12 +830,18 @@ export async function buscarOcorrencias(ativo?: true | false) {
         produto_id: p.produto_id || '-',
         ean: p.ean || '-',
         qtd_ocorrencias: p.qtd_ocorrencias || '-',
+        ocorrencia_id: p.ocorrencia_id,
       }))
     );
   } catch (err) {
     console.error('Erro ao buscar ocorrências:', err);
     throw new Error('Erro ao buscar ocorrências.');
   }
+}
+
+export async function buscarOcorrenciasDaLocalizacao(localizacaoId: number) {
+  const response = await api.get(`/ocorrencia/${localizacaoId}/ocorrencias-da-localizacao`);
+  return response.data;
 }
 
 export interface Armazem {
@@ -809,5 +858,29 @@ export async function buscarArmazemPorEAN(ean: string): Promise<Armazem | null> 
   } catch (err) {
     console.error('Erro ao buscar armazém por EAN →', err);
     return null;
+  }
+}
+
+export async function iniciarAuditoria(id: number) {
+  try {
+    const res = await axios.post(`${BASE_URL}/auditoria/${id}/iniciar`);
+    return res.data;
+  } catch (err: any) {
+    console.error('Erro ao iniciar auditoria:', err);
+    throw new Error(err?.response?.data?.message || 'Erro ao iniciar auditoria.');
+  }
+}
+
+export async function criarAuditoria(data: {
+  usuario_id: number;
+  localizacao_id: number;
+  ocorrencias: { ocorrencia_id: number }[]; // ✅ array de objetos
+}) {
+  try {
+    const res = await axios.post(`${BASE_URL}/auditoria`, data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Erro ao criar auditoria:', err);
+    throw new Error(err?.response?.data?.message || 'Erro ao criar auditoria.');
   }
 }

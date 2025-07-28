@@ -5,25 +5,24 @@ import {
   Chip,
   InputAdornment,
   Paper,
-  Tab,
-  Tabs,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   TextField,
   Typography,
-  TableSortLabel,
-  Menu,
-  MenuItem,
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import Layout from '../components/Layout';
-import { buscarOcorrencias } from '../services/API';
+import { buscarOcorrencias, iniciarAuditoria, criarAuditoria, buscarAuditoria } from '../services/API';
 import { useNavigate } from 'react-router-dom';
 import ProdutosOcorrenciaModal from '../components/ProdutosOcorrenciaModal';
+import ConfirmacaoAuditoria from '../components/ConfirmacaoAuditoria';
 
 interface ProdutoDaOcorrencia {
   produto_id: number;
@@ -34,7 +33,7 @@ interface ProdutoDaOcorrencia {
   qtd_esperada: number;
   diferenca: number;
   qtd_ocorrencias: number;
-  qtd_ocorrencias_produto: number
+  qtd_ocorrencias_produto: number;
 }
 
 interface OcorrenciaItem {
@@ -45,6 +44,7 @@ interface OcorrenciaItem {
   prioridade?: 'Baixa' | 'Media' | 'Alta';
   produtos: ProdutoDaOcorrencia[];
   qtd_ocorrencias: number;
+  localizacao_id: number;
 }
 
 const ITEMS_PER_PAGE = 50;
@@ -56,6 +56,8 @@ export default function Ocorrencias() {
   const [orderBy, setOrderBy] = useState<keyof OcorrenciaItem>('localizacao');
   const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
   const [modalAberto, setModalAberto] = useState(false);
+  const [confirmarAberto, setConfirmarAberto] = useState(false);
+  const [localizacaoIdSelecionada, setLocalizacaoIdSelecionada] = useState<number | null>(null);
   const [ocorrenciaSelecionada, setOcorrenciaSelecionada] = useState<{
     nome: string;
     produtos: ProdutoDaOcorrencia[];
@@ -81,6 +83,7 @@ export default function Ocorrencias() {
               o.armazem === curr.armazem &&
               o.ativo === curr.ativo
           );
+
           const produto = {
             produto_id: curr.produto_id,
             descricao: curr.produto,
@@ -103,6 +106,7 @@ export default function Ocorrencias() {
               ativo: curr.ativo,
               produtos: [produto],
               qtd_ocorrencias: curr.qtd_ocorrencias,
+              localizacao_id: curr.localizacao_id,
             });
           }
 
@@ -112,7 +116,7 @@ export default function Ocorrencias() {
         const finalComPrioridade = agrupado.map((item: OcorrenciaItem) => ({
           ...item,
           prioridade:
-            item.qtd_ocorrencias>= 5
+            item.qtd_ocorrencias >= 5
               ? 'Alta'
               : item.qtd_ocorrencias >= 3
                 ? 'Media'
@@ -262,10 +266,10 @@ export default function Ocorrencias() {
             label={`Prioridade: ${appliedFiltroPrioridade}`}
             color="secondary"
             sx={{
-              backgroundColor: 
-              appliedFiltroPrioridade === 'Alta' ? '#F44336' :
-              appliedFiltroPrioridade === 'Media' ? '#FF9800' :
-              '#4CAF50',
+              backgroundColor:
+                appliedFiltroPrioridade === 'Alta' ? '#F44336' :
+                  appliedFiltroPrioridade === 'Media' ? '#FF9800' :
+                    '#4CAF50',
               color: 'white',
               fontWeight: 'bold',
               height: 32,
@@ -326,96 +330,72 @@ export default function Ocorrencias() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell align='center' sortDirection={orderBy === 'localizacao' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'localizacao'}
-                  direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('localizacao')}
-                >
-                  Localização
-                </TableSortLabel>
-              </TableCell>
-
-              <TableCell align="center" sortDirection={orderBy === 'qtd_ocorrencias' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'qtd_ocorrencias'}
-                  direction={orderBy === 'qtd_ocorrencias' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('qtd_ocorrencias' as keyof OcorrenciaItem)}
-                >
-                  Qtd. Ocorrências
-                </TableSortLabel>
-              </TableCell>
-
-              <TableCell align="center" sortDirection={orderBy === 'prioridade' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'prioridade'}
-                  direction={orderBy === 'prioridade' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('prioridade')}
-                >
-                  Prioridade
-                </TableSortLabel>
-              </TableCell>
-
-              <TableCell align="center" sortDirection={orderBy === 'ativo' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'ativo'}
-                  direction={orderBy === 'ativo' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('ativo')}
-                >
-                  Status
-                </TableSortLabel>
-              </TableCell>
-
+              <TableCell align='center'>Localização</TableCell>
+              <TableCell align="center">Qtd. Ocorrências</TableCell>
+              <TableCell align="center">Prioridade</TableCell>
+              <TableCell align="center">Status</TableCell>
               <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {exibidos.map((item, idx) => (
-              <TableRow key={idx}>
-                <TableCell align='center' sx={{pr: orderBy === 'localizacao' ? 'auto' : '33px'}}>{item.armazem} - {item.localizacao}</TableCell>
-                <TableCell align="center" sx={{pr: orderBy === 'qtd_ocorrencias' ? 'auto' : '33px'}}>{item.qtd_ocorrencias}</TableCell>
-                <TableCell align="center"  sx={{pr: orderBy === 'prioridade' ? 'auto' : '33px'}}>
-                  <Chip
-                    label={item.prioridade}
-                    sx={{
-                      backgroundColor:
-                        item.prioridade === 'Alta' ? '#F44336' :
-                          item.prioridade === 'Media' ? '#FF9800' : '#4CAF50',
-                      color: '#fff',
-                      fontWeight: 600,
-                      px: 2,
-                    }}
-                  />
-                </TableCell>
-                <TableCell align="center" sx={{pr: orderBy === 'ativo' ? 'auto' : '33px'}}>
-                  <Chip
-                    label={item.ativo ? 'Pendente' : 'Concluído'}
-                    size="small"
-                    sx={{
-                      backgroundColor: item.ativo ? '#FFEB3B' : '#61de27',
-                      color: item.ativo ? '#000' : '#fff',
-                      fontWeight: 600,
-                      px: 2,
-                    }}
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => {
-                      setOcorrenciaSelecionada({
-                        nome: `${item.armazem} - ${item.localizacao}`,
-                        produtos: item.produtos,
-                      });
-                      setModalAberto(true);
-                    }}
-                  >
-                    Produtos na Ocorrência
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {exibidos.map((item, idx) => {
+              return (
+                <TableRow key={idx}>
+                  <TableCell align='center'>{item.armazem} - {item.localizacao}</TableCell>
+                  <TableCell align="center">{item.qtd_ocorrencias}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={item.prioridade}
+                      sx={{
+                        backgroundColor:
+                          item.prioridade === 'Alta' ? '#F44336' :
+                            item.prioridade === 'Media' ? '#FF9800' : '#4CAF50',
+                        color: '#fff', fontWeight: 600, px: 2,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={item.ativo ? 'Pendente' : 'Concluído'}
+                      size="small"
+                      sx={{
+                        backgroundColor: item.ativo ? '#FFEB3B' : '#61de27',
+                        color: item.ativo ? '#000' : '#fff',
+                        fontWeight: 600, px: 2,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => {
+                        setOcorrenciaSelecionada({
+                          nome: `${item.armazem} - ${item.localizacao}`,
+                          produtos: item.produtos,
+                        });
+                        setModalAberto(true);
+                      }}
+                      sx={{ mr: 1 }}
+                    >
+                      Produtos na Ocorrência
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
+                      onClick={() => {
+                        console.log('📌 Clicou em conferir. ID:', item.localizacao_id);
+                        setLocalizacaoIdSelecionada(item.localizacao_id);
+                        setConfirmarAberto(true);
+                      }}
+                    >
+                      Conferir
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -428,6 +408,62 @@ export default function Ocorrencias() {
           produtos={ocorrenciaSelecionada.produtos}
         />
       )}
+
+      <ConfirmacaoAuditoria
+        open={confirmarAberto}
+        onClose={() => setConfirmarAberto(false)}
+        mensagem="Deseja realmente iniciar esta auditoria?"
+        onConfirm={async () => {
+          try {
+            const usuario_id = 1;
+            const localizacao_id = localizacaoIdSelecionada;
+
+            if (!localizacao_id || typeof localizacao_id !== 'number') {
+              alert('Localização inválida para iniciar auditoria.');
+              return;
+            }
+
+            const entrada = ocorrencias.find(o => o.localizacao_id === localizacao_id);
+
+            if (!entrada || typeof entrada.id !== 'number') {
+              alert('Ocorrência inválida ou sem ID.');
+              return;
+            }
+
+            const novaAuditoria = await criarAuditoria({
+              usuario_id,
+              localizacao_id,
+              ocorrencias: [{ ocorrencia_id: entrada.id }],
+            });
+
+            await iniciarAuditoria(novaAuditoria.auditoria_id);
+
+            const resposta = await buscarAuditoria({ status: 'pendente' });
+            const auditorias = resposta.results;
+
+            if (!Array.isArray(auditorias)) {
+              alert('Erro ao buscar auditorias.');
+              return;
+            }
+
+            const auditoriaCorrespondente = auditorias.find(
+              (a: any) =>
+                a.auditoria_id === novaAuditoria.auditoria_id &&
+                a.usuario?.usuario_id === usuario_id
+            );
+
+            if (novaAuditoria?.localizacao?.localizacao_id) {
+              navigate(`/ConferenciaAudi/${novaAuditoria.localizacao.localizacao_id}`);
+            } else {
+              alert('Não foi possível redirecionar: auditoria criada, mas sem localizacao_id.');
+            }
+            setConfirmarAberto(false);
+          } catch (err: any) {
+            console.error('❌ Erro ao iniciar auditoria:', err);
+            alert(err?.response?.data?.message || err.message || 'Erro ao iniciar auditoria.');
+          }
+        }}
+      />
     </Layout>
   );
 }
