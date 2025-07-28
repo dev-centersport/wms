@@ -131,6 +131,79 @@ export class OcorrenciaService {
     return agrupamento;
   }
 
+  async ocorrenciasDaLocalizacao(localizacao_id: number): Promise<
+    {
+      armazem: string | null;
+      localizacao: string | null;
+      quantidade: number;
+      produto: {
+        produto_id: number;
+        descricao: string;
+        sku: string;
+        qtd_esperada: number;
+        qtd_ocorrencias: number;
+      }[];
+    }[]
+  > {
+    const localizacao = await this.localizacaoRepository.findOne({
+      where: { localizacao_id: localizacao_id },
+    });
+
+    if (!localizacao)
+      throw new NotFoundException(
+        `Localização com ID ${localizacao_id} não encontrada`,
+      );
+
+    const ocorrencias = await this.ocorrenciaRepository.find({
+      where: { localizacao: localizacao },
+      relations: ['produto_estoque.produto', 'localizacao.armazem'],
+    });
+
+    if (!ocorrencias || ocorrencias.length === 0)
+      throw new NotFoundException('Nenhuma ocorrência foi encontrada');
+
+    const produtosAgrupados = ocorrencias.reduce(
+      (acc, ocorrencia) => {
+        const produtoId = ocorrencia.produto_estoque.produto.produto_id;
+
+        if (!acc[produtoId]) {
+          acc[produtoId] = {
+            produto_id: produtoId,
+            descricao: ocorrencia.produto_estoque.produto.descricao,
+            sku: ocorrencia.produto_estoque.produto.sku,
+            qtd_esperada: ocorrencia.quantidade_esperada,
+            qtd_ocorrencias: 0,
+          };
+        }
+
+        acc[produtoId].qtd_ocorrencias += 1;
+
+        return acc;
+      },
+      {} as Record<
+        number,
+        {
+          produto_id: number;
+          descricao: string;
+          sku: string;
+          qtd_esperada: number;
+          qtd_ocorrencias: number;
+        }
+      >,
+    );
+
+    const produtosArray = Object.values(produtosAgrupados);
+
+    return [
+      {
+        armazem: ocorrencias[0].localizacao.armazem?.nome || null,
+        localizacao: ocorrencias[0].localizacao?.nome || null,
+        quantidade: ocorrencias.length,
+        produto: produtosArray,
+      },
+    ];
+  }
+
   async findOne(ocorrencia_id: number): Promise<Ocorrencia> {
     const ocorrencia = await this.ocorrenciaRepository.findOne({
       where: { ocorrencia_id },

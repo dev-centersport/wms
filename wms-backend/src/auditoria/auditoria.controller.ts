@@ -39,15 +39,15 @@ export class AuditoriaController {
     return results;
   }
 
-  @Get('em-andamento')
-  findAuditoriasEmAndamento() {
-    return this.auditoriaService.findAuditoriasEmAndamento();
-  }
+  // @Get('em-andamento')
+  // findAuditoriasEmAndamento() {
+  //   return this.auditoriaService.findAuditoriasEmAndamento();
+  // }
 
-  @Get('concluidas')
-  findAuditoriasConcluidas() {
-    return this.auditoriaService.findAuditoriasConcluidas();
-  }
+  // @Get('concluidas')
+  // findAuditoriasConcluidas() {
+  //   return this.auditoriaService.findAuditoriasConcluidas();
+  // }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
@@ -89,15 +89,15 @@ export class AuditoriaController {
     return this.auditoriaService.cancelarAuditoria(id);
   }
 
-  @Get('usuario/:usuario_id')
-  findByUsuario(@Param('usuario_id', ParseIntPipe) usuario_id: number) {
-    return this.auditoriaService.findByUsuario(usuario_id);
-  }
+  // @Get('usuario/:usuario_id')
+  // findByUsuario(@Param('usuario_id', ParseIntPipe) usuario_id: number) {
+  //   return this.auditoriaService.findByUsuario(usuario_id);
+  // }
 
-  @Get('ocorrencia/:ocorrencia_id')
-  findByOcorrencia(
-    @Param('ocorrencia_id', ParseIntPipe) ocorrencia_id: number,
-  ) {
-    return this.auditoriaService.findByOcorrencia(ocorrencia_id);
-  }
+  // @Get('ocorrencia/:ocorrencia_id')
+  // findByOcorrencia(
+  //   @Param('ocorrencia_id', ParseIntPipe) ocorrencia_id: number,
+  // ) {
+  //   return this.auditoriaService.findByOcorrencia(ocorrencia_id);
+  // }
 }
