@@ -5,7 +5,7 @@ import { RelatorioService } from './relatorio.service';
 export class RelatorioController {
   constructor(private readonly relatorioService: RelatorioService) {}
 
-  @Get('listar-produtos-com-estoque')
+  @Get('gerar-inventario')
   relatorioConsulta() {
     return this.relatorioService.relatorioConsulta();
   }

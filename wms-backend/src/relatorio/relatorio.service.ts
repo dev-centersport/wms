@@ -17,32 +17,65 @@ export class RelatorioService {
   ) {}
 
   async relatorioConsulta(): Promise<any> {
-    const produto_estoque = await this.ProdutoEstoqueRepository.find({
+    // Busca todos os produtos
+    const produtos = await this.ProdutoRepository.find();
+    if (!produtos || produtos.length === 0)
+      throw new NotFoundException('Nenhum produto cadastrado foi encontrado!');
+
+    // Busca todos os produtos com estoque e suas relações
+    const produtosComEstoque = await this.ProdutoEstoqueRepository.find({
       relations: ['produto', 'localizacao.tipo', 'localizacao.armazem'],
     });
-    console.log(produto_estoque);
 
-    if (!produto_estoque)
-      throw new NotFoundException('Nenhum prodtuo no estoque foi encontrado!');
+    // Mapeia todos os produtos, combinando com informações de estoque quando existirem
+    const result = produtos.map((produto) => {
+      // Encontra o estoque correspondente a este produto (se existir)
+      const estoqueDoProduto = produtosComEstoque.find(
+        (pe) => pe.produto.produto_id === produto.produto_id,
+      );
 
-    const result = produto_estoque.map((item) => ({
-      localizacao: {
-        armazem_id: item.localizacao.armazem.armazem_id,
-        armazem: item.localizacao.armazem.nome,
-        localizacao_id: item.localizacao.localizacao_id,
-        nome: item.localizacao.nome,
-        ean: item.localizacao.ean,
-        tipo: item.localizacao.tipo.tipo,
-      },
-      produto: {
-        id_tiny: item.produto.id_tiny,
-        produto_id: item.produto.produto_id,
-        descricao: item.produto.descricao,
-        sku: item.produto.sku,
-        ean: item.produto.ean,
-      },
-      quantidade: item.quantidade,
-    }));
+      // Se não houver estoque, retorna o produto com quantidade zero e campos vazios
+      if (!estoqueDoProduto) {
+        return {
+          localizacao: {
+            armazem_id: null,
+            armazem: null,
+            localizacao_id: null,
+            nome: null,
+            ean: null,
+            tipo: null,
+          },
+          produto: {
+            id_tiny: produto.id_tiny,
+            produto_id: produto.produto_id,
+            descricao: produto.descricao,
+            sku: produto.sku,
+            ean: produto.ean,
+          },
+          quantidade: 0,
+        };
+      }
+
+      // Se houver estoque, retorna com todas as informações
+      return {
+        localizacao: {
+          armazem_id: estoqueDoProduto.localizacao.armazem.armazem_id,
+          armazem: estoqueDoProduto.localizacao.armazem.nome,
+          localizacao_id: estoqueDoProduto.localizacao.localizacao_id,
+          nome: estoqueDoProduto.localizacao.nome,
+          ean: estoqueDoProduto.localizacao.ean,
+          tipo: estoqueDoProduto.localizacao.tipo.tipo,
+        },
+        produto: {
+          id_tiny: produto.id_tiny,
+          produto_id: produto.produto_id,
+          descricao: produto.descricao,
+          sku: produto.sku,
+          ean: produto.ean,
+        },
+        quantidade: estoqueDoProduto.quantidade,
+      };
+    });
 
     return result;
   }
