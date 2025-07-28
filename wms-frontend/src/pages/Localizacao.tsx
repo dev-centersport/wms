@@ -269,126 +269,328 @@ const Localizacao: React.FC = () => {
   };
 
   const handleImprimir = (localizacao: string, ean: string, tipo: string, armazem: string) => {
-    const tipoLower = tipo.toLowerCase();
-    if (tipoLower.includes('caixa')) {
-      handleImprimirCaixa(localizacao, ean, armazem);
-      return;
-    }
-    const w = window.open('', '_blank');
-    if (!w) return;
+  const tipoLower = tipo.toLowerCase();
 
+  if (tipoLower.includes('cesto')) {
+    handleImprimirCesto(localizacao, ean); // CORRETO
+    return;
+  }
 
-    /* ------------------------------------------------------------------ */
-    /* 1. Identificação do tipo                                           */
-    /* ------------------------------------------------------------------ */
+  if (tipoLower.includes('caixa')) {
+    handleImprimirCaixa(localizacao, ean, armazem);
+    return;
+  }
 
-    const isCaixa = tipoLower.includes('caixa');
-    const isPrateleira = tipoLower.includes('prateleira');
+  const w = window.open('', '_blank');
+  if (!w) return;
 
-    /* ------------------------------------------------------------------ */
-    /* 2. Dimensões, fontes e código de barras                            */
-    /* ------------------------------------------------------------------ */
+  const isCaixa = tipoLower.includes('caixa');
+  const isPrateleira = tipoLower.includes('prateleira');
 
-    const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
-    const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
+  const largura = isCaixa || isPrateleira ? '10cm' : '5cm';
+  const altura = isCaixa ? '15cm' : isPrateleira ? '5cm' : '10cm';
 
-    const fontNome = '120px';                   // tamanho base
-    const barHeight = isCaixa ? 90 : 20;        // altura barra
-    const barFont = isCaixa ? 22 : 10;          // fonte barra
+  const fontNome = '120px';
+  const barHeight = isCaixa ? 90 : 20;
+  const barFont = isCaixa ? 22 : 10;
 
-    /* ------------------------------------------------------------------ */
-    /* 3. Transformação do nome para Prateleira                           */
-    /* ------------------------------------------------------------------ */
+  const nomeImpresso = isPrateleira
+    ? localizacao.replace(/^.*?#/, '')
+    : localizacao;
 
-    const nomeImpresso = isPrateleira
-      ? localizacao.replace(/^.*?#/, '')
-      : localizacao;
+  const bodyJustify = isPrateleira ? 'flex-start' : 'center';
+  const nomeMarginTop = isPrateleira ? '-3mm' : '0';
 
-    /* ------------------------------------------------------------------ */
-    /* 4. Estilos condicionais                                            */
-    /* ------------------------------------------------------------------ */
+  w.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Etiqueta – ${localizacao}</title>
+      <style>
+        @page {
+          size: ${largura} ${altura};
+          margin: 0;
+        }
+        body {
+          width: ${largura};
+          height: ${altura};
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: ${bodyJustify};
+          font-family: Arial, sans-serif;
+          overflow: hidden;
+        }
+        #nome {
+          font-weight: bold;
+          font-size: ${fontNome};
+          margin: ${nomeMarginTop} 0 0 0;
+          padding: 0;
+          line-height: 1;
+          width: 100%;
+          text-align: center;
+          word-break: break-word;
+        }
+        #barcode {
+          width: 90%;
+          margin: 0;
+          padding: 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div id="nome">${nomeImpresso}</div>
+      <svg id="barcode"></svg>
 
-    const bodyJustify = isPrateleira ? 'flex-start' : 'center'; // prateleira cola no topo
-    const nomeMarginTop = isPrateleira ? '-3mm' : '0';          // só prateleira sobe
+      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+      <script>
+        const nomeEl  = document.getElementById('nome');
+        const texto   = '${nomeImpresso}';
+        let tamanho   = ${fontNome.replace('px', '')};
 
-    /* ------------------------------------------------------------------ */
-    /* 5. HTML completo                                                   */
-    /* ------------------------------------------------------------------ */
+        if (texto.length > 8)      tamanho = 50;
+        else if (texto.length > 5) tamanho = 180;
 
+        nomeEl.style.fontSize = tamanho + 'px';
+
+        JsBarcode('#barcode', '${ean}', {
+          format: 'ean13',
+          height: ${barHeight},
+          displayValue: true,
+          fontSize: ${barFont}
+        });
+
+        window.onload = () => {
+          window.print();
+          window.onafterprint = () => window.close();
+        };
+      </script>
+    </body>
+    </html>
+  `);
+
+  w.document.close();
+};
+
+  const handleImprimirCesto = (nome: string, ean: string) => {
+  const largura = '10cm';
+  const altura = '3cm';
+  const barHeight = 55;
+  const barFont = 16;
+
+  const nomeEscapado = nome.replace(/'/g, "\\'");
+  const eanEscapado = ean.replace(/'/g, "\\'");
+
+  const w = window.open('', '_blank');
+  if (!w) return;
+
+  w.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Etiqueta – Cesto</title>
+      <style>
+        @page {
+          size: ${largura} ${altura};
+          margin: 0;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        .etiqueta {
+          width: ${largura};
+          height: ${altura};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: Arial, sans-serif;
+        }
+        .conteudo {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          width: 90%;
+        }
+        .nome {
+          font-weight: bold;
+          font-size: 50px;
+          margin: 0;
+          padding: 0;
+          line-height: 1;
+          white-space: nowrap;
+        }
+        .barcode {
+          width: 120px;
+          height: 100%;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="etiqueta" data-ean="${eanEscapado}">
+        <div class="conteudo">
+          <div class="nome" id="nome-0">${nomeEscapado}</div>
+          <svg class="barcode" id="barcode-0"></svg>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+      <script>
+        const nome = '${nomeEscapado}';
+        const svg = document.getElementById('barcode-0');
+        const nomeEl = document.getElementById('nome-0');
+        let tamanho = 50;
+        if (nome.length > 10)      tamanho = 20;
+        else if (nome.length > 6)  tamanho = 35;
+        nomeEl.style.fontSize = tamanho + 'px';
+
+        JsBarcode(svg, '${eanEscapado}', {
+          format: 'ean13',
+          height: ${barHeight},
+          displayValue: true,
+          fontSize: ${barFont}
+        });
+
+        window.onload = () => {
+          window.print();
+          window.onafterprint = () => window.close();
+        };
+      </script>
+    </body>
+    </html>
+  `);
+
+  w.document.close();
+};
+
+  const handleImprimirSelecionadosCesto = () => {
+  let indicesParaImprimir = selectedItems;
+
+  if (!indicesParaImprimir.length) {
+    indicesParaImprimir = listaLocalizacoes
+      .map((loc, idx) => (loc.tipo.toLowerCase().includes('cesto') ? idx : -1))
+      .filter((idx) => idx !== -1);
+
+    setSelectedItems(indicesParaImprimir);
+    setSelectAll(false);
+  }
+
+  if (!indicesParaImprimir.length) {
+    alert('Nenhuma localização do tipo "Cesto" encontrada.');
+    return;
+  }
+
+  const largura = '10cm';
+  const altura = '3cm';
+  const fontNome = '70px';
+  const barHeight = 55;   // AUMENTADO
+  const barFont = 16;     // AUMENTADO
+
+  const w = window.open('', '_blank');
+  if (!w) return;
+
+  // Cabeçalho e estilo
+  w.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Etiquetas – Cestos</title>
+      <style>
+        @page {
+          size: ${largura} ${altura};
+          margin: 0;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        .etiqueta {
+          width: ${largura};
+          height: ${altura};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: Arial, sans-serif;
+          page-break-after: always;
+        }
+        .conteudo {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          width: 90%;
+        }
+        .nome {
+          font-weight: bold;
+          font-size: ${fontNome};
+          margin: 0;
+          padding: 0;
+          line-height: 1;
+          white-space: nowrap;
+        }
+        .barcode {
+          width: 120px;  /* AJUSTADO PARA FICAR GRANDE, MAS DENTRO DA ETIQUETA */
+          height: 100%;
+        }
+      </style>
+    </head>
+    <body>
+  `);
+
+  // Conteúdo da etiqueta
+  indicesParaImprimir.forEach((idx, i) => {
+    const item = listaLocalizacoes[idx];
+    const nomeEscapado = item.nome.replace(/'/g, "\\'");
+    const eanEscapado = item.ean.replace(/'/g, "\\'");
     w.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Etiqueta – ${localizacao}</title>
-            <style>
-                @page {
-                    size: ${largura} ${altura};
-                    margin: 0;
-                }
-                body {
-                    width: ${largura};
-                    height: ${altura};
-                    margin: 0;
-                    padding: 0;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: ${bodyJustify};
-                    font-family: Arial, sans-serif;
-                    overflow: hidden;
-                }
-                #nome {
-                    font-weight: bold;
-                    font-size: ${fontNome};
-                    margin: ${nomeMarginTop} 0 0 0;
-                    padding: 0;
-                    line-height: 1;
-                    width: 100%;
-                    text-align: center;
-                    word-break: break-word;
-                }
-                #barcode {
-                    width: 90%;
-                    margin: 0;                /* zero espaço entre nome e código */
-                    padding: 0;
-                }
-            </style>
-        </head>
-        <body>
-            <div id="nome">${nomeImpresso}</div>
-            <svg id="barcode"></svg>
+      <div class="etiqueta" data-ean="${eanEscapado}">
+        <div class="conteudo">
+          <div class="nome" id="nome-${i}">${nomeEscapado}</div>
+          <svg class="barcode" id="barcode-${i}"></svg>
+        </div>
+      </div>
+    `);
+  });
 
-            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-            <script>
-                /* ---------- ajuste dinâmico de fonte conforme tamanho do texto -------- */
-                const nomeEl  = document.getElementById('nome');
-                const texto   = '${nomeImpresso}';
-                let tamanho   = ${fontNome.replace('px', '')};
+  // Script de geração do código de barras
+  w.document.write(`
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+      window.onload = () => {
+        document.querySelectorAll('.etiqueta').forEach((div, index) => {
+          const nome = div.querySelector('.nome').innerText;
+          const svg = div.querySelector('.barcode');
+          const ean = div.dataset.ean;
 
-                if (texto.length > 8)      tamanho = 50;
-                else if (texto.length > 5) tamanho = 180;
+          let tamanho = 50;
+          if (nome.length > 10)      tamanho = 20;
+          else if (nome.length > 6)  tamanho = 35;
 
-                nomeEl.style.fontSize = tamanho + 'px';
+          document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
 
-                /* ------------------- geração do código de barras ----------------------- */
-                JsBarcode('#barcode', '${ean}', {
-                    format: 'ean13',
-                    height: ${barHeight},
-                    displayValue: true,
-                    fontSize: ${barFont}
-                });
+          JsBarcode(svg, ean, {
+            format: 'ean13',
+            height: ${barHeight},
+            displayValue: true,
+            fontSize: ${barFont}
+          });
+        });
 
-                window.onload = () => {
-                    window.print();
-                    window.onafterprint = () => window.close();
-                };
-            </script>
-        </body>
-        </html>
-      `);
+        window.print();
+        window.onafterprint = () => window.close();
+      };
+    </script>
+    </body>
+    </html>
+  `);
 
-    w.document.close();
-  };
+  w.document.close();
+};
+
+
 
   const handleImprimirCaixa = (localizacao: string, ean: string, armazem: string) => {
     const w = window.open('', '_blank');
@@ -495,54 +697,60 @@ const Localizacao: React.FC = () => {
   /* ------------------------------------------------------------------ */
   /* Substitua a função handleImprimirSelecionados pelo código abaixo   */
   /* ------------------------------------------------------------------ */
-  const handleImprimirSelecionados = () => {
-    let indicesParaImprimir = selectedItems;
+ const handleImprimirSelecionados = () => {
+  let indicesParaImprimir = selectedItems;
 
-    if (!indicesParaImprimir.length) {
-      indicesParaImprimir = listaLocalizacoes
-        .map((loc, idx) => {
-          const tipo = loc.tipo?.toLowerCase() || '';
-          if (tipo.includes('caixa') || tipo.includes('prateleira')) return idx;
-          return -1;
-        })
-        .filter((idx) => idx !== -1);
+  if (!indicesParaImprimir.length) {
+    indicesParaImprimir = listaLocalizacoes
+      .map((loc, idx) => {
+        const tipo = loc.tipo?.toLowerCase() || '';
+        if (tipo.includes('caixa') || tipo.includes('prateleira') || tipo.includes('cesto')) return idx;
+        return -1;
+      })
+      .filter((idx) => idx !== -1);
 
-      setSelectedItems(indicesParaImprimir);
-      setSelectAll(false);
-    }
+    setSelectedItems(indicesParaImprimir);
+    setSelectAll(false);
+  }
 
-    if (!indicesParaImprimir.length) {
-      alert('Nenhuma localização do tipo "Caixa" ou "Prateleira" encontrada.');
-      return;
-    }
+  if (!indicesParaImprimir.length) {
+    alert('Nenhuma localização do tipo "Caixa", "Prateleira" ou "Cesto" encontrada.');
+    return;
+  }
 
-    const tiposSelecionados = indicesParaImprimir.map(
-      (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
-    );
+  const tiposSelecionados = indicesParaImprimir.map(
+    (idx) => listaLocalizacoes[idx].tipo.toLowerCase()
+  );
 
-    const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
-    if (!tipoUnico) {
-      alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA ou todas PRATELEIRA).');
-      return;
-    }
+  const tipoUnico = tiposSelecionados.every((t) => t === tiposSelecionados[0]);
+  if (!tipoUnico) {
+    alert('Imprima apenas etiquetas de um mesmo tipo por vez (todas CAIXA, PRATELEIRA ou CESTO).');
+    return;
+  }
 
-    const armazemSelecionados = indicesParaImprimir.map(
-      (idx) => listaLocalizacoes[idx].armazem.toLowerCase()
-    );
+  const armazemSelecionados = indicesParaImprimir.map(
+    (idx) => listaLocalizacoes[idx].armazem.toLowerCase()
+  );
 
-    const armazemUnico = armazemSelecionados.every((t) => t === armazemSelecionados[0]);
-    if (!armazemUnico) {
-      alert('Imprima apenas etiquetas de um mesmo armazém.');
-      return;
-    }
+  const armazemUnico = armazemSelecionados.every((t) => t === armazemSelecionados[0]);
+  if (!armazemUnico) {
+    alert('Imprima apenas etiquetas de um mesmo armazém.');
+    return;
+  }
 
-    const tipoAtual = tiposSelecionados[0];
-    if (tipoAtual.includes('caixa')) {
-      handleImprimirSelecionadosCaixa();
-    } else {
-      handleImprimirSelecionadosPrateleira();
-    }
-  };
+  const tipoAtual = tiposSelecionados[0];
+
+  if (tipoAtual.includes('caixa')) {
+    handleImprimirSelecionadosCaixa();
+  } else if (tipoAtual.includes('prateleira')) {
+    handleImprimirSelecionadosPrateleira();
+  } else if (tipoAtual.includes('cesto')) {
+    handleImprimirSelecionadosCesto();
+  } else {
+    alert('Tipo de localização não suportado para impressão.');
+  }
+};
+
 
   const handleImprimirSelecionadosCaixa = () => {
     let indicesParaImprimir = selectedItems;
