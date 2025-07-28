@@ -46,7 +46,7 @@ export interface AuditoriaItem {
   ocorrencias: Ocorrencia[];
 }
 
-export type StatusAuditoria = 'pendente' | 'concluido';
+export type StatusAuditoria = 'pendente' | 'concluido' | 'em andamento';
 
 export async function buscarAuditoria(params?: {
   search?: string;
@@ -101,10 +101,22 @@ export async function registrarConferenciaAuditoria(
   conclusao: string,
   itens: ItemAuditoriaPayload[]
 ) {
-  return await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/concluir`, {
-    conclusao,
-    itens,
-  });
+  try {
+    const payload = {
+      conclusao,
+      itens,
+    };
+
+    const response = await axios.post(
+      `${BASE_URL}/auditoria/${auditoriaId}/concluir`,
+      payload
+    );
+
+    return response.data;
+  } catch (err: any) {
+    console.error('Erro ao concluir auditoria:', err);
+    throw new Error(err?.response?.data?.message || 'Erro ao concluir auditoria.');
+  }
 }
 
 export async function login(usuario: string, senha: string) {
