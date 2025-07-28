@@ -23,8 +23,8 @@ export class Auditoria {
   @PrimaryGeneratedColumn()
   auditoria_id: number;
 
-  @Column({ type: 'text' })
-  conclusao: string;
+  @Column({ type: 'text', nullable: true })
+  conclusao?: string;
 
   @Column({ type: 'timestamp', nullable: true })
   data_hora_inicio?: Date;
