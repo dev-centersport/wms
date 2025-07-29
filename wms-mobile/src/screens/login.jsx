@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,9 +23,20 @@ export default function LoginScreen() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [tecladoAtivo, setTecladoAtivo] = useState(false);
 
+  const scrollRef = useRef(null);
+
   useEffect(() => {
-    const show = Keyboard.addListener('keyboardDidShow', () => setTecladoAtivo(true));
-    const hide = Keyboard.addListener('keyboardDidHide', () => setTecladoAtivo(false));
+    const show = Keyboard.addListener('keyboardDidShow', () => {
+      setTecladoAtivo(true);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      setTecladoAtivo(false);
+      // força scroll para o topo ao fechar o teclado
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
+    });
+
     return () => {
       show.remove();
       hide.remove();
@@ -59,6 +70,7 @@ export default function LoginScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[
             styles.scrollContent,
             tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
@@ -143,7 +155,7 @@ const styles = StyleSheet.create({
   scrollComTeclado: {
     justifyContent: 'flex-start',
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 10, // reduzido para não gerar "buraco"
   },
   logo: {
     width: 150,
