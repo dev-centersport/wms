@@ -33,6 +33,7 @@ export class OcorrenciaService {
 
   async listarPorLocalizacao(): Promise<
     {
+      ocorrencia_id: number | null;
       armazem: string | null;
       localizacao: string | null;
       quantidade: number;
@@ -71,6 +72,7 @@ export class OcorrenciaService {
 
         if (!grupo) {
           grupo = {
+            ocorrencia_id: ocorrencia.ocorrencia_id,
             armazem: armazemNome,
             localizacao_id: localizacaoId,
             localizacao: localizacaoNome,
@@ -113,6 +115,7 @@ export class OcorrenciaService {
         return acc;
       },
       [] as {
+        ocorrencia_id: number | null;
         armazem: string | null;
         localizacao_id: number | null;
         localizacao: string | null;
