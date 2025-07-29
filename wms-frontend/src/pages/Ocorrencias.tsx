@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import Layout from '../components/Layout';
-import { buscarOcorrencias, iniciarAuditoria, criarAuditoria, buscarAuditoria } from '../services/API';
+import { buscarOcorrencias, criarAuditoria } from '../services/API';
 import { useNavigate } from 'react-router-dom';
 import ProdutosOcorrenciaModal from '../components/ProdutosOcorrenciaModal';
 import ConfirmacaoAuditoria from '../components/ConfirmacaoAuditoria';
@@ -34,10 +34,11 @@ interface ProdutoDaOcorrencia {
   diferenca: number;
   qtd_ocorrencias: number;
   qtd_ocorrencias_produto: number;
+  ocorrencia_id: number;
 }
 
 interface OcorrenciaItem {
-  id: number;
+  ocorrencia_id: number;
   localizacao: string;
   armazem: string;
   ativo: boolean;
@@ -94,13 +95,14 @@ export default function Ocorrencias() {
             diferenca: Number(curr.diferenca),
             qtd_ocorrencias: Number(curr.qtd_ocorrencias),
             qtd_ocorrencias_produto: Number(curr.qtd_ocorrencias_produto),
+            ocorrencia_id: curr.ocorrencia_id, // ✅ MANTENHA ESSE CAMPO
           };
 
           if (existente) {
             existente.produtos.push(produto);
           } else {
             acc.push({
-              id: acc.length + 1,
+              ocorrencia_id: curr.ocorrencia_id, // ✅ USE O ID REAL AQUI
               localizacao: curr.localizacao,
               armazem: curr.armazem,
               ativo: curr.ativo,
@@ -390,7 +392,7 @@ export default function Ocorrencias() {
                         setConfirmarAberto(true);
                       }}
                     >
-                      Conferir
+                      Criar Auditoria
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -408,59 +410,43 @@ export default function Ocorrencias() {
           produtos={ocorrenciaSelecionada.produtos}
         />
       )}
-
       <ConfirmacaoAuditoria
         open={confirmarAberto}
         onClose={() => setConfirmarAberto(false)}
-        mensagem="Deseja realmente iniciar esta auditoria?"
+        mensagem="Deseja realmente criar esta auditoria?"
         onConfirm={async () => {
           try {
             const usuario_id = 1;
             const localizacao_id = localizacaoIdSelecionada;
 
             if (!localizacao_id || typeof localizacao_id !== 'number') {
-              alert('Localização inválida para iniciar auditoria.');
+              alert('Localização inválida para criar auditoria.');
               return;
             }
 
             const entrada = ocorrencias.find(o => o.localizacao_id === localizacao_id);
 
-            if (!entrada || typeof entrada.id !== 'number') {
-              alert('Ocorrência inválida ou sem ID.');
+            if (!entrada) {
+              alert('Ocorrência não encontrada.');
               return;
             }
 
             const novaAuditoria = await criarAuditoria({
               usuario_id,
               localizacao_id,
-              ocorrencias: [{ ocorrencia_id: entrada.id }],
+              ocorrencias: [{ ocorrencia_id: entrada.ocorrencia_id }],
             });
 
-            await iniciarAuditoria(novaAuditoria.auditoria_id);
-
-            const resposta = await buscarAuditoria({ status: 'pendente' });
-            const auditorias = resposta.results;
-
-            if (!Array.isArray(auditorias)) {
-              alert('Erro ao buscar auditorias.');
-              return;
-            }
-
-            const auditoriaCorrespondente = auditorias.find(
-              (a: any) =>
-                a.auditoria_id === novaAuditoria.auditoria_id &&
-                a.usuario?.usuario_id === usuario_id
-            );
-
-            if (novaAuditoria?.localizacao?.localizacao_id) {
-              navigate(`/ConferenciaAudi/${novaAuditoria.localizacao.localizacao_id}`);
+            if (novaAuditoria?.auditoria_id) {
+              navigate(`/Auditoria?auditoria_id=${novaAuditoria.auditoria_id}`);
             } else {
-              alert('Não foi possível redirecionar: auditoria criada, mas sem localizacao_id.');
+              alert('Erro ao redirecionar para a auditoria criada.');
             }
+
             setConfirmarAberto(false);
           } catch (err: any) {
-            console.error('❌ Erro ao iniciar auditoria:', err);
-            alert(err?.response?.data?.message || err.message || 'Erro ao iniciar auditoria.');
+            console.error('❌ Erro ao criar auditoria:', err);
+            alert(err?.response?.data?.message || err.message || 'Erro ao criar auditoria.');
           }
         }}
       />

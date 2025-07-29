@@ -22,6 +22,8 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
 import Layout from '../components/Layout';
@@ -61,6 +63,11 @@ export default function Auditoria() {
   const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const [filtroArmazem, setFiltroArmazem] = useState('');
+  const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('');
+  const [appliedFiltroStatus, setAppliedFiltroStatus] = useState('');
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [ocorrenciasModal, setOcorrenciasModal] = useState<{
     open: boolean;
     ocorrencias: Ocorrencia[];
@@ -129,6 +136,25 @@ export default function Auditoria() {
     carregar();
   }, [aba, busca, paginaAtual]); // <- inclua dependências relevantes
 
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleAplicarFiltro = () => {
+    setAppliedFiltroArmazem(filtroArmazem);
+    setAppliedFiltroStatus(filtroStatus);
+    setPaginaAtual(1);
+    handleMenuClose();
+  };
+
+  const handleLimparFiltro = () => {
+    setFiltroArmazem('');
+    setFiltroStatus('');
+    setAppliedFiltroArmazem('');
+    setAppliedFiltroStatus('');
+    setPaginaAtual(1);
+    handleMenuClose();
+  };
+
   function formatarData(dataString: string | Date) {
     const data = new Date(dataString);
     return data.toLocaleString('pt-BR');
@@ -153,14 +179,15 @@ export default function Auditoria() {
   const filtrado = useMemo(() => {
     const termo = busca.toLowerCase();
     return auditorias.filter(aud => {
-      const statusMatch = aba === 'todos' || aud.status === aba;
+      const statusMatch = !appliedFiltroStatus || aud.status === appliedFiltroStatus;
+      const armazemMatch = !appliedFiltroArmazem || aud.armazem?.nome === appliedFiltroArmazem;
       const buscaMatch =
         aud.usuario.responsavel.toLowerCase().includes(termo) ||
         aud.auditoria_id.toString().includes(termo);
 
-      return statusMatch && buscaMatch;
+      return statusMatch && armazemMatch && buscaMatch;
     });
-  }, [auditorias, busca, aba]);
+  }, [auditorias, busca, appliedFiltroStatus, appliedFiltroArmazem]);
 
   const totalPaginas = Math.ceil(filtrado.length / ITEMS_PER_PAGE) || 1;
   const exibidos = filtrado.slice(
@@ -198,7 +225,48 @@ export default function Auditoria() {
           sx={{ width: 400 }}
         />
 
-        <Button variant="outlined">Filtro</Button>
+        <Button
+          variant="outlined"
+          onClick={handleMenuOpen}
+          sx={{
+            minWidth: 110,
+            backgroundColor: appliedFiltroArmazem || appliedFiltroStatus ? '#f0f0f0' : 'transparent',
+            borderColor: appliedFiltroArmazem || appliedFiltroStatus ? '#999' : undefined,
+            color: appliedFiltroArmazem || appliedFiltroStatus ? '#333' : undefined,
+            fontWeight: appliedFiltroArmazem || appliedFiltroStatus ? 'bold' : 'normal',
+          }}
+        >
+          Filtro
+        </Button>
+
+        {appliedFiltroArmazem && (
+          <Chip
+            label={`Armazém: ${appliedFiltroArmazem}`}
+            sx={{
+              backgroundColor: '#61de27',
+              color: '#000',
+              fontWeight: 'bold',
+              height: 32,
+            }}
+          />
+        )}
+        {appliedFiltroStatus && (
+          <Chip
+            label={`Status: ${appliedFiltroStatus === 'concluido' ? 'Concluído' : 'Pendente'}`}
+            sx={{
+              backgroundColor: appliedFiltroStatus === 'concluido' ? '#4CAF50' : '#FFEB3B',
+              color: appliedFiltroStatus === 'concluido' ? '#fff' : '#000',
+              fontWeight: 'bold',
+              height: 32,
+            }}
+          />
+        )}
+
+        {(appliedFiltroArmazem || appliedFiltroStatus) && (
+          <Button variant="outlined" onClick={handleLimparFiltro}>
+            Limpar Filtro
+          </Button>
+        )}
 
         <Button
           variant="contained"
@@ -208,6 +276,38 @@ export default function Auditoria() {
           Nova Auditoria
         </Button>
       </Box>
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <Box sx={{ p: 2, width: 260, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            select
+            label="Status"
+            value={filtroStatus}
+            onChange={(e) => setFiltroStatus(e.target.value)}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="pendente">Pendente</MenuItem>
+            <MenuItem value="concluido">Concluído</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="Armazém"
+            value={filtroArmazem}
+            onChange={(e) => setFiltroArmazem(e.target.value)}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {Array.from(new Set(auditorias.map((a) => a.armazem?.nome).filter(Boolean))).sort().map((a) => (
+              <MenuItem key={a} value={a}>{a}</MenuItem>
+            ))}
+          </TextField>
+
+          <Button variant="outlined" onClick={handleAplicarFiltro}>
+            Aplicar
+          </Button>
+        </Box>
+      </Menu>
+
 
       <Tabs value={aba} onChange={(_, v) => setAba(v)} sx={{ mb: 2 }}>
         <Tab label="Todos" value="todos" />
@@ -219,15 +319,6 @@ export default function Auditoria() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  checked={selecionados.length === exibidos.length && exibidos.length > 0}
-                  indeterminate={selecionados.length > 0 && selecionados.length < exibidos.length}
-                  onChange={(e) =>
-                    setSelecionados(e.target.checked ? exibidos.map((a) => a.auditoria_id) : [])
-                  }
-                />
-              </TableCell>
               <TableCell>Localização</TableCell>
               <TableCell>Criador</TableCell>
               <TableCell align='center'>Início</TableCell>
@@ -240,12 +331,7 @@ export default function Auditoria() {
           <TableBody>
             {exibidos.map((item) => (
               <TableRow key={item.auditoria_id}>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selecionados.includes(item.auditoria_id)}
-                    onChange={() => toggleSelecionado(item.auditoria_id)}
-                  />
-                </TableCell>
+  
                 <TableCell>
                   {item.localizacao.nome} - {item.armazem?.nome || '-'}
                 </TableCell>
@@ -344,35 +430,6 @@ export default function Auditoria() {
           <Button onClick={fecharModalOcorrencias}>Fechar</Button>
         </DialogActions>
       </Dialog>
-
-      <Box display="flex" mt={3} gap={2}>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<CheckCircle />}
-          disabled={selecionados.length === 0}
-        >
-          Conferir Selecionado
-        </Button>
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Cancel />}
-          onClick={() => setSelecionados([])}
-        >
-          Cancelar
-        </Button>
-      </Box>
     </Layout>
   );
 }
-
-// async function buscarAuditorias(): Promise<AuditoriaItem[]> {
-//   try {
-//     const res = await axios.get('http://151.243.0.78:3001/auditoria');
-//     return res.data;
-//   } catch (err) {
-//     console.error('Erro ao buscar auditorias →', err);
-//     throw new Error('Falha ao carregar as auditorias do servidor.');
-//   }
-// }
