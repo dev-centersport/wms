@@ -221,7 +221,11 @@ const Consulta: React.FC = () => {
             <TableRow>
               {(['descricao', 'sku', 'ean', 'armazem', 'quantidade', 'localizacao'] as (keyof ConsultaEstoque)[]).map(
                 (col) => (
-                  <TableCell key={col} sortDirection={orderBy === col ? orderDirection : false}>
+                  <TableCell
+                    key={col}
+                    align={col === 'ean' ||col === 'quantidade' || col === 'localizacao' ? 'center' : 'left'}
+                    sortDirection={orderBy === col ? orderDirection : false}
+                  >
                     <TableSortLabel
                       active={orderBy === col}
                       direction={orderBy === col ? orderDirection : 'asc'}
@@ -240,10 +244,10 @@ const Consulta: React.FC = () => {
                 <TableRow key={`${item.produto_id}-${item.localizacao}-${item.ean}`} hover>
                   <TableCell>{item.descricao}</TableCell>
                   <TableCell>{item.sku}</TableCell>
-                  <TableCell>{item.ean}</TableCell>
+                  <TableCell align='center'>{item.ean}</TableCell>
                   <TableCell>{item.armazem}</TableCell>
-                  <TableCell>{item.quantidade}</TableCell>
-                  <TableCell>{item.localizacao}</TableCell>
+                  <TableCell align='center'>{item.quantidade}</TableCell>
+                  <TableCell align='center'>{item.localizacao}</TableCell>
                 </TableRow>
               ))
             ) : (

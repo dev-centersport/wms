@@ -937,4 +937,8 @@ export async function fecharLocalizacao(ean: string): Promise<void> {
   }
 }
 
+export async function buscarUsuarios() {
+  const response = await axios.get(`${BASE_URL}/usuario`);
+  return response.data;
+}
 
