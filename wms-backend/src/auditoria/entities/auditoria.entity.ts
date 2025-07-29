@@ -10,6 +10,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { LocalizacoesProximasDto } from '../dto/localizacoes-proximas.dto';
 
 export enum StatusAuditoria {
   PENDENTE = 'pendente',
@@ -38,6 +39,9 @@ export class Auditoria {
     default: StatusAuditoria.PENDENTE,
   })
   status: StatusAuditoria;
+
+  @Column({ type: 'jsonb' })
+  localizacoes_proximas: LocalizacoesProximasDto[];
 
   @ManyToOne(() => Usuario, (user) => user.auditorias)
   @JoinColumn()

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOneOptions, In, Brackets } from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
@@ -11,6 +15,7 @@ import { Localizacao } from '../localizacao/entities/localizacao.entity';
 import { ItemAuditoria } from '../item_auditoria/entities/item_auditoria.entity';
 import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
+import { LocalizacoesProximasDto } from './dto/localizacoes-proximas.dto';
 
 @Injectable()
 export class AuditoriaService {
@@ -240,6 +245,7 @@ export class AuditoriaService {
     id: number,
     conclusao: string,
     itens: CreateItemAuditoriaDto[],
+    localizacoes_proximas: LocalizacoesProximasDto,
   ): Promise<Auditoria> {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: id },
@@ -250,7 +256,7 @@ export class AuditoriaService {
       throw new NotFoundException(`Auditoria com ID ${id} não foi encontrada`);
 
     if (auditoria.status !== StatusAuditoria.EM_ANDAMENTO) {
-      throw new Error(
+      throw new BadRequestException(
         'Só é possível concluir auditorias com status "em andamento"',
       );
     }
@@ -270,6 +276,80 @@ export class AuditoriaService {
       }),
     );
 
+    // Estrutura consolidada das localizações para persistência
+    const localizacoesContadas: {
+      localizacao_id: number;
+      produtos: { produto_id: number; quantidade: number }[];
+    }[] = [];
+
+    for (const localizacaoDto of localizacoes_proximas.localizacoes_proximas) {
+      // Busca a localização no banco de dados
+      const localizacaoEncontrada = await this.localizacaoRepository.findOne({
+        where: { localizacao_id: localizacaoDto.localizacao_id },
+        relations: ['itens_localizacao', 'itens_localizacao.produto'],
+      });
+
+      if (!localizacaoEncontrada)
+        throw new NotFoundException(
+          `Não foi encontrado a localização com ID ${localizacaoDto.localizacao_id}`,
+        );
+
+      const estoqueLocalizacao = await this.produtoEstoqueRepository.find({
+        where: { localizacao: localizacaoEncontrada },
+      });
+
+      if (!estoqueLocalizacao || estoqueLocalizacao.length === 0)
+        throw new NotFoundException(
+          `Não foi encontrado nenhum estoque no ID ${localizacaoDto.localizacao_id}`,
+        );
+
+      // Mapeia quantos produtos de cada tipo apareceram no request
+      const contagemProdutos = new Map<number, number>();
+      for (const itemDto of localizacaoDto.itens_localizacao) {
+        const produtoId = itemDto.produto.produto_id;
+        contagemProdutos.set(
+          produtoId,
+          (contagemProdutos.get(produtoId) ?? 0) + 1,
+        );
+      }
+
+      // Para persistir no banco, armazene a contagem por produto_id:
+      localizacoesContadas.push({
+        localizacao_id: localizacaoDto.localizacao_id,
+        produtos: Array.from(contagemProdutos.entries()).map(
+          ([produto_id, quantidade]) => ({
+            produto_id,
+            quantidade,
+          }),
+        ),
+      });
+
+      // Para cada produto contado, verifica com o estoque do banco
+      for (const [produtoId, quantidadeContada] of contagemProdutos.entries()) {
+        const itemEstoque = estoqueLocalizacao.find(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          (item: any) => item.produto_id === produtoId,
+        );
+
+        if (!itemEstoque) {
+          throw new NotFoundException(
+            `Produto ID ${produtoId} não encontrado no estoque da Localização ID ${localizacaoDto.localizacao_id}`,
+          );
+        }
+
+        const quantidadeBanco = itemEstoque.quantidade;
+        if (quantidadeBanco !== quantidadeContada) {
+          console.log(
+            `Estoque divergente para Produto ID ${produtoId} na Localização ID ${localizacaoDto.localizacao_id}. Esperado: ${quantidadeBanco}, Recebido: ${quantidadeContada}`,
+          );
+        } else {
+          console.log(
+            `Estoque OK para Produto ID ${produtoId} na Localização ID ${localizacaoDto.localizacao_id}`,
+          );
+        }
+      }
+    }
+
     const ocorrencias = auditoria.ocorrencias.map((o) => {
       return o;
     });
@@ -285,6 +365,7 @@ export class AuditoriaService {
       );
     }
     auditoria.itens_auditoria = itensSalvos;
+    auditoria.localizacoes_proximas = [localizacoes_proximas];
 
     return this.auditoriaRepository.save(auditoria);
   }
@@ -341,7 +422,7 @@ export class AuditoriaService {
         qtd_sistema: o.quantidade_sistemas,
       };
       return map;
-    });
+    }, {});
 
     // Formata todos os produtos da localização
     const produtosFormatados = produtosLocalizacao.map((produtoEstoque) => {
@@ -361,6 +442,9 @@ export class AuditoriaService {
       };
     });
 
+    // console.log(produtosComOcorrencias);
+    // console.log(Object.keys(produtosComOcorrencias).length);
+
     return [
       {
         auditoria_id: auditoria.auditoria_id,
@@ -373,33 +457,4 @@ export class AuditoriaService {
       },
     ];
   }
-
-  // async findByStatus(status: StatusAuditoria): Promise<Auditoria[]> {
-  //   return this.auditoriaRepository.find({
-  //     where: { status },
-  //     relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
-  //   });
-  // }
-
-  // async findByUsuario(usuario_id: number): Promise<Auditoria[]> {
-  //   return this.auditoriaRepository.find({
-  //     where: { usuario: { usuario_id: usuario_id } },
-  //     relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
-  //   });
-  // }
-
-  // async findByOcorrencia(ocorrencia_id: number): Promise<Auditoria[]> {
-  //   return this.auditoriaRepository.find({
-  //     where: { ocorrencias: { ocorrencia_id: ocorrencia_id } },
-  //     relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
-  //   });
-  // }
-
-  // async findAuditoriasEmAndamento(): Promise<Auditoria[]> {
-  //   return this.findByStatus(StatusAuditoria.EM_ANDAMENTO);
-  // }
-
-  // async findAuditoriasConcluidas(): Promise<Auditoria[]> {
-  //   return this.findByStatus(StatusAuditoria.CONCLUIDA);
-  // }
 }

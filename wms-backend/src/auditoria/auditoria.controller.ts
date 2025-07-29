@@ -15,6 +15,7 @@ import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 import { StatusAuditoria } from './entities/auditoria.entity';
 // import { ItemAuditoria } from 'src/item_auditoria/entities/item_auditoria.entity';
 import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
+import { LocalizacoesProximasDto } from './dto/localizacoes-proximas.dto';
 
 @Controller('auditoria')
 export class AuditoriaController {
@@ -82,12 +83,18 @@ export class AuditoriaController {
   @Post(':id/concluir')
   concluirAuditoria(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { conclusao: string; itens: CreateItemAuditoriaDto[] },
+    @Body()
+    body: {
+      conclusao: string;
+      itens: CreateItemAuditoriaDto[];
+      localizacoes_proximas: LocalizacoesProximasDto;
+    },
   ) {
     return this.auditoriaService.concluirAuditoria(
       id,
       body.conclusao,
       body.itens,
+      body.localizacoes_proximas,
     );
   }
 
