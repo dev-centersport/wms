@@ -824,6 +824,7 @@ export async function buscarOcorrencias(ativo?: true | false) {
         produto_id: p.produto_id || '-',
         ean: p.ean || '-',
         qtd_ocorrencias: p.qtd_ocorrencias || '-',
+        ocorrencia_id: o.ocorrencia_id,
       }))
     ));
 
@@ -842,7 +843,7 @@ export async function buscarOcorrencias(ativo?: true | false) {
         produto_id: p.produto_id || '-',
         ean: p.ean || '-',
         qtd_ocorrencias: p.qtd_ocorrencias || '-',
-        ocorrencia_id: p.ocorrencia_id,
+        ocorrencia_id: o.ocorrencia_id,
       }))
     );
   } catch (err) {
@@ -882,17 +883,20 @@ export async function iniciarAuditoria(id: number) {
     throw new Error(err?.response?.data?.message || 'Erro ao iniciar auditoria.');
   }
 }
-
 export async function criarAuditoria(data: {
   usuario_id: number;
   localizacao_id: number;
   ocorrencias: { ocorrencia_id: number }[]; // ✅ array de objetos
 }) {
   try {
+    console.log('📤 Dados enviados para /auditoria:', JSON.stringify(data, null, 2));
+
     const res = await axios.post(`${BASE_URL}/auditoria`, data);
+    console.log('✅ Resposta recebida da API /auditoria:', res.data);
+
     return res.data;
   } catch (err: any) {
-    console.error('Erro ao criar auditoria:', err);
+    console.error('❌ Erro ao criar auditoria:', err?.response?.data || err);
     throw new Error(err?.response?.data?.message || 'Erro ao criar auditoria.');
   }
 }
