@@ -11,6 +11,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -21,6 +22,9 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState('');
   const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
+
+  const { height } = useWindowDimensions();
+  const keyboardOffset = Platform.OS === 'ios' ? 0 : 40;
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -43,9 +47,9 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 40}
+      keyboardVerticalOffset={keyboardOffset}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
@@ -55,7 +59,10 @@ export default function LoginScreen() {
         >
           <Image
             source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
+            style={[
+              styles.logo,
+              { width: height < 700 ? 100 : 150, height: height < 700 ? 100 : 150 },
+            ]}
           />
           <Text style={styles.brand}>WMS</Text>
           <Text style={styles.welcome}>Bem Vindo!</Text>
@@ -111,17 +118,19 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#61DE25',
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
-    paddingBottom: 100, // espaço extra pro botão aparecer
+    paddingBottom: 120, // espaço extra pro teclado
   },
   logo: {
-    width: 150,
-    height: 150,
     marginBottom: 10,
     borderRadius: 75,
     backgroundColor: '#4BCC1C',
