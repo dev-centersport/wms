@@ -10,6 +10,7 @@ import { Ocorrencia } from '../ocorrencia/entities/ocorrencia.entity';
 import { Localizacao } from '../localizacao/entities/localizacao.entity';
 import { ItemAuditoria } from '../item_auditoria/entities/item_auditoria.entity';
 import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
+import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 
 @Injectable()
 export class AuditoriaService {
@@ -24,6 +25,8 @@ export class AuditoriaService {
     private readonly localizacaoRepository: Repository<Localizacao>,
     @InjectRepository(ItemAuditoria)
     private readonly itemAuditoriaRepository: Repository<ItemAuditoria>,
+    @InjectRepository(ProdutoEstoque)
+    private readonly produtoEstoqueRepository: Repository<ProdutoEstoque>,
   ) {}
 
   async create(createAuditoriaDto: CreateAuditoriaDto): Promise<Auditoria> {
@@ -101,11 +104,13 @@ export class AuditoriaService {
     const query = this.auditoriaRepository
       .createQueryBuilder('auditoria')
       .leftJoin('auditoria.usuario', 'usuario')
-      .leftJoinAndSelect('auditoria.localizacao', 'localizacao')
-      .select(['auditoria', 'usuario', 'localizacao'])
+      .leftJoin('auditoria.localizacao', 'localizacao')
+      .leftJoin('auditoria.ocorrencias', 'ocorrencias')
+      .select(['auditoria', 'usuario', 'localizacao', 'ocorrencias'])
       .groupBy('auditoria.auditoria_id')
       .addGroupBy('usuario.usuario_id')
-      .addGroupBy('localizacao.localizacao_id');
+      .addGroupBy('localizacao.localizacao_id')
+      .addGroupBy('ocorrencias.ocorrencia_id');
 
     if (search) {
       query.andWhere(
@@ -300,7 +305,7 @@ export class AuditoriaService {
     return this.auditoriaRepository.save(auditoria);
   }
 
-  async ocorrenciasDaAuditoria(auditoria_id: number): Promise<any> {
+  async produtosDaAuditoria(auditoria_id: number): Promise<any> {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: auditoria_id },
     });
@@ -320,45 +325,51 @@ export class AuditoriaService {
         'Nenhuma ocorrência foi encontrada na auditoria',
       );
 
-    const produtosAgrupados = ocorrencias.reduce(
-      (acc, ocorrencia) => {
-        const produtoId = ocorrencia.produto_estoque.produto.produto_id;
+    const localizacao = ocorrencias[0].localizacao;
 
-        if (!acc[produtoId]) {
-          acc[produtoId] = {
-            produto_id: produtoId,
-            descricao: ocorrencia.produto_estoque.produto.descricao,
-            sku: ocorrencia.produto_estoque.produto.sku,
-            qtd_esperada: ocorrencia.quantidade_esperada,
-            qtd_ocorrencias: 0,
-          };
-        }
+    const produtosLocalizacao = await this.produtoEstoqueRepository.find({
+      where: { localizacao: localizacao },
+      relations: ['produto'],
+    });
 
-        acc[produtoId].qtd_ocorrencias += 1;
+    const produtosComOcorrencias = ocorrencias.reduce((map, o) => {
+      const produtoId = o.produto_estoque.produto.produto_id;
 
-        return acc;
-      },
-      {} as Record<
-        number,
-        {
-          produto_id: number;
-          descricao: string;
-          sku: string;
-          qtd_esperada: number;
-          qtd_ocorrencias: number;
-        }
-      >,
-    );
+      map[produtoId] = {
+        temOcorrencia: true,
+        qtd_esperada: o.quantidade_esperada,
+        qtd_sistema: o.quantidade_sistemas,
+      };
+      return map;
+    });
 
-    const produtosArray = Object.values(produtosAgrupados);
+    // Formata todos os produtos da localização
+    const produtosFormatados = produtosLocalizacao.map((produtoEstoque) => {
+      const produtoId = produtoEstoque.produto.produto_id;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const ocorrencia = produtosComOcorrencias[produtoId];
+
+      return {
+        produto_id: produtoId,
+        descricao: produtoEstoque.produto.descricao,
+        sku: produtoEstoque.produto.sku,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        qtd_esperada: ocorrencia?.qtd_esperada || produtoEstoque.quantidade,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        qtd_encontrada: ocorrencia?.qtd_sistema || produtoEstoque.quantidade,
+        produto_com_ocorrencia: !!ocorrencia,
+      };
+    });
 
     return [
       {
         auditoria_id: auditoria.auditoria_id,
         armazem: ocorrencias[0].localizacao.armazem?.nome || null,
         localizacao: ocorrencias[0].localizacao?.nome || null,
-        quantidade: ocorrencias.length,
-        produto: produtosArray,
+        quantidade_ocorrencias: ocorrencias.length,
+        total_produtos: produtosLocalizacao.length,
+        produtos_com_ocorrencia: Object.keys(produtosComOcorrencias).length,
+        produtos: produtosFormatados,
       },
     ];
   }

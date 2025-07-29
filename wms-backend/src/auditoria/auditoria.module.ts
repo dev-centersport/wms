@@ -7,6 +7,7 @@ import { ItemAuditoria } from 'src/item_auditoria/entities/item_auditoria.entity
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
+import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
       Usuario,
       Ocorrencia,
       Localizacao,
+      ProdutoEstoque,
     ]),
   ],
   controllers: [AuditoriaController],

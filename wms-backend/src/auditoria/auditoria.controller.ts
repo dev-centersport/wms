@@ -13,7 +13,7 @@ import { AuditoriaService } from './auditoria.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 import { StatusAuditoria } from './entities/auditoria.entity';
-import { ItemAuditoria } from 'src/item_auditoria/entities/item_auditoria.entity';
+// import { ItemAuditoria } from 'src/item_auditoria/entities/item_auditoria.entity';
 import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
 
 @Controller('auditoria')
@@ -56,9 +56,9 @@ export class AuditoriaController {
     return this.auditoriaService.findOne(id);
   }
 
-  @Get(':id/listar-ocorrencias')
-  ocorrenciasDaAuditoria(@Param('id', ParseIntPipe) id: number) {
-    return this.auditoriaService.ocorrenciasDaAuditoria(id);
+  @Get(':id/listar-produtos-localizacao')
+  produtosDaAuditoria(@Param('id', ParseIntPipe) id: number) {
+    return this.auditoriaService.produtosDaAuditoria(id);
   }
 
   @Patch(':id')
