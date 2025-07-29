@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-  useWindowDimensions,
+  KeyboardEvent,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -22,9 +22,17 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState('');
   const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [tecladoAtivo, setTecladoAtivo] = useState(false);
 
-  const { height } = useWindowDimensions();
-  const keyboardOffset = Platform.OS === 'ios' ? 0 : 40;
+  // Detectar teclado
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setTecladoAtivo(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setTecladoAtivo(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -49,7 +57,7 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={keyboardOffset}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 40}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
@@ -61,7 +69,7 @@ export default function LoginScreen() {
             source={require('../../assets/images/logo01.png')}
             style={[
               styles.logo,
-              { width: height < 700 ? 100 : 150, height: height < 700 ? 100 : 150 },
+              tecladoAtivo && styles.logoPequena,
             ]}
           />
           <Text style={styles.brand}>WMS</Text>
@@ -128,9 +136,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
-    paddingBottom: 120, // espaço extra pro teclado
+    paddingBottom: 100,
   },
   logo: {
+    width: 150,
+    height: 150,
     marginBottom: 10,
     borderRadius: 75,
     backgroundColor: '#4BCC1C',
@@ -140,6 +150,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 6,
+    transition: 'all 0.3s ease-in-out',
+  },
+  logoPequena: {
+    width: 90,
+    height: 90,
   },
   brand: {
     fontSize: 36,
