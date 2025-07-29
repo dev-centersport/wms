@@ -19,6 +19,7 @@ import { OcorrenciaModule } from './ocorrencia/ocorrencia.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ItemAuditoriaModule } from './item_auditoria/item_auditoria.module';
 import { SeparacaoModule } from './separacao/separacao.module';
+import { AuthModule } from './auth/auth.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -90,6 +91,7 @@ import { SeparacaoModule } from './separacao/separacao.module';
     AuditoriaModule,
     ItemAuditoriaModule,
     SeparacaoModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
