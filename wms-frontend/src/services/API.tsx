@@ -916,3 +916,25 @@ export async function criarAuditoria(data: {
     throw new Error(err?.response?.data?.message || 'Erro ao criar auditoria.');
   }
 }
+
+// 🔓 Abrir localização
+export async function abrirLocalizacao(ean: string): Promise<void> {
+  try {
+    await axios.get(`${BASE_URL}/movimentacao/abrir-localizacao/${ean}`);
+  } catch (err: any) {
+    console.error('Erro ao abrir localização:', err);
+    throw new Error(err?.response?.data?.message || 'Falha ao abrir localização.');
+  }
+}
+
+// 🔒 Fechar localização
+export async function fecharLocalizacao(ean: string): Promise<void> {
+  try {
+    await axios.get(`${BASE_URL}/movimentacao/fechar-localizacao/${ean}`);
+  } catch (err: any) {
+    console.error('Erro ao fechar localização:', err);
+    throw new Error(err?.response?.data?.message || 'Falha ao fechar localização.');
+  }
+}
+
+

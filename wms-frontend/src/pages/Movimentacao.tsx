@@ -191,37 +191,47 @@ const Movimentacao: React.FC = () => {
   };
 
   const handleBuscarLocalizacao = async () => {
-    if (!localizacao.trim()) return;
+  if (!localizacao.trim()) return;
 
-    const eanLocalizacao = localizacao.trim();
-    let resultado;
+  const eanLocalizacao = localizacao.trim();
+  let resultado;
 
-    try {
-      if (tipo === 'transferencia') {
-        resultado = await buscarLocalizacaoGeral(eanLocalizacao);
-      } else {
-        resultado = await buscarLocalizacaoPorEAN(eanLocalizacao);
-      }
-
-      if (!resultado) {
-        alert(`Localização com EAN ${eanLocalizacao} não encontrada.`);
-        return;
-      }
-
-      setOrigem({
-        id: resultado.localizacao_id,
-        nome: resultado.nome,
-        ean: eanLocalizacao,
-      });
-
-      setLocalizacao('');
-      setLocalizacaoBloqueada(true);
-
-    } catch (err: any) {
-      console.error('Erro ao buscar localização:', err);
-      alert(err?.message || 'Erro ao buscar localização.');
+  try {
+    // Busca a localização (entrada, saída ou transferência)
+    if (tipo === 'transferencia') {
+      resultado = await buscarLocalizacaoGeral(eanLocalizacao);
+    } else {
+      resultado = await buscarLocalizacaoPorEAN(eanLocalizacao);
     }
-  };
+
+    if (!resultado) {
+      alert(`Localização com EAN ${eanLocalizacao} não encontrada.`);
+      return;
+    }
+
+    // Tenta abrir a localização no backend
+    try {
+      await axios.get(`http://151.243.0.78:3001/movimentacao/abrir-localizacao/${eanLocalizacao}`);
+    } catch (erro: any) {
+      alert(erro?.response?.data?.message || 'A localização já está em uso.');
+      return;
+    }
+
+    setOrigem({
+      id: resultado.localizacao_id,
+      nome: resultado.nome,
+      ean: eanLocalizacao,
+    });
+
+    setLocalizacao('');
+    setLocalizacaoBloqueada(true);
+
+  } catch (err: any) {
+    console.error('Erro ao buscar localização:', err);
+    alert(err?.message || 'Erro ao buscar localização.');
+  }
+};
+
 
 
   const handleExcluir = (index: number) => {
@@ -243,7 +253,7 @@ const Movimentacao: React.FC = () => {
   };
 
   const handleSalvarClick = () => {
-    if (!validacaoCampos()) return;
+    
 
     let mensagem = '';
     switch (tipo) {
@@ -262,75 +272,70 @@ const Movimentacao: React.FC = () => {
     setConfirmMessage(mensagem);
     setConfirmOpen(true);
   };
+  
+
 
   const handleConfirmarOperacao = async () => {
+  try {
+    const usuario_id = 1;
+
+    const payload: any = {
+      tipo,
+      usuario_id: usuario_id,
+      itens_movimentacao: lista.map((item) => ({
+        produto_id: Number(item.produto_id),
+        produto_estoque_id: Number(item.produto_estoque_id),
+        quantidade: Number(item.quantidade ?? 1),
+      })),
+      localizacao_origem_id: 0,
+      localizacao_destino_id: 0,
+    };
+
+    if (tipo === 'entrada') {
+      payload.localizacao_origem_id = 0;
+      payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
+    } else if (tipo === 'saida') {
+      payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
+      payload.localizacao_destino_id = 0;
+    } else if (tipo === 'transferencia') {
+      payload.localizacao_origem_id = origem?.id;
+      payload.localizacao_destino_id = destino?.id;
+    }
+
+    console.log('📦 Payload final:', payload);
+
+    await enviarMovimentacao(payload);
+
+    // ✅ FECHAR LOCALIZAÇÕES
     try {
-      const usuario_id = 1;
-
-      const payload: any = {
-        tipo,
-        usuario_id: usuario_id,
-        itens_movimentacao: lista.map((item) => ({
-          produto_id: Number(item.produto_id),
-          produto_estoque_id: Number(item.produto_estoque_id),
-          quantidade: Number(item.quantidade ?? 1),
-        })),
-        localizacao_origem_id: 0,
-        localizacao_destino_id: 0,
-      };
-
-      if (tipo === 'entrada') {
-        payload.localizacao_origem_id = 0;
-        payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
-      } else if (tipo === 'saida') {
-        payload.localizacao_origem_id = origem?.id || parseInt(localizacao);
-        payload.localizacao_destino_id = 0;
-      } else if (tipo === 'transferencia') {
-        payload.localizacao_origem_id = origem?.id;
-        payload.localizacao_destino_id = destino?.id;
+      if (origem?.ean) {
+        await axios.get(`http://151.243.0.78:3001/movimentacao/fechar-localizacao/${origem.ean}`);
       }
 
-      console.log('📦 Payload final:', payload);
-
-      await enviarMovimentacao(payload);
-
-      alert('Movimentacao realizada com sucesso!');
-      setConfirmOpen(false);
-      setLista([]);
-      setOrigem(null);
-      setDestino(null);
-      setLocalizacao('');
-      setLocalizacaoBloqueada(false);
-      setContadorTotal(1);
-    } catch (err: any) {
-      console.error('Erro ao enviar movimentacao:', err);
-      if (err.response) {
-        console.error('📛 Código:', err.response.status);
-        console.error('📦 Dados do erro:', err.response.data);
+      if (tipo === 'transferencia' && destino?.ean) {
+        await axios.get(`http://151.243.0.78:3001/movimentacao/fechar-localizacao/${destino.ean}`);
       }
-      alert(err?.response?.data?.message || 'Falha ao salvar movimentacao.');
+    } catch (erro) {
+      console.warn('⚠️ Erro ao tentar fechar a localização:', erro);
     }
-  };
 
-  const validacaoCampos = () => {
-    if (lista.length === 0) {
-      alert('Adicione pelo menos um produto.');
-      return false;
+    alert('Movimentacao realizada com sucesso!');
+    setConfirmOpen(false);
+    setLista([]);
+    setOrigem(null);
+    setDestino(null);
+    setLocalizacao('');
+    setLocalizacaoBloqueada(false);
+    setContadorTotal(1);
+  } catch (err: any) {
+    console.error('Erro ao enviar movimentacao:', err);
+    if (err.response) {
+      console.error('📛 Código:', err.response.status);
+      console.error('📦 Dados do erro:', err.response.data);
     }
-    if (tipo === 'saida' && !origem?.id) {
-      alert('Saída exige localização de origem.');
-      return false;
-    }
-    if (tipo === 'entrada' && !origem?.id && !localizacao) {
-      alert('Entrada exige localização de destino.');
-      return false;
-    }
-    if (tipo === 'transferencia' && (!origem?.id || !destino?.id)) {
-      alert('Transferência exige origem e destino.');
-      return false;
-    }
-    return true;
-  };
+    alert(err?.response?.data?.message || 'Falha ao salvar movimentacao.');
+  }
+};
 
 
 
