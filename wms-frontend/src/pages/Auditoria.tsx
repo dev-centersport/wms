@@ -23,7 +23,8 @@ import {
   Tooltip,
   IconButton,
   Menu,
-  MenuItem
+  MenuItem,
+  TableSortLabel
 } from '@mui/material';
 import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
 import Layout from '../components/Layout';
@@ -41,7 +42,7 @@ export interface AuditoriaItem {
   conclusao: string;
   data_hora_inicio: string;
   data_hora_fim: string;
-  status: string;
+  status: 'pendente' | 'concluida' | 'em andamento';
   usuario: {
     responsavel: string;
   };
@@ -59,7 +60,7 @@ const ITEMS_PER_PAGE = 10;
 
 export default function Auditoria() {
   const [busca, setBusca] = useState('');
-  const [aba, setAba] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [aba, setAba] = useState<'todos' | 'pendente' | 'concluida'>('todos');
   const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -77,6 +78,15 @@ export default function Auditoria() {
     ocorrencias: [],
     localizacao: '',
   });
+  const [orderBy, setOrderBy] = useState<string>('data_hora_inicio');
+  const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
+
+  // E a função:
+  const handleSort = (property: string) => {
+    const isAsc = orderBy === property && orderDirection === 'asc';
+    setOrderDirection(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
 
   useEffect(() => {
     async function carregar() {
@@ -85,7 +95,7 @@ export default function Auditoria() {
           search: busca,
           offset: (paginaAtual - 1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
-          status: aba === 'pendente' || aba === 'concluido' ? aba : undefined,
+          status: aba === 'pendente' || aba === 'concluida' ? aba : undefined,
         });
 
         console.log('🔍 Resposta buscarAuditoria:', dados); // Debug
@@ -252,10 +262,10 @@ export default function Auditoria() {
         )}
         {appliedFiltroStatus && (
           <Chip
-            label={`Status: ${appliedFiltroStatus === 'concluido' ? 'Concluído' : 'Pendente'}`}
+            label={`Status: ${appliedFiltroStatus === 'concluida' ? 'Concluída' : 'Pendente'}`}
             sx={{
-              backgroundColor: appliedFiltroStatus === 'concluido' ? '#4CAF50' : '#FFEB3B',
-              color: appliedFiltroStatus === 'concluido' ? '#fff' : '#000',
+              backgroundColor: appliedFiltroStatus === 'concluida' ? '#4CAF50' : '#FFEB3B',
+              color: appliedFiltroStatus === 'concluida' ? '#fff' : '#000',
               fontWeight: 'bold',
               height: 32,
             }}
@@ -287,7 +297,7 @@ export default function Auditoria() {
           >
             <MenuItem value="">Todos</MenuItem>
             <MenuItem value="pendente">Pendente</MenuItem>
-            <MenuItem value="concluido">Concluído</MenuItem>
+            <MenuItem value="concluida">Concluído</MenuItem>
           </TextField>
 
           <TextField
@@ -312,29 +322,74 @@ export default function Auditoria() {
       <Tabs value={aba} onChange={(_, v) => setAba(v)} sx={{ mb: 2 }}>
         <Tab label="Todos" value="todos" />
         <Tab label="Pendentes" value="pendente" />
-        <Tab label="Concluídos" value="concluido" />
+        <Tab label="Concluídos" value="concluida" />
       </Tabs>
 
       <TableContainer component={Paper}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>Localização</TableCell>
-              <TableCell>Criador</TableCell>
-              <TableCell align='center'>Início</TableCell>
-              <TableCell align='center'>Término</TableCell>
-              <TableCell align='center'>Ocorrências</TableCell>
-              <TableCell align='center'>Status</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'localizacao'}
+                  direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('localizacao')}
+                >
+                  Localização
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'usuario'}
+                  direction={orderBy === 'usuario' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('usuario')}
+                >
+                  Criador
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'data_hora_inicio'}
+                  direction={orderBy === 'data_hora_inicio' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('data_hora_inicio')}
+                >
+                  Início
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'data_hora_fim'}
+                  direction={orderBy === 'data_hora_fim' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('data_hora_fim')}
+                >
+                  Término
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'ocorrencias'}
+                  direction={orderBy === 'ocorrencias' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('ocorrencias')}
+                >
+                  Ocorrências
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'status'}
+                  direction={orderBy === 'status' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('status')}
+                >
+                  Status
+                </TableSortLabel>
+              </TableCell>
               <TableCell align='center'>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {exibidos.map((item) => (
               <TableRow key={item.auditoria_id}>
-  
-                <TableCell>
-                  {item.localizacao.nome} - {item.armazem?.nome || '-'}
-                </TableCell>
+                <TableCell>{item.localizacao.nome} - {item.armazem?.nome || '-'}</TableCell>
                 <TableCell>{item.usuario.responsavel}</TableCell>
                 <TableCell align='center'>{item.data_hora_inicio}</TableCell>
                 <TableCell align='center'>{item.data_hora_fim}</TableCell>
@@ -349,11 +404,11 @@ export default function Auditoria() {
                 </TableCell>
                 <TableCell align='center'>
                   <Chip
-                    label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                    label={item.status === 'concluida' ? 'Concluído' : 'Pendente'}
                     size="small"
                     sx={{
-                      backgroundColor: item.status === 'concluido' ? '#4CAF50' : '#FFEB3B',
-                      color: item.status === 'concluido' ? '#fff' : '#000',
+                      backgroundColor: item.status === 'concluida' ? '#4CAF50' : '#FFEB3B',
+                      color: item.status === 'concluida' ? '#fff' : '#000',
                       fontWeight: 600,
                     }}
                   />
@@ -366,9 +421,7 @@ export default function Auditoria() {
                       disabled={false}
                       sx={{
                         color: 'error.main',
-                        '&:hover': {
-                          backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                        },
+                        '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
                       }}
                     >
                       <DeleteIcon fontSize="small" />

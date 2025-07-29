@@ -26,6 +26,7 @@ import NovaOcorrencia from "./pages/NovaOcorrencia";
 import ConferenciaAudi from "./pages/ConferenciaAudi";
 import Auditoria from "./pages/Auditoria";
 import Relatorio from "./pages/Relatorio";
+import Usuarios from "./pages/Usuarios";
 
 import theme from './components/Theme';
 
@@ -68,6 +69,9 @@ root.render(
           <Route path="/Relatorio" element={<Relatorio/>}/>
           <Route path="/NovaOcorrencia" element={<NovaOcorrencia/>}/>
           <Route path="/ConferenciaAudi/:id" element={<ConferenciaAudi />} />
+
+          {/* Usuarios */}
+          <Route path="/usuarios" element={<Usuarios />} />
 
           {/* Redirecionamentos */}
           <Route path="/" element={<Navigate to="/login" replace />} />

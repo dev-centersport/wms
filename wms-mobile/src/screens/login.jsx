@@ -43,12 +43,15 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 40}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <Image
             source={require('../../assets/images/logo01.png')}
@@ -65,6 +68,7 @@ export default function LoginScreen() {
               onChangeText={setUsuario}
               style={styles.input}
               placeholderTextColor="#888"
+              returnKeyType="next"
             />
             <Icon name="user" size={20} color="#888" style={styles.icon} />
           </View>
@@ -78,6 +82,8 @@ export default function LoginScreen() {
               secureTextEntry={!mostrarSenha}
               style={styles.input}
               placeholderTextColor="#888"
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
             />
             <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
               <Icon
@@ -105,16 +111,13 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#61DE25',
-  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
+    paddingBottom: 100, // espaço extra pro botão aparecer
   },
   logo: {
     width: 150,

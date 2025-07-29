@@ -32,21 +32,32 @@ export interface Ocorrencia {
 
 export interface AuditoriaItem {
   auditoria_id: number;
-  conclusao: string;
-  data_hora_inicio: string;
-  data_hora_fim: string;
-  status: string;
+  conclusao?: string | null;
+  data_hora_inicio?: string | null;
+  data_hora_fim?: string | null; // ou data_hora_conclusao, dependendo da sua API
+  status: 'pendente' | 'concluida' | 'em andamento';
   usuario: {
+    usuario_id: number;
     responsavel: string;
+    usuario: string;
+    senha: string;
+    nivel: number;
+    cpf: string;
+    ativo: boolean;
   };
   localizacao: {
+    localizacao_id: number;
+    status: string;
     nome: string;
+    altura: string;
+    largura: string;
+    comprimento: string;
     ean: string;
   };
-  ocorrencias: Ocorrencia[];
+  ocorrencias?: Ocorrencia[];
 }
 
-export type StatusAuditoria = 'pendente' | 'concluido' | 'em andamento';
+export type StatusAuditoria = 'pendente' | 'concluida' | 'em andamento';
 
 export async function buscarAuditoria(params?: {
   search?: string;
@@ -64,9 +75,14 @@ export async function buscarAuditoria(params?: {
     queryParams.offset = String(params?.offset ?? 0);
     queryParams.limit = String(params?.limit ?? 50);
 
-    if (params?.status === 'pendente' || params?.status === 'concluido') {
+    if (
+      params?.status === 'pendente' ||
+      params?.status === 'concluida' ||
+      params?.status === 'em andamento'
+    ) {
       queryParams.status = params.status;
     }
+
 
     const response = await axios.get(`${BASE_URL}/auditoria`, {
       params: queryParams,
