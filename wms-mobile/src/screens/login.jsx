@@ -11,6 +11,8 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -26,12 +28,18 @@ export default function LoginScreen() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+
     const show = Keyboard.addListener('keyboardDidShow', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(true);
     });
+
     const hide = Keyboard.addListener('keyboardDidHide', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(false);
-      // força scroll para o topo ao fechar o teclado
       setTimeout(() => {
         scrollRef.current?.scrollTo({ y: 0, animated: true });
       }, 100);
@@ -65,7 +73,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} // 'padding' evita espaços brancos no Android
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -80,10 +88,7 @@ export default function LoginScreen() {
         >
           <Image
             source={require('../../assets/images/logo01.png')}
-            style={[
-              styles.logo,
-              tecladoAtivo && styles.logoPequena,
-            ]}
+            style={[styles.logo, tecladoAtivo && styles.logoPequena]}
           />
           <Text style={styles.brand}>WMS</Text>
           <Text style={styles.welcome}>Bem Vindo!</Text>
@@ -155,7 +160,6 @@ const styles = StyleSheet.create({
   scrollComTeclado: {
     justifyContent: 'flex-start',
     paddingTop: 60,
-    paddingBottom: 10, // reduzido para não gerar "buraco"
   },
   logo: {
     width: 150,
