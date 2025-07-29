@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-  KeyboardEvent,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -24,13 +23,12 @@ export default function LoginScreen() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [tecladoAtivo, setTecladoAtivo] = useState(false);
 
-  // Detectar teclado
   useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => setTecladoAtivo(true));
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => setTecladoAtivo(false));
+    const show = Keyboard.addListener('keyboardDidShow', () => setTecladoAtivo(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setTecladoAtivo(false));
     return () => {
-      showSub.remove();
-      hideSub.remove();
+      show.remove();
+      hide.remove();
     };
   }, []);
 
@@ -57,11 +55,14 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 40}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -132,11 +133,17 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
     paddingHorizontal: 20,
-    paddingBottom: 100,
+  },
+  scrollSemTeclado: {
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  scrollComTeclado: {
+    justifyContent: 'flex-start',
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   logo: {
     width: 150,
@@ -150,7 +157,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 6,
-    transition: 'all 0.3s ease-in-out',
   },
   logoPequena: {
     width: 90,
