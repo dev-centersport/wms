@@ -47,7 +47,7 @@ async function bootstrap() {
 
       // Verifica se é localhost ou IP da rede local
       if (
-        origin === 'http://localhost:3000' ||
+        origin === 'http://151.243.0.78:3000' ||
         // origin === 'https://localhost:3000' ||
         localNetworkRegex.test(origin)
       ) {
