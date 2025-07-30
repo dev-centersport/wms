@@ -137,12 +137,14 @@ export async function registrarConferenciaAuditoria(
 
 export const login = async (usuario: string, senha: string) => {
   try {
+
     const response = await axios.post(`${BASE_URL}/auth/login`, {
       usuario,
       senha,
     }, {
       withCredentials: true
     });
+
 
     return { status: response.status, message: response.data.message };
   } catch (error: any) {
