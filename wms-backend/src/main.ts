@@ -30,7 +30,33 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TimezoneInterceptor());
 
   // Configuração básica do CORS (permite todas as origens)
-  app.enableCors();
+  app.enableCors({
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: string | boolean) => void,
+    ) => {
+      // Permite requisições sem origin (como mobile apps ou curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Expressão regular para verificar IPs da rede local (192.168.x.x)
+      const localNetworkRegex =
+        /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/;
+
+      // Verifica se é localhost ou IP da rede local
+      if (
+        origin === 'http://151.243.0.78:3000' ||
+        // origin === 'https://localhost:3000' ||
+        localNetworkRegex.test(origin)
+      ) {
+        callback(null, origin);
+      } else {
+        callback(new Error('Not allowed by CORS'), false);
+      }
+    },
+    credentials: true,
+  });
 
   // Habilitando o Cors
   // app.enableCors({
