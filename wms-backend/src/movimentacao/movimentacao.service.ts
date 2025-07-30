@@ -465,6 +465,7 @@ export class MovimentacaoService {
       );
 
     localizacao.status = StatusPrateleira.ABERTA;
+    await this.localizacaoRepository.save(localizacao);
     return `Localização ${localizacao.nome} foi aberta`;
   }
 
@@ -482,6 +483,7 @@ export class MovimentacaoService {
       );
 
     localizacao.status = StatusPrateleira.ABERTA;
+    await this.localizacaoRepository.save(localizacao);
     return `Localização ${localizacao.nome} foi fechada com sucesso`;
   }
 

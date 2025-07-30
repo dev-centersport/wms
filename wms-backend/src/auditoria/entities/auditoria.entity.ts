@@ -23,8 +23,8 @@ export class Auditoria {
   @PrimaryGeneratedColumn()
   auditoria_id: number;
 
-  @Column({ type: 'text' })
-  conclusao: string;
+  @Column({ type: 'text', nullable: true })
+  conclusao?: string;
 
   @Column({ type: 'timestamp', nullable: true })
   data_hora_inicio?: Date;
@@ -43,13 +43,12 @@ export class Auditoria {
   @JoinColumn()
   usuario: Usuario;
 
-  @ManyToOne(() => Ocorrencia, (o) => o.auditorias)
-  @JoinColumn()
-  ocorrencia: Ocorrencia;
-
   @ManyToOne(() => Localizacao, (loc) => loc.auditorias)
   @JoinColumn()
   localizacao: Localizacao;
+
+  @OneToMany(() => Ocorrencia, (o) => o.auditoria)
+  ocorrencias: Ocorrencia[];
 
   @OneToMany(() => ItemAuditoria, (ia) => ia.auditoria)
   itens_auditoria: ItemAuditoria[];

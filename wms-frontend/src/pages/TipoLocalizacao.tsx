@@ -89,8 +89,8 @@ const TipoLocalizacaoPage: React.FC = () => {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox"><Checkbox disabled /></TableCell>
-              <TableCell>Nome</TableCell>
+              {/* <TableCell padding="checkbox"><Checkbox disabled /></TableCell> */}
+              <TableCell align='center'>Nome</TableCell>
               <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
@@ -98,8 +98,7 @@ const TipoLocalizacaoPage: React.FC = () => {
             {tiposPaginados.length > 0 ? (
               tiposPaginados.map((tipo) => (
                 <TableRow key={tipo.tipo_localizacao_id}>
-                  <TableCell padding="checkbox"><Checkbox /></TableCell>
-                  <TableCell>{tipo.tipo}</TableCell>
+                  <TableCell align='center'>{tipo.tipo}</TableCell>
                   <TableCell align="center">
                     <IconButton onClick={() => navigate(`/EditarTipoLocalizacao/${tipo.tipo_localizacao_id}/editar`)}>
                       <EditIcon />

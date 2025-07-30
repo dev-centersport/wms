@@ -9,7 +9,6 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -48,8 +47,9 @@ export class Ocorrencia {
   @JoinColumn()
   usuario: Usuario;
 
-  @OneToMany(() => Auditoria, (a) => a.ocorrencia)
-  auditorias: Auditoria[];
+  @ManyToOne(() => Auditoria, (a) => a.ocorrencias)
+  @JoinColumn()
+  auditoria: Auditoria;
 
   @BeforeInsert()
   @BeforeUpdate()

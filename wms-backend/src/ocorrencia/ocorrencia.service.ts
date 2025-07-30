@@ -33,62 +33,181 @@ export class OcorrenciaService {
 
   async listarPorLocalizacao(): Promise<
     {
+      ocorrencia_id: number | null;
       armazem: string | null;
       localizacao: string | null;
       quantidade: number;
-      nome_produto: string;
-      sku: string;
-      ativo: boolean;
-      ocorrencias: Ocorrencia[];
+      produto: {
+        produto_id: number;
+        descricao: string;
+        ean: string;
+        sku: string;
+        qtd_sistema: number;
+        qtd_esperada: number;
+        diferenca: number;
+        ativo: boolean;
+        qtd_ocorrencias: number;
+      }[];
     }[]
   > {
+    // Busca todas as ocorrências com as relações necessárias
     const ocorrencias = await this.ocorrenciaRepository.find({
-      relations: ['produto_estoque.produto', 'usuario', 'localizacao.armazem'],
+      relations: ['produto_estoque.produto', 'localizacao.armazem'],
     });
 
     // Agrupa as ocorrências por localização
     const agrupamento = ocorrencias.reduce(
       (acc, ocorrencia) => {
-        // Verifica se a ocorrência tem localizações (considerando que é um array)
         const primeiraLocalizacao = ocorrencia.localizacao;
-        const armazemNome = primeiraLocalizacao?.armazem.nome;
-        const localizacaoNome = primeiraLocalizacao?.nome || null;
-        const nomeProduto = ocorrencia.produto_estoque.produto.descricao;
-        const skuProduto = ocorrencia.produto_estoque.produto.sku;
+        if (!primeiraLocalizacao) return acc;
+
+        const armazemNome = primeiraLocalizacao.armazem?.nome || null;
+        const localizacaoNome = primeiraLocalizacao.nome || null;
+        const localizacaoId = primeiraLocalizacao.localizacao_id || null;
 
         // Encontra ou cria o grupo para esta localização
-        let grupo = acc.find((g) => g.localizacao === localizacaoNome);
+        let grupo = acc.find(
+          (g) => g.localizacao === localizacaoNome && g.armazem === armazemNome,
+        );
+
         if (!grupo) {
           grupo = {
+            ocorrencia_id: ocorrencia.ocorrencia_id,
             armazem: armazemNome,
+            localizacao_id: localizacaoId,
             localizacao: localizacaoNome,
             quantidade: 0,
-            nome_produto: nomeProduto,
-            sku: skuProduto,
-            ativo: ocorrencia.ativo,
-            ocorrencias: [],
+            produto: [],
           };
           acc.push(grupo);
         }
 
-        // Adiciona a ocorrência ao grupo
-        grupo.quantidade++;
-        grupo.ocorrencias.push(ocorrencia);
+        // Adiciona o produto ao grupo se existir
+        if (ocorrencia.produto_estoque?.produto) {
+          if (ocorrencia.ativo !== false) {
+            const produto = ocorrencia.produto_estoque.produto;
+
+            // Verifica se o produto já está na lista
+            const produtoExistente = grupo.produto.find(
+              (p) => p.produto_id === produto.produto_id,
+            );
+
+            if (!produtoExistente) {
+              grupo.produto.push({
+                produto_id: produto.produto_id,
+                descricao: produto.descricao,
+                ean: produto.ean || 'S/EAN',
+                sku: produto.sku,
+                qtd_sistema: ocorrencia.quantidade_sistemas,
+                qtd_esperada: ocorrencia.quantidade_esperada,
+                diferenca: ocorrencia.diferenca_quantidade,
+                ativo: ocorrencia.ativo,
+                qtd_ocorrencias: 1,
+              });
+            } else {
+              produtoExistente.qtd_ocorrencias++;
+            }
+
+            grupo.quantidade++;
+          }
+        }
 
         return acc;
       },
       [] as {
+        ocorrencia_id: number | null;
         armazem: string | null;
+        localizacao_id: number | null;
         localizacao: string | null;
         quantidade: number;
-        nome_produto: string;
-        sku: string;
-        ativo: boolean;
-        ocorrencias: Ocorrencia[];
+        produto: {
+          produto_id: number;
+          descricao: string;
+          ean: string;
+          sku: string;
+          qtd_sistema: number;
+          qtd_esperada: number;
+          diferenca: number;
+          ativo: boolean;
+          qtd_ocorrencias: number;
+        }[];
       }[],
     );
 
     return agrupamento;
+  }
+
+  async ocorrenciasDaLocalizacao(localizacao_id: number): Promise<
+    {
+      armazem: string | null;
+      localizacao: string | null;
+      quantidade: number;
+      produto: {
+        produto_id: number;
+        descricao: string;
+        sku: string;
+        qtd_esperada: number;
+        qtd_ocorrencias: number;
+      }[];
+    }[]
+  > {
+    const localizacao = await this.localizacaoRepository.findOne({
+      where: { localizacao_id: localizacao_id },
+    });
+
+    if (!localizacao)
+      throw new NotFoundException(
+        `Localização com ID ${localizacao_id} não encontrada`,
+      );
+
+    const ocorrencias = await this.ocorrenciaRepository.find({
+      where: { localizacao: localizacao },
+      relations: ['produto_estoque.produto', 'localizacao.armazem'],
+    });
+
+    if (!ocorrencias || ocorrencias.length === 0)
+      throw new NotFoundException('Nenhuma ocorrência foi encontrada');
+
+    const produtosAgrupados = ocorrencias.reduce(
+      (acc, ocorrencia) => {
+        const produtoId = ocorrencia.produto_estoque.produto.produto_id;
+
+        if (!acc[produtoId]) {
+          acc[produtoId] = {
+            produto_id: produtoId,
+            descricao: ocorrencia.produto_estoque.produto.descricao,
+            sku: ocorrencia.produto_estoque.produto.sku,
+            qtd_esperada: ocorrencia.quantidade_esperada,
+            qtd_ocorrencias: 0,
+          };
+        }
+
+        acc[produtoId].qtd_ocorrencias += 1;
+
+        return acc;
+      },
+      {} as Record<
+        number,
+        {
+          produto_id: number;
+          descricao: string;
+          sku: string;
+          qtd_esperada: number;
+          qtd_ocorrencias: number;
+        }
+      >,
+    );
+
+    const produtosArray = Object.values(produtosAgrupados);
+
+    return [
+      {
+        armazem: ocorrencias[0].localizacao.armazem?.nome || null,
+        localizacao: ocorrencias[0].localizacao?.nome || null,
+        quantidade: ocorrencias.length,
+        produto: produtosArray,
+      },
+    ];
   }
 
   async findOne(ocorrencia_id: number): Promise<Ocorrencia> {

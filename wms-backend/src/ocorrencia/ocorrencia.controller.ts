@@ -35,6 +35,16 @@ export class OcorrenciaController {
     return this.ocorrenciaService.findOne(+id);
   }
 
+  @Get(':id/ocorrencias-da-localizacao')
+  ocorrenciasDaLocalizacao(@Param('id') id: string) {
+    return this.ocorrenciaService.ocorrenciasDaLocalizacao(+id);
+  }
+
+  // @Get(':id/listar-produtos')
+  // listarProdutosDaOcorrencia(@Param('id') id: string) {
+  //   return this.ocorrenciaService.listarProdutosDaOcorrencia(+id);
+  // }
+
   @Patch(':id')
   update(
     @Param('id') id: string,

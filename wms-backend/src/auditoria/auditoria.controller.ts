@@ -13,6 +13,7 @@ import { AuditoriaService } from './auditoria.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 import { StatusAuditoria } from './entities/auditoria.entity';
+import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
 
 @Controller('auditoria')
 export class AuditoriaController {
@@ -24,36 +25,39 @@ export class AuditoriaController {
   }
 
   @Get()
-  findAll(
+  async search(
+    @Query('search') search?: string,
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
     @Query('status') status?: StatusAuditoria,
-    @Query('usuario_id') usuario_id?: number,
-    @Query('ocorrencia_id') ocorrencia_id?: number,
   ) {
-    if (status) {
-      return this.auditoriaService.findByStatus(status);
-    }
-    if (usuario_id) {
-      return this.auditoriaService.findByUsuario(+usuario_id);
-    }
-    if (ocorrencia_id) {
-      return this.auditoriaService.findByOcorrencia(+ocorrencia_id);
-    }
-    return this.auditoriaService.findAll();
+    const results = await this.auditoriaService.search(
+      search,
+      Number(offset) || 0,
+      Number(limit) || 50,
+      status,
+    );
+    return results;
   }
 
-  @Get('em-andamento')
-  findAuditoriasEmAndamento() {
-    return this.auditoriaService.findAuditoriasEmAndamento();
-  }
+  // @Get('em-andamento')
+  // findAuditoriasEmAndamento() {
+  //   return this.auditoriaService.findAuditoriasEmAndamento();
+  // }
 
-  @Get('concluidas')
-  findAuditoriasConcluidas() {
-    return this.auditoriaService.findAuditoriasConcluidas();
-  }
+  // @Get('concluidas')
+  // findAuditoriasConcluidas() {
+  //   return this.auditoriaService.findAuditoriasConcluidas();
+  // }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.findOne(id);
+  }
+
+  @Get(':id/listar-ocorrencias')
+  ocorrenciasDaAuditoria(@Param('id', ParseIntPipe) id: number) {
+    return this.auditoriaService.ocorrenciasDaAuditoria(id);
   }
 
   @Patch(':id')
@@ -70,14 +74,14 @@ export class AuditoriaController {
   }
 
   @Post(':id/iniciar')
-  iniciar(@Param('id', ParseIntPipe) id: number) {
+  iniciarAuditoria(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.iniciarAuditoria(id);
   }
 
   @Post(':id/concluir')
-  concluir(
+  concluirAuditoria(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { conclusao: string; itens: any[] },
+    @Body() body: { conclusao: string; itens: CreateItemAuditoriaDto[] },
   ) {
     return this.auditoriaService.concluirAuditoria(
       id,
@@ -87,19 +91,19 @@ export class AuditoriaController {
   }
 
   @Post(':id/cancelar')
-  cancelar(@Param('id', ParseIntPipe) id: number) {
+  cancelarAuditoria(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.cancelarAuditoria(id);
   }
 
-  @Get('usuario/:usuario_id')
-  findByUsuario(@Param('usuario_id', ParseIntPipe) usuario_id: number) {
-    return this.auditoriaService.findByUsuario(usuario_id);
-  }
+  // @Get('usuario/:usuario_id')
+  // findByUsuario(@Param('usuario_id', ParseIntPipe) usuario_id: number) {
+  //   return this.auditoriaService.findByUsuario(usuario_id);
+  // }
 
-  @Get('ocorrencia/:ocorrencia_id')
-  findByOcorrencia(
-    @Param('ocorrencia_id', ParseIntPipe) ocorrencia_id: number,
-  ) {
-    return this.auditoriaService.findByOcorrencia(ocorrencia_id);
-  }
+  // @Get('ocorrencia/:ocorrencia_id')
+  // findByOcorrencia(
+  //   @Param('ocorrencia_id', ParseIntPipe) ocorrencia_id: number,
+  // ) {
+  //   return this.auditoriaService.findByOcorrencia(ocorrencia_id);
+  // }
 }

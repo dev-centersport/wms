@@ -22,11 +22,6 @@ export class LocalizacaoController {
     return this.localizacaoService.create(createLocalizacaoDto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.localizacaoService.findAll();
-  // }
-
   @Get()
   async search(
     @Query('search') search?: string,
