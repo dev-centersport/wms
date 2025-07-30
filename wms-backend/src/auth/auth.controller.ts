@@ -1,4 +1,5 @@
-import { Body, Controller, Post, Session } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Body, Controller, Get, Post, Req, Session } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -23,7 +24,24 @@ export class AuthController {
 
   @Post('logout')
   logout(@Session() session: Record<string, any>) {
-    session.usuario_id = null;
-    return { message: 'Logout realizado com sucesso!' };
+    return new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      session.destroy((err: any) => {
+        if (err) {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+          reject({ message: 'Erro ao fazer logout!' });
+        } else {
+          resolve({ message: 'Logout realizado com sucesso!' });
+        }
+      });
+    });
+  }
+
+  @Get('all')
+  getAllSessions(@Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+    return Object.entries(req.sessionStore.sessions || {}).map(
+      ([sid, val]) => ({ sid, data: JSON.parse(val as string) }),
+    );
   }
 }
