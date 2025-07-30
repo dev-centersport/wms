@@ -1,20 +1,21 @@
-// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { TimezoneInterceptor } from './interceptors/timezone.interceptor';
 import { Request, Response } from 'express';
 import session from 'express-session';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.use(cookieParser());
   app.use(
     session({
       secret: 'uma_senha_secreta', // Troque em produção!
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 3600000 }, // 1h
+      cookie: { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: false }, // 1 dia
     }),
   );
 
@@ -30,7 +31,33 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TimezoneInterceptor());
 
   // Configuração básica do CORS (permite todas as origens)
-  app.enableCors();
+  app.enableCors({
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      // Permite requisições sem origin (como mobile apps ou curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Expressão regular para verificar IPs da rede local (192.168.x.x)
+      const localNetworkRegex =
+        /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/;
+
+      // Verifica se é localhost ou IP da rede local
+      if (
+        origin === 'http://localhost:3000' ||
+        // origin === 'https://localhost:3000' ||
+        localNetworkRegex.test(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  });
 
   // Habilitando o Cors
   // app.enableCors({
