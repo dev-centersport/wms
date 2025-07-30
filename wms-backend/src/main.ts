@@ -4,19 +4,9 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { TimezoneInterceptor } from './interceptors/timezone.interceptor';
 import { Request, Response } from 'express';
-import session from 'express-session';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  app.use(
-    session({
-      secret: 'uma_senha_secreta', // Troque em produção!
-      resave: false,
-      saveUninitialized: false,
-      cookie: { maxAge: 3600000 }, // 1h
-    }),
-  );
 
   // Configuração global do ValidationPipe
   app.useGlobalPipes(
