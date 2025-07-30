@@ -9,7 +9,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -24,16 +24,17 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const menuItems = [
   // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
-  { label: 'Armazém',             icon: <HomeIcon />,          path: '/armazem' },
-  { label: 'Localização',         icon: <RoomIcon />,          path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <AssignmentIcon />,         path: '/tipo-localizacao' },
-  { label: 'Produto',             icon: <ViewInArIcon />,     path: '/produto' },
-  { label: 'Consulta',            icon: <SearchIcon />,        path: '/consulta' },
-  // { label: 'Movimentação',        icon: <TrolleyIcon />,    path: '/movimentacao' },
-  // { label: 'Separação',          icon: <LocalShippingIcon />, path: '/separacao' },
-  // { label: 'Ocorrência',          icon: <ReportProblemIcon />, path: '/ocorrencias' },
-  // { label: 'Auditoria',           icon: <ThumbUpIcon />,       path: '/auditoria' },
-  // { label: 'Relatorio',           icon: <AssignmentIcon />,       path: '/Relatorio' },
+  { label: 'Armazém', icon: <HomeIcon />, path: '/armazem' },
+  { label: 'Localização', icon: <RoomIcon />, path: '/localizacao' },
+  { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
+  { label: 'Produto', icon: <ViewInArIcon />, path: '/produto' },
+  { label: 'Consulta', icon: <SearchIcon />, path: '/consulta' },
+  // { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
+  // { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
+  // { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  // { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
+  // { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
+  // { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' }
 ];
 
 interface SidebarProps {
@@ -42,7 +43,7 @@ interface SidebarProps {
 
 // NÃO precisa mais da interface SidebarProps ou do children
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
-// const Sidebar = () => {
+  // const Sidebar = () => {
   const location = useLocation();
 
   return (

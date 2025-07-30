@@ -248,7 +248,11 @@ export default function Movimentacao() {
       const resposta = await enviarMovimentacao(payload);
 
       console.log('✅ Movimentação salva com sucesso:', resposta);
-      Alert.alert('Movimentação salva com sucesso');
+      Alert.alert(
+        '✅ Sucesso',
+        `A movimentação de ${tipo === 'entrada' ? 'entrada' : 'saída'} foi registrada corretamente.`,
+        [{ text: 'OK' }]
+      );
       limparTudo();
 
     } catch (err) {

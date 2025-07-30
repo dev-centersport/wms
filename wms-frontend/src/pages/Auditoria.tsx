@@ -22,6 +22,9 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  Menu,
+  MenuItem,
+  TableSortLabel
 } from '@mui/material';
 import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
 import Layout from '../components/Layout';
@@ -39,7 +42,7 @@ export interface AuditoriaItem {
   conclusao: string;
   data_hora_inicio: string;
   data_hora_fim: string;
-  status: string;
+  status: 'pendente' | 'concluida' | 'em andamento';
   usuario: {
     responsavel: string;
   };
@@ -57,10 +60,15 @@ const ITEMS_PER_PAGE = 10;
 
 export default function Auditoria() {
   const [busca, setBusca] = useState('');
-  const [aba, setAba] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [aba, setAba] = useState<'todos' | 'pendente' | 'concluida'>('todos');
   const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const [filtroArmazem, setFiltroArmazem] = useState('');
+  const [appliedFiltroArmazem, setAppliedFiltroArmazem] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('');
+  const [appliedFiltroStatus, setAppliedFiltroStatus] = useState('');
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [ocorrenciasModal, setOcorrenciasModal] = useState<{
     open: boolean;
     ocorrencias: Ocorrencia[];
@@ -70,37 +78,62 @@ export default function Auditoria() {
     ocorrencias: [],
     localizacao: '',
   });
+  const [orderBy, setOrderBy] = useState<string>('data_hora_inicio');
+  const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
+
+  // E a função:
+  const handleSort = (property: string) => {
+    const isAsc = orderBy === property && orderDirection === 'asc';
+    setOrderDirection(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
 
   useEffect(() => {
     async function carregar() {
       try {
-        const dados = await buscarAuditoria();
+        const dados = await buscarAuditoria({
+          search: busca,
+          offset: (paginaAtual - 1) * ITEMS_PER_PAGE,
+          limit: ITEMS_PER_PAGE,
+          status: aba === 'pendente' || aba === 'concluida' ? aba : undefined,
+        });
 
-        const auditoriasComArmazem = await Promise.all(dados.map(async (aud) => {
-          let nomeArmazem = '-';
+        console.log('🔍 Resposta buscarAuditoria:', dados); // Debug
 
-          if (aud.localizacao.ean) {
-            const armazemEncontrado = await buscarArmazemPorEAN(aud.localizacao.ean);
-            nomeArmazem = armazemEncontrado?.nome || '-';
-          }
+        // Garante que será um array
+        const lista: AuditoriaItem[] = Array.isArray(dados)
+          ? dados
+          : Array.isArray(dados.results)
+            ? dados.results
+            : [];
 
-          return {
-            ...aud,
-            data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
-            data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
-            localizacao: {
-              nome: aud.localizacao.nome || '-',
-              ean: aud.localizacao.ean || '',
-            },
-            armazem: {
-              nome: nomeArmazem,
-            },
-            ocorrencias: aud.ocorrencias?.map(oc => ({
-              ...oc,
-              dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
-            })) || [],
-          };
-        }));
+        const auditoriasComArmazem = await Promise.all(
+          lista.map(async (aud: AuditoriaItem) => {
+            let nomeArmazem = '-';
+
+            if (aud.localizacao.ean) {
+              const armazemEncontrado = await buscarArmazemPorEAN(aud.localizacao.ean);
+              nomeArmazem = armazemEncontrado?.nome || '-';
+            }
+
+            return {
+              ...aud,
+              data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
+              data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
+              localizacao: {
+                nome: aud.localizacao.nome || '-',
+                ean: aud.localizacao.ean || '',
+              },
+              armazem: {
+                nome: nomeArmazem,
+              },
+              ocorrencias: aud.ocorrencias?.map((oc: Ocorrencia) => ({
+                ...oc,
+                dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
+              })) || [],
+            };
+          })
+        );
 
         setAuditorias(auditoriasComArmazem);
         setSelecionados([]);
@@ -111,8 +144,26 @@ export default function Auditoria() {
     }
 
     carregar();
-  }, [aba]);
+  }, [aba, busca, paginaAtual]); // <- inclua dependências relevantes
 
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleAplicarFiltro = () => {
+    setAppliedFiltroArmazem(filtroArmazem);
+    setAppliedFiltroStatus(filtroStatus);
+    setPaginaAtual(1);
+    handleMenuClose();
+  };
+
+  const handleLimparFiltro = () => {
+    setFiltroArmazem('');
+    setFiltroStatus('');
+    setAppliedFiltroArmazem('');
+    setAppliedFiltroStatus('');
+    setPaginaAtual(1);
+    handleMenuClose();
+  };
 
   function formatarData(dataString: string | Date) {
     const data = new Date(dataString);
@@ -138,14 +189,15 @@ export default function Auditoria() {
   const filtrado = useMemo(() => {
     const termo = busca.toLowerCase();
     return auditorias.filter(aud => {
-      const statusMatch = aba === 'todos' || aud.status === aba;
+      const statusMatch = !appliedFiltroStatus || aud.status === appliedFiltroStatus;
+      const armazemMatch = !appliedFiltroArmazem || aud.armazem?.nome === appliedFiltroArmazem;
       const buscaMatch =
         aud.usuario.responsavel.toLowerCase().includes(termo) ||
         aud.auditoria_id.toString().includes(termo);
 
-      return statusMatch && buscaMatch;
+      return statusMatch && armazemMatch && buscaMatch;
     });
-  }, [auditorias, busca, aba]);
+  }, [auditorias, busca, appliedFiltroStatus, appliedFiltroArmazem]);
 
   const totalPaginas = Math.ceil(filtrado.length / ITEMS_PER_PAGE) || 1;
   const exibidos = filtrado.slice(
@@ -183,7 +235,48 @@ export default function Auditoria() {
           sx={{ width: 400 }}
         />
 
-        <Button variant="outlined">Filtro</Button>
+        <Button
+          variant="outlined"
+          onClick={handleMenuOpen}
+          sx={{
+            minWidth: 110,
+            backgroundColor: appliedFiltroArmazem || appliedFiltroStatus ? '#f0f0f0' : 'transparent',
+            borderColor: appliedFiltroArmazem || appliedFiltroStatus ? '#999' : undefined,
+            color: appliedFiltroArmazem || appliedFiltroStatus ? '#333' : undefined,
+            fontWeight: appliedFiltroArmazem || appliedFiltroStatus ? 'bold' : 'normal',
+          }}
+        >
+          Filtro
+        </Button>
+
+        {appliedFiltroArmazem && (
+          <Chip
+            label={`Armazém: ${appliedFiltroArmazem}`}
+            sx={{
+              backgroundColor: '#61de27',
+              color: '#000',
+              fontWeight: 'bold',
+              height: 32,
+            }}
+          />
+        )}
+        {appliedFiltroStatus && (
+          <Chip
+            label={`Status: ${appliedFiltroStatus === 'concluida' ? 'Concluída' : 'Pendente'}`}
+            sx={{
+              backgroundColor: appliedFiltroStatus === 'concluida' ? '#4CAF50' : '#FFEB3B',
+              color: appliedFiltroStatus === 'concluida' ? '#fff' : '#000',
+              fontWeight: 'bold',
+              height: 32,
+            }}
+          />
+        )}
+
+        {(appliedFiltroArmazem || appliedFiltroStatus) && (
+          <Button variant="outlined" onClick={handleLimparFiltro}>
+            Limpar Filtro
+          </Button>
+        )}
 
         <Button
           variant="contained"
@@ -194,46 +287,109 @@ export default function Auditoria() {
         </Button>
       </Box>
 
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <Box sx={{ p: 2, width: 260, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            select
+            label="Status"
+            value={filtroStatus}
+            onChange={(e) => setFiltroStatus(e.target.value)}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="pendente">Pendente</MenuItem>
+            <MenuItem value="concluida">Concluído</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="Armazém"
+            value={filtroArmazem}
+            onChange={(e) => setFiltroArmazem(e.target.value)}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {Array.from(new Set(auditorias.map((a) => a.armazem?.nome).filter(Boolean))).sort().map((a) => (
+              <MenuItem key={a} value={a}>{a}</MenuItem>
+            ))}
+          </TextField>
+
+          <Button variant="outlined" onClick={handleAplicarFiltro}>
+            Aplicar
+          </Button>
+        </Box>
+      </Menu>
+
+
       <Tabs value={aba} onChange={(_, v) => setAba(v)} sx={{ mb: 2 }}>
         <Tab label="Todos" value="todos" />
         <Tab label="Pendentes" value="pendente" />
-        <Tab label="Concluídos" value="concluido" />
+        <Tab label="Concluídos" value="concluida" />
       </Tabs>
 
       <TableContainer component={Paper}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  checked={selecionados.length === exibidos.length && exibidos.length > 0}
-                  indeterminate={selecionados.length > 0 && selecionados.length < exibidos.length}
-                  onChange={(e) =>
-                    setSelecionados(e.target.checked ? exibidos.map((a) => a.auditoria_id) : [])
-                  }
-                />
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'localizacao'}
+                  direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('localizacao')}
+                >
+                  Localização
+                </TableSortLabel>
               </TableCell>
-              <TableCell>Localização</TableCell>
-              <TableCell>Criador</TableCell>
-              <TableCell align='center'>Início</TableCell>
-              <TableCell align='center'>Término</TableCell>
-              <TableCell align='center'>Ocorrências</TableCell>
-              <TableCell align='center'>Status</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'usuario'}
+                  direction={orderBy === 'usuario' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('usuario')}
+                >
+                  Criador
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'data_hora_inicio'}
+                  direction={orderBy === 'data_hora_inicio' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('data_hora_inicio')}
+                >
+                  Início
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'data_hora_fim'}
+                  direction={orderBy === 'data_hora_fim' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('data_hora_fim')}
+                >
+                  Término
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'ocorrencias'}
+                  direction={orderBy === 'ocorrencias' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('ocorrencias')}
+                >
+                  Ocorrências
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align='center'>
+                <TableSortLabel
+                  active={orderBy === 'status'}
+                  direction={orderBy === 'status' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('status')}
+                >
+                  Status
+                </TableSortLabel>
+              </TableCell>
               <TableCell align='center'>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {exibidos.map((item) => (
               <TableRow key={item.auditoria_id}>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selecionados.includes(item.auditoria_id)}
-                    onChange={() => toggleSelecionado(item.auditoria_id)}
-                  />
-                </TableCell>
-                <TableCell>
-                  {item.localizacao.nome} - {item.armazem?.nome || '-'}
-                </TableCell>
+                <TableCell>{item.localizacao.nome} - {item.armazem?.nome || '-'}</TableCell>
                 <TableCell>{item.usuario.responsavel}</TableCell>
                 <TableCell align='center'>{item.data_hora_inicio}</TableCell>
                 <TableCell align='center'>{item.data_hora_fim}</TableCell>
@@ -248,11 +404,11 @@ export default function Auditoria() {
                 </TableCell>
                 <TableCell align='center'>
                   <Chip
-                    label={item.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                    label={item.status === 'concluida' ? 'Concluído' : 'Pendente'}
                     size="small"
                     sx={{
-                      backgroundColor: item.status === 'concluido' ? '#4CAF50' : '#FFEB3B',
-                      color: item.status === 'concluido' ? '#fff' : '#000',
+                      backgroundColor: item.status === 'concluida' ? '#4CAF50' : '#FFEB3B',
+                      color: item.status === 'concluida' ? '#fff' : '#000',
                       fontWeight: 600,
                     }}
                   />
@@ -265,9 +421,7 @@ export default function Auditoria() {
                       disabled={false}
                       sx={{
                         color: 'error.main',
-                        '&:hover': {
-                          backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                        },
+                        '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
                       }}
                     >
                       <DeleteIcon fontSize="small" />
@@ -329,35 +483,6 @@ export default function Auditoria() {
           <Button onClick={fecharModalOcorrencias}>Fechar</Button>
         </DialogActions>
       </Dialog>
-
-      <Box display="flex" mt={3} gap={2}>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<CheckCircle />}
-          disabled={selecionados.length === 0}
-        >
-          Conferir Selecionado
-        </Button>
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Cancel />}
-          onClick={() => setSelecionados([])}
-        >
-          Cancelar
-        </Button>
-      </Box>
     </Layout>
   );
 }
-
-// async function buscarAuditorias(): Promise<AuditoriaItem[]> {
-//   try {
-//     const res = await axios.get('http://151.243.0.78:3001/auditoria');
-//     return res.data;
-//   } catch (err) {
-//     console.error('Erro ao buscar auditorias →', err);
-//     throw new Error('Falha ao carregar as auditorias do servidor.');
-//   }
-// }

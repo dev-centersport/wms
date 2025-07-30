@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -21,6 +23,33 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState('');
   const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [tecladoAtivo, setTecladoAtivo] = useState(false);
+
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+
+    const show = Keyboard.addListener('keyboardDidShow', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setTecladoAtivo(true);
+    });
+
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setTecladoAtivo(false);
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
+    });
+
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -44,17 +73,22 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} // 'padding' evita espaços brancos no Android
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          ref={scrollRef}
+          contentContainerStyle={[
+            styles.scrollContent,
+            tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
+          ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <Image
             source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
+            style={[styles.logo, tecladoAtivo && styles.logoPequena]}
           />
           <Text style={styles.brand}>WMS</Text>
           <Text style={styles.welcome}>Bem Vindo!</Text>
@@ -67,6 +101,7 @@ export default function LoginScreen() {
               onChangeText={setUsuario}
               style={styles.input}
               placeholderTextColor="#888"
+              returnKeyType="next"
             />
             <Icon name="user" size={20} color="#888" style={styles.icon} />
           </View>
@@ -80,6 +115,8 @@ export default function LoginScreen() {
               secureTextEntry={!mostrarSenha}
               style={styles.input}
               placeholderTextColor="#888"
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
             />
             <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
               <Icon
@@ -113,10 +150,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
     paddingHorizontal: 20,
+  },
+  scrollSemTeclado: {
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  scrollComTeclado: {
+    justifyContent: 'flex-start',
+    paddingTop: 60,
   },
   logo: {
     width: 150,
@@ -130,6 +173,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 6,
+  },
+  logoPequena: {
+    width: 90,
+    height: 90,
   },
   brand: {
     fontSize: 36,

@@ -20,7 +20,7 @@ export default function Ocorrencia() {
   const [localizacao, setLocalizacao] = useState('');
   const [sku, setSku] = useState('');
   const [quantidade, setQuantidade] = useState('');
-  const [quantidadeBipada, setQuantidadeBipada] = useState('');
+  const [quantidadeEsperada, setQuantidadeEsperada] = useState('');
   const [nomeLocalizacao, setNomeLocalizacao] = useState('');
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
@@ -78,9 +78,9 @@ export default function Ocorrencia() {
     }
   };
 
-  const handleQuantidadeBipadaChange = (valor) => {
+  const handleQuantidadeEsperadaChange = (valor) => {
     const somenteNumeros = valor.replace(/[^0-9]/g, '');
-    setQuantidadeBipada(somenteNumeros);
+    setQuantidadeEsperada(somenteNumeros);
   };
 
   const handleSalvar = () => {
@@ -94,8 +94,8 @@ export default function Ocorrencia() {
       return;
     }
 
-    if (!quantidadeBipada || isNaN(quantidadeBipada) || Number(quantidadeBipada) <= 0) {
-      Alert.alert('Atenção', 'Informe uma quantidade bipada válida (número maior que 0).');
+    if (!quantidadeEsperada || isNaN(quantidadeEsperada) || Number(quantidadeEsperada) <= 0) {
+      Alert.alert('Atenção', 'Informe uma quantidade esperada válida (número maior que 0).');
       return;
     }
 
@@ -108,10 +108,14 @@ export default function Ocorrencia() {
         usuario_id: 1,
         localizacao_id: Number(localizacaoBloqueada ? (await buscarLocalizacaoPorEAN(localizacao)).localizacao_id : 0),
         produto_estoque_id: Number((await buscarProdutoEstoquePorLocalizacaoEAN(localizacao, sku)).produto_estoque_id),
-        quantidade_bipada: Number(quantidadeBipada),
+        quantidade_esperada: Number(quantidadeEsperada),
       };
       await criarOcorrencia(payload);
-      Alert.alert('Sucesso', 'Ocorrência registrada com sucesso!');
+      Alert.alert(
+        'Ocorrência criada',
+        'A ocorrência foi registrada com sucesso!.',
+        [{ text: 'OK' }]
+      );
       limparTudo();
     } catch (err) {
       Alert.alert('Erro', err.message || 'Erro ao registrar ocorrência.');
@@ -124,7 +128,7 @@ export default function Ocorrencia() {
     setLocalizacao('');
     setSku('');
     setQuantidade('');
-    setQuantidadeBipada('');
+    setQuantidadeEsperada('');
     setNomeLocalizacao('');
     setLocalizacaoBloqueada(false);
     setSkuBloqueado(true);
@@ -165,13 +169,13 @@ export default function Ocorrencia() {
         )}
 
         {produtoValidado && (
-        <QuantidadeDisplay
-          quantidade={quantidade}
-          quantidadeBipada={quantidadeBipada}
-          handleQuantidadeBipadaChange={handleQuantidadeBipadaChange}
-        />
+          <QuantidadeDisplay
+            quantidade={quantidade}
+            quantidadeEsperada={quantidadeEsperada}
+            handleQuantidadeEsperadaChange={handleQuantidadeEsperadaChange}
+          />
         )}
-        
+
         <BotoesAcoes onSalvar={handleSalvar} onCancelar={() => setMostrarCancelar(true)} />
       </ScrollView>
 
