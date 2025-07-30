@@ -42,6 +42,7 @@ const normalizar = (s: string) =>
 
 const Consulta: React.FC = () => {
   const [lista, setLista] = useState<ConsultaEstoque[]>([]);
+  const [inputBusca, setInputBusca] = useState('');
   const [busca, setBusca] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [orderBy, setOrderBy] = useState<keyof ConsultaEstoque>('descricao');
@@ -144,8 +145,13 @@ const Consulta: React.FC = () => {
           placeholder="Busca por nome, SKU, EAN ou localização"
           variant="outlined"
           size="small"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          value={inputBusca}
+          onChange={(e) => setInputBusca(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              setBusca(inputBusca); // atualiza a busca real
+            }
+          }}
           InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
           sx={{ maxWidth: 480, width: 380 }}
         />
