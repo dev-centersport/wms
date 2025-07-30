@@ -249,7 +249,7 @@ export class AuditoriaService {
   ): Promise<Auditoria> {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: id },
-      relations: ['ocorrencias'],
+      relations: ['ocorrencias', 'usuario'],
     });
 
     if (!auditoria)
@@ -341,6 +341,23 @@ export class AuditoriaService {
         if (quantidadeBanco !== quantidadeContada) {
           console.log(
             `Estoque divergente para Produto ID ${produtoId} na Localização ID ${localizacaoDto.localizacao_id}. Esperado: ${quantidadeBanco}, Recebido: ${quantidadeContada}`,
+          );
+
+          // Cria uma nova ocorrência para a divergência encontrada
+          const novaOcorrencia = this.ocorrenciaRepository.create({
+            quantidade_esperada: quantidadeContada,
+            quantidade_sistemas: quantidadeBanco,
+            diferenca_quantidade: quantidadeBanco - quantidadeContada,
+            produto_estoque: itemEstoque,
+            localizacao: localizacaoEncontrada,
+            usuario: auditoria.usuario,
+            auditoria: auditoria,
+            ativo: true,
+          });
+
+          await this.ocorrenciaRepository.save(novaOcorrencia);
+          console.log(
+            `Nova ocorrência criada para divergência no Produto ID ${produtoId} na Localização ID ${localizacaoDto.localizacao_id}`,
           );
         } else {
           console.log(

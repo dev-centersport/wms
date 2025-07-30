@@ -44,8 +44,8 @@ export class Auditoria {
   })
   status: StatusAuditoria;
 
-  @Column({ type: 'jsonb' })
-  localizacoes_proximas: LocalizacoesProximasDto[];
+  @Column({ type: 'jsonb', nullable: true })
+  localizacoes_proximas?: LocalizacoesProximasDto[];
 
   @ManyToOne(() => Usuario, (user) => user.auditorias)
   @JoinColumn()
