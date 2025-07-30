@@ -1,21 +1,20 @@
+// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { TimezoneInterceptor } from './interceptors/timezone.interceptor';
 import { Request, Response } from 'express';
 import session from 'express-session';
-import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.use(cookieParser());
   app.use(
     session({
       secret: 'uma_senha_secreta', // Troque em produção!
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: false }, // 1 dia
+      cookie: { maxAge: 3600000 }, // 1h
     }),
   );
 
