@@ -41,8 +41,7 @@ async function bootstrap() {
       }
 
       // Expressão regular para verificar IPs da rede local (192.168.x.x)
-      const localNetworkRegex =
-        /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/;
+      const localNetworkRegex = /^http?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/;
 
       // Verifica se é localhost ou IP da rede local
       if (
