@@ -145,7 +145,6 @@ export const login = async (usuario: string, senha: string) => {
       withCredentials: true
     });
 
-
     return { status: response.status, message: response.data.message };
   } catch (error: any) {
     if (error.response) {
