@@ -44,4 +44,12 @@ export class AuthController {
       ([sid, val]) => ({ sid, data: JSON.parse(val as string) }),
     );
   }
+
+  // Ler uma informação da sessão
+  @Get('get')
+  getSessionInfo(@Req() req: any) {
+    // Supondo que você salvou algo como req.session.user
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    return req.session.usuario_id;
+  }
 }
