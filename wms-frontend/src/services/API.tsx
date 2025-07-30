@@ -135,22 +135,30 @@ export async function registrarConferenciaAuditoria(
   }
 }
 
-export async function login(usuario: string, senha: string) {
+export const login = async (usuario: string, senha: string) => {
   try {
-    const res = await axios.post(`${BASE_URL}/usuario/validar-usuario`, {
-      usuario: usuario,
-      senha: senha
+    const response = await axios.post(`${BASE_URL}/auth/login`, {
+      usuario,
+      senha,
+    }, {
+      withCredentials: true
     });
-    console.log(res)
-    const result = res.data;
 
-    return { status: result.status, message: result.message };
-  } catch (err) {
-    console.error('Erro na função login:', err);
-    throw new Error('Erro inesperado ao tentar login.');
+    return { status: response.status, message: response.data.message };
+  } catch (error: any) {
+    if (error.response) {
+      return {
+        status: error.response.status,
+        message: error.response.data.message,
+      };
+    } else {
+      return {
+        status: 500,
+        message: 'Erro de conexão com o servidor',
+      };
+    }
   }
-}
-
+};
 
 export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
   try {
@@ -338,8 +346,6 @@ export const buscarProdutos = async (): Promise<Produto[]> => {
       sku: item.sku,
       ean: item.ean ?? '',
     }));
-
-    console.log(dados)
 
     return dados
   } catch (err) {
@@ -825,24 +831,6 @@ export async function buscarOcorrencias(ativo?: true | false) {
   try {
     const query = ativo ? `?ativo=${ativo}` : '';
     const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
-    console.log(res)
-    console.log(res.data.flatMap((o: any) =>
-      o.produto.map((p: any) => ({
-        localizacao: o.localizacao || '-',
-        armazem: o.armazem || '-',
-        produto: p.descricao || '-',
-        sku: p.sku || '-',
-        quantidade: p.qtd_esperada || '-',
-        qtd_sistema: p.qtd_sistema || '-',
-        diferenca: p.diferenca || '-',
-        qtd_ocorrencias_produto: p.qtd_ocorrencias || '-',
-        ativo: p.ativo,
-        produto_id: p.produto_id || '-',
-        ean: p.ean || '-',
-        qtd_ocorrencias: p.qtd_ocorrencias || '-',
-        ocorrencia_id: o.ocorrencia_id,
-      }))
-    ));
 
     return res.data.flatMap((o: any) =>
       o.produto.map((p: any) => ({

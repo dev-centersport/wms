@@ -29,12 +29,12 @@ const menuItems = [
   { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
   { label: 'Produto', icon: <ViewInArIcon />, path: '/produto' },
   { label: 'Consulta', icon: <SearchIcon />, path: '/consulta' },
-  // { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
-  // { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
-  // { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
-  // { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
-  // { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
-  // { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' }
+  { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
+  { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
+  { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
+  { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
+  { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' }
 ];
 
 interface SidebarProps {
