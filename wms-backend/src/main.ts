@@ -34,7 +34,7 @@ async function bootstrap() {
   app.enableCors({
     origin: (
       origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void,
+      callback: (err: Error | null, allow?: string | boolean) => void,
     ) => {
       // Permite requisições sem origin (como mobile apps ou curl requests)
       if (!origin) {
@@ -51,9 +51,9 @@ async function bootstrap() {
         // origin === 'https://localhost:3000' ||
         localNetworkRegex.test(origin)
       ) {
-        callback(null, true);
+        callback(null, origin);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error('Not allowed by CORS'), false);
       }
     },
     credentials: true,
