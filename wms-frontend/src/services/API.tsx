@@ -140,7 +140,7 @@ export async function login(usuario: string, senha: string) {
     const res = await axios.post(`${BASE_URL}/usuario/validar-usuario`, {
       usuario: usuario,
       senha: senha
-    });
+    }, {withCredentials: true});
     console.log(res)
     const result = res.data;
 
