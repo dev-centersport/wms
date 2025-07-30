@@ -24,6 +24,10 @@ export class Auditoria {
   @PrimaryGeneratedColumn()
   auditoria_id: number;
 
+  @ManyToOne(() => Usuario, { nullable: true })
+  @JoinColumn({ name: 'auditado_por_id' })
+  auditado_por: Usuario;
+
   @Column({ type: 'text', nullable: true })
   conclusao?: string;
 
