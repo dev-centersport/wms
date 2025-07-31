@@ -1003,7 +1003,9 @@ export async function excluirPerfil(id: number): Promise<void> {
   } catch (error: any) {
     console.error('Erro ao excluir perfil:', error.message);
     throw new Error('Falha ao excluir o perfil.');
-    
+  }
+}
+
 // Função para buscar auditoria por ID
 export async function buscarAuditoriaPorId(auditoriaId: number) {
   try {
@@ -1022,7 +1024,7 @@ export async function buscarProdutosAuditoria(auditoriaId: number) {
     return response.data;
   } catch (error: any) {
     console.error('Erro ao buscar produtos da auditoria:', error.message);
-    throw new Error('Falha ao carregar os produtos da auditoria.
+    throw new Error('Falha ao carregar os produtos da auditoria.');
   }
 }
 

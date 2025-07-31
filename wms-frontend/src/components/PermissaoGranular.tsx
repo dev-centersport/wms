@@ -12,6 +12,7 @@ import {
   Button,
   Tooltip,
 } from '@mui/material';
+
 import {
   Visibility as VisibilityIcon,
   Add as AddIcon,
@@ -81,48 +82,40 @@ export default function PermissaoGranular({ permissoes, onPermissaoChange, onSel
           Permissões por Módulo
         </Typography>
         
-        <Grid container spacing={2} mb={2}>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 1 }}>
-              <Typography variant="h6" color="primary" fontWeight={700}>
-                {getPermissaoCount('pode_ver')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Visualização
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 1 }}>
-              <Typography variant="h6" color="success.main" fontWeight={700}>
-                {getPermissaoCount('pode_add')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Criação
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 1 }}>
-              <Typography variant="h6" color="warning.main" fontWeight={700}>
-                {getPermissaoCount('pode_edit')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Edição
-              </Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 1 }}>
-              <Typography variant="h6" color="error.main" fontWeight={700}>
-                {getPermissaoCount('pode_delete')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Exclusão
-              </Typography>
-            </Card>
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 2 }}>
+          <Card sx={{ textAlign: 'center', p: 1 }}>
+            <Typography variant="h6" color="primary" fontWeight={700}>
+              {getPermissaoCount('pode_ver')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Visualização
+            </Typography>
+          </Card>
+          <Card sx={{ textAlign: 'center', p: 1 }}>
+            <Typography variant="h6" color="success.main" fontWeight={700}>
+              {getPermissaoCount('pode_add')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Criação
+            </Typography>
+          </Card>
+          <Card sx={{ textAlign: 'center', p: 1 }}>
+            <Typography variant="h6" color="warning.main" fontWeight={700}>
+              {getPermissaoCount('pode_edit')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Edição
+            </Typography>
+          </Card>
+          <Card sx={{ textAlign: 'center', p: 1 }}>
+            <Typography variant="h6" color="error.main" fontWeight={700}>
+              {getPermissaoCount('pode_delete')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Exclusão
+            </Typography>
+          </Card>
+        </Box>
 
         {/* Botões de ação rápida */}
         <Box display="flex" gap={1} flexWrap="wrap">
@@ -172,9 +165,9 @@ export default function PermissaoGranular({ permissoes, onPermissaoChange, onSel
       <Divider sx={{ my: 2 }} />
 
       {/* Grid de módulos */}
-      <Grid container spacing={2}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 2 }}>
         {permissoes.map((permissao) => (
-          <Grid item xs={12} sm={6} md={4} key={permissao.nome}>
+          <Box key={permissao.nome}>
             <Card
               sx={{
                 height: '100%',
@@ -279,9 +272,9 @@ export default function PermissaoGranular({ permissoes, onPermissaoChange, onSel
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 } 

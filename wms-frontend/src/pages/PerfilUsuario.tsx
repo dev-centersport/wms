@@ -20,6 +20,7 @@ import {
   Avatar,
   Tooltip,
 } from '@mui/material';
+
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -243,9 +244,9 @@ export default function PerfilUsuario() {
         </Box>
 
         {/* Cards dos Perfis */}
-        <Grid container spacing={3} mb={4}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 3, mb: 4 }}>
           {perfis.map((perfil) => (
-            <Grid item xs={12} sm={6} md={4} key={perfil.perfil_id}>
+            <Box key={perfil.perfil_id}>
               <Card
                 sx={{
                   height: '100%',
@@ -310,47 +311,41 @@ export default function PerfilUsuario() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         {/* Estatísticas */}
         <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
           <Typography variant="h6" fontWeight={600} mb={2}>
             Estatísticas dos Perfis
           </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={4}>
-              <Box textAlign="center">
-                <Typography variant="h4" color="primary" fontWeight={700}>
-                  {perfis.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total de Perfis
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box textAlign="center">
-                <Typography variant="h4" color="success.main" fontWeight={700}>
-                  {perfis.filter(p => p.pode_add && p.pode_edit && p.pode_delete).length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Perfis Completos
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box textAlign="center">
-                <Typography variant="h4" color="warning.main" fontWeight={700}>
-                  {perfis.filter(p => p.pode_edit && !p.pode_delete).length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Perfis Limitados
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+            <Box textAlign="center">
+              <Typography variant="h4" color="primary" fontWeight={700}>
+                {perfis.length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total de Perfis
+              </Typography>
+            </Box>
+            <Box textAlign="center">
+              <Typography variant="h4" color="success.main" fontWeight={700}>
+                {perfis.filter(p => p.pode_add && p.pode_edit && p.pode_delete).length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Perfis Completos
+              </Typography>
+            </Box>
+            <Box textAlign="center">
+              <Typography variant="h4" color="warning.main" fontWeight={700}>
+                {perfis.filter(p => p.pode_edit && !p.pode_delete).length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Perfis Limitados
+              </Typography>
+            </Box>
+          </Box>
         </Paper>
 
         {/* Dialog para Criar/Editar Perfil */}
@@ -378,46 +373,42 @@ export default function PerfilUsuario() {
           </DialogTitle>
 
           <DialogContent sx={{ pt: 2 }}>
-            <Grid container spacing={3}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {/* Informações Básicas */}
-              <Grid item xs={12}>
+              <Box>
                 <Typography variant="h6" fontWeight={600} mb={2} color="primary">
                   Informações do Perfil
                 </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Nome do Perfil"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      placeholder="Ex: Administrador, Separador, Auditor"
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Descrição"
-                      value={formData.descricao}
-                      onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                      placeholder="Descreva o propósito deste perfil"
-                      variant="outlined"
-                      multiline
-                      rows={1}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Nome do Perfil"
+                    value={formData.nome}
+                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    placeholder="Ex: Administrador, Separador, Auditor"
+                    variant="outlined"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Descrição"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                    placeholder="Descreva o propósito deste perfil"
+                    variant="outlined"
+                    multiline
+                    rows={1}
+                  />
+                </Box>
+              </Box>
 
-                             <Grid item xs={12}>
-                 <PermissaoGranular
-                   permissoes={permissoes}
-                   onPermissaoChange={handlePermissaoChange}
-                   onSelectAll={handleSelectAll}
-                 />
-               </Grid>
-            </Grid>
+              <Box>
+                <PermissaoGranular
+                  permissoes={permissoes}
+                  onPermissaoChange={handlePermissaoChange}
+                  onSelectAll={handleSelectAll}
+                />
+              </Box>
+            </Box>
           </DialogContent>
 
           <DialogActions sx={{ p: 3, pt: 1 }}>
