@@ -43,35 +43,35 @@ const ConferenciaAuditoria: React.FC = () => {
   useEffect(() => {
     async function carregarDadosAuditoria() {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         setError(null);
-        
+
         // Buscar dados da auditoria
         const auditoriaData = await buscarAuditoriaPorId(Number(id));
         setAuditoriaId(auditoriaData.auditoria_id);
-        
+
         // Extrair informações da localização
         if (auditoriaData.localizacao) {
           setLocalizacaoNome(auditoriaData.localizacao.nome || '');
           setEanLocalizacao(auditoriaData.localizacao.ean || '');
-          
+
           if (auditoriaData.localizacao.armazem) {
             setArmazemNome(auditoriaData.localizacao.armazem.nome || '');
           }
         }
-        
+
         // Buscar produtos (ocorrências) da auditoria
         const produtosData = await buscarProdutosAuditoria(Number(id));
-        
+
         // Extrair produtos das ocorrências
-        const produtos = produtosData.flatMap((ocorrencia: any) => 
-          ocorrencia.produto ? [ocorrencia.produto] : []
+        // CERTO: junta todos os produtos em um array único!
+        const produtos = produtosData.flatMap((ocorrencia: any) =>
+          Array.isArray(ocorrencia.produto) ? ocorrencia.produto : []
         );
-        
         setEsperados(produtos);
-        
+
       } catch (err: any) {
         console.error('Erro ao carregar dados da auditoria:', err);
         setError('Erro ao carregar dados da auditoria. Verifique se o ID é válido.');
@@ -124,7 +124,7 @@ const ConferenciaAuditoria: React.FC = () => {
       ([produto_id, quantidade]) => {
         const produto = produtosMap[produto_id] || {};
         const produtoEsperado = esperados.find((p: any) => p.produto_id === Number(produto_id));
-        
+
         return {
           produto_estoque_id: produto.produto_estoque_id || null,
           quantidade,
