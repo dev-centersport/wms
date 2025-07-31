@@ -99,6 +99,33 @@ export async function buscarAuditoria(params?: {
   }
 }
 
+export async function buscarProdutosAuditoria(auditoriaId: number) {
+  try {
+    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar produtos da auditoria:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Status:', error.response.status);
+    }
+    throw new Error('Falha ao carregar os produtos da auditoria.');
+  }
+}
+
+export async function buscarAuditoriaPorId(auditoriaId: number) {
+  try {
+    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar auditoria por ID:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Status:', error.response.status);
+    }
+    throw new Error('Falha ao carregar a auditoria.');
+  }
+}
 
 export interface ItemAuditoriaPayload {
   produto_estoque_id: number;
@@ -940,89 +967,5 @@ export async function fecharLocalizacao(ean: string): Promise<void> {
 export async function buscarUsuarios() {
   const response = await axios.get(`${BASE_URL}/usuario`);
   return response.data;
-}
-
-// ---------- PERFIL FUNCTIONS ----------
-export interface Perfil {
-  perfil_id: number;
-  nome: string;
-  descricao?: string;
-  pode_ver: boolean;
-  pode_add: boolean;
-  pode_edit: boolean;
-  pode_delete: boolean;
-}
-
-export async function buscarPerfis(): Promise<Perfil[]> {
-  try {
-    const response = await axios.get(`${BASE_URL}/perfil`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar perfis:', error.message);
-    throw new Error('Falha ao carregar os perfis.');
-  }
-}
-
-export async function criarPerfil(dados: {
-  nome: string;
-  descricao?: string;
-  pode_ver?: boolean;
-  pode_add?: boolean;
-  pode_edit?: boolean;
-  pode_delete?: boolean;
-}): Promise<Perfil> {
-  try {
-    const response = await axios.post(`${BASE_URL}/perfil`, dados);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao criar perfil:', error.message);
-    throw new Error('Falha ao criar o perfil.');
-  }
-}
-
-export async function atualizarPerfil(id: number, dados: {
-  nome: string;
-  descricao?: string;
-  pode_ver?: boolean;
-  pode_add?: boolean;
-  pode_edit?: boolean;
-  pode_delete?: boolean;
-}): Promise<Perfil> {
-  try {
-    const response = await axios.patch(`${BASE_URL}/perfil/${id}`, dados);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao atualizar perfil:', error.message);
-    throw new Error('Falha ao atualizar o perfil.');
-  }
-}
-
-export async function excluirPerfil(id: number): Promise<void> {
-  try {
-    await axios.delete(`${BASE_URL}/perfil/${id}`);
-  } catch (error: any) {
-    console.error('Erro ao excluir perfil:', error.message);
-    throw new Error('Falha ao excluir o perfil.');
-    
-// Função para buscar auditoria por ID
-export async function buscarAuditoriaPorId(auditoriaId: number) {
-  try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar auditoria por ID:', error.message);
-    throw new Error('Falha ao carregar a auditoria.');
-  }
-}
-
-// Função para buscar produtos (ocorrências) de uma auditoria
-export async function buscarProdutosAuditoria(auditoriaId: number) {
-  try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar produtos da auditoria:', error.message);
-    throw new Error('Falha ao carregar os produtos da auditoria.
-  }
 }
 
