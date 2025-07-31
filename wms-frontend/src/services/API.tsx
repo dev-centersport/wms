@@ -1,5 +1,6 @@
 import axios from 'axios'
 import Ocorrencia from '../pages/NovaOcorrencia';
+import Cookies from 'js-cookie';
 
 const BASE_URL = 'http://151.243.0.78:3001';
 
@@ -137,17 +138,26 @@ export async function registrarConferenciaAuditoria(
 
 export async function login(usuario: string, senha: string) {
   try {
-    const res = await axios.post(`${BASE_URL}/usuario/validar-usuario`, {
-      usuario: usuario,
-      senha: senha
+    const res = await axios.post(`http://localhost:3001/auth/login`, {
+      usuario,
+      senha
     });
-    console.log(res)
-    const result = res.data;
 
-    return { status: result.status, message: result.message };
-  } catch (err) {
-    console.error('Erro na função login:', err);
-    throw new Error('Erro inesperado ao tentar login.');
+    // Se vier o token, salva no cookie
+    if (res.data && res.data.access_token) {
+      Cookies.set('token', res.data.access_token, { expires: 1 }); // expira em 1 dia
+      return { status: 200, message: 'Login realizado com sucesso!' };
+    } else {
+      // Caso não venha o token, retorna erro genérico
+      return { status: 401, message: 'Token não recebido.' };
+    }
+  } catch (err: any) {
+    // Se a API retornar mensagem de erro, repassa para o front
+    if (err.response && err.response.data && err.response.data.message) {
+      return { status: err.response.status, message: err.response.data.message };
+    }
+    // Erro inesperado
+    return { status: 500, message: 'Erro inesperado ao tentar login.' };
   }
 }
 
