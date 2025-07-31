@@ -39,7 +39,7 @@ export class AuthController {
   getProfile(@Req() req: ExpressRequest) {
     if (!req.user) throw new NotFoundException('Usuário não foi encontrado');
 
-    // req.user será preenchido pelo guard com os dados do token JWT
+    // req.user será preenchido pelo guard com os dados do login JWT
     return {
       usuario: req.user['usuario'],
       perfil: req.user['perfil'],

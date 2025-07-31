@@ -2,11 +2,40 @@ import axios from 'axios'
 import Ocorrencia from '../pages/NovaOcorrencia';
 import Cookies from 'js-cookie';
 
-const BASE_URL = 'http://151.243.0.78:3001';
+const BASE_URL = 'http://localhost:3001';
 
 const api = axios.create({
-  baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
+  baseURL: 'http://localhost:3001', // ou a URL da sua API
 });
+
+// Interceptor para adicionar token de autenticação automaticamente
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para tratar erros de autenticação
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expirado ou inválido
+      Cookies.remove('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
 
@@ -85,7 +114,7 @@ export async function buscarAuditoria(params?: {
     }
 
 
-    const response = await axios.get(`${BASE_URL}/auditoria`, {
+    const response = await api.get(`/auditoria`, {
       params: queryParams,
     });
 
@@ -124,8 +153,8 @@ export async function registrarConferenciaAuditoria(
       itens,
     };
 
-    const response = await axios.post(
-      `${BASE_URL}/auditoria/${auditoriaId}/concluir`,
+    const response = await api.post(
+      `/auditoria/${auditoriaId}/concluir`,
       payload
     );
 
@@ -138,7 +167,7 @@ export async function registrarConferenciaAuditoria(
 
 export async function login(usuario: string, senha: string) {
   try {
-    const res = await axios.post(`http://localhost:3001/auth/login`, {
+    const res = await axios.post(`${BASE_URL}/auth/login`, {
       usuario,
       senha
     });
@@ -269,8 +298,8 @@ export const buscarLocalizacoes = async (
       params.set('tipoId', tipoId.toString());
     }
 
-    const res = await axios.get<{ results: any[]; total: number }>(
-      `http://151.243.0.78:3001/localizacao?${params.toString()}`
+    const res = await api.get<{ results: any[]; total: number }>(
+      `/localizacao?${params.toString()}`
     );
 
     const dados: Localizacao[] = res.data.results.map((item) => ({
@@ -339,7 +368,7 @@ export interface Produto {
 
 export const buscarProdutos = async (): Promise<Produto[]> => {
   try {
-    const res = await axios.get<{ results: any[] }>('http://151.243.0.78:3001/produto?limit=1000000000000');
+    const res = await api.get<{ results: any[] }>(`/produto?limit=1000000000000`);
 
     const dados: Produto[] = res.data.results.map((item) => ({
       produto_id: item.produto_id,
@@ -365,7 +394,7 @@ export async function buscarConsultaEstoque() {
     let total = Infinity;
 
     while (todos.length < total) {
-      const res = await axios.get('http://151.243.0.78:3001/produto-estoque', {
+      const res = await api.get('/produto-estoque', {
         params: { limit: limite, offset: offset }
       });
 
@@ -430,7 +459,7 @@ export interface RespostaSeparacaoProduto {
 
 export async function enviarArquivoSeparacaoPorProduto(formData: FormData): Promise<RespostaSeparacaoProduto> {
   try {
-    const response = await axios.post(`${BASE_URL}/separacao/agrupado-produto`, formData, {
+    const response = await api.post(`/separacao/agrupado-produto`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -446,7 +475,7 @@ export async function enviarArquivoSeparacaoPorProduto(formData: FormData): Prom
 
 export async function enviarArquivoSeparacao(formData: FormData): Promise<RespostaSeparacao> {
   try {
-    const response = await axios.post(`${BASE_URL}/separacao/agrupado-pedido`, formData, {
+    const response = await api.post(`/separacao/agrupado-pedido`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -455,7 +484,7 @@ export async function enviarArquivoSeparacao(formData: FormData): Promise<Respos
     const pedidos = response.data.pedidos;
 
     // Buscar todos os produtos disponíveis na base para enriquecimento
-    const produtosRes = await axios.get(`${BASE_URL}/produto`);
+    const produtosRes = await api.get(`/produto`);
     const produtos = produtosRes.data;
 
     const pedidosComDescricaoFoto = pedidos.map((pedido: any) => {
@@ -503,7 +532,7 @@ export interface Armazem {
 
 export const buscarArmazem = async (): Promise<Armazem[]> => {
   try {
-    const res = await axios.get<Armazem[]>('http://151.243.0.78:3001/armazem');
+    const res = await api.get<Armazem[]>('/armazem');
     return res.data;
   } catch (err) {
     console.error('Erro ao buscar armazéns →', err);
@@ -530,7 +559,7 @@ export interface TipoLocalizacao {
 
 export const buscarTiposDeLocalizacao = async (): Promise<TipoLocalizacao[]> => {
   try {
-    const res = await axios.get<TipoLocalizacao[]>('http://151.243.0.78:3001/tipo-localizacao');
+    const res = await api.get<TipoLocalizacao[]>('/tipo-localizacao');
 
     return res.data;
   } catch (err) {
@@ -577,7 +606,7 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
       throw new Error(`Tipo de localização "${criarLocalizacao.tipo}" não encontrado.`);
     }
 
-    await axios.post('http://151.243.0.78:3001/localizacao', {
+    await api.post('/localizacao', {
       nome: criarLocalizacao.nome,
       status: 'fechada',
       altura: criarLocalizacao.altura,
@@ -617,7 +646,7 @@ export interface ExcluirLocalizacao {
 
 export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao): Promise<void> => {
   try {
-    await axios.delete(`http://151.243.0.78:3001/localizacao/${localizacao_id}`);
+    await api.delete(`/localizacao/${localizacao_id}`);
     console.log(`Localização ID ${localizacao_id} excluída com sucesso.`);
   } catch (err) {
     console.error('Erro ao excluir localização →', err);
@@ -642,7 +671,7 @@ export async function buscarProdutoPorEAN(ean: string, eanLocalizacao?: string) 
   const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
 
   try {
-    const response = await axios.get(`http://151.243.0.78:3001/produto/buscar-por-ean/${eanLimpo}`);
+    const response = await api.get(`/produto/buscar-por-ean/${eanLimpo}`);
     const produto = response.data;
 
     let produto_estoque_id;
@@ -671,7 +700,7 @@ export async function buscarProdutoPorEAN(ean: string, eanLocalizacao?: string) 
 export async function buscarLocalizacaoPorEAN(ean: string) {
   try {
     const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
-    const response = await axios.get(`${BASE_URL}/localizacao/buscar-por-ean/${eanLimpo}`);
+    const response = await api.get(`/localizacao/buscar-por-ean/${eanLimpo}`);
     const loc = response.data;
 
     if (!loc || !loc.localizacao_id) {
@@ -700,7 +729,7 @@ export interface ProdutoEstoqueDTO {
 }
 
 export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number): Promise<ProdutoEstoqueDTO[]> {
-  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacao_id}/produtos`);
+  const res = await api.get(`/localizacao/${localizacao_id}/produtos`);
 
   const dados = res.data?.produtos_estoque || [];
 
@@ -716,7 +745,7 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number)
 
 export async function buscarProdutoEstoquePorId(id: number) {
   try {
-    const res = await axios.get(`http://151.243.0.78:3001/produto-estoque/${id}`);
+    const res = await api.get(`/produto-estoque/${id}`);
     return res.data;
   } catch (err: any) {
     console.error(`❌ Erro ao buscar produto_estoque ID ${id}:`, err);
@@ -736,8 +765,8 @@ export async function enviarMovimentacao(payload: {
   }[];
 }) {
   try {
-    const { data } = await axios.post(
-      'http://151.243.0.78:3001/movimentacao',
+    const { data } = await api.post(
+      '/movimentacao',
       payload
     );
     return data;
@@ -761,7 +790,7 @@ export async function enviarMovimentacao(payload: {
 }
 
 export async function buscarLocalizacaoGeral(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/localizacao');
+  const response = await api.get('/localizacao');
   const localizacoes = response.data.results;
 
   const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
@@ -817,7 +846,7 @@ export async function criarOcorrencia(payload: {
   quantidade_esperada: number;
 }) {
   try {
-    const { data } = await axios.post(`${BASE_URL}/ocorrencia`, {
+    const { data } = await api.post(`/ocorrencia`, {
       usuario_id: payload.usuario_id,
       produto_estoque_id: payload.produto_estoque_id,
       localizacao_id: payload.localizacao_id,
@@ -834,7 +863,7 @@ export async function criarOcorrencia(payload: {
 export async function buscarOcorrencias(ativo?: true | false) {
   try {
     const query = ativo ? `?ativo=${ativo}` : '';
-    const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
+    const res = await api.get(`/ocorrencia/listar-por-localizacao${query}`);
     console.log(res)
     console.log(res.data.flatMap((o: any) =>
       o.produto.map((p: any) => ({
@@ -890,7 +919,7 @@ export interface Armazem {
 
 export async function buscarArmazemPorEAN(ean: string): Promise<Armazem | null> {
   try {
-    const res = await axios.get<Armazem[]>(`http://151.243.0.78:3001/armazem`, {
+    const res = await api.get<Armazem[]>(`/armazem`, {
       params: { ean }
     });
     return res.data.length > 0 ? res.data[0] : null;
@@ -902,7 +931,7 @@ export async function buscarArmazemPorEAN(ean: string): Promise<Armazem | null> 
 
 export async function iniciarAuditoria(id: number) {
   try {
-    const res = await axios.post(`${BASE_URL}/auditoria/${id}/iniciar`);
+    const res = await api.post(`/auditoria/${id}/iniciar`);
     return res.data;
   } catch (err: any) {
     console.error('Erro ao iniciar auditoria:', err);
@@ -917,7 +946,7 @@ export async function criarAuditoria(data: {
   try {
     console.log('📤 Dados enviados para /auditoria:', JSON.stringify(data, null, 2));
 
-    const res = await axios.post(`${BASE_URL}/auditoria`, data);
+    const res = await api.post(`/auditoria`, data);
     console.log('✅ Resposta recebida da API /auditoria:', res.data);
 
     return res.data;
@@ -930,7 +959,7 @@ export async function criarAuditoria(data: {
 // 🔓 Abrir localização
 export async function abrirLocalizacao(ean: string): Promise<void> {
   try {
-    await axios.get(`${BASE_URL}/movimentacao/abrir-localizacao/${ean}`);
+    await api.get(`/movimentacao/abrir-localizacao/${ean}`);
   } catch (err: any) {
     console.error('Erro ao abrir localização:', err);
     throw new Error(err?.response?.data?.message || 'Falha ao abrir localização.');
@@ -940,7 +969,7 @@ export async function abrirLocalizacao(ean: string): Promise<void> {
 // 🔒 Fechar localização
 export async function fecharLocalizacao(ean: string): Promise<void> {
   try {
-    await axios.get(`${BASE_URL}/movimentacao/fechar-localizacao/${ean}`);
+    await api.get(`/movimentacao/fechar-localizacao/${ean}`);
   } catch (err: any) {
     console.error('Erro ao fechar localização:', err);
     throw new Error(err?.response?.data?.message || 'Falha ao fechar localização.');
@@ -948,7 +977,7 @@ export async function fecharLocalizacao(ean: string): Promise<void> {
 }
 
 export async function buscarUsuarios() {
-  const response = await axios.get(`${BASE_URL}/usuario`);
+  const response = await api.get(`/usuario`);
   return response.data;
 }
 
