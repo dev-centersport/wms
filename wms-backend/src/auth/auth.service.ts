@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { PasswordUtils } from 'src/utils/password.utils';
 
 @Injectable()
 export class AuthService {
@@ -17,8 +18,11 @@ export class AuthService {
       where: { usuario: usuario },
       relations: ['perfil'],
     });
+
     // Comparar com hash de senha mais tarde Ex: bcrypt.compare(senha, user.senha)
-    if (user && user.senha === senha) return user;
+    // if (user && user.senha === senha) return user;
+    if (user && (await PasswordUtils.verificarSenha(senha, user.senha)))
+      return user;
 
     return null;
   }

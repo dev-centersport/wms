@@ -13,6 +13,17 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { Request as ExpressRequest } from 'express';
 
+declare module 'express' {
+  export interface Request {
+    user?: {
+      usuario: string;
+      perfil: string;
+      sub: number;
+      // adicione outras propriedades se precisar
+    };
+  }
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
