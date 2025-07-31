@@ -30,33 +30,6 @@ export interface Ocorrencia {
   ativo: boolean;
 }
 
-export interface AuditoriaItem {
-  auditoria_id: number;
-  conclusao?: string | null;
-  data_hora_inicio?: string | null;
-  data_hora_fim?: string | null; // ou data_hora_conclusao, dependendo da sua API
-  status: 'pendente' | 'concluida' | 'em andamento';
-  usuario: {
-    usuario_id: number;
-    responsavel: string;
-    usuario: string;
-    senha: string;
-    nivel: number;
-    cpf: string;
-    ativo: boolean;
-  };
-  localizacao: {
-    localizacao_id: number;
-    status: string;
-    nome: string;
-    altura: string;
-    largura: string;
-    comprimento: string;
-    ean: string;
-  };
-  ocorrencias?: Ocorrencia[];
-}
-
 export type StatusAuditoria = 'pendente' | 'concluida' | 'em andamento';
 
 export async function buscarAuditoria(params?: {
@@ -96,6 +69,34 @@ export async function buscarAuditoria(params?: {
       console.error('Status:', error.response.status);
     }
     throw new Error('Falha ao carregar as auditorias.');
+  }
+}
+
+export async function buscarProdutosAuditoria(auditoriaId: number) {
+  try {
+    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar produtos da auditoria:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Status:', error.response.status);
+    }
+    throw new Error('Falha ao carregar os produtos da auditoria.');
+  }
+}
+
+export async function buscarAuditoriaPorId(auditoriaId: number) {
+  try {
+    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar auditoria por ID:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Status:', error.response.status);
+    }
+    throw new Error('Falha ao carregar a auditoria.');
   }
 }
 
