@@ -129,8 +129,8 @@ export class AuditoriaService {
 
     const { entities, raw } = await query.getRawAndEntities();
 
-    const results = entities.map((localizacao, index) => ({
-      ...localizacao,
+    const results = entities.map((auditoria, index) => ({
+      ...auditoria,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       total_auditoria: parseFloat(raw[index].total_auditoria) || 0,
     }));
@@ -145,7 +145,13 @@ export class AuditoriaService {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: id },
       ...options,
-      relations: ['usuario', 'ocorrencias', 'localizacao', 'itens_auditoria'],
+      relations: [
+        'usuario',
+        'ocorrencias',
+        'localizacao',
+        'localizacao.armazem',
+        'itens_auditoria',
+      ],
     });
 
     if (!auditoria) {
