@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ProdutoEstoqueService } from './produto_estoque.service';
 import { CreateProdutoEstoqueDto } from './dto/create-produto_estoque.dto';
 import { UpdateProdutoEstoqueDto } from './dto/update-produto_estoque.dto';
+import { Autenticacao } from 'src/auth/auth.guard';
 
 @Controller('produto-estoque')
 export class ProdutoEstoqueController {
@@ -37,6 +39,7 @@ export class ProdutoEstoqueController {
   }
 
   @Get('pesquisar')
+  @UseGuards(Autenticacao)
   async search(
     @Query('search') search?: string,
     @Query('offset') offset?: string,
