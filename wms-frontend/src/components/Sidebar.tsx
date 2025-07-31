@@ -22,9 +22,10 @@ import TrolleyIcon from '@mui/icons-material/Trolley';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import SecurityIcon from '@mui/icons-material/Security';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 
 const menuItems = [
-  // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
+  { label: 'Dashboard', icon: <AnalyticsIcon />, path: '/dashboard' },
   { label: 'Armazém', icon: <HomeIcon />, path: '/armazem' },
   { label: 'Localização', icon: <RoomIcon />, path: '/localizacao' },
   { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },

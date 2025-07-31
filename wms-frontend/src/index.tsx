@@ -29,6 +29,7 @@ import Relatorio from "./pages/Relatorio";
 import Usuarios from "./pages/Usuarios";
 import CriarUsuario from "./pages/CriarUsuario"
 import PerfilUsuario from "./pages/PerfilUsuario";
+import Dashboard from "./pages/Dashboard";
 
 import theme from './components/Theme';
 
@@ -46,6 +47,8 @@ root.render(
           {/* Login sem menu lateral */}
           <Route path="/login" element={<Login />} />
           {/* Páginas internas com Sidebar */}
+          {/* Dashboard */}
+          <Route path="/dashboard" element={<Dashboard />} />
           {/* Páginas de localização */}
           <Route path="/localizacao" element={<Localizacao />} />
           <Route path="/localizacao/criar" element={<CriarLocalizacao />} />
