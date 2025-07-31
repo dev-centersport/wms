@@ -1,5 +1,4 @@
 import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
-import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 import {
   Column,
   Entity,
@@ -44,8 +43,4 @@ export class ItemAuditoria {
   @ManyToOne(() => Auditoria, (a) => a.itens_auditoria)
   @JoinColumn()
   auditoria: Auditoria;
-
-  @ManyToOne(() => ProdutoEstoque)
-  @JoinColumn({ name: 'produto_estoque_id' })
-  produto_estoque: ProdutoEstoque;
 }
