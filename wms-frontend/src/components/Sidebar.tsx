@@ -21,6 +21,7 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import TrolleyIcon from '@mui/icons-material/Trolley';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import SecurityIcon from '@mui/icons-material/Security';
 
 const menuItems = [
   { label: 'Armazém', icon: <HomeIcon />, path: '/armazem' },
@@ -33,7 +34,8 @@ const menuItems = [
   { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
   { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
   { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
-  { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' },
+  { label: 'Usuários', icon: <PeopleAltIcon />, path: '/usuarios' },
+  { label: 'Perfis', icon: <SecurityIcon />, path: '/perfil-usuario' },
 ];
 
 const SIDEBAR_WIDTH = 210;
