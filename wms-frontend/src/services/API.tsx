@@ -969,3 +969,9 @@ export async function buscarUsuarios() {
   return response.data;
 }
 
+// services/API.ts
+export async function cancelarAuditoria(auditoriaId: number) {
+  const res = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
+  return res.data;
+}
+

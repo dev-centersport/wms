@@ -29,7 +29,7 @@ import {
 import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon, PlayArrow } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import axios from 'axios';
-import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria } from '../services/API';
+import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria, buscarProdutosAuditoria, cancelarAuditoria } from '../services/API';
 
 interface Ocorrencia {
   ocorrencia_id: number;
@@ -41,7 +41,7 @@ export interface AuditoriaItem {
   auditoria_id: number;
   conclusao: string;
   data_hora_inicio: string;
-  data_hora_fim: string;
+  data_hora_conclusao: string;
   status: 'pendente' | 'concluida' | 'em andamento' | 'cancelada';
   usuario: {
     responsavel: string;
@@ -54,8 +54,9 @@ export interface AuditoriaItem {
   armazem?: {
     nome: string;
   };
+  /** ADICIONE ESTA LINHA ABAIXO: */
+  qtdOcorrencias?: number;
 }
-
 
 const ITEMS_PER_PAGE = 10;
 
@@ -73,6 +74,7 @@ export default function Auditoria() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [modalIniciar, setModalIniciar] = useState<AuditoriaItem | null>(null);
   const [modalConferir, setModalConferir] = useState<AuditoriaItem | null>(null);
+  const [modalCancelar, setModalCancelar] = useState<{ open: boolean; auditoria?: AuditoriaItem }>({ open: false });
   const [ocorrenciasModal, setOcorrenciasModal] = useState<{
     open: boolean;
     ocorrencias: Ocorrencia[];
@@ -102,44 +104,45 @@ export default function Auditoria() {
           status: aba === 'pendente' || aba === 'concluida' ? aba : undefined,
         });
 
-        console.log('🔍 Resposta buscarAuditoria:', dados); // Debug
-
-        // Garante que será um array
         const lista: AuditoriaItem[] = Array.isArray(dados)
           ? dados
           : Array.isArray(dados.results)
             ? dados.results
             : [];
 
-        const auditoriasComArmazem = await Promise.all(
-          lista.map(async (aud: AuditoriaItem) => {
+        // Aqui busca a quantidade de ocorrências de cada auditoria!
+        const auditoriasComOcorrencias = await Promise.all(
+          lista.map(async (aud) => {
             let nomeArmazem = '-';
-
             if (aud.localizacao.ean) {
               const armazemEncontrado = await buscarArmazemPorEAN(aud.localizacao.ean);
               nomeArmazem = armazemEncontrado?.nome || '-';
             }
 
+            // Chama sua função já pronta
+            let qtdOcorrencias = 0;
+            try {
+              const ocorrencias = await buscarProdutosAuditoria(aud.auditoria_id);
+              qtdOcorrencias = Array.isArray(ocorrencias) ? ocorrencias.length : 0;
+            } catch {
+              qtdOcorrencias = 0;
+            }
+
             return {
               ...aud,
               data_hora_inicio: aud.data_hora_inicio ? formatarData(aud.data_hora_inicio) : '-',
-              data_hora_fim: aud.data_hora_fim ? formatarData(aud.data_hora_fim) : '-',
+              data_hora_conclusao: aud.data_hora_conclusao ? formatarData(aud.data_hora_conclusao) : '-',
               localizacao: {
                 nome: aud.localizacao.nome || '-',
                 ean: aud.localizacao.ean || '',
               },
-              armazem: {
-                nome: nomeArmazem,
-              },
-              ocorrencias: aud.ocorrencias?.map((oc: Ocorrencia) => ({
-                ...oc,
-                dataHora: oc.dataHora ? formatarData(oc.dataHora) : '-',
-              })) || [],
+              armazem: { nome: nomeArmazem },
+              qtdOcorrencias, // <-- aqui!
             };
           })
         );
 
-        setAuditorias(auditoriasComArmazem);
+        setAuditorias(auditoriasComOcorrencias);
         setSelecionados([]);
       } catch (err) {
         alert('Erro ao carregar auditorias.');
@@ -148,7 +151,7 @@ export default function Auditoria() {
     }
 
     carregar();
-  }, [aba, busca, paginaAtual]); // <- inclua dependências relevantes
+  }, [aba, busca, paginaAtual]);
 
   const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -258,6 +261,18 @@ export default function Auditoria() {
     setModalConferir(item);
   };
 
+  const handleCancelar = async (auditoriaId: number) => {
+    if (window.confirm('Tem certeza que deseja cancelar esta auditoria?')) {
+      try {
+        await cancelarAuditoria(auditoriaId);
+        alert('Auditoria cancelada com sucesso!');
+        // Atualize a lista de auditorias após cancelar
+        // Exemplo: recarregar a página ou chamar a função de busca
+      } catch (error: any) {
+        alert(error?.response?.data?.message || 'Erro ao cancelar auditoria.');
+      }
+    }
+  };
 
   return (
     <Layout totalPages={totalPaginas} currentPage={paginaAtual} onPageChange={setPaginaAtual}>
@@ -391,15 +406,11 @@ export default function Auditoria() {
                 <TableCell>{item.localizacao.nome} - {item.armazem?.nome || '-'}</TableCell>
                 <TableCell>{item.usuario.responsavel}</TableCell>
                 <TableCell align='center'>{item.data_hora_inicio}</TableCell>
-                <TableCell align='center'>{item.data_hora_fim}</TableCell>
+                <TableCell align='center'>{item.data_hora_conclusao}</TableCell>
                 <TableCell align='center'>
-                  <Button
-                    variant="text"
-                    onClick={() => abrirModalOcorrencias(item.ocorrencias, item.localizacao.nome)}
-                    disabled={!item.ocorrencias || item.ocorrencias.length === 0}
-                  >
-                    {item.ocorrencias?.length || 0} ocorrência(s)
-                  </Button>
+                  <span style={{ color: '#bbb' }}>
+                    {item.qtdOcorrencias} ocorrência(s)
+                  </span>
                 </TableCell>
                 <TableCell align='center'>
                   <Chip
@@ -453,18 +464,19 @@ export default function Auditoria() {
                     >
                       Conferir
                     </Button>
-                    <Tooltip title="Excluir auditoria">
+                    <Tooltip title="Cancelar auditoria">
                       <IconButton
-                        size="small"
-                        onClick={() => { }}
+                        size="medium"
+                        onClick={() => setModalCancelar({ open: true, auditoria: item })}
                         sx={{
                           color: 'error.main',
                           '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
                         }}
                       >
-                        <DeleteIcon fontSize="small" />
+                        <Cancel fontSize="small" />
                       </IconButton>
                     </Tooltip>
+
                   </Box>
                 </TableCell>
               </TableRow>
@@ -650,6 +662,111 @@ export default function Auditoria() {
         <DialogActions>
           <Button onClick={fecharModalOcorrencias}>Fechar</Button>
         </DialogActions>
+
+        <Dialog
+          open={modalCancelar.open}
+          onClose={() => setModalCancelar({ open: false })}
+          fullWidth
+          maxWidth="xs"
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              border: '2px solid #f44336',
+              overflow: 'hidden',
+              boxShadow: '0px 10px 25px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              backgroundColor: '#f44336',
+              px: 2,
+              py: 1.5,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography sx={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+              Cancelar Auditoria
+            </Typography>
+            <IconButton onClick={() => setModalCancelar({ open: false })} size="small">
+              <Typography sx={{ fontSize: 22, fontWeight: 'bold', color: '#fff' }}>×</Typography>
+            </IconButton>
+          </Box>
+
+          <DialogContent
+            sx={{
+              textAlign: 'center',
+              py: 5,
+              backgroundColor: '#fff',
+            }}
+          >
+            <Cancel sx={{ fontSize: 56, color: '#f44336', mb: 2 }} />
+            <Typography sx={{ fontSize: 17, fontWeight: 500, color: '#333' }}>
+              Tem certeza que deseja <b>cancelar</b> a auditoria de <br />
+              <b>{modalCancelar.auditoria?.localizacao.nome} - {modalCancelar.auditoria?.armazem?.nome}</b>?
+            </Typography>
+          </DialogContent>
+
+          <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
+            <Button
+              onClick={() => setModalCancelar({ open: false })}
+              sx={{
+                backgroundColor: '#e0e0e0',
+                color: '#222',
+                fontWeight: 'bold',
+                fontSize: 16,
+                textTransform: 'none',
+                px: 6,
+                py: 1.7,
+                borderRadius: '10px',
+                boxShadow: 'none',
+                mr: 2,
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  backgroundColor: '#bdbdbd',
+                  transform: 'scale(1.01)',
+                  boxShadow: '0 4px 8px #ccc',
+                },
+              }}
+            >
+              Não, Voltar
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  await cancelarAuditoria(modalCancelar.auditoria!.auditoria_id);
+                  setModalCancelar({ open: false });
+                  alert('Auditoria cancelada com sucesso!');
+                  // Recarregue a lista se necessário
+                } catch (err: any) {
+                  alert(err?.response?.data?.message || 'Erro ao cancelar auditoria.');
+                }
+              }}
+              sx={{
+                backgroundColor: '#f44336',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: 16,
+                textTransform: 'none',
+                px: 6,
+                py: 1.7,
+                borderRadius: '10px',
+                boxShadow: '0 6px 12px rgba(244,67,54,0.2)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  backgroundColor: '#b71c1c',
+                  transform: 'scale(1.03)',
+                  boxShadow: '0 8px 16px rgba(244,67,54,0.28)',
+                },
+              }}
+            >
+              Sim, Cancelar
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Dialog>
     </Layout>
   );
