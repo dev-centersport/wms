@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -26,10 +27,10 @@ import {
   MenuItem,
   TableSortLabel
 } from '@mui/material';
-import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
+import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon, PlayArrow } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import axios from 'axios';
-import { buscarAuditoria, buscarArmazemPorEAN } from '../services/API';
+import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria } from '../services/API';
 
 interface Ocorrencia {
   ocorrencia_id: number;
@@ -59,6 +60,7 @@ export interface AuditoriaItem {
 const ITEMS_PER_PAGE = 10;
 
 export default function Auditoria() {
+  const navigate = useNavigate();
   const [busca, setBusca] = useState('');
   const [aba, setAba] = useState<'todos' | 'pendente' | 'concluida'>('todos');
   const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
@@ -69,8 +71,6 @@ export default function Auditoria() {
   const [filtroStatus, setFiltroStatus] = useState('');
   const [appliedFiltroStatus, setAppliedFiltroStatus] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [confirmarAberto, setConfirmarAberto] = useState(false);
-  const [localizacaoIdSelecionada, setLocalizacaoIdSelecionada] = useState<string | null>(null);
   const [ocorrenciasModal, setOcorrenciasModal] = useState<{
     open: boolean;
     ocorrencias: Ocorrencia[];
@@ -186,6 +186,15 @@ export default function Auditoria() {
       ocorrencias: [],
       localizacao: '',
     });
+  };
+
+  const handleIniciarConferencia = async (auditoriaId: number) => {
+    try {
+      await iniciarAuditoria(auditoriaId);
+      navigate(`/ConferenciaAudi/${auditoriaId}`);
+    } catch (error: any) {
+      alert(`Erro ao iniciar conferência: ${error.message}`);
+    }
   };
 
   const filtrado = useMemo(() => {
@@ -331,7 +340,7 @@ export default function Auditoria() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell align='center'>
+              <TableCell>
                 <TableSortLabel
                   active={orderBy === 'localizacao'}
                   direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
@@ -391,7 +400,7 @@ export default function Auditoria() {
           <TableBody>
             {exibidos.map((item) => (
               <TableRow key={item.auditoria_id}>
-                <TableCell align='center'>{item.localizacao.nome} - {item.armazem?.nome || '-'}</TableCell>
+                <TableCell>{item.localizacao.nome} - {item.armazem?.nome || '-'}</TableCell>
                 <TableCell>{item.usuario.responsavel}</TableCell>
                 <TableCell align='center'>{item.data_hora_inicio}</TableCell>
                 <TableCell align='center'>{item.data_hora_fim}</TableCell>
@@ -416,35 +425,46 @@ export default function Auditoria() {
                   />
                 </TableCell>
                 <TableCell align='center'>
-                  <Box display="flex" justifyContent="center" gap={1}>
-                    <Tooltip title="Conferir">
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
-                        onClick={() => {
-                          console.log('📌 Clicou em conferir. ID:', item.localizacao.ean);
-                          setLocalizacaoIdSelecionada(item.localizacao.ean); // ou item.localizacao_id
-                          setConfirmarAberto(true);
-                        }}
-                      >
-                        Conferir
-                      </Button>
-                    </Tooltip>
-
-                    <Tooltip title="Cancelar auditoria">
+                  <Box display="flex" gap={1} justifyContent="center">
+                    {item.status === 'pendente' && (
+                      <Tooltip title="Iniciar conferência">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleIniciarConferencia(item.auditoria_id)}
+                          sx={{
+                            color: 'primary.main',
+                            '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' },
+                          }}
+                        >
+                          <PlayArrow fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {item.status === 'em andamento' && (
+                      <Tooltip title="Continuar conferência">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/ConferenciaAudi/${item.auditoria_id}`)}
+                          sx={{
+                            color: 'success.main',
+                            '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.1)' },
+                          }}
+                        >
+                          <CheckCircle fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Excluir auditoria">
                       <IconButton
-                        size="medium"
-                        onClick={() => {
-                          console.log('❌ Cancelar auditoria ID:', item.auditoria_id);
-                          // Lógica de cancelamento aqui
-                        }}
+                        size="small"
+                        onClick={() => { }}
+                        disabled={false}
                         sx={{
                           color: 'error.main',
                           '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
                         }}
                       >
-                        <Cancel fontSize="small" />
+                        <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
                   </Box>

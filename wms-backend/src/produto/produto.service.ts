@@ -65,6 +65,10 @@ export class ProdutoService {
   }
 
   async encontrarProdutoPorEan(ean: string) {
+    if (ean.length < 13) {
+      ean = ean.padStart(13, '0');
+    }
+
     const produto = await this.produtoRepository.findOneBy({
       ean: ean,
     });

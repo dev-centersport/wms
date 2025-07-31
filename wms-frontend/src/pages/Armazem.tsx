@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePageLogger } from '../hooks/usePageLogger';
+
 import {
   Box,
   Paper,
@@ -33,6 +35,7 @@ interface Armazem extends ArmazemAPI {
 const itemsPerPage = 50;
 
 const ArmazemPage: React.FC = () => {
+  usePageLogger('Armazem');
   const navigate = useNavigate();
 
   const [armazens, setArmazens] = useState<Armazem[]>([]);

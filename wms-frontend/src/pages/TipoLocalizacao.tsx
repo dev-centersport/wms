@@ -100,7 +100,7 @@ const TipoLocalizacaoPage: React.FC = () => {
                 <TableRow key={tipo.tipo_localizacao_id}>
                   <TableCell align='center'>{tipo.tipo}</TableCell>
                   <TableCell align="center">
-                    <IconButton onClick={() => navigate(`/tipo-localizacao/${tipo.tipo_localizacao_id}/editar`)}>
+                    <IconButton onClick={() => navigate(`/EditarTipoLocalizacao/${tipo.tipo_localizacao_id}/editar`)}>
                       <EditIcon />
                     </IconButton>
                     <IconButton onClick={() => handleExcluir(tipo.tipo_localizacao_id)}>
