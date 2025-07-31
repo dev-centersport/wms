@@ -22,9 +22,15 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar erros de autenticação
+// Interceptor para tratar erros de autenticação e capturar novos tokens
 api.interceptors.response.use(
   (response) => {
+    // Captura novo token se enviado pelo backend
+    const newToken = response.headers['x-new-token'];
+    if (newToken) {
+      Cookies.set('token', newToken, { expires: 1 });
+      console.log('Token renovado automaticamente');
+    }
     return response;
   },
   (error) => {
@@ -172,10 +178,14 @@ export async function login(usuario: string, senha: string) {
       senha
     });
 
+    console.log(res)
+
     // Se vier o token, salva no cookie
     if (res.data && res.data.access_token) {
       Cookies.set('token', res.data.access_token, { expires: 1 }); // expira em 1 dia
       return { status: 200, message: 'Login realizado com sucesso!' };
+    } else if (res.status === 201 && res.data) {
+      return { status: 401, message: 'Usuário ou senha inválido'}
     } else {
       // Caso não venha o token, retorna erro genérico
       return { status: 401, message: 'Token não recebido.' };
