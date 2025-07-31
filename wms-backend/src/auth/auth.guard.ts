@@ -22,7 +22,7 @@ interface JwtPayload {
 }
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class Autenticacao implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: ExecutionContext): boolean {

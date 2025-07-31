@@ -11,7 +11,7 @@ import {
 import { TipoLocalizacaoService } from './tipo_localizacao.service';
 import { CreateTipoLocalizacaoDto } from './dto/create-tipo_localizacao.dto';
 import { UpdateTipoLocalizacaoDto } from './dto/update-tipo_localizacao.dto';
-import { AuthGuard } from '../auth/auth.guard';
+import { Autenticacao } from '../auth/auth.guard';
 
 @Controller('tipo-localizacao')
 export class TipoLocalizacaoController {
@@ -35,7 +35,7 @@ export class TipoLocalizacaoController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(Autenticacao)
   update(
     @Param('id') id: string,
     @Body() updateTipoLocalizacaoDto: UpdateTipoLocalizacaoDto,

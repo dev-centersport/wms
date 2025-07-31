@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
+import { Autenticacao } from './auth.guard';
 import { Request as ExpressRequest } from 'express';
 
 declare module 'express' {
@@ -46,7 +46,7 @@ export class AuthController {
   }
 
   @Get('profile')
-  @UseGuards(AuthGuard)
+  @UseGuards(Autenticacao)
   getProfile(@Req() req: ExpressRequest) {
     if (!req.user) throw new NotFoundException('Usuário não foi encontrado');
 
