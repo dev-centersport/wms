@@ -710,63 +710,65 @@ export default function Auditoria() {
             </Typography>
           </DialogContent>
 
-          <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
-            <Button
-              onClick={() => setModalCancelar({ open: false })}
-              sx={{
-                backgroundColor: '#e0e0e0',
-                color: '#222',
-                fontWeight: 'bold',
-                fontSize: 16,
-                textTransform: 'none',
-                px: 6,
-                py: 1.7,
-                borderRadius: '10px',
-                boxShadow: 'none',
-                mr: 2,
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                  backgroundColor: '#bdbdbd',
-                  transform: 'scale(1.01)',
-                  boxShadow: '0 4px 8px #ccc',
-                },
-              }}
-            >
-              Não, Voltar
-            </Button>
-            <Button
-              onClick={async () => {
-                try {
-                  await cancelarAuditoria(modalCancelar.auditoria!.auditoria_id);
-                  setModalCancelar({ open: false });
-                  alert('Auditoria cancelada com sucesso!');
-                  // Recarregue a lista se necessário
-                } catch (err: any) {
-                  alert(err?.response?.data?.message || 'Erro ao cancelar auditoria.');
-                }
-              }}
-              sx={{
-                backgroundColor: '#f44336',
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: 16,
-                textTransform: 'none',
-                px: 6,
-                py: 1.7,
-                borderRadius: '10px',
-                boxShadow: '0 6px 12px rgba(244,67,54,0.2)',
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                  backgroundColor: '#b71c1c',
-                  transform: 'scale(1.03)',
-                  boxShadow: '0 8px 16px rgba(244,67,54,0.28)',
-                },
-              }}
-            >
-              Sim, Cancelar
-            </Button>
-          </DialogActions>
+
         </Dialog>
+
+        <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
+          <Button
+            onClick={() => setModalCancelar({ open: false })}
+            sx={{
+              backgroundColor: '#e0e0e0',
+              color: '#222',
+              fontWeight: 'bold',
+              fontSize: 16,
+              textTransform: 'none',
+              px: 6,
+              py: 1.7,
+              borderRadius: '10px',
+              boxShadow: 'none',
+              mr: 2,
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                backgroundColor: '#bdbdbd',
+                transform: 'scale(1.01)',
+                boxShadow: '0 4px 8px #ccc',
+              },
+            }}
+          >
+            Não, Voltar
+          </Button>
+          <Button
+            onClick={async () => {
+              try {
+                await cancelarAuditoria(modalCancelar.auditoria!.auditoria_id);
+                setModalCancelar({ open: false });
+                alert('Auditoria cancelada com sucesso!');
+                // Recarregue a lista se necessário
+              } catch (err: any) {
+                alert(err?.response?.data?.message || 'Erro ao cancelar auditoria.');
+              }
+            }}
+            sx={{
+              backgroundColor: '#f44336',
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 16,
+              textTransform: 'none',
+              px: 6,
+              py: 1.7,
+              borderRadius: '10px',
+              boxShadow: '0 6px 12px rgba(244,67,54,0.2)',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                backgroundColor: '#b71c1c',
+                transform: 'scale(1.03)',
+                boxShadow: '0 8px 16px rgba(244,67,54,0.28)',
+              },
+            }}
+          >
+            Sim, Cancelar
+          </Button>
+        </DialogActions>
       </Dialog>
     </Layout>
   );

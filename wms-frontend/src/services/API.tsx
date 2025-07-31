@@ -99,33 +99,6 @@ export async function buscarAuditoria(params?: {
   }
 }
 
-export async function buscarProdutosAuditoria(auditoriaId: number) {
-  try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar produtos da auditoria:', error.message);
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Status:', error.response.status);
-    }
-    throw new Error('Falha ao carregar os produtos da auditoria.');
-  }
-}
-
-export async function buscarAuditoriaPorId(auditoriaId: number) {
-  try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar auditoria por ID:', error.message);
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Status:', error.response.status);
-    }
-    throw new Error('Falha ao carregar a auditoria.');
-  }
-}
 
 export interface ItemAuditoriaPayload {
   produto_estoque_id: number;
@@ -1033,7 +1006,7 @@ export async function excluirPerfil(id: number): Promise<void> {
   }
 }
 
-// Função para buscar auditoria por ID
+// Função para buscar auditoria por ID (apenas uma vez!)
 export async function buscarAuditoriaPorId(auditoriaId: number) {
   try {
     const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
@@ -1044,7 +1017,7 @@ export async function buscarAuditoriaPorId(auditoriaId: number) {
   }
 }
 
-// Função para buscar produtos (ocorrências) de uma auditoria
+// Função para buscar produtos (ocorrências) de uma auditoria (apenas uma vez!)
 export async function buscarProdutosAuditoria(auditoriaId: number) {
   try {
     const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
@@ -1053,9 +1026,10 @@ export async function buscarProdutosAuditoria(auditoriaId: number) {
     console.error('Erro ao buscar produtos da auditoria:', error.message);
     throw new Error('Falha ao carregar os produtos da auditoria.');
   }
-// services/API.ts
+}
+
+// Função para cancelar auditoria
 export async function cancelarAuditoria(auditoriaId: number) {
   const res = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
   return res.data;
 }
-

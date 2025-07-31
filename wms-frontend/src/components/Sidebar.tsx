@@ -45,6 +45,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
+  const location = useLocation(); // <---- CORRETO
+
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -54,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
         PaperProps={{
           sx: {
             width: SIDEBAR_WIDTH,
-            background: 'linear-gradient(hsl(101, 70.00%, 55.30%))',
+            background: 'linear-gradient(hsl(101, 74.00%, 50.30%))',
             color: '#111',
             borderRight: 'none',
             boxShadow: '4px 0 16px -4px #0001',
