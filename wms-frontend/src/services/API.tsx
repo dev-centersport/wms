@@ -942,3 +942,25 @@ export async function buscarUsuarios() {
   return response.data;
 }
 
+// Função para buscar auditoria por ID
+export async function buscarAuditoriaPorId(auditoriaId: number) {
+  try {
+    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar auditoria por ID:', error.message);
+    throw new Error('Falha ao carregar a auditoria.');
+  }
+}
+
+// Função para buscar produtos (ocorrências) de uma auditoria
+export async function buscarProdutosAuditoria(auditoriaId: number) {
+  try {
+    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar produtos da auditoria:', error.message);
+    throw new Error('Falha ao carregar os produtos da auditoria.');
+  }
+}
+

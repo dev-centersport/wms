@@ -18,10 +18,10 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  buscarOcorrenciasDaLocalizacao,
   registrarConferenciaAuditoria,
   buscarProdutoPorEAN,
-  buscarAuditoria,
+  buscarAuditoriaPorId,
+  buscarProdutosAuditoria,
   ItemAuditoriaPayload,
 } from '../services/API';
 import Layout from '../components/Layout';
@@ -37,47 +37,50 @@ const ConferenciaAuditoria: React.FC = () => {
   const [auditoriaId, setAuditoriaId] = useState<number | null>(null);
   const [conclusaoTexto, setConclusaoTexto] = useState('');
   const [motivos, setMotivos] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function carregarProdutos() {
+    async function carregarDadosAuditoria() {
       if (!id) return;
+      
       try {
-        const dados = await buscarOcorrenciasDaLocalizacao(Number(id));
-        const produtos = dados.flatMap((ocorrencia: any) => ocorrencia.produto || []);
-        setEsperados(produtos);
-
-        if (dados.length > 0) {
-          setLocalizacaoNome(dados[0].localizacao || '');
-          setArmazemNome(dados[0].armazem || '');
-          setEanLocalizacao(dados[0].ean_localizacao || '');
+        setLoading(true);
+        setError(null);
+        
+        // Buscar dados da auditoria
+        const auditoriaData = await buscarAuditoriaPorId(Number(id));
+        setAuditoriaId(auditoriaData.auditoria_id);
+        
+        // Extrair informações da localização
+        if (auditoriaData.localizacao) {
+          setLocalizacaoNome(auditoriaData.localizacao.nome || '');
+          setEanLocalizacao(auditoriaData.localizacao.ean || '');
+          
+          if (auditoriaData.localizacao.armazem) {
+            setArmazemNome(auditoriaData.localizacao.armazem.nome || '');
+          }
         }
-      } catch (err) {
-        alert('Erro ao buscar produtos da localização.');
-      }
-    }
-
-    async function carregarAuditoriaRelacionada() {
-      if (!id) return;
-      try {
-        const resultado = await buscarAuditoria({ status: 'em andamento' });
-        const auditorias = resultado.results || [];
-
-        const auditoriaRelacionada = auditorias.find(
-          (a: any) => a.localizacao?.localizacao_id === Number(id)
+        
+        // Buscar produtos (ocorrências) da auditoria
+        const produtosData = await buscarProdutosAuditoria(Number(id));
+        
+        // Extrair produtos das ocorrências
+        const produtos = produtosData.flatMap((ocorrencia: any) => 
+          ocorrencia.produto ? [ocorrencia.produto] : []
         );
-
-        if (auditoriaRelacionada) {
-          setAuditoriaId(auditoriaRelacionada.auditoria_id);
-        } else {
-          alert('Nenhuma auditoria em andamento encontrada para esta localização.');
-        }
-      } catch {
-        alert('Erro ao buscar auditoria em andamento.');
+        
+        setEsperados(produtos);
+        
+      } catch (err: any) {
+        console.error('Erro ao carregar dados da auditoria:', err);
+        setError('Erro ao carregar dados da auditoria. Verifique se o ID é válido.');
+      } finally {
+        setLoading(false);
       }
     }
 
-    carregarProdutos();
-    carregarAuditoriaRelacionada();
+    carregarDadosAuditoria();
   }, [id]);
 
   const handleBipagem = async (ean: string) => {
@@ -120,15 +123,17 @@ const ConferenciaAuditoria: React.FC = () => {
     const itens: ItemAuditoriaPayload[] = Object.entries(bipados).map(
       ([produto_id, quantidade]) => {
         const produto = produtosMap[produto_id] || {};
+        const produtoEsperado = esperados.find((p: any) => p.produto_id === Number(produto_id));
+        
         return {
           produto_estoque_id: produto.produto_estoque_id || null,
           quantidade,
-          quantidades_sistema: produto.qtd_sistema || 0,
+          quantidades_sistema: produtoEsperado?.qtd_esperada || 0,
           quantidades_fisico: quantidade,
           motivo_diferenca: motivos[produto_id] || 'outro',
           mais_informacoes: '',
           acao_corretiva: 'Ajuste realizado',
-          estoque_anterior: produto.qtd_sistema || 0,
+          estoque_anterior: produtoEsperado?.qtd_esperada || 0,
           estoque_novo: quantidade,
         };
       }
@@ -145,6 +150,26 @@ const ConferenciaAuditoria: React.FC = () => {
       alert(`Erro ao salvar conferência: ${err?.response?.data?.message || err.message}`);
     }
   };
+
+  if (loading) {
+    return (
+      <Layout show={false}>
+        <Box p={3} display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <Typography variant="h6">Carregando dados da auditoria...</Typography>
+        </Box>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout show={false}>
+        <Box p={3} display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <Typography variant="h6" color="error">{error}</Typography>
+        </Box>
+      </Layout>
+    );
+  }
 
   return (
     <Layout show={false}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -26,10 +27,10 @@ import {
   MenuItem,
   TableSortLabel
 } from '@mui/material';
-import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
+import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon, PlayArrow } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import axios from 'axios';
-import { buscarAuditoria, buscarArmazemPorEAN } from '../services/API';
+import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria } from '../services/API';
 
 interface Ocorrencia {
   ocorrencia_id: number;
@@ -59,6 +60,7 @@ export interface AuditoriaItem {
 const ITEMS_PER_PAGE = 10;
 
 export default function Auditoria() {
+  const navigate = useNavigate();
   const [busca, setBusca] = useState('');
   const [aba, setAba] = useState<'todos' | 'pendente' | 'concluida'>('todos');
   const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
@@ -184,6 +186,15 @@ export default function Auditoria() {
       ocorrencias: [],
       localizacao: '',
     });
+  };
+
+  const handleIniciarConferencia = async (auditoriaId: number) => {
+    try {
+      await iniciarAuditoria(auditoriaId);
+      navigate(`/ConferenciaAudi/${auditoriaId}`);
+    } catch (error: any) {
+      alert(`Erro ao iniciar conferência: ${error.message}`);
+    }
   };
 
   const filtrado = useMemo(() => {
@@ -414,19 +425,49 @@ export default function Auditoria() {
                   />
                 </TableCell>
                 <TableCell align='center'>
-                  <Tooltip title="Excluir auditoria">
-                    <IconButton
-                      size="small"
-                      onClick={() => { }}
-                      disabled={false}
-                      sx={{
-                        color: 'error.main',
-                        '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
-                      }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <Box display="flex" gap={1} justifyContent="center">
+                    {item.status === 'pendente' && (
+                      <Tooltip title="Iniciar conferência">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleIniciarConferencia(item.auditoria_id)}
+                          sx={{
+                            color: 'primary.main',
+                            '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' },
+                          }}
+                        >
+                          <PlayArrow fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {item.status === 'em andamento' && (
+                      <Tooltip title="Continuar conferência">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/ConferenciaAudi/${item.auditoria_id}`)}
+                          sx={{
+                            color: 'success.main',
+                            '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.1)' },
+                          }}
+                        >
+                          <CheckCircle fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Excluir auditoria">
+                      <IconButton
+                        size="small"
+                        onClick={() => { }}
+                        disabled={false}
+                        sx={{
+                          color: 'error.main',
+                          '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
