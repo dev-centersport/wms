@@ -28,6 +28,7 @@ import Auditoria from "./pages/Auditoria";
 import Relatorio from "./pages/Relatorio";
 import Usuarios from "./pages/Usuarios";
 import CriarUsuario from "./pages/CriarUsuario"
+import PerfilUsuario from "./pages/PerfilUsuario";
 
 import theme from './components/Theme';
 
@@ -74,6 +75,7 @@ root.render(
           {/* Usuarios */}
           <Route path="/usuarios" element={<Usuarios />} />
           <Route path="/criarusuario" element={<CriarUsuario />} />
+          <Route path="/perfil-usuario" element={<PerfilUsuario />} />
 
           {/* Redirecionamentos */}
           <Route path="/" element={<Navigate to="/login" replace />} />

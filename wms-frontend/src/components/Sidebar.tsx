@@ -21,6 +21,7 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import TrolleyIcon from '@mui/icons-material/Trolley';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import SecurityIcon from '@mui/icons-material/Security';
 
 const menuItems = [
   // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
@@ -29,12 +30,13 @@ const menuItems = [
   { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
   { label: 'Produto', icon: <ViewInArIcon />, path: '/produto' },
   { label: 'Consulta', icon: <SearchIcon />, path: '/consulta' },
-  // { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
-  // { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
-  // { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
-  // { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
-  // { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
-  // { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' }
+  { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
+  { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
+  { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
+  { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
+  { label: 'Usuários', icon: <PeopleAltIcon />, path: '/usuarios' },
+  { label: 'Perfis', icon: <SecurityIcon />, path: '/perfil-usuario' },
 ];
 
 interface SidebarProps {
