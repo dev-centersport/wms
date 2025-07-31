@@ -20,6 +20,7 @@ export class TipoLocalizacaoController {
   ) {}
 
   @Post()
+  @UseGuards(Autenticacao)
   create(@Body() createTipoLocalizacaoDto: CreateTipoLocalizacaoDto) {
     return this.tipoLocalizacaoService.create(createTipoLocalizacaoDto);
   }
@@ -44,6 +45,7 @@ export class TipoLocalizacaoController {
   }
 
   @Delete(':id')
+  @UseGuards(Autenticacao)
   remove(@Param('id') id: string) {
     return this.tipoLocalizacaoService.remove(+id);
   }

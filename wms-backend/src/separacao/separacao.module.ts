@@ -6,9 +6,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Produto } from 'src/produto/entities/produto.entity';
 import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Localizacao, Produto, ProdutoEstoque])],
+  imports: [
+    TypeOrmModule.forFeature([Localizacao, Produto, ProdutoEstoque]),
+    AuthModule,
+  ],
   controllers: [SeparacaoController],
   providers: [SeparacaoService],
 })

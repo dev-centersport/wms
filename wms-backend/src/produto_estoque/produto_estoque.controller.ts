@@ -19,6 +19,7 @@ export class ProdutoEstoqueController {
   constructor(private readonly produtoEstoqueService: ProdutoEstoqueService) {}
 
   @Post()
+  @UseGuards(Autenticacao)
   create(@Body() createProdutoEstoqueDto: CreateProdutoEstoqueDto) {
     return this.produtoEstoqueService.create(createProdutoEstoqueDto);
   }
@@ -34,6 +35,7 @@ export class ProdutoEstoqueController {
   }
 
   @Get('relatorio')
+  @UseGuards(Autenticacao)
   relatorioConsulta() {
     return this.produtoEstoqueService.relatorioConsulta();
   }
@@ -77,6 +79,7 @@ export class ProdutoEstoqueController {
   }
 
   @Patch(':id')
+  @UseGuards(Autenticacao)
   update(
     @Param('id') id: string,
     @Body() updateProdutoEstoqueDto: UpdateProdutoEstoqueDto,
@@ -85,6 +88,7 @@ export class ProdutoEstoqueController {
   }
 
   @Delete(':id')
+  @UseGuards(Autenticacao)
   remove(@Param('id') id: string) {
     return this.produtoEstoqueService.remove(+id);
   }

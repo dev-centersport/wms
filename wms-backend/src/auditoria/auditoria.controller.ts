@@ -8,18 +8,21 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { AuditoriaService } from './auditoria.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 import { StatusAuditoria } from './entities/auditoria.entity';
 import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
+import { Autenticacao } from 'src/auth/auth.guard';
 
 @Controller('auditoria')
 export class AuditoriaController {
   constructor(private readonly auditoriaService: AuditoriaService) {}
 
   @Post()
+  @UseGuards(Autenticacao)
   create(@Body() createAuditoriaDto: CreateAuditoriaDto) {
     return this.auditoriaService.create(createAuditoriaDto);
   }
@@ -61,6 +64,7 @@ export class AuditoriaController {
   }
 
   @Patch(':id')
+  @UseGuards(Autenticacao)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateAuditoriaDto: UpdateAuditoriaDto,
@@ -69,16 +73,19 @@ export class AuditoriaController {
   }
 
   @Delete(':id')
+  @UseGuards(Autenticacao)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.remove(id);
   }
 
   @Post(':id/iniciar')
+  @UseGuards(Autenticacao)
   iniciarAuditoria(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.iniciarAuditoria(id);
   }
 
   @Post(':id/concluir')
+  @UseGuards(Autenticacao)
   concluirAuditoria(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { conclusao: string; itens: CreateItemAuditoriaDto[] },
@@ -91,19 +98,8 @@ export class AuditoriaController {
   }
 
   @Post(':id/cancelar')
+  @UseGuards(Autenticacao)
   cancelarAuditoria(@Param('id', ParseIntPipe) id: number) {
     return this.auditoriaService.cancelarAuditoria(id);
   }
-
-  // @Get('usuario/:usuario_id')
-  // findByUsuario(@Param('usuario_id', ParseIntPipe) usuario_id: number) {
-  //   return this.auditoriaService.findByUsuario(usuario_id);
-  // }
-
-  // @Get('ocorrencia/:ocorrencia_id')
-  // findByOcorrencia(
-  //   @Param('ocorrencia_id', ParseIntPipe) ocorrencia_id: number,
-  // ) {
-  //   return this.auditoriaService.findByOcorrencia(ocorrencia_id);
-  // }
 }
