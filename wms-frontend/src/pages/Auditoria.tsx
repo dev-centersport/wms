@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Checkbox,
   Chip,
   Dialog,
   DialogTitle,
@@ -43,7 +42,7 @@ export interface AuditoriaItem {
   conclusao: string;
   data_hora_inicio: string;
   data_hora_fim: string;
-  status: 'pendente' | 'concluida' | 'em andamento';
+  status: 'pendente' | 'concluida' | 'em andamento' | 'cancelada';
   usuario: {
     responsavel: string;
   };
@@ -56,6 +55,7 @@ export interface AuditoriaItem {
     nome: string;
   };
 }
+
 
 const ITEMS_PER_PAGE = 10;
 
@@ -71,6 +71,8 @@ export default function Auditoria() {
   const [filtroStatus, setFiltroStatus] = useState('');
   const [appliedFiltroStatus, setAppliedFiltroStatus] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [modalIniciar, setModalIniciar] = useState<AuditoriaItem | null>(null);
+  const [modalConferir, setModalConferir] = useState<AuditoriaItem | null>(null);
   const [ocorrenciasModal, setOcorrenciasModal] = useState<{
     open: boolean;
     ocorrencias: Ocorrencia[];
@@ -191,6 +193,7 @@ export default function Auditoria() {
   const handleIniciarConferencia = async (auditoriaId: number) => {
     try {
       await iniciarAuditoria(auditoriaId);
+      setModalIniciar(null);
       navigate(`/ConferenciaAudi/${auditoriaId}`);
     } catch (error: any) {
       alert(`Erro ao iniciar conferência: ${error.message}`);
@@ -222,6 +225,40 @@ export default function Auditoria() {
     );
   };
 
+  const onClickIniciar = (item: AuditoriaItem) => {
+    if (item.status === 'cancelada') {
+      alert("Esta auditoria foi cancelada");
+      return;
+    }
+    if (item.status === 'concluida') {
+      alert("Esta auditoria já foi concluída");
+      return;
+    }
+    if (item.status === 'em andamento') {
+      alert("Esta auditoria já foi iniciada");
+      return;
+    }
+    setModalIniciar(item);
+  };
+
+  // Função para lidar com clique em Conferir
+  const onClickConferir = (item: AuditoriaItem) => {
+    if (item.status === 'cancelada') {
+      alert("Esta auditoria foi cancelada");
+      return;
+    }
+    if (item.status === 'concluida') {
+      alert("Esta auditoria já foi concluída");
+      return;
+    }
+    if (item.status === 'pendente') {
+      alert("Esta auditoria não foi iniciada!");
+      return;
+    }
+    setModalConferir(item);
+  };
+
+
   return (
     <Layout totalPages={totalPaginas} currentPage={paginaAtual} onPageChange={setPaginaAtual}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -229,7 +266,6 @@ export default function Auditoria() {
           Auditorias
         </Typography>
       </Box>
-
       <Box display="flex" gap={2} alignItems="center" mb={2} flexWrap="wrap">
         <TextField
           placeholder="Busca por usuário ou ID"
@@ -340,60 +376,12 @@ export default function Auditoria() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === 'localizacao'}
-                  direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('localizacao')}
-                >
-                  Localização
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === 'usuario'}
-                  direction={orderBy === 'usuario' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('usuario')}
-                >
-                  Criador
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align='center'>
-                <TableSortLabel
-                  active={orderBy === 'data_hora_inicio'}
-                  direction={orderBy === 'data_hora_inicio' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('data_hora_inicio')}
-                >
-                  Início
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align='center'>
-                <TableSortLabel
-                  active={orderBy === 'data_hora_fim'}
-                  direction={orderBy === 'data_hora_fim' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('data_hora_fim')}
-                >
-                  Término
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align='center'>
-                <TableSortLabel
-                  active={orderBy === 'ocorrencias'}
-                  direction={orderBy === 'ocorrencias' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('ocorrencias')}
-                >
-                  Ocorrências
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align='center'>
-                <TableSortLabel
-                  active={orderBy === 'status'}
-                  direction={orderBy === 'status' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('status')}
-                >
-                  Status
-                </TableSortLabel>
-              </TableCell>
+              <TableCell>Localização</TableCell>
+              <TableCell>Criador</TableCell>
+              <TableCell align='center'>Início</TableCell>
+              <TableCell align='center'>Término</TableCell>
+              <TableCell align='center'>Ocorrências</TableCell>
+              <TableCell align='center'>Status</TableCell>
               <TableCell align='center'>Ações</TableCell>
             </TableRow>
           </TableHead>
@@ -415,50 +403,60 @@ export default function Auditoria() {
                 </TableCell>
                 <TableCell align='center'>
                   <Chip
-                    label={item.status === 'concluida' ? 'Concluído' : 'Pendente'}
+                    label={
+                      item.status === 'concluida'
+                        ? 'Concluído'
+                        : item.status === 'em andamento'
+                          ? 'Em andamento'
+                          : item.status === 'cancelada'
+                            ? 'Cancelada'
+                            : 'Pendente'
+                    }
                     size="small"
                     sx={{
-                      backgroundColor: item.status === 'concluida' ? '#4CAF50' : '#FFEB3B',
-                      color: item.status === 'concluida' ? '#fff' : '#000',
+                      backgroundColor:
+                        item.status === 'concluida'
+                          ? '#4CAF50'
+                          : item.status === 'em andamento'
+                            ? '#2196f3'
+                            : item.status === 'cancelada'
+                              ? '#f44336'
+                              : '#FFEB3B',
+                      color:
+                        item.status === 'concluida' || item.status === 'em andamento' || item.status === 'cancelada'
+                          ? '#fff'
+                          : '#000',
                       fontWeight: 600,
                     }}
                   />
                 </TableCell>
                 <TableCell align='center'>
                   <Box display="flex" gap={1} justifyContent="center">
-                    {item.status === 'pendente' && (
-                      <Tooltip title="Iniciar conferência">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleIniciarConferencia(item.auditoria_id)}
-                          sx={{
-                            color: 'primary.main',
-                            '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' },
-                          }}
-                        >
-                          <PlayArrow fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {item.status === 'em andamento' && (
-                      <Tooltip title="Continuar conferência">
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(`/ConferenciaAudi/${item.auditoria_id}`)}
-                          sx={{
-                            color: 'success.main',
-                            '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.1)' },
-                          }}
-                        >
-                          <CheckCircle fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      sx={{ fontWeight: 'bold', minWidth: 100 }}
+                      onClick={() => onClickIniciar(item)}
+                    >
+                      Iniciar
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      sx={{
+                        backgroundColor: '#61de27',
+                        color: '#000',
+                        fontWeight: 'bold',
+                        minWidth: 100,
+                      }}
+                      onClick={() => onClickConferir(item)}
+                    >
+                      Conferir
+                    </Button>
                     <Tooltip title="Excluir auditoria">
                       <IconButton
                         size="small"
                         onClick={() => { }}
-                        disabled={false}
                         sx={{
                           color: 'error.main',
                           '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
@@ -474,6 +472,135 @@ export default function Auditoria() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Modal de confirmação para iniciar auditoria */}
+      <Dialog
+        open={!!modalIniciar}
+        onClose={() => setModalIniciar(null)}
+      >
+        <DialogTitle sx={{ fontWeight: 700, textAlign: 'center', pt: 4 }}>
+          Iniciar auditoria
+        </DialogTitle>
+        <DialogContent>
+          <Typography fontSize={18} textAlign="center" py={2}>
+            Deseja iniciar a auditoria de <b>{modalIniciar?.localizacao.nome}</b>?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
+          <Button
+            onClick={() => setModalIniciar(null)}
+            sx={{
+              backgroundColor: '#e0e0e0',
+              color: '#222',
+              fontWeight: 'bold',
+              fontSize: 16,
+              textTransform: 'none',
+              px: 6,
+              py: 1.7,
+              borderRadius: '10px',
+              boxShadow: 'none',
+              mr: 2,
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                backgroundColor: '#bdbdbd',
+                transform: 'scale(1.01)',
+                boxShadow: '0 4px 8px #ccc',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => modalIniciar && handleIniciarConferencia(modalIniciar.auditoria_id)}
+            sx={{
+              backgroundColor: '#61de27',
+              color: '#000',
+              fontWeight: 'bold',
+              fontSize: 16,
+              textTransform: 'none',
+              px: 6,
+              py: 1.7,
+              borderRadius: '10px',
+              boxShadow: '0 6px 12px rgba(97, 222, 39, 0.4)',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                backgroundColor: '#4ec51f',
+                transform: 'scale(1.03)',
+                boxShadow: '0 8px 16px rgba(78, 197, 31, 0.5)',
+              },
+            }}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de confirmação para conferir auditoria */}
+      <Dialog
+        open={!!modalConferir}
+        onClose={() => setModalConferir(null)}
+      >
+        <DialogTitle sx={{ fontWeight: 700, textAlign: 'center', pt: 4 }}>
+          Conferir auditoria
+        </DialogTitle>
+        <DialogContent>
+          <Typography fontSize={18} textAlign="center" py={2}>
+            Deseja conferir esta auditoria de <b>{modalConferir?.localizacao.nome}</b>?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
+          <Button
+            onClick={() => setModalConferir(null)}
+            sx={{
+              backgroundColor: '#e0e0e0',
+              color: '#222',
+              fontWeight: 'bold',
+              fontSize: 16,
+              textTransform: 'none',
+              px: 6,
+              py: 1.7,
+              borderRadius: '10px',
+              boxShadow: 'none',
+              mr: 2,
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                backgroundColor: '#bdbdbd',
+                transform: 'scale(1.01)',
+                boxShadow: '0 4px 8px #ccc',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => {
+              if (modalConferir) {
+                setModalConferir(null);
+                navigate(`/ConferenciaAudi/${modalConferir.auditoria_id}`);
+              }
+            }}
+            sx={{
+              backgroundColor: '#61de27',
+              color: '#000',
+              fontWeight: 'bold',
+              fontSize: 16,
+              textTransform: 'none',
+              px: 6,
+              py: 1.7,
+              borderRadius: '10px',
+              boxShadow: '0 6px 12px rgba(97, 222, 39, 0.4)',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                backgroundColor: '#4ec51f',
+                transform: 'scale(1.03)',
+                boxShadow: '0 8px 16px rgba(78, 197, 31, 0.5)',
+              },
+            }}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal de Ocorrências */}
       <Dialog
