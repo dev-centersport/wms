@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('usuario')
 export class UsuarioController {
@@ -25,6 +27,11 @@ export class UsuarioController {
     return this.usuarioService.validarUsuario(body.usuario, body.senha);
   }
 
+  @Post('logout')
+  logoutUsuario(@Body() body: { usuario: string; senha: string }) {
+    return this.usuarioService.logoutUsuario(body.usuario, body.senha);
+  }
+
   @Get()
   findAll() {
     return this.usuarioService.findAll();
@@ -36,6 +43,7 @@ export class UsuarioController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard)
   update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
     return this.usuarioService.update(+id, updateUsuarioDto);
   }
