@@ -11,7 +11,7 @@ export async function buscarProdutoPorEAN(ean) {
 	const localizacao = response.data;
 
 	if (!localizacao) {
-		throw new Error("Localização com esse EAN não encontrado.");
+		throw new Error("Produto com esse EAN não encontrado.");
 	}
 
 	return localizacao;

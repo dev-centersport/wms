@@ -1,5 +1,5 @@
 import {
-  // BadRequestException,
+  BadRequestException,
   HttpStatus,
   Injectable,
   NotFoundException,
@@ -29,7 +29,7 @@ export class UsuarioService {
   async findOne(usuario_id: number): Promise<Usuario> {
     const usuario = await this.UsuarioRepository.findOne({
       where: { usuario_id },
-      relations: ['perfil'],
+      relations: ['usuario'],
     });
 
     if (!usuario)
@@ -78,43 +78,9 @@ export class UsuarioService {
         message: 'Senha inválida',
       };
 
-    usuarioEncontrado.is_logged = true;
-    await this.UsuarioRepository.save(usuarioEncontrado);
-
     return {
       status: HttpStatus.OK,
-      message: 'Usuário entrou com sucesso',
-    };
-  }
-
-  async logoutUsuario(
-    usuario: string,
-    senha: string,
-  ): Promise<{ status: number; message: string }> {
-    const usuarioEncontrado = await this.UsuarioRepository.findOne({
-      where: { usuario: usuario },
-    });
-
-    if (!usuarioEncontrado)
-      return {
-        status: HttpStatus.NOT_FOUND,
-        message: 'Usuário não encontrado',
-      };
-
-    const validacao = usuarioEncontrado.senha === senha;
-
-    if (!validacao)
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Senha inválida',
-      };
-
-    usuarioEncontrado.is_logged = false;
-    await this.UsuarioRepository.save(usuarioEncontrado);
-
-    return {
-      status: HttpStatus.OK,
-      message: 'Usuário saiu com sucesso',
+      message: 'Usuário logado com sucesso',
     };
   }
 
@@ -145,4 +111,20 @@ export class UsuarioService {
 
     await this.UsuarioRepository.remove(usuario);
   }
+
+  //   create(createUsuarioDto: CreateUsuarioDto) {
+  //     return 'This action adds a new usuario';
+  //   }
+  //   findAll() {
+  //     return `This action returns all usuario`;
+  //   }
+  //   findOne(id: number) {
+  //     return `This action returns a #${id} usuario`;
+  //   }
+  //   update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
+  //     return `This action updates a #${id} usuario`;
+  //   }
+  //   remove(id: number) {
+  //     return `This action removes a #${id} usuario`;
+  //   }
 }

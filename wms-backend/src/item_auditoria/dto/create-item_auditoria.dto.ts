@@ -5,13 +5,12 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { idRelations } from 'src/utils/decorator.id.relations';
 import { MotivoDiferenca } from '../entities/item_auditoria.entity';
 
 export class CreateItemAuditoriaDto {
   @IsNotEmpty()
-  @IsString()
-  conclusao: string;
+  @IsInt()
+  produto_estoque_id: number;
 
   @IsNotEmpty()
   @IsInt()
@@ -26,7 +25,6 @@ export class CreateItemAuditoriaDto {
   motivo_diferenca: MotivoDiferenca;
 
   @IsOptional()
-  @IsNotEmpty()
   @IsString()
   mais_informacoes?: string;
 
@@ -41,7 +39,4 @@ export class CreateItemAuditoriaDto {
   @IsNotEmpty()
   @IsInt()
   estoque_novo: number;
-
-  @idRelations()
-  auditoria_id: number;
 }

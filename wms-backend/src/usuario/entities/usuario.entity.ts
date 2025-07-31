@@ -34,9 +34,6 @@ export class Usuario {
   @Column({ type: 'boolean', default: true })
   ativo: boolean;
 
-  @Column({ type: 'boolean', default: false })
-  is_logged: boolean;
-
   @ManyToOne(() => Perfil, (perfil) => perfil.usuarios)
   @JoinColumn()
   perfil: Perfil;

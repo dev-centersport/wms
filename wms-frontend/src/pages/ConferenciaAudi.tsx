@@ -18,16 +18,16 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  buscarOcorrenciasDaLocalizacao,
   registrarConferenciaAuditoria,
   buscarProdutoPorEAN,
-  buscarAuditoria,
+  buscarAuditoriaPorId,
+  buscarProdutosAuditoria,
   ItemAuditoriaPayload,
 } from '../services/API';
 import Layout from '../components/Layout';
 
 const ConferenciaAuditoria: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // Este ID agora é o ID da auditoria
   const [esperados, setEsperados] = useState<any[]>([]);
   const [bipados, setBipados] = useState<Record<string, number>>({});
   const [produtosMap, setProdutosMap] = useState<Record<string, any>>({});
@@ -37,47 +37,66 @@ const ConferenciaAuditoria: React.FC = () => {
   const [auditoriaId, setAuditoriaId] = useState<number | null>(null);
   const [conclusaoTexto, setConclusaoTexto] = useState('');
   const [motivos, setMotivos] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function carregarProdutos() {
-      if (!id) return;
-      try {
-        const dados = await buscarOcorrenciasDaLocalizacao(Number(id));
-        const produtos = dados.flatMap((ocorrencia: any) => ocorrencia.produto || []);
-        setEsperados(produtos);
+    async function carregarAuditoria() {
+      if (!id) {
+        setError('ID da auditoria não fornecido');
+        setLoading(false);
+        return;
+      }
 
-        if (dados.length > 0) {
-          setLocalizacaoNome(dados[0].localizacao || '');
-          setArmazemNome(dados[0].armazem || '');
-          setEanLocalizacao(dados[0].ean_localizacao || '');
+      try {
+        setLoading(true);
+        const auditoriaId = Number(id);
+        setAuditoriaId(auditoriaId);
+
+        // Buscar detalhes da auditoria
+        const auditoria = await buscarAuditoriaPorId(auditoriaId);
+
+        if (!auditoria) {
+          setError('Auditoria não encontrada');
+          setLoading(false);
+          return;
         }
+
+        // Verificar se a auditoria está em andamento
+        if (auditoria.status !== 'em andamento') {
+          setError('Esta auditoria não está em andamento');
+          setLoading(false);
+          return;
+        }
+
+        // Definir informações da localização
+        setLocalizacaoNome(auditoria.localizacao?.nome || '');
+        setArmazemNome(auditoria.localizacao?.armazem?.nome || '');
+        setEanLocalizacao(auditoria.localizacao?.ean || '');
+
+        // Buscar produtos da auditoria usando a API de ocorrências da auditoria
+        try {
+          const dados = await buscarProdutosAuditoria(auditoriaId);
+          
+          if (dados && dados.length > 0 && dados[0].produto) {
+            setEsperados(dados[0].produto);
+          } else {
+            setError('Nenhum produto encontrado nesta auditoria');
+          }
+        } catch (err) {
+          console.error('Erro ao buscar produtos da auditoria:', err);
+          setError('Erro ao carregar produtos da auditoria');
+        }
+
       } catch (err) {
-        alert('Erro ao buscar produtos da localização.');
+        console.error('Erro ao carregar auditoria:', err);
+        setError('Erro ao carregar dados da auditoria');
+      } finally {
+        setLoading(false);
       }
     }
 
-    async function carregarAuditoriaRelacionada() {
-      if (!id) return;
-      try {
-        const resultado = await buscarAuditoria({ status: 'em andamento' });
-        const auditorias = resultado.results || [];
-
-        const auditoriaRelacionada = auditorias.find(
-          (a: any) => a.localizacao?.localizacao_id === Number(id)
-        );
-
-        if (auditoriaRelacionada) {
-          setAuditoriaId(auditoriaRelacionada.auditoria_id);
-        } else {
-          alert('Nenhuma auditoria em andamento encontrada para esta localização.');
-        }
-      } catch {
-        alert('Erro ao buscar auditoria em andamento.');
-      }
-    }
-
-    carregarProdutos();
-    carregarAuditoriaRelacionada();
+    carregarAuditoria();
   }, [id]);
 
   const handleBipagem = async (ean: string) => {
@@ -120,15 +139,17 @@ const ConferenciaAuditoria: React.FC = () => {
     const itens: ItemAuditoriaPayload[] = Object.entries(bipados).map(
       ([produto_id, quantidade]) => {
         const produto = produtosMap[produto_id] || {};
+        const produtoEsperado = esperados.find((p: any) => p.produto_id === Number(produto_id));
+        
         return {
           produto_estoque_id: produto.produto_estoque_id || null,
           quantidade,
-          quantidades_sistema: produto.qtd_sistema || 0,
+          quantidades_sistema: produtoEsperado?.qtd_esperada || 0,
           quantidades_fisico: quantidade,
           motivo_diferenca: motivos[produto_id] || 'outro',
           mais_informacoes: '',
           acao_corretiva: 'Ajuste realizado',
-          estoque_anterior: produto.qtd_sistema || 0,
+          estoque_anterior: produtoEsperado?.qtd_esperada || 0,
           estoque_novo: quantidade,
         };
       }
@@ -145,6 +166,28 @@ const ConferenciaAuditoria: React.FC = () => {
       alert(`Erro ao salvar conferência: ${err?.response?.data?.message || err.message}`);
     }
   };
+
+  if (loading) {
+    return (
+      <Layout show={false}>
+        <Box p={3}>
+          <Typography variant="h6">Carregando auditoria...</Typography>
+        </Box>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout show={false}>
+        <Box p={3}>
+          <Typography variant="h6" color="error">
+            Erro: {error}
+          </Typography>
+        </Box>
+      </Layout>
+    );
+  }
 
   return (
     <Layout show={false}>
