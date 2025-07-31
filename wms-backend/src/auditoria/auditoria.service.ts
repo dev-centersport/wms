@@ -10,7 +10,6 @@ import { Ocorrencia } from '../ocorrencia/entities/ocorrencia.entity';
 import { Localizacao } from '../localizacao/entities/localizacao.entity';
 import { ItemAuditoria } from '../item_auditoria/entities/item_auditoria.entity';
 import { CreateItemAuditoriaDto } from 'src/item_auditoria/dto/create-item_auditoria.dto';
-import { ProdutoEstoque } from 'src/produto_estoque/entities/produto_estoque.entity';
 
 @Injectable()
 export class AuditoriaService {
@@ -25,8 +24,6 @@ export class AuditoriaService {
     private readonly localizacaoRepository: Repository<Localizacao>,
     @InjectRepository(ItemAuditoria)
     private readonly itemAuditoriaRepository: Repository<ItemAuditoria>,
-    @InjectRepository(ProdutoEstoque)
-    private readonly produtoEstoqueRepository: Repository<ProdutoEstoque>,
   ) {}
 
   async create(createAuditoriaDto: CreateAuditoriaDto): Promise<Auditoria> {
@@ -148,7 +145,13 @@ export class AuditoriaService {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: id },
       ...options,
-      relations: ['usuario', 'ocorrencias', 'localizacao', 'localizacao.armazem', 'itens_auditoria'],
+      relations: [
+        'usuario',
+        'ocorrencias',
+        'localizacao',
+        'localizacao.armazem',
+        'itens_auditoria',
+      ],
     });
 
     if (!auditoria) {
@@ -260,21 +263,9 @@ export class AuditoriaService {
     // Salvar os itens de auditoria
     const itensSalvos = await Promise.all(
       itens.map(async (item) => {
-        // Verificar se o produto_estoque existe
-        const produtoEstoque = await this.produtoEstoqueRepository.findOne({
-          where: { produto_estoque_id: item.produto_estoque_id },
-        });
-
-        if (!produtoEstoque) {
-          throw new NotFoundException(
-            `Produto estoque com ID ${item.produto_estoque_id} não encontrado`,
-          );
-        }
-
         const itemAuditoria = this.itemAuditoriaRepository.create({
           ...item,
           auditoria,
-          produto_estoque: produtoEstoque,
         });
         return this.itemAuditoriaRepository.save(itemAuditoria);
       }),
@@ -369,25 +360,13 @@ export class AuditoriaService {
 
     return [
       {
-        armazem:
-          ocorrencias[0].localizacao.armazem?.nome || null,
-        localizacao:
-          ocorrencias[0].localizacao?.nome || null,
+        auditoria_id: auditoria.auditoria_id,
+        armazem: ocorrencias[0].localizacao.armazem?.nome || null,
+        localizacao: ocorrencias[0].localizacao?.nome || null,
         quantidade: ocorrencias.length,
         produto: produtosArray,
       },
     ];
-  }
-
-  async findByLocalizacao(localizacao_id: number): Promise<Auditoria[]> {
-    return this.auditoriaRepository.find({
-      where: { 
-        localizacao: { localizacao_id: localizacao_id },
-        status: StatusAuditoria.EM_ANDAMENTO 
-      },
-      relations: ['localizacao', 'localizacao.armazem'],
-      order: { auditoria_id: 'DESC' },
-    });
   }
 
   // async findByStatus(status: StatusAuditoria): Promise<Auditoria[]> {
