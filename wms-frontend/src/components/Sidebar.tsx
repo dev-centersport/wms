@@ -23,10 +23,9 @@ import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const menuItems = [
-  // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
   { label: 'Armazém', icon: <HomeIcon />, path: '/armazem' },
   { label: 'Localização', icon: <RoomIcon />, path: '/localizacao' },
-  { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
+  { label: 'Tipo Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
   { label: 'Produto', icon: <ViewInArIcon />, path: '/produto' },
   { label: 'Consulta', icon: <SearchIcon />, path: '/consulta' },
   { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
@@ -34,50 +33,81 @@ const menuItems = [
   { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
   { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
   { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
-  { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' }
+  { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' },
 ];
+
+const SIDEBAR_WIDTH = 210;
 
 interface SidebarProps {
   children: React.ReactNode;
 }
 
-// NÃO precisa mais da interface SidebarProps ou do children
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
-  // const Sidebar = () => {
   const location = useLocation();
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <Drawer
         variant="permanent"
         anchor="left"
-        sx={{
-          width: 200,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            borderTopRightRadius: 8,
-            borderBottomRightRadius: 8,
-            width: 200,
-            backgroundColor: '#61de27',
-            boxSizing: 'border-box',
-            paddingTop: 2,
+        PaperProps={{
+          sx: {
+            width: SIDEBAR_WIDTH,
+            background: 'linear-gradient(rgb(103, 221, 40) 100%)',
+            color: '#111',
             borderRight: 'none',
+            boxShadow: '4px 0 16px -4px #0001',
+            zIndex: 1200,
+            overflow: 'hidden',
+            borderTopRightRadius: 10,
+            borderBottomRightRadius: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            position: 'fixed', // Garante que nunca vai rolar junto
+            top: 0,
+            left: 0,
+            height: '100vh',
+            transition: 'box-shadow 0.2s',
+            paddingX: 0,
+            paddingTop: 0,
           },
         }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+            mt: 1,
+            mb: 1,
+            px: 0,
+            userSelect: 'none',
+          }}
+        >
           <Box
             component="img"
             src={image}
             alt="Logo"
-            sx={{ width: 170, height: 140, marginTop: 2 }}
+            sx={{
+              width: 140,
+              height: 110,
+              mb: 1,
+            }}
           />
         </Box>
-
-        <List disablePadding>
+        <List
+          disablePadding
+          sx={{
+            width: '100%',
+            flexGrow: 1,
+          }}
+        >
           {menuItems.map(({ label, icon, path }) => {
-            // Considera ativo se o início da rota bate com o path
-            const isActive = location.pathname === path || location.pathname.startsWith(path + '/');
+            const isActive =
+              location.pathname === path || location.pathname.startsWith(path + '/');
             return (
               <ListItemButton
                 key={path}
@@ -85,41 +115,71 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
                 to={path}
                 selected={isActive}
                 sx={{
-                  px: 3,
-                  py: 1,
-                  position: 'relative',
-                  '&.Mui-selected::before': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 2,
-                    backgroundColor: '#000',
-                    borderTopRightRadius: 4,
-                    borderBottomRightRadius: 4,
-                  },
-                  '&.Mui-selected': {
-                    backgroundColor: 'transparent',
-                    fontWeight: 'bold',
+                  mx: 2,
+                  my: 0.5,
+                  borderRadius: 1.5,
+                  px: 2,
+                  py: 1.2,
+                  minHeight: 48,
+                  alignItems: 'center',
+                  boxShadow: isActive ? '0 2px 12px #1111' : 'none',
+                  background: isActive ? 'rgba(255,255,255,0.98)' : 'transparent',
+                  fontWeight: isActive ? 'bold' : 500,
+                  color: isActive ? '#222' : '#1d4a09',
+                  '& .MuiListItemIcon-root': {
+                    color: isActive ? '#0e9200' : '#0b3d11',
                   },
                   '&:hover': {
-                    backgroundColor: 'rgba(238, 0, 0, 0.05)',
+                    background: 'rgba(255,255,255,0.89)',
+                    color: '#198700',
                   },
+                  transition: 'background 0.15s, box-shadow 0.22s',
+                  position: 'relative',
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 32, color: '#000' }}>{icon}</ListItemIcon>
+                {isActive && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: 4,
+                      top: 10,
+                      bottom: 10,
+                      width: 4,
+                      borderRadius: 2,
+                      background: 'linear-gradient(180deg,#198700 0%,#68ea34 100%)',
+                      boxShadow: '0 0 4px #0b0b0b22',
+                    }}
+                  />
+                )}
+                <ListItemIcon sx={{ minWidth: 32, mr: 1 }}>{icon}</ListItemIcon>
                 <ListItemText
                   primary={label}
-                  primaryTypographyProps={{ sx: { color: '#000', fontSize: 14 } }}
+                  primaryTypographyProps={{
+                    sx: {
+                      fontSize: 13.2,
+                      fontWeight: isActive ? 700 : 500,
+                      letterSpacing: '0.03em',
+                      textTransform: 'none',
+                    },
+                  }}
                 />
               </ListItemButton>
             );
           })}
         </List>
+        <Box sx={{ height: 32 }} />
       </Drawer>
-
-      <Box component="main" width="100%">
+      <Box
+        component="main"
+        sx={{
+          marginLeft: `${SIDEBAR_WIDTH}px`,
+          width: `calc(100vw - ${SIDEBAR_WIDTH}px)`,
+          minHeight: '100vh',
+          background: '#fafbfd',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {children}
       </Box>
     </Box>

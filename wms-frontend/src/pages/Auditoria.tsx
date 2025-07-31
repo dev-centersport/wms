@@ -69,6 +69,8 @@ export default function Auditoria() {
   const [filtroStatus, setFiltroStatus] = useState('');
   const [appliedFiltroStatus, setAppliedFiltroStatus] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [confirmarAberto, setConfirmarAberto] = useState(false);
+  const [localizacaoIdSelecionada, setLocalizacaoIdSelecionada] = useState<string | null>(null);
   const [ocorrenciasModal, setOcorrenciasModal] = useState<{
     open: boolean;
     ocorrencias: Ocorrencia[];
@@ -329,7 +331,7 @@ export default function Auditoria() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>
+              <TableCell align='center'>
                 <TableSortLabel
                   active={orderBy === 'localizacao'}
                   direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
@@ -389,7 +391,7 @@ export default function Auditoria() {
           <TableBody>
             {exibidos.map((item) => (
               <TableRow key={item.auditoria_id}>
-                <TableCell>{item.localizacao.nome} - {item.armazem?.nome || '-'}</TableCell>
+                <TableCell align='center'>{item.localizacao.nome} - {item.armazem?.nome || '-'}</TableCell>
                 <TableCell>{item.usuario.responsavel}</TableCell>
                 <TableCell align='center'>{item.data_hora_inicio}</TableCell>
                 <TableCell align='center'>{item.data_hora_fim}</TableCell>
@@ -414,19 +416,38 @@ export default function Auditoria() {
                   />
                 </TableCell>
                 <TableCell align='center'>
-                  <Tooltip title="Excluir auditoria">
-                    <IconButton
-                      size="small"
-                      onClick={() => { }}
-                      disabled={false}
-                      sx={{
-                        color: 'error.main',
-                        '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
-                      }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <Box display="flex" justifyContent="center" gap={1}>
+                    <Tooltip title="Conferir">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
+                        onClick={() => {
+                          console.log('📌 Clicou em conferir. ID:', item.localizacao.ean);
+                          setLocalizacaoIdSelecionada(item.localizacao.ean); // ou item.localizacao_id
+                          setConfirmarAberto(true);
+                        }}
+                      >
+                        Conferir
+                      </Button>
+                    </Tooltip>
+
+                    <Tooltip title="Cancelar auditoria">
+                      <IconButton
+                        size="medium"
+                        onClick={() => {
+                          console.log('❌ Cancelar auditoria ID:', item.auditoria_id);
+                          // Lógica de cancelamento aqui
+                        }}
+                        sx={{
+                          color: 'error.main',
+                          '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' },
+                        }}
+                      >
+                        <Cancel fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
