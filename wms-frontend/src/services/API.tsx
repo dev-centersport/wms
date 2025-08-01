@@ -93,7 +93,7 @@ export interface AuditoriaItem {
   ocorrencias?: Ocorrencia[];
 }
 
-export type StatusAuditoria = 'pendente' | 'concluida' | 'em andamento';
+export type StatusAuditoria = 'pendente' | 'concluida' | 'em andamento' | 'cancelada';
 
 export async function buscarAuditoria(params?: {
   search?: string;
