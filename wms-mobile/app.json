@@ -4,9 +4,9 @@
     "slug": "wms-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo01.png",
+    "icon": "./assets/images/icon-centersport-1024x1024.png",
     "splash": {
-      "image": "./assets/images/logo01.png",
+      "image": "./assets/images/icon-centersport-1024x1024.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -29,14 +29,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo01.png",
+        "foregroundImage": "./assets/images/icon-centersport-1024x1024.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.centersporti.wmsmobile"
     },
     "web": {
-      "favicon": "./assets/images/logo01.png"
+      "favicon": "./assets/images/icon-centersport-1024x1024.png"
     },
     "extra": {
       "eas": {
