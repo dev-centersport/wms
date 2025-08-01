@@ -1000,6 +1000,7 @@ export interface Perfil {
   pode_add: boolean;
   pode_edit: boolean;
   pode_delete: boolean;
+  usuarios_count?: number;
 }
 
 export async function buscarPerfis(): Promise<Perfil[]> {
@@ -1055,6 +1056,7 @@ export async function excluirPerfil(id: number): Promise<void> {
   }
 }
 
+
 // Função para buscar auditoria por ID (apenas uma vez!)
 export async function buscarAuditoriaPorId(auditoriaId: number) {
   try {
@@ -1068,12 +1070,13 @@ export async function buscarAuditoriaPorId(auditoriaId: number) {
 
 // Função para buscar produtos (ocorrências) de uma auditoria (apenas uma vez!)
 export async function buscarProdutosAuditoria(auditoriaId: number) {
+
   try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
-    return response.data;
+    const res = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
+    return res.data;
   } catch (error: any) {
-    console.error('Erro ao buscar produtos da auditoria:', error.message);
-    throw new Error('Falha ao carregar os produtos da auditoria.');
+    console.error('Erro ao cancelar auditoria:', error.message);
+    throw new Error('Falha ao cancelar a auditoria.');
   }
 }
 

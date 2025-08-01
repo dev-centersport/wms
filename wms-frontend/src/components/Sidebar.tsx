@@ -22,8 +22,10 @@ import TrolleyIcon from '@mui/icons-material/Trolley';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import SecurityIcon from '@mui/icons-material/Security';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 
 const menuItems = [
+  { label: 'Dashboard', icon: <AnalyticsIcon />, path: '/dashboard' },
   { label: 'Armazém', icon: <HomeIcon />, path: '/armazem' },
   { label: 'Localização', icon: <RoomIcon />, path: '/localizacao' },
   { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
@@ -45,7 +47,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
-  const location = useLocation(); // <---- CORRETO
+
+  const currentLocation = useLocation();
 
 
   return (
@@ -110,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
         >
           {menuItems.map(({ label, icon, path }) => {
             const isActive =
-              location.pathname === path || location.pathname.startsWith(path + '/');
+              currentLocation.pathname === path || currentLocation.pathname.startsWith(path + '/');
             return (
               <ListItemButton
                 key={path}
