@@ -20,6 +20,8 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ItemAuditoriaModule } from './item_auditoria/item_auditoria.module';
 import { SeparacaoModule } from './separacao/separacao.module';
 import { AuthModule } from './auth/auth.module';
+import { PermissaoModule } from './permissao/permissao.module';
+import { PermissoesModule } from './auth/permissoes.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -92,6 +94,8 @@ import { AuthModule } from './auth/auth.module';
     ItemAuditoriaModule,
     SeparacaoModule,
     AuthModule,
+    PermissaoModule,
+    PermissoesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,5 +1,13 @@
+import { Permissao } from 'src/permissao/entities/permissao.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Perfil {
@@ -12,17 +20,9 @@ export class Perfil {
   @Column({ type: 'text', nullable: true })
   descricao?: string;
 
-  @Column({ type: 'boolean', default: true })
-  can_view: boolean;
-
-  @Column({ type: 'boolean', default: false })
-  can_add: boolean;
-
-  @Column({ type: 'boolean', default: false })
-  can_edit: boolean;
-
-  @Column({ type: 'boolean', default: false })
-  can_delete: boolean;
+  @ManyToMany(() => Permissao)
+  @JoinTable()
+  permissoes: Permissao[];
 
   @OneToMany(() => Usuario, (usuario) => usuario.perfil)
   usuarios: Usuario[];
