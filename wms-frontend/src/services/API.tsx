@@ -978,6 +978,7 @@ export interface Perfil {
   pode_add: boolean;
   pode_edit: boolean;
   pode_delete: boolean;
+  usuarios_count?: number;
 }
 
 export async function buscarPerfis(): Promise<Perfil[]> {
@@ -1033,29 +1034,14 @@ export async function excluirPerfil(id: number): Promise<void> {
   }
 }
 
-// Função para buscar auditoria por ID
-export async function buscarAuditoriaPorId(auditoriaId: number) {
-  try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar auditoria por ID:', error.message);
-    throw new Error('Falha ao carregar a auditoria.');
-  }
-}
-
-// Função para buscar produtos (ocorrências) de uma auditoria
-export async function buscarProdutosAuditoria(auditoriaId: number) {
-  try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar produtos da auditoria:', error.message);
-    throw new Error('Falha ao carregar os produtos da auditoria.');
-  }
-// services/API.ts
+// Função para cancelar auditoria
 export async function cancelarAuditoria(auditoriaId: number) {
-  const res = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
-  return res.data;
+  try {
+    const res = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
+    return res.data;
+  } catch (error: any) {
+    console.error('Erro ao cancelar auditoria:', error.message);
+    throw new Error('Falha ao cancelar a auditoria.');
+  }
 }
 

@@ -47,6 +47,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
+  const currentLocation = useLocation();
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -110,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
         >
           {menuItems.map(({ label, icon, path }) => {
             const isActive =
-              location.pathname === path || location.pathname.startsWith(path + '/');
+              currentLocation.pathname === path || currentLocation.pathname.startsWith(path + '/');
             return (
               <ListItemButton
                 key={path}

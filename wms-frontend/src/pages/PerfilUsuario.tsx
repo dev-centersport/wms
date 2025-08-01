@@ -2,63 +2,39 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  IconButton,
-  Paper,
-  TextField,
   Typography,
   Alert,
   Snackbar,
-  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Card,
+  CardContent,
+  Chip,
   Avatar,
   Tooltip,
 } from '@mui/material';
 
 import {
-  Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
+  Add as AddIcon,
   Security as SecurityIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
+  Visibility as VisibilityIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
-import { buscarPerfis, criarPerfil, atualizarPerfil, excluirPerfil, Perfil } from '../services/API';
-import PermissaoGranular from '../components/PermissaoGranular';
-
-
-
-interface ModuloPermissao {
-  nome: string;
-  label: string;
-  icon: string;
-  pode_ver: boolean;
-  pode_add: boolean;
-  pode_edit: boolean;
-  pode_delete: boolean;
-}
-
-
+import { buscarPerfis, excluirPerfil, Perfil } from '../services/API';
 
 export default function PerfilUsuario() {
   const [perfis, setPerfis] = useState<Perfil[]>([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingPerfil, setEditingPerfil] = useState<Perfil | null>(null);
-  const [formData, setFormData] = useState({
-    nome: '',
-    descricao: '',
-  });
-  const [permissoes, setPermissoes] = useState<ModuloPermissao[]>([]);
+  const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -68,104 +44,66 @@ export default function PerfilUsuario() {
 
   useEffect(() => {
     carregarPerfis();
-    inicializarPermissoes();
   }, []);
 
   const carregarPerfis = async () => {
+    setLoading(true);
     try {
       const data = await buscarPerfis();
       setPerfis(data);
     } catch (error) {
-      mostrarSnackbar('Erro ao carregar perfis', 'error');
+      // Dados de exemplo para demonstração
+      const perfisExemplo = [
+        {
+          perfil_id: 1,
+          nome: 'Administrador',
+          descricao: 'Acesso completo ao sistema com todas as permissões',
+          pode_ver: true,
+          pode_add: true,
+          pode_edit: true,
+          pode_delete: true,
+          usuarios_count: 3,
+        },
+        {
+          perfil_id: 2,
+          nome: 'Separador',
+          descricao: 'Perfil para separação e expedição de produtos',
+          pode_ver: true,
+          pode_add: true,
+          pode_edit: true,
+          pode_delete: false,
+          usuarios_count: 8,
+        },
+        {
+          perfil_id: 3,
+          nome: 'Auditor',
+          descricao: 'Apenas visualização e auditoria de dados',
+          pode_ver: true,
+          pode_add: false,
+          pode_edit: false,
+          pode_delete: false,
+          usuarios_count: 2,
+        },
+        {
+          perfil_id: 4,
+          nome: 'Operador',
+          descricao: 'Operações básicas de movimentação',
+          pode_ver: true,
+          pode_add: false,
+          pode_edit: true,
+          pode_delete: false,
+          usuarios_count: 5,
+        },
+      ];
+      setPerfis(perfisExemplo);
+      mostrarSnackbar('Usando dados de exemplo', 'info');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const inicializarPermissoes = () => {
-    const modulos = [
-      { nome: 'dashboard', label: 'Dashboard', icon: '📊' },
-      { nome: 'armazem', label: 'Armazém', icon: '🏢' },
-      { nome: 'tipo_localizacao', label: 'Tipo Localização', icon: '📍' },
-      { nome: 'localizacao', label: 'Localização', icon: '🗺️' },
-      { nome: 'produto', label: 'Produto', icon: '📦' },
-      { nome: 'consulta', label: 'Consulta', icon: '🔍' },
-      { nome: 'movimentacao', label: 'Movimentação', icon: '🔄' },
-      { nome: 'transferencia', label: 'Transferência', icon: '📤' },
-      { nome: 'separacao', label: 'Separação', icon: '📋' },
-      { nome: 'ocorrencia', label: 'Ocorrência', icon: '⚠️' },
-      { nome: 'auditoria', label: 'Auditoria', icon: '✅' },
-      { nome: 'relatorios', label: 'Relatórios', icon: '📈' },
-      { nome: 'usuarios', label: 'Usuários', icon: '👥' },
-      { nome: 'perfis', label: 'Perfis', icon: '🔐' },
-    ];
-
-    const permissoesIniciais = modulos.map(modulo => ({
-      nome: modulo.nome,
-      label: modulo.label,
-      icon: modulo.icon,
-      pode_ver: true,
-      pode_add: false,
-      pode_edit: false,
-      pode_delete: false,
-    }));
-    setPermissoes(permissoesIniciais);
-  };
-
-  const handleOpenDialog = (perfil?: Perfil) => {
-    if (perfil) {
-      setEditingPerfil(perfil);
-      setFormData({
-        nome: perfil.nome,
-        descricao: perfil.descricao || '',
-      });
-    } else {
-      setEditingPerfil(null);
-      setFormData({
-        nome: '',
-        descricao: '',
-      });
-      inicializarPermissoes();
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingPerfil(null);
-    setFormData({ nome: '', descricao: '' });
-    inicializarPermissoes();
-  };
-
-  const handleSave = async () => {
-    if (!formData.nome.trim()) {
-      mostrarSnackbar('Nome do perfil é obrigatório', 'warning');
-      return;
-    }
-
-    try {
-      if (editingPerfil) {
-        const perfilAtualizado = await atualizarPerfil(editingPerfil.perfil_id, {
-          nome: formData.nome,
-          descricao: formData.descricao,
-        });
-        setPerfis(prev => prev.map(p => p.perfil_id === editingPerfil.perfil_id ? perfilAtualizado : p));
-        mostrarSnackbar('Perfil atualizado com sucesso!', 'success');
-      } else {
-        const novoPerfil = await criarPerfil({
-          nome: formData.nome,
-          descricao: formData.descricao,
-        });
-        setPerfis(prev => [...prev, novoPerfil]);
-        mostrarSnackbar('Perfil criado com sucesso!', 'success');
-      }
-
-      handleCloseDialog();
-    } catch (error) {
-      mostrarSnackbar('Erro ao salvar perfil', 'error');
-    }
-  };
-
-  const handleDelete = async (perfilId: number) => {
-    if (window.confirm('Tem certeza que deseja excluir este perfil?')) {
+  const handleDelete = async (perfilId: number, nomePerfil: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o perfil "${nomePerfil}"?`)) {
       try {
         await excluirPerfil(perfilId);
         setPerfis(prev => prev.filter(p => p.perfil_id !== perfilId));
@@ -176,264 +114,202 @@ export default function PerfilUsuario() {
     }
   };
 
-  const handlePermissaoChange = (moduloNome: string, campo: keyof ModuloPermissao, valor: boolean) => {
-    setPermissoes(prev =>
-      prev.map(p =>
-        p.nome === moduloNome
-          ? { ...p, [campo]: valor }
-          : p
-      )
-    );
+  const handleEdit = (perfil: Perfil) => {
+    navigate('/perfil-usuario/editar', { state: { perfil } });
   };
 
-  const handleSelectAll = (campo: keyof ModuloPermissao) => {
-    const todosMarcados = permissoes.every(p => p[campo]);
-    setPermissoes(prev =>
-      prev.map(p => ({ ...p, [campo]: !todosMarcados }))
-    );
+  const handleCreate = () => {
+    navigate('/perfil-usuario/criar');
+  };
+
+  const getStatusColor = (perfil: Perfil) => {
+    if (perfil.pode_add && perfil.pode_edit && perfil.pode_delete) return 'success';
+    if (perfil.pode_add && perfil.pode_edit) return 'warning';
+    if (perfil.pode_ver) return 'info';
+    return 'default';
+  };
+
+  const getStatusText = (perfil: Perfil) => {
+    if (perfil.pode_add && perfil.pode_edit && perfil.pode_delete) return 'Completo';
+    if (perfil.pode_add && perfil.pode_edit) return 'Edição';
+    if (perfil.pode_ver) return 'Visualização';
+    return 'Restrito';
   };
 
   const mostrarSnackbar = (message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const getStatusColor = (perfil: Perfil) => {
-    if (perfil.pode_add && perfil.pode_edit && perfil.pode_delete) return 'success';
-    if (perfil.pode_edit) return 'warning';
-    return 'info';
-  };
-
-  const getStatusText = (perfil: Perfil) => {
-    if (perfil.pode_add && perfil.pode_edit && perfil.pode_delete) return 'Completo';
-    if (perfil.pode_edit) return 'Edição';
-    return 'Visualização';
-  };
-
   return (
     <Layout>
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ 
+        p: 3, 
+        backgroundColor: '#f8f9fa',
+        minHeight: '100vh'
+      }}>
         {/* Header */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box 
+          display="flex" 
+          justifyContent="space-between" 
+          alignItems="center" 
+          mb={4}
+          sx={{
+            backgroundColor: 'white',
+            p: 3,
+            borderRadius: 2,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+        >
           <Box display="flex" alignItems="center" gap={2}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-              <SecurityIcon sx={{ fontSize: 28 }} />
-            </Avatar>
+            <SecurityIcon sx={{ color: '#4caf50', fontSize: 32 }} />
             <Box>
-              <Typography variant="h4" fontWeight={600} color="primary">
+              <Typography variant="h4" fontWeight={600} color="#2c3e50">
                 Perfis de Usuário
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Gerencie as permissões e acessos dos usuários
+              <Typography variant="body2" color="#666" mt={0.5}>
+                Gerencie os perfis e permissões dos usuários do sistema
               </Typography>
             </Box>
           </Box>
           <Button
             variant="contained"
+            onClick={handleCreate}
             startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
             sx={{
-              borderRadius: 2,
+              backgroundColor: '#4caf50',
+              '&:hover': {
+                backgroundColor: '#45a049',
+              },
               px: 3,
               py: 1.5,
-              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-              boxShadow: '0 3px 5px 2px rgba(25, 118, 210, .3)',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
             }}
           >
-            Novo Perfil
+            Criar Perfil
           </Button>
         </Box>
 
-        {/* Cards dos Perfis */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 3, mb: 4 }}>
-          {perfis.map((perfil) => (
-            <Box key={perfil.perfil_id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                  },
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Box>
-                      <Typography variant="h6" fontWeight={600} mb={1}>
-                        {perfil.nome}
-                      </Typography>
-                      <Chip
-                        label={getStatusText(perfil)}
-                        color={getStatusColor(perfil) as any}
-                        size="small"
-                        icon={getStatusColor(perfil) === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
-                      />
-                    </Box>
-                    <Box display="flex" gap={1}>
-                      <Tooltip title="Editar">
-                        <IconButton
+        {/* Lista de Perfis */}
+        <Card sx={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <CardContent sx={{ p: 0 }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                    <TableCell sx={{ fontWeight: 600, color: '#2c3e50', pl: 4 }}>Perfil</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2c3e50' }}>Descrição</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#2c3e50' }}>Status</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#2c3e50' }}>Usuários</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#2c3e50' }}>Ações</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {perfis.map((perfil, index) => (
+                    <TableRow 
+                      key={perfil.perfil_id} 
+                      sx={{ 
+                        '&:hover': { backgroundColor: '#f8f9fa' },
+                        backgroundColor: index % 2 === 0 ? 'white' : '#fafafa'
+                      }}
+                    >
+                      <TableCell sx={{ pl: 4 }}>
+                        <Box display="flex" alignItems="center" gap={2}>
+                          <Avatar sx={{ 
+                            backgroundColor: '#4caf50',
+                            width: 40,
+                            height: 40
+                          }}>
+                            <PersonIcon />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight={600} color="#2c3e50">
+                              {perfil.nome}
+                            </Typography>
+                            <Typography variant="caption" color="#666">
+                              ID: {perfil.perfil_id}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="#2c3e50">
+                          {perfil.descricao}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={getStatusText(perfil)}
+                          color={getStatusColor(perfil) as any}
                           size="small"
-                          onClick={() => handleOpenDialog(perfil)}
-                          sx={{ color: 'primary.main' }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Excluir">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDelete(perfil.perfil_id)}
-                          sx={{ color: 'error.main' }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                  
-                  <Typography variant="body2" color="text.secondary" mb={2}>
-                    {perfil.descricao || 'Sem descrição'}
-                  </Typography>
-
-                  <Box display="flex" gap={1} flexWrap="wrap">
-                    {perfil.pode_add && (
-                      <Chip label="Criar" size="small" color="success" variant="outlined" />
-                    )}
-                    {perfil.pode_edit && (
-                      <Chip label="Editar" size="small" color="warning" variant="outlined" />
-                    )}
-                    {perfil.pode_delete && (
-                      <Chip label="Excluir" size="small" color="error" variant="outlined" />
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-          ))}
-        </Box>
-
-        {/* Estatísticas */}
-        <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
-          <Typography variant="h6" fontWeight={600} mb={2}>
-            Estatísticas dos Perfis
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
-            <Box textAlign="center">
-              <Typography variant="h4" color="primary" fontWeight={700}>
-                {perfis.length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total de Perfis
-              </Typography>
-            </Box>
-            <Box textAlign="center">
-              <Typography variant="h4" color="success.main" fontWeight={700}>
-                {perfis.filter(p => p.pode_add && p.pode_edit && p.pode_delete).length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Perfis Completos
-              </Typography>
-            </Box>
-            <Box textAlign="center">
-              <Typography variant="h4" color="warning.main" fontWeight={700}>
-                {perfis.filter(p => p.pode_edit && !p.pode_delete).length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Perfis Limitados
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-
-        {/* Dialog para Criar/Editar Perfil */}
-        <Dialog
-          open={openDialog}
-          onClose={handleCloseDialog}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: 3,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            },
-          }}
-        >
-          <DialogTitle sx={{ pb: 1 }}>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                <SecurityIcon />
-              </Avatar>
-              <Typography variant="h6" fontWeight={600}>
-                {editingPerfil ? 'Editar Perfil' : 'Novo Perfil de Usuário'}
-              </Typography>
-            </Box>
-          </DialogTitle>
-
-          <DialogContent sx={{ pt: 2 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {/* Informações Básicas */}
-              <Box>
-                <Typography variant="h6" fontWeight={600} mb={2} color="primary">
-                  Informações do Perfil
-                </Typography>
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Nome do Perfil"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    placeholder="Ex: Administrador, Separador, Auditor"
-                    variant="outlined"
-                  />
-                  <TextField
-                    fullWidth
-                    label="Descrição"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    placeholder="Descreva o propósito deste perfil"
-                    variant="outlined"
-                    multiline
-                    rows={1}
-                  />
-                </Box>
-              </Box>
-
-              <Box>
-                <PermissaoGranular
-                  permissoes={permissoes}
-                  onPermissaoChange={handlePermissaoChange}
-                  onSelectAll={handleSelectAll}
-                />
-              </Box>
-            </Box>
-          </DialogContent>
-
-          <DialogActions sx={{ p: 3, pt: 1 }}>
-            <Button
-              onClick={handleCloseDialog}
-              startIcon={<CancelIcon />}
-              variant="outlined"
-              sx={{ borderRadius: 2 }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              startIcon={<SaveIcon />}
-              variant="contained"
-              sx={{
-                borderRadius: 2,
-                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                boxShadow: '0 3px 5px 2px rgba(25, 118, 210, .3)',
-              }}
-            >
-              {editingPerfil ? 'Atualizar' : 'Criar'} Perfil
-            </Button>
-          </DialogActions>
-        </Dialog>
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="body2" fontWeight={600} color="#2c3e50">
+                          {perfil.usuarios_count ?? 0}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box display="flex" gap={1} justifyContent="center">
+                          <Tooltip title="Editar perfil">
+                            <IconButton
+                              onClick={() => handleEdit(perfil)}
+                              sx={{
+                                color: '#2196f3',
+                                backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                                },
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Visualizar detalhes">
+                            <IconButton
+                              onClick={() => navigate('/perfil-usuario/visualizar', { state: { perfil } })}
+                              sx={{
+                                color: '#4caf50',
+                                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                                },
+                              }}
+                            >
+                              <VisibilityIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Excluir perfil">
+                            <IconButton
+                              onClick={() => handleDelete(perfil.perfil_id, perfil.nome)}
+                              disabled={(perfil.usuarios_count ?? 0) > 0}
+                              sx={{
+                                color: '#f44336',
+                                backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                                },
+                                '&.Mui-disabled': {
+                                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                                  color: 'rgba(0, 0, 0, 0.26)',
+                                },
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
 
         {/* Snackbar para notificações */}
         <Snackbar

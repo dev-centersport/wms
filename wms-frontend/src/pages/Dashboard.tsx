@@ -4,24 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
-  Paper,
-  Chip,
-  Avatar,
-  LinearProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  IconButton,
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
   Paper,
   Chip,
   Avatar,
@@ -34,6 +16,11 @@ import {
   IconButton,
   Tooltip,
   Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -50,11 +37,35 @@ import {
   Analytics as AnalyticsIcon,
   Refresh as RefreshIcon,
   Notifications as NotificationsIcon,
+  FilterList as FilterListIcon,
 } from '@mui/icons-material';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import Layout from '../components/Layout';
 
 // Dados simulados para demonstração
 const mockData = {
+  armazens: [
+    { id: 1, nome: 'DIB', cidade: 'São Paulo', estado: 'SP' },
+    { id: 2, nome: 'Sacotem', cidade: 'Campinas', estado: 'SP' },
+    { id: 3, nome: 'Etic', cidade: 'Rio de Janeiro', estado: 'RJ' },
+    { id: 4, nome: 'CenterSport', cidade: 'Belo Horizonte', estado: 'MG' },
+  ],
   estatisticas: {
     totalProdutos: 15420,
     produtosEmEstoque: 12850,
@@ -71,31 +82,61 @@ const mockData = {
     movimentacoes: { valor: 12.1, direcao: 'up' },
     ocorrencias: { valor: 3.2, direcao: 'down' },
   },
+  movimentacoesPorDia: [
+    { dia: 'Seg', entrada: 45, saida: 32, transferencia: 18 },
+    { dia: 'Ter', entrada: 52, saida: 38, transferencia: 22 },
+    { dia: 'Qua', entrada: 38, saida: 41, transferencia: 15 },
+    { dia: 'Qui', entrada: 61, saida: 35, transferencia: 28 },
+    { dia: 'Sex', entrada: 48, saida: 44, transferencia: 20 },
+    { dia: 'Sáb', entrada: 25, saida: 18, transferencia: 12 },
+    { dia: 'Dom', entrada: 15, saida: 8, transferencia: 5 },
+  ],
+  estoquePorArmazem: [
+    { armazem: 'DIB', quantidade: 5200, capacidade: 8000, percentual: 65 },
+    { armazem: 'Sacotem', quantidade: 3800, capacidade: 6000, percentual: 63 },
+    { armazem: 'Etic', quantidade: 2900, capacidade: 5000, percentual: 58 },
+    { armazem: 'CenterSport', quantidade: 2950, capacidade: 4000, percentual: 74 },
+  ],
+  auditoriasPorStatus: [
+    { status: 'Concluída', quantidade: 45, cor: '#4caf50' },
+    { status: 'Em Andamento', quantidade: 12, cor: '#ff9800' },
+    { status: 'Pendente', quantidade: 8, cor: '#f44336' },
+    { status: 'Cancelada', quantidade: 3, cor: '#9e9e9e' },
+  ],
   topProdutos: [
-    { nome: 'Produto A', quantidade: 1250, localizacao: 'A1-B2-C3' },
-    { nome: 'Produto B', quantidade: 980, localizacao: 'A2-B1-C4' },
-    { nome: 'Produto C', quantidade: 750, localizacao: 'A3-B3-C1' },
-    { nome: 'Produto D', quantidade: 620, localizacao: 'A1-B4-C2' },
-    { nome: 'Produto E', quantidade: 450, localizacao: 'A2-B2-C5' },
+    { nome: 'Tênis Nike Air Max', quantidade: 1250, localizacao: 'DIB-A1-B2-C3', armazem: 'DIB' },
+    { nome: 'Camisa Adidas Training', quantidade: 980, localizacao: 'Sacotem-A2-B1-C4', armazem: 'Sacotem' },
+    { nome: 'Bola de Futebol Penalty', quantidade: 750, localizacao: 'Etic-A3-B3-C1', armazem: 'Etic' },
+    { nome: 'Raquete Wilson Tennis', quantidade: 620, localizacao: 'CenterSport-A1-B4-C2', armazem: 'CenterSport' },
+    { nome: 'Luvas de Boxe Everlast', quantidade: 450, localizacao: 'DIB-A2-B2-C5', armazem: 'DIB' },
   ],
   movimentacoesRecentes: [
-    { tipo: 'Entrada', produto: 'Produto X', quantidade: 500, hora: '14:30' },
-    { tipo: 'Saída', produto: 'Produto Y', quantidade: 200, hora: '14:25' },
-    { tipo: 'Transferência', produto: 'Produto Z', quantidade: 150, hora: '14:20' },
-    { tipo: 'Entrada', produto: 'Produto W', quantidade: 300, hora: '14:15' },
-    { tipo: 'Saída', produto: 'Produto V', quantidade: 100, hora: '14:10' },
+    { tipo: 'Entrada', produto: 'Tênis Nike Air Max', quantidade: 500, hora: '14:30', armazem: 'DIB' },
+    { tipo: 'Saída', produto: 'Camisa Adidas Training', quantidade: 200, hora: '14:25', armazem: 'Sacotem' },
+    { tipo: 'Transferência', produto: 'Bola de Futebol Penalty', quantidade: 150, hora: '14:20', armazem: 'Etic' },
+    { tipo: 'Entrada', produto: 'Raquete Wilson Tennis', quantidade: 300, hora: '14:15', armazem: 'CenterSport' },
+    { tipo: 'Saída', produto: 'Luvas de Boxe Everlast', quantidade: 100, hora: '14:10', armazem: 'DIB' },
   ],
   alertas: [
-    { tipo: 'warning', mensagem: 'Produto "ABC123" com estoque baixo (5 unidades)' },
-    { tipo: 'error', mensagem: 'Localização "A1-B2-C3" com ocupação 95%' },
-    { tipo: 'info', mensagem: 'Auditoria programada para amanhã às 08:00' },
-    { tipo: 'success', mensagem: 'Separação #1234 concluída com sucesso' },
+    { tipo: 'warning', mensagem: 'Produto "Tênis Nike Air Max" com estoque baixo (5 unidades) - DIB' },
+    { tipo: 'error', mensagem: 'Localização "DIB-A1-B2-C3" com ocupação 95%' },
+    { tipo: 'info', mensagem: 'Auditoria programada para amanhã às 08:00 - Sacotem' },
+    { tipo: 'success', mensagem: 'Separação #1234 concluída com sucesso - Etic' },
   ],
+  performance: {
+    taxaAcerto: 98.5,
+    tempoMedioSeparacao: 2.3,
+    usuariosAtivos: 12,
+    ocupacaoArmazem: 85,
+  },
 };
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function Dashboard() {
   const [data, setData] = useState(mockData);
   const [loading, setLoading] = useState(false);
+  const [armazemFiltro, setArmazemFiltro] = useState('todos');
 
   const handleRefresh = () => {
     setLoading(true);
@@ -122,6 +163,15 @@ export default function Dashboard() {
     }
   };
 
+  const dadosFiltrados = armazemFiltro === 'todos' 
+    ? data 
+    : {
+        ...data,
+        topProdutos: data.topProdutos.filter(p => p.armazem === armazemFiltro),
+        movimentacoesRecentes: data.movimentacoesRecentes.filter(m => m.armazem === armazemFiltro),
+        alertas: data.alertas.filter(a => a.mensagem.includes(armazemFiltro)),
+      };
+
   return (
     <Layout>
       <Box sx={{ p: 3 }}>
@@ -140,28 +190,38 @@ export default function Dashboard() {
               </Typography>
             </Box>
           </Box>
-          <Box display="flex" gap={1}>
+          <Box display="flex" gap={2} alignItems="center">
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Filtrar por Armazém</InputLabel>
+              <Select
+                value={armazemFiltro}
+                label="Filtrar por Armazém"
+                onChange={(e) => setArmazemFiltro(e.target.value)}
+              >
+                <MenuItem value="todos">Todos os Armazéns</MenuItem>
+                {data.armazens.map((armazem) => (
+                  <MenuItem key={armazem.id} value={armazem.nome}>
+                    {armazem.nome}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Tooltip title="Atualizar dados">
               <IconButton onClick={handleRefresh} disabled={loading}>
                 <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Notificações">
-              <IconButton>
-                <NotificationsIcon />
               </IconButton>
             </Tooltip>
           </Box>
         </Box>
 
         {/* Cards de Estatísticas Principais */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 3, mb: 4 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
           <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" fontWeight={700}>
-                    {data.estatisticas.totalProdutos.toLocaleString()}
+                    {dadosFiltrados.estatisticas.totalProdutos.toLocaleString()}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.9 }}>
                     Total de Produtos
@@ -179,7 +239,7 @@ export default function Dashboard() {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" fontWeight={700}>
-                    {data.estatisticas.movimentacoesHoje}
+                    {dadosFiltrados.estatisticas.movimentacoesHoje}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.9 }}>
                     Movimentações Hoje
@@ -197,7 +257,7 @@ export default function Dashboard() {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" fontWeight={700}>
-                    {data.estatisticas.separacoesPendentes}
+                    {dadosFiltrados.estatisticas.separacoesPendentes}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.9 }}>
                     Separações Pendentes
@@ -215,7 +275,7 @@ export default function Dashboard() {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" fontWeight={700}>
-                    {data.estatisticas.auditoriasPendentes}
+                    {dadosFiltrados.estatisticas.auditoriasPendentes}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.9 }}>
                     Auditorias Pendentes
@@ -229,16 +289,86 @@ export default function Dashboard() {
           </Card>
         </Box>
 
-        {/* Gráficos e Métricas */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 3, mb: 4 }}>
-          {/* Tendências */}
+        {/* Gráficos */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 4 }}>
+          {/* Gráfico de Movimentações por Dia */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Movimentações por Dia da Semana
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={data.movimentacoesPorDia}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="dia" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Legend />
+                  <Area type="monotone" dataKey="entrada" stackId="1" stroke="#8884d8" fill="#8884d8" />
+                  <Area type="monotone" dataKey="saida" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+                  <Area type="monotone" dataKey="transferencia" stackId="1" stroke="#ffc658" fill="#ffc658" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Estoque por Armazém */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Estoque por Armazém
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.estoquePorArmazem}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="armazem" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Bar dataKey="quantidade" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {/* Gráficos de Status */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 4 }}>
+          {/* Gráfico de Status das Auditorias */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Status das Auditorias
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={data.auditoriasPorStatus}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ status, percent }) => `${status} ${((percent || 0) * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="quantidade"
+                  >
+                    {data.auditoriasPorStatus.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.cor} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Tendências */}
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={600} mb={3}>
                 Tendências do Período
               </Typography>
               <Box display="flex" flexDirection="column" gap={2}>
-                {Object.entries(data.tendencias).map(([key, value]) => (
+                {Object.entries(dadosFiltrados.tendencias).map(([key, value]) => (
                   <Box key={key} display="flex" justifyContent="space-between" alignItems="center">
                     <Box display="flex" alignItems="center" gap={1}>
                       {getTendenciaIcon(value.direcao)}
@@ -254,62 +384,10 @@ export default function Dashboard() {
               </Box>
             </CardContent>
           </Card>
-
-          {/* Status do Estoque */}
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight={600} mb={3}>
-                Status do Estoque
-              </Typography>
-              <Box display="flex" flexDirection="column" gap={2}>
-                <Box>
-                  <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Em Estoque</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {data.estatisticas.produtosEmEstoque.toLocaleString()}
-                    </Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={83} 
-                    sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
-                  />
-                </Box>
-                <Box>
-                  <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Baixo Estoque</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {data.estatisticas.produtosBaixoEstoque.toLocaleString()}
-                    </Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={8} 
-                    color="warning"
-                    sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
-                  />
-                </Box>
-                <Box>
-                  <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Sem Estoque</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {data.estatisticas.produtosSemEstoque.toLocaleString()}
-                    </Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={2} 
-                    color="error"
-                    sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
         </Box>
 
         {/* Tabelas e Listas */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 3, mb: 4 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 4 }}>
           {/* Top Produtos */}
           <Card>
             <CardContent>
@@ -317,8 +395,8 @@ export default function Dashboard() {
                 Top 5 Produtos em Estoque
               </Typography>
               <List>
-                {data.topProdutos.map((produto, index) => (
-                  <ListItem key={index} divider={index < data.topProdutos.length - 1}>
+                {dadosFiltrados.topProdutos.slice(0, 5).map((produto, index) => (
+                  <ListItem key={index} divider={index < dadosFiltrados.topProdutos.length - 1}>
                     <ListItemAvatar>
                       <Avatar sx={{ bgcolor: 'primary.main' }}>
                         <StorageIcon />
@@ -326,7 +404,7 @@ export default function Dashboard() {
                     </ListItemAvatar>
                     <ListItemText
                       primary={produto.nome}
-                      secondary={`Localização: ${produto.localizacao}`}
+                      secondary={`${produto.armazem} - ${produto.localizacao}`}
                     />
                     <Chip 
                       label={`${produto.quantidade.toLocaleString()} un`}
@@ -346,8 +424,8 @@ export default function Dashboard() {
                 Movimentações Recentes
               </Typography>
               <List>
-                {data.movimentacoesRecentes.map((mov, index) => (
-                  <ListItem key={index} divider={index < data.movimentacoesRecentes.length - 1}>
+                {dadosFiltrados.movimentacoesRecentes.slice(0, 5).map((mov, index) => (
+                  <ListItem key={index} divider={index < dadosFiltrados.movimentacoesRecentes.length - 1}>
                     <ListItemAvatar>
                       <Avatar sx={{ bgcolor: getMovimentacaoColor(mov.tipo) }}>
                         <LocalShippingIcon />
@@ -355,11 +433,13 @@ export default function Dashboard() {
                     </ListItemAvatar>
                     <ListItemText
                       primary={mov.produto}
-                      secondary={`${mov.tipo} - ${mov.quantidade} unidades`}
+                      secondary={`${mov.tipo} - ${mov.armazem} - ${mov.hora}`}
                     />
-                    <Typography variant="caption" color="text.secondary">
-                      {mov.hora}
-                    </Typography>
+                    <Chip 
+                      label={`${mov.quantidade} un`}
+                      color="primary"
+                      variant="outlined"
+                    />
                   </ListItem>
                 ))}
               </List>
@@ -367,72 +447,89 @@ export default function Dashboard() {
           </Card>
         </Box>
 
-        {/* Alertas e Notificações */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" fontWeight={600} mb={3}>
-              Alertas e Notificações
-            </Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
-              {data.alertas.map((alerta, index) => (
-                <Alert 
-                  key={index}
-                  severity={alerta.tipo as any}
-                  icon={
-                    alerta.tipo === 'warning' ? <WarningIcon /> :
-                    alerta.tipo === 'error' ? <WarningIcon /> :
-                    alerta.tipo === 'success' ? <CheckCircleIcon /> :
-                    <ScheduleIcon />
-                  }
-                >
-                  {alerta.mensagem}
-                </Alert>
-              ))}
-            </Box>
-          </CardContent>
-        </Card>
+        {/* Alertas e Performance */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
+          {/* Alertas */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Alertas e Notificações
+              </Typography>
+              <Box display="flex" flexDirection="column" gap={2}>
+                {dadosFiltrados.alertas.map((alerta, index) => (
+                  <Alert key={index} severity={alerta.tipo as any} sx={{ mb: 1 }}>
+                    {alerta.mensagem}
+                  </Alert>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
 
-        {/* Métricas de Performance */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3, mt: 4 }}>
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <SpeedIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-            <Typography variant="h4" fontWeight={700} color="primary">
-              98.5%
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Taxa de Acerto
-            </Typography>
-          </Paper>
-
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <ScheduleIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-            <Typography variant="h4" fontWeight={700} color="success.main">
-              2.3 min
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Tempo Médio Separação
-            </Typography>
-          </Paper>
-
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <PeopleIcon sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
-            <Typography variant="h4" fontWeight={700} color="warning.main">
-              12
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Usuários Ativos
-            </Typography>
-          </Paper>
-
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <StorageIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
-            <Typography variant="h4" fontWeight={700} color="info.main">
-              85%
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Ocupação do Armazém
-            </Typography>
-          </Paper>
+          {/* Métricas de Performance */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Métricas de Performance
+              </Typography>
+              <Box display="flex" flexDirection="column" gap={3}>
+                <Box>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Taxa de Acerto</Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {data.performance.taxaAcerto}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={data.performance.taxaAcerto} 
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </Box>
+                
+                <Box>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Tempo Médio Separação</Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {data.performance.tempoMedioSeparacao} min
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(data.performance.tempoMedioSeparacao / 5) * 100} 
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </Box>
+                
+                <Box>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Usuários Ativos</Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {data.performance.usuariosAtivos}
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(data.performance.usuariosAtivos / 20) * 100} 
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </Box>
+                
+                <Box>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Ocupação Armazém</Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {data.performance.ocupacaoArmazem}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={data.performance.ocupacaoArmazem} 
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
         </Box>
       </Box>
     </Layout>

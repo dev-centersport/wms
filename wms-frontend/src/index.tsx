@@ -29,6 +29,7 @@ import Relatorio from "./pages/Relatorio";
 import Usuarios from "./pages/Usuarios";
 import CriarUsuario from "./pages/CriarUsuario"
 import PerfilUsuario from "./pages/PerfilUsuario";
+import CriarPerfilUsuario from "./pages/CriarPerfilUsuario";
 import Dashboard from "./pages/Dashboard";
 
 import theme from './components/Theme';
@@ -78,7 +79,11 @@ root.render(
           {/* Usuarios */}
           <Route path="/usuarios" element={<Usuarios />} />
           <Route path="/criarusuario" element={<CriarUsuario />} />
+          
+          {/* Perfis de Usuário */}
           <Route path="/perfil-usuario" element={<PerfilUsuario />} />
+          <Route path="/perfil-usuario/criar" element={<CriarPerfilUsuario />} />
+          <Route path="/perfil-usuario/editar" element={<CriarPerfilUsuario />} />
 
           {/* Redirecionamentos */}
           <Route path="/" element={<Navigate to="/login" replace />} />
