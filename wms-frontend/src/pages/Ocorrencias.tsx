@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import Layout from '../components/Layout';
-import { buscarOcorrencias, criarAuditoria } from '../services/API';
+import { buscarOcorrencias, criarAuditoria, getCurrentUser } from '../services/API';
 import { useNavigate } from 'react-router-dom';
 import ProdutosOcorrenciaModal from '../components/ProdutosOcorrenciaModal';
 import ConfirmacaoAuditoria from '../components/ConfirmacaoAuditoria';
@@ -416,7 +416,9 @@ export default function Ocorrencias() {
         mensagem="Deseja realmente criar esta auditoria?"
         onConfirm={async () => {
           try {
-            const usuario_id = 1;
+            // Buscar o usuário logado
+            const currentUser = await getCurrentUser();
+            const usuario_id = currentUser.usuario_id;
             const localizacao_id = localizacaoIdSelecionada;
 
             if (!localizacao_id || typeof localizacao_id !== 'number') {

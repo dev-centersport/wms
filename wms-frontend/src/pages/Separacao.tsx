@@ -9,7 +9,7 @@ import { CloudUpload, Print, Close } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import PrintPorPedido from '../components/PrintPorPedido';
 import PrintPorLocalizacao from '../components/PrintPorLocalizacao';
-import axios from 'axios';
+import api from '../services/API';
 import Layout from '../components/Layout';
 
 interface ProdutoPlanilha {
@@ -114,7 +114,7 @@ export default function Separacao() {
 
     try {
       const url = tipo === 'pedido' ? ENDPOINT_PEDIDO : ENDPOINT_SKU;
-      const { data } = await axios.post(url, form);
+      const { data } = await api.post(url, form);
 
       let dadosCorrigidos;
 

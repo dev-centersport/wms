@@ -15,6 +15,7 @@ import {
   enviarMovimentacao,
   buscarProdutosPorLocalizacaoDireto,
 } from '../api/movimentacaoAPI';
+import { obterUsuarioLogado } from '../api/config';
 import { useNavigation } from '@react-navigation/native';
 
 import HeaderMovimentacao from '../componentes/Movimentacao/HeaderMovimentacao';

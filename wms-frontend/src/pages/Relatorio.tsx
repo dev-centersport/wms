@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Layout from '../components/Layout';
-import axios from 'axios';
+import api from '../services/API';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
@@ -44,7 +44,7 @@ export default function Relatorio() {
 
   const handleGerarRelatorio = async () => {
     try {
-      const response = await axios.get('http://151.243.0.78:3001/produto-estoque/relatorio');
+      const response = await api.get('/produto-estoque/relatorio');
       const dados = Array.isArray(response.data) ? response.data : response.data?.data || [];
 
       const formatados = dados.map((item: any) => ({
@@ -89,7 +89,7 @@ export default function Relatorio() {
 
 const handleGerarInventarioTiny = async () => {
   try {
-    const response = await axios.get('http://151.243.0.78:3001/produto-estoque/pesquisar?relatorio=true');
+    const response = await api.get('/produto-estoque/pesquisar?relatorio=true');
     const dados = Array.isArray(response.data?.results) ? response.data.results : [];
 
     const formatados = dados.map((item: any) => ({

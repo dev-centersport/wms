@@ -36,8 +36,13 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expirado ou inválido
+      console.log('Token expirado, redirecionando para login...');
       Cookies.remove('token');
-      window.location.href = '/login';
+      
+      // Evita redirecionamento múltiplo
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -173,30 +178,66 @@ export async function registrarConferenciaAuditoria(
 
 export async function login(usuario: string, senha: string) {
   try {
+    // Para login, usamos axios diretamente pois ainda não temos token
     const res = await axios.post(`${BASE_URL}/auth/login`, {
       usuario,
       senha
     });
 
-    console.log(res)
+    console.log('Resposta do login:', res);
 
     // Se vier o token, salva no cookie
     if (res.data && res.data.access_token) {
       Cookies.set('token', res.data.access_token, { expires: 1 }); // expira em 1 dia
       return { status: 200, message: 'Login realizado com sucesso!' };
     } else if (res.status === 201 && res.data) {
-      return { status: 401, message: 'Usuário ou senha inválido'}
+      return { status: 401, message: 'Usuário ou senha inválido' };
     } else {
       // Caso não venha o token, retorna erro genérico
       return { status: 401, message: 'Token não recebido.' };
     }
   } catch (err: any) {
+    console.error('Erro no login:', err);
+    
     // Se a API retornar mensagem de erro, repassa para o front
     if (err.response && err.response.data && err.response.data.message) {
       return { status: err.response.status, message: err.response.data.message };
     }
+    
+    // Se for erro de rede
+    if (err.code === 'NETWORK_ERROR' || err.code === 'ERR_NETWORK') {
+      return { status: 500, message: 'Erro de conexão. Verifique sua internet.' };
+    }
+    
     // Erro inesperado
     return { status: 500, message: 'Erro inesperado ao tentar login.' };
+  }
+}
+
+// Função para buscar o perfil do usuário logado
+export async function getCurrentUser() {
+  try {
+    const response = await api.get('/auth/profile');
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar perfil do usuário:', error);
+    
+    // Se for erro 401, significa que o token expirou ou é inválido
+    if (error.response?.status === 401) {
+      // Remove o token inválido
+      Cookies.remove('token');
+      // Redireciona para login
+      window.location.href = '/login';
+      throw new Error('Sessão expirada. Faça login novamente.');
+    }
+    
+    // Se for erro de rede
+    if (error.code === 'NETWORK_ERROR' || error.code === 'ERR_NETWORK') {
+      throw new Error('Erro de conexão. Verifique sua internet.');
+    }
+    
+    // Outros erros
+    throw new Error(error.response?.data?.message || 'Falha ao buscar perfil do usuário.');
   }
 }
 
@@ -770,8 +811,9 @@ export async function enviarMovimentacao(payload: {
   localizacao_origem_id: number;
   localizacao_destino_id: number;
   itens_movimentacao: {
-    produto_estoque_id: number;
+    produto_id: number;
     quantidade: number;
+    produto_estoque_id?: number;
   }[];
 }) {
   try {
@@ -1004,7 +1046,7 @@ export interface Perfil {
 
 export async function buscarPerfis(): Promise<Perfil[]> {
   try {
-    const response = await axios.get(`${BASE_URL}/perfil`);
+    const response = await api.get('/perfil');
     return response.data;
   } catch (error: any) {
     console.error('Erro ao buscar perfis:', error.message);
@@ -1021,7 +1063,7 @@ export async function criarPerfil(dados: {
   pode_delete?: boolean;
 }): Promise<Perfil> {
   try {
-    const response = await axios.post(`${BASE_URL}/perfil`, dados);
+    const response = await api.post('/perfil', dados);
     return response.data;
   } catch (error: any) {
     console.error('Erro ao criar perfil:', error.message);
@@ -1038,7 +1080,7 @@ export async function atualizarPerfil(id: number, dados: {
   pode_delete?: boolean;
 }): Promise<Perfil> {
   try {
-    const response = await axios.patch(`${BASE_URL}/perfil/${id}`, dados);
+    const response = await api.patch(`/perfil/${id}`, dados);
     return response.data;
   } catch (error: any) {
     console.error('Erro ao atualizar perfil:', error.message);
@@ -1048,7 +1090,7 @@ export async function atualizarPerfil(id: number, dados: {
 
 export async function excluirPerfil(id: number): Promise<void> {
   try {
-    await axios.delete(`${BASE_URL}/perfil/${id}`);
+    await api.delete(`/perfil/${id}`);
   } catch (error: any) {
     console.error('Erro ao excluir perfil:', error.message);
     throw new Error('Falha ao excluir o perfil.');
@@ -1058,7 +1100,7 @@ export async function excluirPerfil(id: number): Promise<void> {
 // Função para buscar auditoria por ID (apenas uma vez!)
 export async function buscarAuditoriaPorId(auditoriaId: number) {
   try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}`);
+    const response = await api.get(`/auditoria/${auditoriaId}`);
     return response.data;
   } catch (error: any) {
     console.error('Erro ao buscar auditoria por ID:', error.message);
@@ -1069,7 +1111,7 @@ export async function buscarAuditoriaPorId(auditoriaId: number) {
 // Função para buscar produtos (ocorrências) de uma auditoria (apenas uma vez!)
 export async function buscarProdutosAuditoria(auditoriaId: number) {
   try {
-    const response = await axios.get(`${BASE_URL}/auditoria/${auditoriaId}/listar-ocorrencias`);
+    const response = await api.get(`/auditoria/${auditoriaId}/listar-ocorrencias`);
     return response.data;
   } catch (error: any) {
     console.error('Erro ao buscar produtos da auditoria:', error.message);
@@ -1080,7 +1122,7 @@ export async function buscarProdutosAuditoria(auditoriaId: number) {
 // Função para cancelar auditoria
 export async function cancelarAuditoria(auditoriaId: number) {
   try {
-    const response = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
+    const response = await api.post(`/auditoria/${auditoriaId}/cancelar`);
     return response.data;
   } catch (error: any) {
     console.error('Erro ao cancelar auditoria:', error.message);
