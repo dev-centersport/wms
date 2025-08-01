@@ -13,16 +13,16 @@ export class Perfil {
   descricao?: string;
 
   @Column({ type: 'boolean', default: true })
-  pode_ver: boolean;
+  can_view: boolean;
 
   @Column({ type: 'boolean', default: false })
-  pode_add: boolean;
+  can_add: boolean;
 
   @Column({ type: 'boolean', default: false })
-  pode_edit: boolean;
+  can_edit: boolean;
 
   @Column({ type: 'boolean', default: false })
-  pode_delete: boolean;
+  can_delete: boolean;
 
   @OneToMany(() => Usuario, (usuario) => usuario.perfil)
   usuarios: Usuario[];

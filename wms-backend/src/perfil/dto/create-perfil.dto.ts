@@ -18,17 +18,17 @@ export class CreatePerfilDto {
 
   @IsOptional()
   @IsBoolean()
-  pode_ver: boolean = true;
+  can_view: boolean = true;
 
   @IsOptional()
   @IsBoolean()
-  pode_add: boolean = false;
+  can_add: boolean = false;
 
   @IsOptional()
   @IsBoolean()
-  pode_edit: boolean = false;
+  can_edit: boolean = false;
 
   @IsOptional()
   @IsBoolean()
-  pode_delete: boolean = false;
+  can_delete: boolean = false;
 }
