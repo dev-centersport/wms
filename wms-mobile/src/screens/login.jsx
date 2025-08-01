@@ -95,7 +95,7 @@ export default function LoginScreen() {
           source={require('../../assets/images/logo01.png')}
           style={[styles.logo, tecladoAtivo && styles.logoPequena]}
         />
-        <Text style={styles.brand}>WMS</Text>
+        <Text style={styles.brand}>WMSjfkjdsjkfkjasdh</Text>
         <Text style={styles.welcome}>Bem Vindo!</Text>
 
         <Text style={styles.label}>Usuário</Text>
