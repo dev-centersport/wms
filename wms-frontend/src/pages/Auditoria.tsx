@@ -407,8 +407,8 @@ export default function Auditoria() {
     <Layout totalPages={totalPaginas} currentPage={paginaAtual} onPageChange={setPaginaAtual}>
       {/* Header com estatísticas */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} sx={{ mb: 3, color: '#1a237e' }}>
-          <Assessment sx={{ mr: 1, verticalAlign: 'middle' }} />
+        <Typography variant="h4" fontWeight={700} sx={{ mb: 3, color: '#32CD32' }}>
+          <Assessment sx={{ mr: 1, verticalAlign: 'middle', fontSize: 50 }} />
           Gestão de Auditorias
         </Typography>
 

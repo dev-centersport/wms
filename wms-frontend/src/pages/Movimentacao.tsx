@@ -488,8 +488,8 @@ const Movimentacao: React.FC = () => {
       <Box sx={{ width: '100%', maxWidth: '1400px', mx: 'auto', p: 2 }}>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <InventoryIcon sx={{ fontSize: 32, color: '#1976d2' }} />
-          <Typography variant="h4" fontWeight={600} color="#1976d2">
+          <InventoryIcon sx={{ fontSize: 32, color: '#black' }} />
+          <Typography variant="h4" fontWeight={600} color="black">
             {tipo === 'transferencia' ? 'Transferência de Estoque' : 'Movimentação de Estoque'}
           </Typography>
         </Box>
@@ -498,7 +498,7 @@ const Movimentacao: React.FC = () => {
         <Card sx={{ mb: 3, borderRadius: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ color: '#1976d2' }}>
+              <Typography variant="h6" sx={{ color: '#black' }}>
                 Tipo de Operação
               </Typography>
               {localizacoesAbertas.length > 0 && (
@@ -583,7 +583,7 @@ const Movimentacao: React.FC = () => {
               <Box sx={{ flex: 1, minWidth: 300 }}>
                 <Card sx={{ borderRadius: 2 }}>
                   <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2, color: '#1976d2' }}>
+                    <Typography variant="h6" sx={{ mb: 2, color: '#black' }}>
                       {tipo === 'entrada' ? 'Localização de Destino' : 'Localização de Origem'}
                     </Typography>
                     <TextField
@@ -615,7 +615,7 @@ const Movimentacao: React.FC = () => {
               <Box sx={{ flex: 1, minWidth: 300 }}>
                 <Card sx={{ borderRadius: 2 }}>
                   <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2, color: '#1976d2' }}>
+                    <Typography variant="h6" sx={{ mb: 2, color: '#black' }}>
                       Produto
                     </Typography>
                     <TextField
