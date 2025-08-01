@@ -37,6 +37,9 @@ export class Usuario {
   @Column({ type: 'boolean', default: false })
   is_logged: boolean;
 
+  @Column({ type: 'text', nullable: true })
+  current_token: string | null;
+
   @ManyToOne(() => Perfil, (perfil) => perfil.usuarios)
   @JoinColumn()
   perfil: Perfil;

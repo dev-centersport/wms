@@ -54,8 +54,8 @@ api.interceptors.response.use(
 			try {
 				await AsyncStorage.removeItem("token");
 				console.log("🔒 Token removido - usuário deslogado");
-				// Aqui você pode adicionar navegação para tela de login se necessário
-				// navigation.navigate('Login');
+				// Em React Native, não podemos usar navigation diretamente aqui
+				// O logout será tratado pelo AuthContext
 			} catch (storageError) {
 				console.error("❌ Erro ao remover token:", storageError);
 			}

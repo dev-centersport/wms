@@ -59,18 +59,14 @@ export class AuthController {
   }
 
   @Post('logout')
-  logout(@Session() session: Record<string, any>) {
-    return new Promise((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      session.destroy((err: any) => {
-        if (err) {
-          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-          reject({ message: 'Erro ao fazer logout!' });
-        } else {
-          resolve({ message: 'Logout realizado com sucesso!' });
-        }
-      });
-    });
+  @UseGuards(Autenticacao)
+  async logout(@Req() req: ExpressRequest) {
+    if (!req.user) throw new NotFoundException('Usuário não foi encontrado');
+
+    // 🔒 LIMPA O TOKEN NO BANCO
+    await this.authService.logout(req.user.sub);
+
+    return { message: 'Logout realizado com sucesso!' };
   }
 
   @Get('all')
