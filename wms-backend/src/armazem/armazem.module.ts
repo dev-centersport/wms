@@ -9,6 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 // Importa a entidade Armazem que representa a tabela no banco de dados
 import { Armazem } from './entities/armazem.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { Usuario } from 'src/usuario/entities/usuario.entity';
 
 // Define um módulo NestJS usando o decorador @Module
 @Module({
@@ -16,7 +17,7 @@ import { AuthModule } from 'src/auth/auth.module';
   imports: [
     // Registra a entidade Armazem no TypeORM para que possa ser injetada/referenciada
     // dentro deste módulo (cria um repositório para a entidade)
-    TypeOrmModule.forFeature([Armazem]),
+    TypeOrmModule.forFeature([Armazem, Usuario]),
     AuthModule,
   ],
   // Define os controllers que pertencem a este módulo

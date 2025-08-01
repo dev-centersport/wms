@@ -6,10 +6,11 @@ import { ProdutoEstoque } from './entities/produto_estoque.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import { Produto } from 'src/produto/entities/produto.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { Usuario } from 'src/usuario/entities/usuario.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ProdutoEstoque, Localizacao, Produto]),
+    TypeOrmModule.forFeature([ProdutoEstoque, Localizacao, Produto, Usuario]),
     AuthModule,
   ],
   controllers: [ProdutoEstoqueController],

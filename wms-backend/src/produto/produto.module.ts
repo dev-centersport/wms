@@ -5,9 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Produto } from './entities/produto.entity';
 import { IsEAN13Valid } from 'src/localizacao/validators/ean13.validator';
 import { AuthModule } from 'src/auth/auth.module';
+import { Usuario } from 'src/usuario/entities/usuario.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Produto]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Produto, Usuario]), AuthModule],
   controllers: [ProdutoController],
   providers: [ProdutoService, IsEAN13Valid],
 })
