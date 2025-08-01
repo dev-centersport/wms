@@ -1030,6 +1030,11 @@ export async function buscarProdutosAuditoria(auditoriaId: number) {
 
 // Função para cancelar auditoria
 export async function cancelarAuditoria(auditoriaId: number) {
-  const res = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
-  return res.data;
+  try {
+    const response = await axios.post(`${BASE_URL}/auditoria/${auditoriaId}/cancelar`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao cancelar auditoria:', error.message);
+    throw new Error(error?.response?.data?.message || 'Falha ao cancelar a auditoria.');
+  }
 }

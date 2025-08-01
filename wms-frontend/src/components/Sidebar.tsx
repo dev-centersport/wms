@@ -159,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
                   primary={label}
                   primaryTypographyProps={{
                     sx: {
-                      fontSize: 15,
+                      fontSize: 13.2,
                       fontWeight: isActive ? 700 : 500,
                       letterSpacing: '0.03em',
                       textTransform: 'none',
