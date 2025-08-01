@@ -15,97 +15,52 @@ import Ocorrencia from "./src/screens/ocorrencia";
 
 const Stack = createNativeStackNavigator();
 
-// Componente para rotas protegidas
-const ProtectedRoute = ({ children }) => {
+// Componente para verificar autenticação
+const AuthCheck = ({ children }) => {
 	const { isAuthenticated, loading } = useAuth();
 
 	if (loading) {
 		return <Loading message="Verificando autenticação..." />;
-	}
-
-	if (!isAuthenticated) {
-		return <Login />;
-	}
-
-	return children;
-};
-
-// Componente para rotas públicas (como login)
-const PublicRoute = ({ children }) => {
-	const { isAuthenticated, loading } = useAuth();
-
-	if (loading) {
-		return <Loading message="Verificando autenticação..." />;
-	}
-
-	if (isAuthenticated) {
-		return <Home />; // Redireciona para Home após login
 	}
 
 	return children;
 };
 
 const AppNavigator = () => {
-	const { isAuthenticated, loading } = useAuth();
+	const { isAuthenticated } = useAuth();
 
 	useEffect(() => {
 		async function checkUpdate() {
-			const update = await Updates.checkForUpdateAsync();
-			if (update.isAvailable) {
-				await Updates.fetchUpdateAsync();
-				await Updates.reloadAsync();
+			try {
+				const update = await Updates.checkForUpdateAsync();
+				if (update.isAvailable) {
+					await Updates.fetchUpdateAsync();
+					await Updates.reloadAsync();
+				}
+			} catch (error) {
+				console.log("Erro ao verificar atualizações:", error);
 			}
 		}
 
 		checkUpdate();
 	}, []);
 
-	if (loading) {
-		return <Loading message="Verificando autenticação..." />;
-	}
-
 	return (
 		<NavigationContainer>
-			<Stack.Navigator initialRouteName={isAuthenticated ? "Home" : "Login"}>
-				<Stack.Screen
-					name="Login"
-					component={PublicRoute}
-					options={{ headerShown: false }}
-				>
-					{() => <Login />}
-				</Stack.Screen>
-
-				<Stack.Screen
-					name="Home"
-					component={ProtectedRoute}
-					options={{ headerShown: false }}
-				>
-					{() => <Home />}
-				</Stack.Screen>
-
-				<Stack.Screen
-					name="Movimentacao"
-					component={ProtectedRoute}
-					options={{ headerShown: false }}
-				>
-					{() => <Movimentacao />}
-				</Stack.Screen>
-
-				<Stack.Screen
-					name="Consulta"
-					component={ProtectedRoute}
-					options={{ headerShown: false }}
-				>
-					{() => <Consulta />}
-				</Stack.Screen>
-
-				<Stack.Screen
-					name="Ocorrencia"
-					component={ProtectedRoute}
-					options={{ headerShown: false }}
-				>
-					{() => <Ocorrencia />}
-				</Stack.Screen>
+			<Stack.Navigator
+				initialRouteName={isAuthenticated ? "Home" : "Login"}
+				screenOptions={{ headerShown: false }}
+			>
+				{!isAuthenticated ? (
+					<Stack.Screen name="Login" component={Login} />
+				) : (
+					<>
+						<Stack.Screen name="Home" component={Home} />
+						<Stack.Screen name="Movimentacao" component={Movimentacao} />
+						<Stack.Screen name="Consulta" component={Consulta} />
+						<Stack.Screen name="Ocorrencia" component={Ocorrencia} />
+					</>
+				)}
 			</Stack.Navigator>
 		</NavigationContainer>
 	);
@@ -114,7 +69,9 @@ const AppNavigator = () => {
 function App() {
 	return (
 		<AuthProvider>
-			<AppNavigator />
+			<AuthCheck>
+				<AppNavigator />
+			</AuthCheck>
 		</AuthProvider>
 	);
 }
