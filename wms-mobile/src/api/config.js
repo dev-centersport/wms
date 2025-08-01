@@ -2,7 +2,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ===== CONFIGURAÇÃO BÁSICA =====
-export const BASE_URL = "http://localhost:3001";
+export const BASE_URL = "http://151.243.0.78:3001";
 
 // ===== INSTÂNCIA DO AXIOS =====
 export const api = axios.create({
