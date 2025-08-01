@@ -1,6 +1,28 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, Get, Post, Req, Session } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Post,
+  Req,
+  Session,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Autenticacao } from './auth.guard';
+import { Request as ExpressRequest } from 'express';
+
+declare module 'express' {
+  export interface Request {
+    user?: {
+      usuario: string;
+      perfil: string;
+      sub: number;
+      // adicione outras propriedades se precisar
+    };
+  }
+}
 
 @Controller('auth')
 export class AuthController {
@@ -9,8 +31,8 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() body: { usuario: string; senha: string },
-    @Session() session: Record<string, any>,
-  ): Promise<{ message: string }> {
+    // @Session() session: Record<string, any>,
+  ): Promise<any> {
     const { usuario, senha } = body;
     const user = await this.authService.validateUser(usuario, senha);
 
@@ -18,8 +40,22 @@ export class AuthController {
       return { message: 'Usuário ou senha inválidos' };
     }
 
-    session.usuario_id = user?.usuario_id;
-    return { message: 'Login realizado com sucesso!' };
+    // session.usuario_id = user?.usuario_id;
+    // Retorna JWT
+    return this.authService.login(user);
+  }
+
+  @Get('profile')
+  @UseGuards(Autenticacao)
+  getProfile(@Req() req: ExpressRequest) {
+    if (!req.user) throw new NotFoundException('Usuário não foi encontrado');
+
+    // req.user será preenchido pelo guard com os dados do login JWT
+    return {
+      usuario: req.user['usuario'],
+      perfil: req.user['perfil'],
+      usuario_id: req.user['sub'],
+    };
   }
 
   @Post('logout')

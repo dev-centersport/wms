@@ -89,70 +89,77 @@ const Login: React.FC = () => {
           </Typography>
         </StyledLogoContainer>
 
-        <TextField
-          label="Usuário"
-          variant="outlined"
-          fullWidth
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <FaUser color="rgba(0, 0, 0, 1)" />
-              </InputAdornment>
-            )
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleLogin();
           }}
-          sx={{
-            mb: 3,
-            "& .MuiOutlinedInput-root": {
-              backgroundColor: "white",
-              borderRadius: "10px",
-              "& fieldset": {
-                border: "none"
+        >
+          <TextField
+            label="Usuário"
+            variant="outlined"
+            fullWidth
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <FaUser color="rgba(0, 0, 0, 1)" />
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              mb: 3,
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "white",
+                borderRadius: "10px",
+                "& fieldset": {
+                  border: "none"
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
 
-        <TextField
-          label="Senha"
-          variant="outlined"
-          fullWidth
-          type={mostrarSenha ? "text" : "password"}
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setMostrarSenha(!mostrarSenha)}
-                  edge="end"
-                  aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                >
-                  {mostrarSenha ? (
-                    <FaEyeSlash color="rgba(0, 0, 0, 1)" />
-                  ) : (
-                    <FaEye color="rgba(0, 0, 0, 1)" />
-                  )}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-          sx={{
-            mb: 3,
-            "& .MuiOutlinedInput-root": {
-              backgroundColor: "white",
-              borderRadius: "10px",
-              "& fieldset": {
-                border: "none"
+          <TextField
+            label="Senha"
+            variant="outlined"
+            fullWidth
+            type={mostrarSenha ? "text" : "password"}
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setMostrarSenha(!mostrarSenha)}
+                    edge="end"
+                    aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                  >
+                    {mostrarSenha ? (
+                      <FaEyeSlash color="rgba(0, 0, 0, 1)" />
+                    ) : (
+                      <FaEye color="rgba(0, 0, 0, 1)" />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              mb: 3,
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "white",
+                borderRadius: "10px",
+                "& fieldset": {
+                  border: "none"
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
 
-        <StyledButton variant="contained" onClick={handleLogin}>
-          Entrar
-        </StyledButton>
+          <StyledButton variant="contained" onClick={handleLogin} type="submit">
+            Entrar
+          </StyledButton>
+        </form>
 
         <Typography
           variant="body1"

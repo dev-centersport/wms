@@ -47,7 +47,9 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
+
   const currentLocation = useLocation();
+
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -57,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
         PaperProps={{
           sx: {
             width: SIDEBAR_WIDTH,
-            background: 'linear-gradient(hsl(101, 70.00%, 55.30%))',
+            background: 'linear-gradient(hsl(101, 74.00%, 50.30%))',
             color: '#111',
             borderRight: 'none',
             boxShadow: '4px 0 16px -4px #0001',
@@ -160,7 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
                   primary={label}
                   primaryTypographyProps={{
                     sx: {
-                      fontSize: 15,
+                      fontSize: 13.2,
                       fontWeight: isActive ? 700 : 500,
                       letterSpacing: '0.03em',
                       textTransform: 'none',
