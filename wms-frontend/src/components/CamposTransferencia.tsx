@@ -14,9 +14,10 @@ interface Props {
   destino: LocalizacaoOption | null;
   setOrigem: (loc: LocalizacaoOption | null) => void;
   setDestino: (loc: LocalizacaoOption | null) => void;
+  onLocalizacaoAberta?: (ean: string) => void;
 }
 
-const CamposTransferencia: React.FC<Props> = ({ tipo, origem, destino, setOrigem, setDestino }) => {
+const CamposTransferencia: React.FC<Props> = ({ tipo, origem, destino, setOrigem, setDestino, onLocalizacaoAberta }) => {
   const [eanOrigem, setEanOrigem] = useState('');
   const [eanDestino, setEanDestino] = useState('');
 
@@ -35,6 +36,7 @@ const CamposTransferencia: React.FC<Props> = ({ tipo, origem, destino, setOrigem
         onChangeEAN={setEanOrigem}
         onSelecionar={setOrigem}
         valorSelecionado={origem}
+        onLocalizacaoAberta={onLocalizacaoAberta}
       />
 
       <InputLocalizacaoAutocomplete
@@ -43,6 +45,7 @@ const CamposTransferencia: React.FC<Props> = ({ tipo, origem, destino, setOrigem
         onChangeEAN={setEanDestino}
         onSelecionar={setDestino}
         valorSelecionado={destino}
+        onLocalizacaoAberta={onLocalizacaoAberta}
       />
     </Box>
   );
