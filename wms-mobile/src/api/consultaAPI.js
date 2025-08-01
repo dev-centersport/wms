@@ -1,26 +1,36 @@
-import axios from 'axios';
-
-const BASE_URL = 'http://151.243.0.78:3001';
+import { api, tratarErro } from "./config";
 
 // ---------- CONSULTA DE ESTOQUE ----------
 export async function buscarConsultaEstoque(termoBusca) {
-  try {
-    const response = await axios.get(`${BASE_URL}/produto-estoque/pesquisar?search=${encodeURIComponent(termoBusca)}`);
+	try {
+		// Usar endpoint que não requer autenticação
+		const response = await api.get(`/produto-estoque`);
 
-    const resultados = response.data.results || [];
+		const resultados = response.data.results || response.data || [];
 
-    return resultados.map((item) => ({
-      produto_id: item.produto?.produto_id,
-      localizacao_id: item.localizacao?.localizacao_id ?? null,
-      descricao: item.produto?.descricao || '',
-      sku: item.produto?.sku || '',
-      ean: item.produto?.ean || '',
-      armazem: item.localizacao?.armazem?.nome || '',
-      localizacao: item.localizacao?.nome || '',
-      quantidade: item.quantidade || 0,
-    }));
-  } catch (err) {
-    console.error('Erro ao buscar consulta de estoque →', err);
-    throw new Error('Falha ao carregar os dados de estoque.');
-  }
+		// Filtrar localmente se houver termo de busca
+		const dadosFiltrados = termoBusca
+			? resultados.filter((item) => {
+					const searchTerm = termoBusca.toLowerCase();
+					return (
+						item.produto?.descricao?.toLowerCase().includes(searchTerm) ||
+						item.produto?.sku?.toLowerCase().includes(searchTerm) ||
+						item.produto?.ean?.toLowerCase().includes(searchTerm)
+					);
+			  })
+			: resultados;
+
+		return dadosFiltrados.map((item) => ({
+			produto_id: item.produto?.produto_id,
+			localizacao_id: item.localizacao?.localizacao_id ?? null,
+			descricao: item.produto?.descricao || "",
+			sku: item.produto?.sku || "",
+			ean: item.produto?.ean || "",
+			armazem: item.localizacao?.armazem?.nome || "",
+			localizacao: item.localizacao?.nome || "",
+			quantidade: item.quantidade || 0,
+		}));
+	} catch (error) {
+		throw tratarErro(error, "Consulta de estoque");
+	}
 }

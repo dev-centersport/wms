@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
+import { PasswordUtils } from 'src/utils/password.utils';
 
 @Injectable()
 export class UsuarioService {
@@ -48,8 +49,14 @@ export class UsuarioService {
     if (!perfil)
       throw new NotFoundException('Perfil de usuário não encontrado');
 
+    // Criptografa a senha antes de salvar
+    const senhaCriptografada = await PasswordUtils.criptografarSenha(
+      CreateUsuarioDto.senha,
+    );
+
     const usuario = this.UsuarioRepository.create({
       ...CreateUsuarioDto,
+      senha: senhaCriptografada,
       perfil,
     });
 
@@ -70,9 +77,13 @@ export class UsuarioService {
         message: 'Usuário não encontrado',
       };
 
-    const validacao = usuarioEncontrado.senha === senha;
+    // Verifica se a senha está criptografada e faz a comparação segura
+    const senhaValida = await PasswordUtils.verificarSenha(
+      senha,
+      usuarioEncontrado.senha,
+    );
 
-    if (!validacao)
+    if (!senhaValida)
       return {
         status: HttpStatus.BAD_REQUEST,
         message: 'Senha inválida',
@@ -101,9 +112,13 @@ export class UsuarioService {
         message: 'Usuário não encontrado',
       };
 
-    const validacao = usuarioEncontrado.senha === senha;
+    // Verifica se a senha está criptografada e faz a comparação segura
+    const senhaValida = await PasswordUtils.verificarSenha(
+      senha,
+      usuarioEncontrado.senha,
+    );
 
-    if (!validacao)
+    if (!senhaValida)
       return {
         status: HttpStatus.BAD_REQUEST,
         message: 'Senha inválida',
@@ -133,9 +148,16 @@ export class UsuarioService {
       if (!perfil) throw new NotFoundException('Perfil não encontrado');
     }
 
-    const { perfil_id, ...camposSimpels } = updateUsuarioDto;
+    const { perfil_id, ...camposSimples } = updateUsuarioDto;
 
-    Object.assign(usuario, camposSimpels);
+    // Se uma nova senha foi fornecida, criptografa ela
+    if (camposSimples.senha) {
+      camposSimples.senha = await PasswordUtils.criptografarSenha(
+        camposSimples.senha,
+      );
+    }
+
+    Object.assign(usuario, camposSimples);
 
     return await this.UsuarioRepository.save(usuario);
   }

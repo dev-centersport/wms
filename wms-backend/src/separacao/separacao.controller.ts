@@ -4,6 +4,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SeparacaoService } from './separacao.service';
@@ -12,12 +13,14 @@ import {
   ResultadoSeparacaoDTO,
   ResultadoSeparacaoPorPedidoDTO,
 } from './dto/separacao.dto.';
+import { Autenticacao } from 'src/auth/auth.guard';
 
 @Controller('separacao')
 export class SeparacaoController {
   constructor(private readonly separacaoService: SeparacaoService) {}
 
   @Post('agrupado-produto')
+  @UseGuards(Autenticacao)
   @UseInterceptors(FileInterceptor('arquivo'))
   async processarSeparacao(
     @UploadedFile() arquivo: Express.Multer.File,
@@ -30,6 +33,7 @@ export class SeparacaoController {
   }
 
   @Post('agrupado-pedido')
+  @UseGuards(Autenticacao)
   @UseInterceptors(FileInterceptor('arquivo'))
   async processarSeparacaoPorPedido(
     @UploadedFile() arquivo: Express.Multer.File,

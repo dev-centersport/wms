@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TouchableWithoutFeedback,
   Keyboard,
   LayoutAnimation,
   UIManager,
@@ -26,6 +25,8 @@ export default function LoginScreen() {
   const [tecladoAtivo, setTecladoAtivo] = useState(false);
 
   const scrollRef = useRef(null);
+  const usuarioInputRef = useRef(null);
+  const senhaInputRef = useRef(null);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -70,75 +71,86 @@ export default function LoginScreen() {
     }
   };
 
+  const handleUsuarioSubmit = () => {
+    senhaInputRef.current?.focus();
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} // 'padding' evita espaços brancos no Android
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={[
-            styles.scrollContent,
-            tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={[styles.logo, tecladoAtivo && styles.logoPequena]}
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
+        ]}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        style={Platform.OS === 'web' ? { flex: 1 } : undefined}
+      >
+        <Image
+          source={require('../../assets/images/logo01.png')}
+          style={[styles.logo, tecladoAtivo && styles.logoPequena]}
+        />
+        <Text style={styles.brand}>WMSjfkjdsjkfkjasdh</Text>
+        <Text style={styles.welcome}>Bem Vindo!</Text>
+
+        <Text style={styles.label}>Usuário</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={usuarioInputRef}
+            placeholder="Usuário"
+            value={usuario}
+            onChangeText={setUsuario}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            onSubmitEditing={handleUsuarioSubmit}
+            blurOnSubmit={false}
+            autoCapitalize="none"
+            autoCorrect={false}
           />
-          <Text style={styles.brand}>WMS</Text>
-          <Text style={styles.welcome}>Bem Vindo!</Text>
+          <Icon name="user" size={20} color="#888" style={styles.icon} />
+        </View>
 
-          <Text style={styles.label}>Usuário</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Usuário"
-              value={usuario}
-              onChangeText={setUsuario}
-              style={styles.input}
-              placeholderTextColor="#888"
-              returnKeyType="next"
+        <Text style={styles.label}>Senha</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={senhaInputRef}
+            placeholder="Senha"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry={!mostrarSenha}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+            <Icon
+              name={mostrarSenha ? 'eye' : 'eye-slash'}
+              size={20}
+              color="#888"
+              style={styles.icon}
             />
-            <Icon name="user" size={20} color="#888" style={styles.icon} />
-          </View>
-
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!mostrarSenha}
-              style={styles.input}
-              placeholderTextColor="#888"
-              returnKeyType="done"
-              onSubmitEditing={handleLogin}
-            />
-            <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
-              <Icon
-                name={mostrarSenha ? 'eye' : 'eye-slash'}
-                size={20}
-                color="#888"
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
           </TouchableOpacity>
+        </View>
 
-          <Text style={styles.footer}>
-            <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
-              "Otimizando a gestão de armazém com tecnologia eficiente"
-            </Text>
+        <TouchableOpacity onPress={handleLogin} style={styles.button}>
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.footer}>
+          <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
+            &ldquo;Otimizando a gestão de armazém com tecnologia eficiente&rdquo;
           </Text>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+        </Text>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

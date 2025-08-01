@@ -7,17 +7,20 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { LocalizacaoService } from './localizacao.service';
 import { CreateLocalizacaoDto } from './dto/create-localizacao.dto';
 import { UpdateLocalizacaoDto } from './dto/update-localizacao.dto';
 import { StatusPrateleira } from './entities/localizacao.entity';
+import { Autenticacao } from 'src/auth/auth.guard';
 
 @Controller('localizacao')
 export class LocalizacaoController {
   constructor(private readonly localizacaoService: LocalizacaoService) {}
 
   @Post()
+  @UseGuards(Autenticacao)
   create(@Body() createLocalizacaoDto: CreateLocalizacaoDto) {
     return this.localizacaoService.create(createLocalizacaoDto);
   }
@@ -58,6 +61,7 @@ export class LocalizacaoController {
   }
 
   @Patch(':id')
+  @UseGuards(Autenticacao)
   update(
     @Param('id') id: string,
     @Body() updateLocalizacaoDto: UpdateLocalizacaoDto,
@@ -66,6 +70,7 @@ export class LocalizacaoController {
   }
 
   @Delete(':id')
+  @UseGuards(Autenticacao)
   remove(@Param('id') id: string) {
     return this.localizacaoService.remove(+id);
   }

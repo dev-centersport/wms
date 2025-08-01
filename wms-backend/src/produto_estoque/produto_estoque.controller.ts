@@ -7,16 +7,19 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ProdutoEstoqueService } from './produto_estoque.service';
 import { CreateProdutoEstoqueDto } from './dto/create-produto_estoque.dto';
 import { UpdateProdutoEstoqueDto } from './dto/update-produto_estoque.dto';
+import { Autenticacao } from 'src/auth/auth.guard';
 
 @Controller('produto-estoque')
 export class ProdutoEstoqueController {
   constructor(private readonly produtoEstoqueService: ProdutoEstoqueService) {}
 
   @Post()
+  @UseGuards(Autenticacao)
   create(@Body() createProdutoEstoqueDto: CreateProdutoEstoqueDto) {
     return this.produtoEstoqueService.create(createProdutoEstoqueDto);
   }
@@ -32,11 +35,13 @@ export class ProdutoEstoqueController {
   }
 
   @Get('relatorio')
+  @UseGuards(Autenticacao)
   relatorioConsulta() {
     return this.produtoEstoqueService.relatorioConsulta();
   }
 
   @Get('pesquisar')
+  @UseGuards(Autenticacao)
   async search(
     @Query('search') search?: string,
     @Query('offset') offset?: string,
@@ -74,6 +79,7 @@ export class ProdutoEstoqueController {
   }
 
   @Patch(':id')
+  @UseGuards(Autenticacao)
   update(
     @Param('id') id: string,
     @Body() updateProdutoEstoqueDto: UpdateProdutoEstoqueDto,
@@ -82,6 +88,7 @@ export class ProdutoEstoqueController {
   }
 
   @Delete(':id')
+  @UseGuards(Autenticacao)
   remove(@Param('id') id: string) {
     return this.produtoEstoqueService.remove(+id);
   }

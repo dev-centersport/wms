@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 // Importa o serviço do módulo Armazem
 import { ArmazemService } from './armazem.service';
@@ -14,6 +15,7 @@ import { ArmazemService } from './armazem.service';
 import { CreateArmazemDto } from './dto/create-armazem.dto';
 // Importa o DTO para atualização de armazém
 import { UpdateArmazemDto } from './dto/update-armazem.dto';
+import { Autenticacao } from 'src/auth/auth.guard';
 
 // Define que esta classe é um Controller com o prefixo de rota 'armazem'
 // Todas as rotas deste controller serão acessíveis em /armazem
@@ -24,6 +26,7 @@ export class ArmazemController {
 
   // Define um endpoint POST para criar um novo armazém
   @Post()
+  @UseGuards(Autenticacao)
   // @Body() extrai os dados do corpo da requisição e valida com CreateArmazemDto
   create(@Body() createArmazemDto: CreateArmazemDto) {
     return this.armazemService.create(createArmazemDto);
@@ -45,12 +48,14 @@ export class ArmazemController {
 
   // Define um endpoint PATCH para atualizar parcialmente um armazém
   @Patch(':id')
+  @UseGuards(Autenticacao)
   update(@Param('id') id: string, @Body() updateArmazemDto: UpdateArmazemDto) {
     return this.armazemService.update(+id, updateArmazemDto);
   }
 
   // Endpoint DELETE comentado - pode ser implementado quando necessário
   @Delete(':id')
+  @UseGuards(Autenticacao)
   remove(@Param('id') id: string) {
     return this.armazemService.remove(+id);
   }
