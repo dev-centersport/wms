@@ -16,6 +16,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { removerToken } from '../api/config';
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
@@ -59,14 +60,17 @@ export default function LoginScreen() {
     }
 
     try {
+      // Limpar token anterior antes de fazer novo login
+      await removerToken();
+      
       const resultado = await login(usuario, senha);
       if (resultado.success) {
         navigation.navigate('Home');
       } else {
-        alert('Usuário ou senha inválidos.');
+        alert(resultado.message || 'Usuário ou senha inválidos.');
       }
     } catch (err) {
-      console.log(err);
+      console.error("❌ Erro no login:", err);
       alert('Erro ao fazer login. Verifique seus dados.');
     }
   };
