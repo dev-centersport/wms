@@ -35,19 +35,21 @@ async function bootstrap() {
       origin: string | undefined,
       callback: (err: Error | null, allow?: string | boolean) => void,
     ) => {
-      // Permite requisições sem origin (como mobile apps ou curl requests)
+      // Permite requisições sem origin (como mobile apps)
       if (!origin) {
         return callback(null, true);
       }
 
-      // Expressão regular para verificar IPs da rede local (192.168.x.x)
+      // Expressão regular para verificar IPs da rede local
       const localNetworkRegex = /^http?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/;
 
-      // Verifica se é localhost ou IP da rede local
+      // Verifica se é localhost, IP da rede local ou mobile app
       if (
         origin === 'http://151.243.0.78:3000' ||
-        // origin === 'https://localhost:3000' ||
-        localNetworkRegex.test(origin)
+        origin === 'http://151.243.0.78:3001' ||
+        localNetworkRegex.test(origin) ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
       ) {
         callback(null, origin);
       } else {
@@ -55,6 +57,8 @@ async function bootstrap() {
       }
     },
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-New-Token'],
+    exposedHeaders: ['X-New-Token'],
   });
 
   // Habilitando o Cors
