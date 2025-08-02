@@ -42,7 +42,10 @@ import Layout from '../components/Layout';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import axios from 'axios';
 import api from '../services/API';
-import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, buscarLocalizacaoGeral, buscarProdutosPorLocalizacaoDireto, getCurrentUser } from '../services/API';
+import {
+  enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, buscarLocalizacaoGeral,
+  buscarProdutosPorLocalizacaoDireto, getCurrentUser, abrirLocalizacao, fecharLocalizacao
+} from '../services/API';
 import CamposTransferencia from '../components/CamposTransferencia';
 
 
@@ -98,7 +101,7 @@ const Movimentacao: React.FC = () => {
   // Modal de edição
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
-  
+
   // Estado para controlar se há localizações abertas
   const [localizacoesAbertas, setLocalizacoesAbertas] = useState<string[]>([]);
   const [editingQuantidade, setEditingQuantidade] = useState<number>(1);
@@ -111,21 +114,20 @@ const Movimentacao: React.FC = () => {
   // Função para fechar localizações abertas
   const fecharLocalizacoesAbertas = useCallback(async () => {
     if (localizacoesAbertas.length === 0) return;
-    
+
     const localizacoesParaFechar = [...localizacoesAbertas];
-    
+
     for (const ean of localizacoesParaFechar) {
       try {
-        await api.get(`/movimentacao/fechar-localizacao/${ean}`);
+        await fecharLocalizacao(ean);
         console.log(`✅ Localização ${ean} fechada com sucesso`);
       } catch (erro) {
         console.warn(`⚠️ Erro ao fechar localização ${ean}:`, erro);
       }
     }
-    
+
     setLocalizacoesAbertas([]);
   }, [localizacoesAbertas]);
-
   // useEffect para detectar fechamento/recarregamento da página
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -244,19 +246,19 @@ const Movimentacao: React.FC = () => {
     } else {
       novo = await buscarProdutoPorEAN(eanLimpo, origem?.ean || localizacao);
     }
-    
+
     if (!novo) {
       alert('Produto não encontrado!');
       setProduto('');
       return;
     }
-    
+
     if (tipo !== 'entrada' && !novo.produto_estoque_id) {
       alert('Produto não encontrado nesta localização para saída ou transferência.');
       setProduto('');
       return;
     }
-    
+
     // O TypeScript já sabe que novo não é mais null neste ponto!
     setLista((prevLista: Item[]) => {
       const novaLista: Item[] = [
@@ -275,7 +277,7 @@ const Movimentacao: React.FC = () => {
       ];
       setSelectedItems((prev) => [...prev, novaLista.length - 1]);
       return novaLista;
-    });    
+    });
 
     setContadorTotal((prev) => prev + 1);
     setProduto('');
@@ -300,13 +302,15 @@ const Movimentacao: React.FC = () => {
         return;
       }
 
-      // Tenta abrir a localização no backend
+      // Usa função centralizada
       try {
-        await api.get(`/movimentacao/abrir-localizacao/${eanLocalizacao}`);
-        
-        // Adiciona a localização ao estado de localizações abertas
-        setLocalizacoesAbertas(prev => [...prev, eanLocalizacao]);
-        
+        await abrirLocalizacao(eanLocalizacao);
+
+        // Adiciona ao estado, evitando duplicidade
+        setLocalizacoesAbertas(prev =>
+          prev.includes(eanLocalizacao) ? prev : [...prev, eanLocalizacao]
+        );
+
         setOrigem({
           id: resultado.localizacao_id,
           nome: resultado.nome,
@@ -316,17 +320,14 @@ const Movimentacao: React.FC = () => {
         setLocalizacao('');
         setLocalizacaoBloqueada(true);
       } catch (erro: any) {
-        alert(erro?.response?.data?.message || 'A localização já está em uso.');
+        alert(erro?.message || 'A localização já está em uso.');
         return;
       }
-
     } catch (err: any) {
       console.error('Erro ao buscar localização:', err);
       alert(err?.message || 'Erro ao buscar localização.');
     }
   };
-
-
 
   const handleExcluir = (index: number) => {
     setLista((prev) => prev.filter((_, i) => i !== index));
@@ -437,11 +438,11 @@ const Movimentacao: React.FC = () => {
           quantidade: Number(item.quantidade ?? 1),
           // Sempre envie, mesmo que seja 0
           produto_estoque_id: Number(item.produto_estoque_id) || 0,
-        })),        
+        })),
         localizacao_origem_id: 0,
         localizacao_destino_id: 0,
       };
-      
+
       if (tipo === 'entrada') {
         payload.localizacao_origem_id = 0;
         payload.localizacao_destino_id = origem?.id || parseInt(localizacao);
@@ -530,10 +531,10 @@ const Movimentacao: React.FC = () => {
                 onChange={(e) => {
                   const novoTipo = e.target.value as any;
                   setTipo(novoTipo);
-                  
+
                   // Fechar localizações abertas antes de mudar o tipo
                   fecharLocalizacoesAbertas();
-                  
+
                   // Limpar estado
                   setLista([]);
                   setOrigem(null);
@@ -570,14 +571,14 @@ const Movimentacao: React.FC = () => {
         {/* Campos de Localização */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 3 }}>
           {tipo === 'transferencia' ? (
-                            <CamposTransferencia
-                  tipo={tipo}
-                  origem={origem}
-                  destino={destino}
-                  setOrigem={setOrigem}
-                  setDestino={setDestino}
-                  onLocalizacaoAberta={(ean) => setLocalizacoesAbertas(prev => [...prev, ean])}
-                />
+            <CamposTransferencia
+              tipo={tipo}
+              origem={origem}
+              destino={destino}
+              setOrigem={setOrigem}
+              setDestino={setDestino}
+              onLocalizacaoAberta={(ean) => setLocalizacoesAbertas(prev => [...prev, ean])}
+            />
           ) : (
             <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
               <Box sx={{ flex: 1, minWidth: 300 }}>

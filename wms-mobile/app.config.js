@@ -87,7 +87,7 @@ export default {
         {
           ios: {
             // Otimizações de compilação iOS
-            deploymentTarget: "13.0",
+            deploymentTarget: "15.1",
             enableBitcode: false,
             enableProguard: true,
             // Configurações de performance
@@ -139,7 +139,7 @@ export default {
       cacheTTL: 300000, // 5 minutos
       
       // Configurações de debug
-      debugEnabled: __DEV__,
+      debugEnabled: process.env.NODE_ENV !== "production",
       
       // Configurações de performance
       enablePerformanceMonitoring: true,
