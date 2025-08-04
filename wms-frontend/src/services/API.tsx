@@ -36,11 +36,13 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expirado ou inválido
-      console.log('Token expirado detectado no interceptor');
+      console.log('Token expirado, redirecionando para login...');
       Cookies.remove('token');
       
-      // Evita redirecionamento múltiplo e deixa o componente tratar o erro
-      // O redirecionamento será feito pelo ProtectedRoute ou pelos componentes
+      // Evita redirecionamento múltiplo
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

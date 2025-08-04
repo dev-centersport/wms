@@ -31,7 +31,6 @@ import CriarUsuario from "./pages/CriarUsuario"
 import PerfilUsuario from "./pages/PerfilUsuario";
 import CriarPerfilUsuario from "./pages/CriarPerfilUsuario";
 import Dashboard from "./pages/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 import theme from './components/Theme';
 
@@ -50,137 +49,41 @@ root.render(
           <Route path="/login" element={<Login />} />
           {/* Páginas internas com Sidebar */}
           {/* Dashboard */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
+          <Route path="/dashboard" element={<Dashboard />} />
           {/* Páginas de localização */}
-          <Route path="/localizacao" element={
-            <ProtectedRoute>
-              <Localizacao />
-            </ProtectedRoute>
-          } />
-          <Route path="/localizacao/criar" element={
-            <ProtectedRoute>
-              <CriarLocalizacao />
-            </ProtectedRoute>
-          } />
-          <Route path="/localizacao/:id/editar" element={
-            <ProtectedRoute>
-              <EditarLocalizacao />
-            </ProtectedRoute>
-          } />
+          <Route path="/localizacao" element={<Localizacao />} />
+          <Route path="/localizacao/criar" element={<CriarLocalizacao />} />
+          <Route path="/localizacao/:id/editar" element={<EditarLocalizacao />} />
 
           {/* Páginas de Armazém */}
-          <Route path="/armazem" element={
-            <ProtectedRoute>
-              <Armazem />
-            </ProtectedRoute>
-          } />
-          <Route path="/criar-armazem" element={
-            <ProtectedRoute>
-              <CriarArmazem />
-            </ProtectedRoute>
-          } />
-          <Route path="/armazem/:id/editar" element={
-            <ProtectedRoute>
-              <EditarArmazem />
-            </ProtectedRoute>
-          } />
+          <Route path="/armazem" element={<Armazem />} />
+          <Route path="/criar-armazem" element={<CriarArmazem />} />
+          <Route path="/armazem/:id/editar" element={<EditarArmazem />} />
 
           {/* Páginas de Tipo de localização */}
-          <Route path="/tipo-localizacao" element={
-            <ProtectedRoute>
-              <TipoLocalizacao />
-            </ProtectedRoute>
-          }/>
-          <Route path="/tipo-localizacao/:id/editar" element={
-            <ProtectedRoute>
-              <EditarTipoLocalizacao />
-            </ProtectedRoute>
-          } />
-          <Route path="/tipo-localizacao/criar" element={
-            <ProtectedRoute>
-              <CriarTipoLocalizacao />
-            </ProtectedRoute>
-          } />
+          <Route path="/tipo-localizacao" element={<TipoLocalizacao />}/>
+          <Route path="/tipo-localizacao/:id/editar" element={<EditarTipoLocalizacao />} />
+          <Route path="/tipo-localizacao/criar" element={<CriarTipoLocalizacao />} />
 
           {/* {/ Pagina de Produto} s */}
-          <Route path="/produto" element={
-            <ProtectedRoute>
-              <Produto />
-            </ProtectedRoute>
-          }/>
-          <Route path="/consulta" element={
-            <ProtectedRoute>
-              <Consulta />
-            </ProtectedRoute>
-          }/>
-          <Route path="/movimentacao" element={
-            <ProtectedRoute>
-              <Movimentacao/>
-            </ProtectedRoute>
-          }/>
-          <Route path="/separacao" element={
-            <ProtectedRoute>
-              <Separacao/>
-            </ProtectedRoute>
-          }/>
-          <Route path="/ocorrencias" element={
-            <ProtectedRoute>
-              <Ocorrencias/>
-            </ProtectedRoute>
-          }/>
-          <Route path="/Auditoria" element={
-            <ProtectedRoute>
-              <Auditoria/>
-            </ProtectedRoute>
-          }/>
-          <Route path="/Relatorio" element={
-            <ProtectedRoute>
-              <Relatorio/>
-            </ProtectedRoute>
-          }/>
-          <Route path="/NovaOcorrencia" element={
-            <ProtectedRoute>
-              <NovaOcorrencia/>
-            </ProtectedRoute>
-          }/>
-          <Route path="/ConferenciaAudi/:id" element={
-            <ProtectedRoute>
-              <ConferenciaAudi />
-            </ProtectedRoute>
-          } />
+          <Route path="/produto" element={<Produto />}/>
+          <Route path="/consulta" element={<Consulta />}/>
+          <Route path="/movimentacao" element={<Movimentacao/>}/>
+          <Route path="/separacao" element={<Separacao/>}/>
+          <Route path="/ocorrencias" element={<Ocorrencias/>}/>
+          <Route path="/Auditoria" element={<Auditoria/>}/>
+          <Route path="/Relatorio" element={<Relatorio/>}/>
+          <Route path="/NovaOcorrencia" element={<NovaOcorrencia/>}/>
+          <Route path="/ConferenciaAudi/:id" element={<ConferenciaAudi />} />
 
           {/* Usuarios */}
-          <Route path="/usuarios" element={
-            <ProtectedRoute>
-              <Usuarios />
-            </ProtectedRoute>
-          } />
-          <Route path="/criarusuario" element={
-            <ProtectedRoute>
-              <CriarUsuario />
-            </ProtectedRoute>
-          } />
+          <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/criarusuario" element={<CriarUsuario />} />
           
           {/* Perfis de Usuário */}
-          <Route path="/perfil-usuario" element={
-            <ProtectedRoute>
-              <PerfilUsuario />
-            </ProtectedRoute>
-          } />
-          <Route path="/perfil-usuario/criar" element={
-            <ProtectedRoute>
-              <CriarPerfilUsuario />
-            </ProtectedRoute>
-          } />
-          <Route path="/perfil-usuario/editar" element={
-            <ProtectedRoute>
-              <CriarPerfilUsuario />
-            </ProtectedRoute>
-          } />
+          <Route path="/perfil-usuario" element={<PerfilUsuario />} />
+          <Route path="/perfil-usuario/criar" element={<CriarPerfilUsuario />} />
+          <Route path="/perfil-usuario/editar" element={<CriarPerfilUsuario />} />
 
           {/* Redirecionamentos */}
           <Route path="/" element={<Navigate to="/login" replace />} />

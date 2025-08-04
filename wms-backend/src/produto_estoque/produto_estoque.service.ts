@@ -53,62 +53,6 @@ export class ProdutoEstoqueService {
     armazemId?: number,
     relatorio: boolean = false,
   ): Promise<{ results: any[] }> {
-    if (relatorio) {
-      // Para relatórios, buscar todos os produtos
-      console.log('Gerando relatório com todos os produtos...');
-      console.log('Parâmetros recebidos:', { search, offset, limit, tipoId, armazemId, relatorio });
-      
-      const todosProdutos = await this.ProdutoRepository.find();
-      console.log('Total de produtos para relatório:', todosProdutos.length);
-
-      // Buscar produtos com estoque
-      const produtosComEstoque = await this.ProdutoEstoqueRepository.find({
-        relations: ['produto', 'localizacao.tipo', 'localizacao.armazem'],
-      });
-      console.log('Produtos com estoque encontrados:', produtosComEstoque.length);
-
-      // Criar um mapa para facilitar a busca de produtos com estoque
-      const mapaProdutosComEstoque = new Map();
-      produtosComEstoque.forEach(item => {
-        if (item.produto?.produto_id) {
-          mapaProdutosComEstoque.set(item.produto.produto_id, item);
-        }
-      });
-      console.log('Mapa de produtos com estoque criado com', mapaProdutosComEstoque.size, 'itens');
-
-      // Processar todos os produtos para o relatório
-      const results = todosProdutos.map((produto) => {
-        const produtoComEstoque = mapaProdutosComEstoque.get(produto.produto_id);
-        
-        if (produtoComEstoque) {
-          // Produto tem estoque em alguma localização
-          console.log(`Produto ${produto.produto_id} (${produto.descricao}) tem estoque: ${produtoComEstoque.quantidade} em ${produtoComEstoque.localizacao?.nome}`);
-          return {
-            produto_estoque_id: produtoComEstoque.produto_estoque_id,
-            quantidade: produtoComEstoque.quantidade,
-            produto: produtoComEstoque.produto,
-            localizacao: produtoComEstoque.localizacao,
-          };
-        } else {
-          // Produto não tem estoque em nenhuma localização
-          console.log(`Produto ${produto.produto_id} (${produto.descricao}) SEM estoque - quantidade: 0, localização: null`);
-          return {
-            produto_estoque_id: null,
-            quantidade: 0,
-            produto: produto,
-            localizacao: null,
-          };
-        }
-      });
-
-      console.log('Relatório final gerado com', results.length, 'produtos');
-      console.log('Produtos com estoque no relatório:', results.filter(r => r.quantidade > 0).length);
-      console.log('Produtos sem estoque no relatório:', results.filter(r => r.quantidade === 0).length);
-
-      return { results };
-    }
-
-    // Lógica original para busca normal (não relatório)
     const query = this.ProdutoEstoqueRepository.createQueryBuilder(
       'produto_estoque',
     )
@@ -123,7 +67,7 @@ export class ProdutoEstoqueService {
       .addGroupBy('tipo.tipo_localizacao_id')
       .addGroupBy('armazem.armazem_id');
 
-    query.where('produto_estoque.quantidade > 0');
+    if (!relatorio) query.where('produto_estoque.quantidade > 0');
 
     if (search) {
       query.andWhere(
@@ -172,112 +116,34 @@ export class ProdutoEstoqueService {
   }
 
   async relatorioConsulta(): Promise<any> {
-    console.log('Iniciando relatorioConsulta CORRIGIDO...');
-    
-    try {
-      // Buscar todos os produtos primeiro
-      const todosProdutos = await this.ProdutoRepository.find({
-        order: { produto_id: 'ASC' }
-      });
-      console.log('Total de produtos cadastrados:', todosProdutos.length);
+    const produto_estoque = await this.ProdutoEstoqueRepository.find({
+      relations: ['produto', 'localizacao.tipo', 'localizacao.armazem'],
+    });
+    console.log(produto_estoque);
 
-      // Buscar TODOS os registros de produto_estoque (com e sem estoque)
-      const todosProdutosEstoque = await this.ProdutoEstoqueRepository.find({
-        relations: ['produto', 'localizacao.tipo', 'localizacao.armazem'],
-      });
-      console.log('Total de registros de produto_estoque encontrados:', todosProdutosEstoque.length);
+    if (!produto_estoque)
+      throw new NotFoundException('Nenhum prodtuo no estoque foi encontrado!');
 
-      // Criar um mapa para facilitar a busca de produtos com estoque > 0
-      const mapaProdutosComEstoque = new Map();
-      todosProdutosEstoque.forEach(item => {
-        console.log(`Verificando produto ${item.produto?.produto_id}: quantidade=${item.quantidade}, localização=${item.localizacao?.nome}`);
-        if (item.produto?.produto_id && item.quantidade > 0) {
-          // Se já existe um produto com estoque, mantém o que tem maior quantidade
-          const existente = mapaProdutosComEstoque.get(item.produto.produto_id);
-          if (!existente || item.quantidade > existente.quantidade) {
-            mapaProdutosComEstoque.set(item.produto.produto_id, item);
-            console.log(`Adicionado ao mapa: produto ${item.produto.produto_id} com quantidade ${item.quantidade}`);
-          }
-        }
-      });
-      console.log('Produtos com estoque > 0 encontrados:', mapaProdutosComEstoque.size);
+    const result = produto_estoque.map((item) => ({
+      localizacao: {
+        armazem_id: item.localizacao.armazem.armazem_id,
+        armazem: item.localizacao.armazem.nome,
+        localizacao_id: item.localizacao.localizacao_id,
+        nome: item.localizacao.nome,
+        ean: item.localizacao.ean,
+        tipo: item.localizacao.tipo.tipo,
+      },
+      produto: {
+        id_tiny: item.produto.id_tiny,
+        produto_id: item.produto.produto_id,
+        descricao: item.produto.descricao,
+        sku: item.produto.sku,
+        ean: item.produto.ean,
+      },
+      quantidade: item.quantidade,
+    }));
 
-      // Criar um Set para controlar produtos já processados e evitar duplicatas
-      const produtosProcessados = new Set();
-
-      // Processar todos os produtos (sem duplicatas)
-      const result: any[] = [];
-      
-      for (const produto of todosProdutos) {
-        // Verificar se o produto já foi processado
-        if (produtosProcessados.has(produto.produto_id)) {
-          console.log(`Produto ${produto.produto_id} já foi processado, pulando...`);
-          continue;
-        }
-        
-        const produtoComEstoque = mapaProdutosComEstoque.get(produto.produto_id);
-        
-        if (produtoComEstoque && produtoComEstoque.quantidade > 0) {
-          // Produto tem estoque > 0 em alguma localização
-          console.log(`Produto ${produto.produto_id} (${produto.descricao}) tem estoque: ${produtoComEstoque.quantidade} em ${produtoComEstoque.localizacao?.nome || 'sem localização'}`);
-          const resultItem = {
-            localizacao: {
-              armazem_id: produtoComEstoque.localizacao?.armazem?.armazem_id || null,
-              armazem: produtoComEstoque.localizacao?.armazem?.nome || '',
-              localizacao_id: produtoComEstoque.localizacao?.localizacao_id || null,
-              nome: produtoComEstoque.localizacao?.nome || '',
-              ean: produtoComEstoque.localizacao?.ean || '',
-              tipo: produtoComEstoque.localizacao?.tipo?.tipo || '',
-            },
-            produto: {
-              id_tiny: produto.id_tiny,
-              produto_id: produto.produto_id,
-              descricao: produto.descricao,
-              sku: produto.sku,
-              ean: produto.ean,
-            },
-            quantidade: produtoComEstoque.quantidade,
-          };
-          console.log(`Resultado para produto ${produto.produto_id}: quantidade=${resultItem.quantidade}, localização=${resultItem.localizacao.nome}`);
-          result.push(resultItem);
-        } else {
-          // Produto não tem estoque > 0 em nenhuma localização (saldo = 0)
-          console.log(`Produto ${produto.produto_id} (${produto.descricao}) SEM estoque - quantidade: 0, localização: vazia`);
-          const resultItem = {
-            localizacao: {
-              armazem_id: null,
-              armazem: '',
-              localizacao_id: null,
-              nome: '',
-              ean: '',
-              tipo: '',
-            },
-            produto: {
-              id_tiny: produto.id_tiny,
-              produto_id: produto.produto_id,
-              descricao: produto.descricao,
-              sku: produto.sku,
-              ean: produto.ean,
-            },
-            quantidade: 0,
-          };
-          console.log(`Resultado para produto ${produto.produto_id}: quantidade=${resultItem.quantidade}, localização=${resultItem.localizacao.nome}`);
-          result.push(resultItem);
-        }
-        
-        // Marcar produto como processado
-        produtosProcessados.add(produto.produto_id);
-      }
-
-      console.log('Relatório gerado com sucesso, total de itens:', result.length);
-      console.log('Produtos com estoque > 0:', result.filter(r => r.quantidade > 0).length);
-      console.log('Produtos com saldo 0:', result.filter(r => r.quantidade === 0).length);
-      console.log('Produtos com localização vazia:', result.filter(r => !r.localizacao.nome).length);
-      return result;
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      throw error;
-    }
+    return result;
   }
 
   async create(

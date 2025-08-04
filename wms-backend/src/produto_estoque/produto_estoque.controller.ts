@@ -37,7 +37,6 @@ export class ProdutoEstoqueController {
   @Get('relatorio')
   @UseGuards(Autenticacao)
   relatorioConsulta() {
-    console.log('Requisição para relatório recebida');
     return this.produtoEstoqueService.relatorioConsulta();
   }
 
