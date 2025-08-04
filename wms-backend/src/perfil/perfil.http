@@ -18,10 +18,10 @@ content-type: application/json
 {
     "nome": "Administrador",
     "descricao": "Vai gerenciar tudo do projeto e fazer mais coisas e bla bla bla",
-    "pode_ver": true,
-    "pode_add": true,
-    "pode_edit": true,
-    "pode_delete": true
+    "can_view": true,
+    "can_add": true,
+    "can_edit": true,
+    "can_delete": true
 }
 
 ###

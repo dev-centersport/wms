@@ -4,21 +4,27 @@ import { UpdatePerfilDto } from './dto/update-perfil.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Perfil } from './entities/perfil.entity';
 import { Repository } from 'typeorm';
+import { Permissao } from '../permissao/entities/permissao.entity';
 
 @Injectable()
 export class PerfilService {
   constructor(
     @InjectRepository(Perfil)
     private readonly PerfilRepository: Repository<Perfil>,
+    @InjectRepository(Permissao)
+    private readonly permissaoRepository: Repository<Permissao>,
   ) {}
 
   async findAll(): Promise<Perfil[]> {
-    return await this.PerfilRepository.find();
+    return await this.PerfilRepository.find({
+      relations: ['permissoes'],
+    });
   }
 
   async findOne(perfil_id: number): Promise<Perfil> {
     const perfil = await this.PerfilRepository.findOne({
       where: { perfil_id },
+      relations: ['permissoes'],
     });
 
     if (!perfil)
@@ -55,19 +61,47 @@ export class PerfilService {
     await this.PerfilRepository.remove(perfil);
   }
 
-  // create(createPerfilDto: CreatePerfilDto) {
-  //   return 'This action adds a new perfil';
-  // }
-  // findAll() {
-  //   return `This action returns all perfil`;
-  // }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} perfil`;
-  // }
-  // update(id: number, updatePerfilDto: UpdatePerfilDto) {
-  //   return `This action updates a #${id} perfil`;
-  // }
-  // remove(id: number) {
-  //   return `This action removes a #${id} perfil`;
-  // }
+  // Método para adicionar permissões ao perfil
+  async adicionarPermissoes(
+    perfil_id: number,
+    permissao_ids: number[],
+  ): Promise<Perfil> {
+    const perfil = await this.findOne(perfil_id);
+    const permissoes = await this.permissaoRepository
+      .createQueryBuilder('permissao')
+      .where('permissao.permissao_id IN (:...ids)', { ids: permissao_ids })
+      .getMany();
+
+    perfil.permissoes = [...(perfil.permissoes || []), ...permissoes];
+    return await this.PerfilRepository.save(perfil);
+  }
+
+  // Método para remover permissões do perfil
+  async removerPermissoes(
+    perfil_id: number,
+    permissao_ids: number[],
+  ): Promise<Perfil> {
+    const perfil = await this.findOne(perfil_id);
+
+    perfil.permissoes = perfil.permissoes.filter(
+      (p) => !permissao_ids.includes(p.permissao_id),
+    );
+
+    return await this.PerfilRepository.save(perfil);
+  }
+
+  // Método para definir permissões do perfil (substitui todas)
+  async definirPermissoes(
+    perfil_id: number,
+    permissao_ids: number[],
+  ): Promise<Perfil> {
+    const perfil = await this.findOne(perfil_id);
+    const permissoes = await this.permissaoRepository
+      .createQueryBuilder('permissao')
+      .where('permissao.permissao_id IN (:...ids)', { ids: permissao_ids })
+      .getMany();
+
+    perfil.permissoes = permissoes;
+    return await this.PerfilRepository.save(perfil);
+  }
 }

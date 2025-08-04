@@ -2,10 +2,13 @@ import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
 import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
 import { Ocorrencia } from 'src/ocorrencia/entities/ocorrencia.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
+import { Permissao } from 'src/permissao/entities/permissao.entity';
 import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -36,6 +39,13 @@ export class Usuario {
 
   @Column({ type: 'boolean', default: false })
   is_logged: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  current_token: string | null;
+
+  @ManyToMany(() => Permissao)
+  @JoinTable()
+  permissoes_extras: Permissao[];
 
   @ManyToOne(() => Perfil, (perfil) => perfil.usuarios)
   @JoinColumn()

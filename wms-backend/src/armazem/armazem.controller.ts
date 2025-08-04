@@ -16,6 +16,8 @@ import { CreateArmazemDto } from './dto/create-armazem.dto';
 // Importa o DTO para atualização de armazém
 import { UpdateArmazemDto } from './dto/update-armazem.dto';
 import { Autenticacao } from 'src/auth/auth.guard';
+import { PermissoesGuard } from 'src/auth/permissoes.guard';
+import { RequerPermissao } from 'src/auth/decorators/permissoes.decorator';
 
 // Define que esta classe é um Controller com o prefixo de rota 'armazem'
 // Todas as rotas deste controller serão acessíveis em /armazem
@@ -26,7 +28,8 @@ export class ArmazemController {
 
   // Define um endpoint POST para criar um novo armazém
   @Post()
-  @UseGuards(Autenticacao)
+  @UseGuards(Autenticacao, PermissoesGuard)
+  @RequerPermissao('armazem', 'incluir')
   // @Body() extrai os dados do corpo da requisição e valida com CreateArmazemDto
   create(@Body() createArmazemDto: CreateArmazemDto) {
     return this.armazemService.create(createArmazemDto);
@@ -48,14 +51,16 @@ export class ArmazemController {
 
   // Define um endpoint PATCH para atualizar parcialmente um armazém
   @Patch(':id')
-  @UseGuards(Autenticacao)
+  @UseGuards(Autenticacao, PermissoesGuard)
+  @RequerPermissao('armazem', 'editar')
   update(@Param('id') id: string, @Body() updateArmazemDto: UpdateArmazemDto) {
     return this.armazemService.update(+id, updateArmazemDto);
   }
 
   // Endpoint DELETE comentado - pode ser implementado quando necessário
   @Delete(':id')
-  @UseGuards(Autenticacao)
+  @UseGuards(Autenticacao, PermissoesGuard)
+  @RequerPermissao('armazem', 'excluir')
   remove(@Param('id') id: string) {
     return this.armazemService.remove(+id);
   }

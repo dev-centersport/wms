@@ -33,6 +33,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import axios from 'axios';
 import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, buscarLocalizacaoGeral, buscarProdutosPorLocalizacaoDireto } from '../services/API';
 import CamposTransferencia from '../components/CamposTransferencia';
+import { useAuth } from '../contexts/AuthContext';
 
 
 interface Item {
@@ -53,6 +54,7 @@ interface LocalizacaoOption {
 }
 
 const Movimentacao: React.FC = () => {
+  const { user } = useAuth();
   const [tipo, setTipo] = useState<'entrada' | 'saida' | 'transferencia'>('entrada');
 
   // Localizações
@@ -277,11 +279,14 @@ const Movimentacao: React.FC = () => {
 
   const handleConfirmarOperacao = async () => {
   try {
-    const usuario_id = 1;
+    if (!user) {
+      alert('Usuário não autenticado');
+      return;
+    }
 
     const payload: any = {
       tipo,
-      usuario_id: usuario_id,
+      usuario_id: user.usuario_id, // 🔒 Usando o ID do usuário autenticado
       itens_movimentacao: lista.map((item) => ({
         produto_id: Number(item.produto_id),
         produto_estoque_id: Number(item.produto_estoque_id),

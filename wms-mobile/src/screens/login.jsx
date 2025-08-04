@@ -12,9 +12,10 @@ import {
   Keyboard,
   LayoutAnimation,
   UIManager,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { login } from '../api/loginAPI';
+import { useAuth } from '../contexts/AuthContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { removerToken } from '../api/config';
 
@@ -24,6 +25,8 @@ export default function LoginScreen() {
   const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [tecladoAtivo, setTecladoAtivo] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
   const scrollRef = useRef(null);
   const usuarioInputRef = useRef(null);
@@ -59,19 +62,23 @@ export default function LoginScreen() {
       return;
     }
 
+    setLoading(true);
     try {
       // Limpar token anterior antes de fazer novo login
       await removerToken();
       
       const resultado = await login(usuario, senha);
       if (resultado.success) {
-        navigation.navigate('Home');
+        // O redirecionamento será feito automaticamente pelo AuthContext
+        console.log('Login realizado com sucesso!');
       } else {
         alert(resultado.message || 'Usuário ou senha inválidos.');
       }
     } catch (err) {
       console.error("❌ Erro no login:", err);
       alert('Erro ao fazer login. Verifique seus dados.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -145,8 +152,16 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={handleLogin} style={styles.button}>
-          <Text style={styles.buttonText}>Entrar</Text>
+        <TouchableOpacity 
+          onPress={handleLogin} 
+          style={[styles.button, loading && styles.buttonDisabled]}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.buttonText}>Entrar</Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.footer}>
@@ -240,6 +255,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     width: '80%',
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#666',
+    opacity: 0.7,
   },
   buttonText: {
     color: '#fff',

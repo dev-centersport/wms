@@ -8,6 +8,9 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Typography,
+  Button,
+  Divider,
 } from '@mui/material';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import SearchIcon from '@mui/icons-material/Search';
@@ -21,6 +24,8 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import TrolleyIcon from '@mui/icons-material/Trolley';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../contexts/AuthContext';
 
 const menuItems = [
   // { label: 'Dashboard',           icon: <SpeedIcon />,         path: '/dashboard' },
@@ -41,10 +46,15 @@ interface SidebarProps {
   children: React.ReactNode;
 }
 
-// NÃO precisa mais da interface SidebarProps ou do children
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
-  // const Sidebar = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    if (window.confirm('Deseja realmente sair do sistema?')) {
+      await logout();
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -73,6 +83,20 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
             sx={{ width: 170, height: 140, marginTop: 2 }}
           />
         </Box>
+
+        {/* Informações do usuário */}
+        {user && (
+          <Box sx={{ px: 2, mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000' }}>
+              Usuário: {user.usuario}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#000' }}>
+              Perfil: {user.perfil}
+            </Typography>
+          </Box>
+        )}
+
+        <Divider sx={{ mb: 2 }} />
 
         <List disablePadding>
           {menuItems.map(({ label, icon, path }) => {
@@ -117,6 +141,26 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
             );
           })}
         </List>
+
+        {/* Botão de Logout */}
+        <Box sx={{ mt: 'auto', p: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<LogoutIcon />}
+            onClick={handleLogout}
+            fullWidth
+            sx={{
+              color: '#000',
+              borderColor: '#000',
+              '&:hover': {
+                borderColor: '#000',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            Sair
+          </Button>
+        </Box>
       </Drawer>
 
       <Box component="main" width="100%">

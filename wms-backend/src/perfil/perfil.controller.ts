@@ -11,6 +11,9 @@ import {
 import { PerfilService } from './perfil.service';
 import { CreatePerfilDto } from './dto/create-perfil.dto';
 import { UpdatePerfilDto } from './dto/update-perfil.dto';
+import { AdicionarPermissoesDto } from './dto/adicionar-permissoes.dto';
+import { RemoverPermissoesDto } from './dto/remover-permissoes.dto';
+import { DefinirPermissoesDto } from './dto/definir-permissoes.dto';
 import { Autenticacao } from 'src/auth/auth.guard';
 
 @Controller('perfil')
@@ -43,5 +46,41 @@ export class PerfilController {
   @UseGuards(Autenticacao)
   remove(@Param('id') id: string) {
     return this.perfilService.remove(+id);
+  }
+
+  @Post(':id/permissoes')
+  @UseGuards(Autenticacao)
+  async adicionarPermissoes(
+    @Param('id') id: string,
+    @Body() adicionarPermissoesDto: AdicionarPermissoesDto,
+  ) {
+    return await this.perfilService.adicionarPermissoes(
+      +id,
+      adicionarPermissoesDto.permissao_ids,
+    );
+  }
+
+  @Delete(':id/permissoes')
+  @UseGuards(Autenticacao)
+  async removerPermissoes(
+    @Param('id') id: string,
+    @Body() removerPermissoesDto: RemoverPermissoesDto,
+  ) {
+    return await this.perfilService.removerPermissoes(
+      +id,
+      removerPermissoesDto.permissao_ids,
+    );
+  }
+
+  @Patch(':id/permissoes')
+  @UseGuards(Autenticacao)
+  async definirPermissoes(
+    @Param('id') id: string,
+    @Body() definirPermissoesDto: DefinirPermissoesDto,
+  ) {
+    return await this.perfilService.definirPermissoes(
+      +id,
+      definirPermissoesDto.permissao_ids,
+    );
   }
 }
