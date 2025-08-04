@@ -84,7 +84,9 @@ async function bootstrap() {
     }
   });
 
-  await app.listen(3001, () => {
+  const port = process.env.PORT || 3005;
+
+  await app.listen(port, () => {
     // Sinaliza prontidão para o PM2
     if (process.send) {
       process.send('ready');
