@@ -194,11 +194,13 @@ export default function Ocorrencia() {
       <ModalCancelar
         visible={mostrarCancelar}
         onClose={() => setMostrarCancelar(false)}
-        onConfirmar={() => {
+        onCancelar={() => {
           setMostrarCancelar(false);
           limparTudo();
         }}
+        tipo="ocorrência" // ou qualquer valor desejado
       />
+
     </KeyboardAvoidingView>
   );
 }

@@ -47,7 +47,7 @@ import {
   buscarProdutosPorLocalizacaoDireto, getCurrentUser, abrirLocalizacao, fecharLocalizacao
 } from '../services/API';
 import CamposTransferencia from '../components/CamposTransferencia';
-
+import Sidebar from '../components/Sidebar';
 
 interface Item {
   produto_id: number;
@@ -522,7 +522,7 @@ const Movimentacao: React.FC = () => {
 
   // ---------- UI ----------
   return (
-    <Layout>
+    <Sidebar gavetaAberta={!!eanLocalizacaoAberta}>
       <Box sx={{ width: '100%', maxWidth: '1400px', mx: 'auto', p: 2 }}>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -654,7 +654,7 @@ const Movimentacao: React.FC = () => {
           <Card sx={{ mb: 3, borderRadius: 2 }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" color="#1976d2">
+                <Typography variant="h6" color="black">
                   {tipo === 'transferencia' ? 'Produtos a serem movimentados' : 'Lista de Movimentação'}
                 </Typography>
                 <Chip
@@ -974,7 +974,7 @@ const Movimentacao: React.FC = () => {
           </DialogActions>
         </Dialog>
       </Box>
-    </Layout>
+    </Sidebar>
   );
 };
 

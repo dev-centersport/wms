@@ -8,8 +8,8 @@ export default function ModalCancelar({ visible, onClose, onCancelar, tipo }) {
       <View style={styles.overlay}>
         <View style={styles.modalBox}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Cancelar</Text>
-            <TouchableOpacity onPress={onClose}>
+          <Text style={[styles.modalTitle, { color: '#fff' }]}>Cancelar</Text>
+          <TouchableOpacity onPress={onClose}>
               <Text style={styles.modalClose}>×</Text>
             </TouchableOpacity>
           </View>
