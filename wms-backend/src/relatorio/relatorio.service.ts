@@ -139,4 +139,51 @@ export class RelatorioService {
       auditoriasConcluidas: auditoriasConcluidas,
     };
   }
+
+  async gerarReposicao(): Promise<any[]> {
+    // 1. Buscar todos os estoques com relações necessárias
+    const estoques = await this.ProdutoEstoqueRepository.find({
+      relations: ['produto', 'localizacao', 'localizacao.armazem'],
+    });
+
+    // 2. Agrupar por produto
+    const produtosMap = new Map<number, any>();
+
+    for (const estoque of estoques) {
+      const produtoId = estoque.produto.produto_id;
+      const produtoNome = estoque.produto.descricao;
+      const armazemNome = estoque.localizacao.armazem.nome;
+      const quantidade = estoque.quantidade;
+
+      if (!produtosMap.has(produtoId)) {
+        produtosMap.set(produtoId, {
+          produtoId,
+          produtoNome,
+          saldoDibJorge: null,
+          reposicaoPossivel: [],
+        });
+      }
+
+      const produtoData = produtosMap.get(produtoId);
+
+      if (armazemNome.toLowerCase() === 'dib jorge') {
+        produtoData.saldoDibJorge = quantidade;
+      } else {
+        produtoData.reposicaoPossivel.push({
+          armazem: armazemNome,
+          saldo: quantidade,
+        });
+      }
+    }
+
+    // 3. Filtrar produtos com saldo em Dib Jorge < 10
+    const reposicoes = [];
+    for (const produto of produtosMap.values()) {
+      if (produto.saldoDibJorge !== null && produto.saldoDibJorge < 10) {
+        reposicoes.push(produto);
+      }
+    }
+
+    return reposicoes;
+  }
 }
