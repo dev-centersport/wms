@@ -17,6 +17,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { removerToken } from '../api/config';
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
@@ -63,6 +64,9 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
+      // Limpar token anterior antes de fazer novo login
+      await removerToken();
+      
       const resultado = await login(usuario, senha);
       if (resultado.success) {
         // O redirecionamento será feito automaticamente pelo AuthContext
@@ -71,7 +75,7 @@ export default function LoginScreen() {
         alert(resultado.message || 'Usuário ou senha inválidos.');
       }
     } catch (err) {
-      console.log(err);
+      console.error("❌ Erro no login:", err);
       alert('Erro ao fazer login. Verifique seus dados.');
     } finally {
       setLoading(false);

@@ -38,8 +38,13 @@ api.interceptors.response.use(
 		// Captura novo token se enviado pelo backend
 		const newToken = response.headers["x-new-token"];
 		if (newToken) {
-			AsyncStorage.setItem("token", newToken);
-			console.log("✅ Token renovado automaticamente");
+			AsyncStorage.setItem("token", newToken)
+				.then(() => {
+					console.log("✅ Token renovado automaticamente");
+				})
+				.catch((error) => {
+					console.error("❌ Erro ao salvar novo token:", error);
+				});
 		}
 		console.log(
 			`✅ ${response.status} ${response.config.method?.toUpperCase()} ${
@@ -54,8 +59,10 @@ api.interceptors.response.use(
 			try {
 				await AsyncStorage.removeItem("token");
 				console.log("🔒 Token removido - usuário deslogado");
-				// Em React Native, não podemos usar navigation diretamente aqui
-				// O logout será tratado pelo AuthContext
+
+				// Adicionar navegação para tela de login
+				// Você precisará implementar um sistema de navegação global
+				// ou usar um callback para redirecionar para login
 			} catch (storageError) {
 				console.error("❌ Erro ao remover token:", storageError);
 			}

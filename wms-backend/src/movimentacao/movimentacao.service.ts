@@ -482,7 +482,7 @@ export class MovimentacaoService {
         'Localização já fechada ou com status desconhecido',
       );
 
-    localizacao.status = StatusPrateleira.ABERTA;
+    localizacao.status = StatusPrateleira.FECHADA;
     await this.localizacaoRepository.save(localizacao);
     return `Localização ${localizacao.nome} foi fechada com sucesso`;
   }

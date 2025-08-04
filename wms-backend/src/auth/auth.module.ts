@@ -11,7 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
     TypeOrmModule.forFeature([Usuario]),
     JwtModule.register({
       secret: 'chave_secreta', // Substituir por uma varável de ambiente em produção
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '7d' }, // Aumentar para 7 dias temporariamente
     }),
   ],
   controllers: [AuthController],
