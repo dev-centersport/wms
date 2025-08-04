@@ -44,8 +44,13 @@ export default function Relatorio() {
 
   const handleGerarRelatorio = async () => {
     try {
+      console.log('Iniciando geração do relatório...');
+      
       const response = await api.get('/produto-estoque/relatorio');
+      console.log('Resposta do relatório:', response);
+      
       const dados = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      console.log('Dados formatados:', dados);
 
       const formatados = dados.map((item: any) => ({
         Armazém: item.localizacao?.armazem || '',
@@ -81,43 +86,107 @@ export default function Relatorio() {
       }
 
       alert(`Relatório ${tipoArquivo === 'excel' ? 'Excel' : 'PDF'} gerado com sucesso!`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao gerar relatório:', err);
-      alert('Falha ao gerar o relatório.');
+      
+      // Verifica se é erro de autenticação
+      if (err.response?.status === 401) {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = '/login';
+        return;
+      }
+      
+      // Verifica se é erro de rede
+      if (err.code === 'NETWORK_ERROR' || err.code === 'ERR_NETWORK') {
+        alert('Erro de conexão. Verifique sua internet.');
+        return;
+      }
+      
+      // Outros erros
+      alert(`Falha ao gerar o relatório: ${err.response?.data?.message || err.message || 'Erro desconhecido'}`);
     }
   };
 
 const handleGerarInventarioTiny = async () => {
   try {
-    const response = await api.get('/produto-estoque/pesquisar?relatorio=true');
-    const dados = Array.isArray(response.data?.results) ? response.data.results : [];
+    console.log('Iniciando geração do inventário Tiny...');
+    
+    const response = await api.get('/produto-estoque/relatorio');
+    console.log('Resposta do inventário Tiny:', response);
+    
+    const dados = Array.isArray(response.data) ? response.data : [];
+    console.log('Dados do inventário Tiny:', dados);
 
-    const formatados = dados.map((item: any) => ({
-      ID: item.produto?.id_tiny || '',
-      Produto: item.produto?.descricao || '',
-      'Código (SKU)': item.produto?.sku || '',
-      'GTIN/EAN': item.produto?.ean || '',
-      Localização: item.localizacao?.nome || '',
-      'Saldo em estoque': typeof item.quantidade === 'number' ? item.quantidade : 0
-    }));
+    const formatados = dados.map((item: any) => {
+      // Debug: verificar estrutura dos dados
+      console.log('Item original:', item);
+      console.log('Quantidade:', item.quantidade);
+      console.log('Localização:', item.localizacao);
+      
+      // Lógica corrigida: se quantidade é 0, localização deve ser vazia
+      const localizacao = (item.quantidade === 0 || item.quantidade === '0') ? '' : (item.localizacao?.nome || '');
+      
+      return {
+        ID: item.produto?.id_tiny || '',
+        Produto: item.produto?.descricao || '',
+        'Código (SKU)': item.produto?.sku || '',
+        'GTIN/EAN': item.produto?.ean || '',
+        Localização: localizacao,
+        'Saldo em estoque': typeof item.quantidade === 'number' ? item.quantidade : 0
+      };
+    });
+
+    console.log('Dados formatados para CSV:', formatados.slice(0, 5)); // Log dos primeiros 5 itens
+    console.log('Total de itens formatados:', formatados.length);
+    console.log('Itens com localização vazia:', formatados.filter(item => !item.Localização).length);
+    console.log('Itens com saldo 0:', formatados.filter(item => item['Saldo em estoque'] === 0).length);
 
     if (formatados.length === 0) {
       alert('Nenhum dado encontrado para exportar.');
       return;
     }
 
-    const ws = XLSX.utils.json_to_sheet(formatados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Inventário WMS-Center');
+    // Gerar CSV
+    const headers = Object.keys(formatados[0]);
+    const csvContent = [
+      headers.join(','), // Cabeçalho
+      ...formatados.map((row: Record<string, any>) => 
+        headers.map(header => {
+          const value = row[header];
+          // Escapar vírgulas e aspas no valor
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        }).join(',')
+      )
+    ].join('\n');
 
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    // Criar blob com encoding UTF-8
+    const blob = new Blob(['\ufeff' + csvContent], { 
+      type: 'text/csv;charset=utf-8;' 
+    });
 
-    saveAs(blob, 'inventario-tiny-wms.xlsx');
-    alert('Inventário WMS-Center exportado com sucesso!');
-  } catch (err) {
+    saveAs(blob, 'inventario-tiny-wms.csv');
+    alert('Inventário WMS-Center exportado em CSV com sucesso!');
+  } catch (err: any) {
     console.error('Erro ao gerar inventário Tiny:', err);
-    alert('Erro ao gerar o inventário.');
+    
+    // Verifica se é erro de autenticação
+    if (err.response?.status === 401) {
+      alert('Sessão expirada. Faça login novamente.');
+      window.location.href = '/login';
+      return;
+    }
+    
+    // Verifica se é erro de rede
+    if (err.code === 'NETWORK_ERROR' || err.code === 'ERR_NETWORK') {
+      alert('Erro de conexão. Verifique sua internet.');
+      return;
+    }
+    
+    // Outros erros
+    alert(`Erro ao gerar o inventário: ${err.response?.data?.message || err.message || 'Erro desconhecido'}`);
   }
 };
 
