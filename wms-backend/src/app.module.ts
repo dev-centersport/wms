@@ -19,6 +19,7 @@ import { OcorrenciaModule } from './ocorrencia/ocorrencia.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ItemAuditoriaModule } from './item_auditoria/item_auditoria.module';
 import { SeparacaoModule } from './separacao/separacao.module';
+import { RelatorioModule } from './relatorio/relatorio.module';
 import { AuthModule } from './auth/auth.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
@@ -91,6 +92,7 @@ import { AuthModule } from './auth/auth.module';
     AuditoriaModule,
     ItemAuditoriaModule,
     SeparacaoModule,
+    RelatorioModule,
     AuthModule,
   ],
   controllers: [AppController],
