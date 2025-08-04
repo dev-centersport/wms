@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -9,6 +10,7 @@ import {
 } from 'class-validator';
 import { idRelations } from 'src/utils/decorator.id.relations';
 import { Entity } from 'typeorm';
+import { MovimentacaoSet } from '../entities/usuario.entity';
 
 @Entity()
 export class CreateUsuarioDto {
@@ -30,6 +32,10 @@ export class CreateUsuarioDto {
   @IsNumber()
   @IsNotEmpty()
   nivel: number;
+
+  @IsEnum(MovimentacaoSet)
+  @IsNotEmpty()
+  movimentacao_set: MovimentacaoSet = MovimentacaoSet.ENTRADA;
 
   @IsString()
   @IsNotEmpty()

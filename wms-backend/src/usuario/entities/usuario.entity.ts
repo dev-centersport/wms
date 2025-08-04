@@ -14,6 +14,11 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+export enum MovimentacaoSet {
+  ENTRADA = 'entrada',
+  SAIDA = 'saída',
+}
+
 @Entity()
 export class Usuario {
   @PrimaryGeneratedColumn()
@@ -36,6 +41,13 @@ export class Usuario {
 
   @Column({ type: 'boolean', default: true })
   ativo: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: MovimentacaoSet,
+    default: MovimentacaoSet.ENTRADA,
+  })
+  movimentacao_set: MovimentacaoSet;
 
   @Column({ type: 'boolean', default: false })
   is_logged: boolean;
