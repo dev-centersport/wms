@@ -146,13 +146,7 @@ export default function Usuarios() {
                     </Button>
                 )}
 
-                <Button
-                    variant="contained"
-                    sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
-                    onClick={() => navigate('/CriarUsuario')}
-                >
-                    Novo Usuário
-                </Button>
+                
             </Box>
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
