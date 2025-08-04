@@ -18,7 +18,10 @@ export default function ModalCancelar({ visible, onClose, onCancelar, tipo }) {
             <Text style={styles.modalMessage}>
               Deseja realmente cancelar a {tipo}?
             </Text>
-            <TouchableOpacity style={styles.btnConfirmar} onPress={onCancelar}>
+            <TouchableOpacity style={styles.btnConfirmar} onPress={() => {
+              onCancelar();
+              onClose();
+            }}>
               <Text style={styles.confirmarText}>Sim, Cancelar</Text>
             </TouchableOpacity>
           </View>

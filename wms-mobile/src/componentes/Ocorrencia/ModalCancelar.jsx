@@ -2,26 +2,20 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 
 export default function ModalCancelar({ visible, onClose, onConfirmar }) {
+  if (!visible) return null;
   return (
-    <Modal transparent visible={visible} animationType="fade">
-      <View style={styles.overlay}>
-        <View style={styles.modalBox}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Cancelar</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.modalClose}>×</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.modalContent}>
-            <Text style={styles.alertIcon}>⚠️</Text>
-            <Text style={styles.modalMessage}>Deseja realmente cancelar esta ocorrência?</Text>
-            <TouchableOpacity style={styles.btnConfirmar} onPress={onConfirmar}>
-              <Text style={styles.confirmarText}>Sim, Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
+    <View style={{
+      position: 'absolute', top: 100, left: 30, right: 30,
+      backgroundColor: '#fff', borderRadius: 10, padding: 30, elevation: 10, zIndex: 1000
+    }}>
+      <Text style={{ fontSize: 16, marginBottom: 20 }}>Deseja realmente cancelar?</Text>
+      <TouchableOpacity onPress={onConfirmar} style={{ backgroundColor: 'green', padding: 10, borderRadius: 6 }}>
+        <Text style={{ color: '#fff', fontWeight: 'bold', textAlign: 'center' }}>Sim, Cancelar</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={onClose} style={{ marginTop: 10 }}>
+        <Text style={{ color: '#333', textAlign: 'center' }}>Fechar</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 

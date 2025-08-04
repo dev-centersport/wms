@@ -77,3 +77,33 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
 		throw tratarErro(error, "Busca de produtos por localização");
 	}
 }
+
+export async function abrirLocalizacao(ean) {
+	try {
+		const res = await api.get(`/movimentacao/abrir-localizacao/${ean}`);
+		return res.data;
+	} catch (error) {
+		throw tratarErro(error, "Abertura de localização");
+	}
+}
+
+export async function fecharLocalizacao(ean) {
+	try {
+		const res = await api.get(`/movimentacao/fechar-localizacao/${ean}`);
+		return res.data;
+	} catch (error) {
+		throw tratarErro(error, "Fechamento de localização");
+	}
+}
+
+export async function obterUsuarioLogado() {
+	try {
+	  const response = await api.get('/auth/profile');
+	  return response.data; // Deve conter o usuario_id
+	} catch (error) {
+	  // Tratar erros e, se for 401, redirecionar para login
+	  // ...
+	  throw error;
+	}
+  }
+  

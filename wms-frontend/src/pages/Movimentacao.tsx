@@ -102,8 +102,8 @@ const Movimentacao: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
 
-  // Estado para controlar se há localizações abertas
-  const [localizacoesAbertas, setLocalizacoesAbertas] = useState<string[]>([]);
+  // Estado para controlar a localização aberta (SOMENTE UMA)
+  const [eanLocalizacaoAberta, setEanLocalizacaoAberta] = useState<string | null>(null);
   const [editingQuantidade, setEditingQuantidade] = useState<number>(1);
 
   // Loading states
@@ -111,53 +111,71 @@ const Movimentacao: React.FC = () => {
 
   // ---------- autocomplete fetch ----------
 
-  // Função para fechar localizações abertas
-  const fecharLocalizacoesAbertas = useCallback(async () => {
-    if (localizacoesAbertas.length === 0) return;
+  // Função para verificar se uma localização está aberta
+  const verificarLocalizacaoAberta = useCallback(async (ean: string) => {
+    try {
+      const response = await api.get(`/localizacao?ean=${ean}`);
+      const localizacao = response.data.results?.find((l: any) => l.ean === ean);
+      return localizacao?.status === 'aberta';
+    } catch (erro) {
+      console.warn('Erro ao verificar status da localização:', erro);
+      return false;
+    }
+  }, []);
 
-    const localizacoesParaFechar = [...localizacoesAbertas];
+  // Função para fechar localização aberta
+  const fecharLocalizacaoAberta = useCallback(async () => {
+    if (!eanLocalizacaoAberta) return;
 
-    for (const ean of localizacoesParaFechar) {
-      try {
-        await fecharLocalizacao(ean);
-        console.log(`✅ Localização ${ean} fechada com sucesso`);
-      } catch (erro) {
-        console.warn(`⚠️ Erro ao fechar localização ${ean}:`, erro);
+    console.log('🔒 Fechando localização aberta:', eanLocalizacaoAberta);
+
+    try {
+      // Verificar se a localização ainda está aberta antes de tentar fechar
+      const estaAberta = await verificarLocalizacaoAberta(eanLocalizacaoAberta);
+      if (estaAberta) {
+        await fecharLocalizacao(eanLocalizacaoAberta);
+        console.log(`✅ Localização ${eanLocalizacaoAberta} fechada com sucesso`);
+      } else {
+        console.log(`ℹ️ Localização ${eanLocalizacaoAberta} já estava fechada`);
       }
+    } catch (erro) {
+      console.warn(`⚠️ Erro ao fechar localização ${eanLocalizacaoAberta}:`, erro);
     }
 
-    setLocalizacoesAbertas([]);
-  }, [localizacoesAbertas]);
-  // useEffect para detectar fechamento/recarregamento da página
+    setEanLocalizacaoAberta(null);
+  }, [verificarLocalizacaoAberta, eanLocalizacaoAberta]);
+
+  // Função para limpar estado e fechar localização
+  const limparEstado = useCallback(async () => {
+    console.log('🧹 Limpando estado da movimentação');
+
+    // Fechar localização aberta
+    await fecharLocalizacaoAberta();
+
+    // Limpar estado
+    setLista([]);
+    setOrigem(null);
+    setDestino(null);
+    setLocalizacao('');
+    setLocalizacaoBloqueada(false);
+    setContadorTotal(1);
+    setSelectedItems([]);
+    setSelectAll(false);
+    setProduto('');
+  }, [fecharLocalizacaoAberta]);
+
+  // ALERTA ao usuário se tentar sair/recarregar com localização aberta
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (localizacoesAbertas.length > 0) {
-        // Mostrar mensagem de aviso
-        const message = 'Há localizações abertas. Elas serão fechadas automaticamente.';
-        event.returnValue = message;
-        return message;
+      if (eanLocalizacaoAberta) {
+        event.preventDefault();
+        event.returnValue = 'Há uma localização aberta! Cancele ou conclua a movimentação antes de sair.';
+        return 'Há uma localização aberta! Cancele ou conclua a movimentação antes de sair.';
       }
     };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && localizacoesAbertas.length > 0) {
-        // Página foi minimizada ou mudou de aba - fechar localizações
-        fecharLocalizacoesAbertas();
-      }
-    };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      // Fechar localizações quando o componente for desmontado
-      if (localizacoesAbertas.length > 0) {
-        fecharLocalizacoesAbertas();
-      }
-    };
-  }, [fecharLocalizacoesAbertas]);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [eanLocalizacaoAberta]);
 
   const carregarTodasLocalizacoes = async () => {
     try {
@@ -290,6 +308,8 @@ const Movimentacao: React.FC = () => {
     let resultado;
 
     try {
+      console.log('🔍 Buscando localização:', eanLocalizacao);
+
       // Busca a localização (entrada, saída ou transferência)
       if (tipo === 'transferencia') {
         resultado = await buscarLocalizacaoGeral(eanLocalizacao);
@@ -302,14 +322,16 @@ const Movimentacao: React.FC = () => {
         return;
       }
 
-      // Usa função centralizada
-      try {
-        await abrirLocalizacao(eanLocalizacao);
+      console.log('✅ Localização encontrada:', resultado);
 
-        // Adiciona ao estado, evitando duplicidade
-        setLocalizacoesAbertas(prev =>
-          prev.includes(eanLocalizacao) ? prev : [...prev, eanLocalizacao]
-        );
+      // Usa função centralizada para abrir localização
+      try {
+        console.log('🔓 Abrindo localização:', eanLocalizacao);
+        await abrirLocalizacao(eanLocalizacao);
+        console.log('✅ Localização aberta com sucesso');
+
+        // Define a localização aberta
+        setEanLocalizacaoAberta(eanLocalizacao);
 
         setOrigem({
           id: resultado.localizacao_id,
@@ -320,11 +342,13 @@ const Movimentacao: React.FC = () => {
         setLocalizacao('');
         setLocalizacaoBloqueada(true);
       } catch (erro: any) {
-        alert(erro?.message || 'A localização já está em uso.');
+        console.error('❌ Erro ao abrir localização:', erro);
+        const mensagem = erro?.response?.data?.message || erro?.message || 'A localização já está em uso.';
+        alert(mensagem);
         return;
       }
     } catch (err: any) {
-      console.error('Erro ao buscar localização:', err);
+      console.error('❌ Erro ao buscar localização:', err);
       alert(err?.message || 'Erro ao buscar localização.');
     }
   };
@@ -395,8 +419,16 @@ const Movimentacao: React.FC = () => {
   };
 
   const handleCancelarMovimentacao = async () => {
-    // Fechar todas as localizações abertas
-    await fecharLocalizacoesAbertas();
+    console.log('❌ Cancelando movimentação');
+    await limparEstado();
+    console.log('✅ Movimentação cancelada e localizações fechadas');
+  };
+
+  const handleMudancaTipo = async (novoTipo: 'entrada' | 'saida' | 'transferencia') => {
+    console.log('🔄 Mudando tipo de movimentação de', tipo, 'para', novoTipo);
+
+    // Fechar localização aberta antes de mudar o tipo
+    await fecharLocalizacaoAberta();
 
     // Limpar estado
     setLista([]);
@@ -404,15 +436,20 @@ const Movimentacao: React.FC = () => {
     setDestino(null);
     setLocalizacao('');
     setLocalizacaoBloqueada(false);
-    setContadorTotal(1);
     setSelectedItems([]);
     setSelectAll(false);
-  };
+    setProduto('');
 
+    // Mudar o tipo
+    setTipo(novoTipo);
+
+    console.log('✅ Tipo alterado e estado limpo');
+  };
 
   const handleConfirmarOperacao = async () => {
     try {
       setLoading(true);
+      console.log('✅ Confirmando operação de movimentação');
 
       // Buscar o usuário logado
       const currentUser = await getCurrentUser();
@@ -458,19 +495,19 @@ const Movimentacao: React.FC = () => {
 
       await enviarMovimentacao(payload);
 
-      // ✅ FECHAR LOCALIZAÇÕES
-      await fecharLocalizacoesAbertas();
+      // ✅ FECHAR LOCALIZAÇÃO
+      console.log('🔒 Fechando localização após movimentação concluída');
+      await fecharLocalizacaoAberta();
 
       alert('Movimentacao realizada com sucesso!');
       setConfirmOpen(false);
-      setLista([]);
-      setOrigem(null);
-      setDestino(null);
-      setLocalizacao('');
-      setLocalizacaoBloqueada(false);
-      setContadorTotal(1);
+
+      // Limpar estado após sucesso
+      await limparEstado();
+
+      console.log('✅ Movimentação concluída com sucesso');
     } catch (err: any) {
-      console.error('Erro ao enviar movimentacao:', err);
+      console.error('❌ Erro ao enviar movimentacao:', err);
       if (err.response) {
         console.error('📛 Código:', err.response.status);
         console.error('📦 Dados do erro:', err.response.data);
@@ -502,25 +539,6 @@ const Movimentacao: React.FC = () => {
               <Typography variant="h6" sx={{ color: '#black' }}>
                 Tipo de Operação
               </Typography>
-              {localizacoesAbertas.length > 0 && (
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  <Chip
-                    icon={<WarningAmberIcon />}
-                    label={`${localizacoesAbertas.length} localização(ões) aberta(s)`}
-                    color="warning"
-                    variant="outlined"
-                  />
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="error"
-                    onClick={fecharLocalizacoesAbertas}
-                    sx={{ ml: 1 }}
-                  >
-                    Fechar Todas
-                  </Button>
-                </Box>
-              )}
             </Box>
             <FormControl fullWidth size="small">
               <InputLabel id="tipo-label">Tipo</InputLabel>
@@ -530,18 +548,7 @@ const Movimentacao: React.FC = () => {
                 label="Tipo"
                 onChange={(e) => {
                   const novoTipo = e.target.value as any;
-                  setTipo(novoTipo);
-
-                  // Fechar localizações abertas antes de mudar o tipo
-                  fecharLocalizacoesAbertas();
-
-                  // Limpar estado
-                  setLista([]);
-                  setOrigem(null);
-                  setDestino(null);
-                  setLocalizacao('');
-                  setSelectedItems([]);
-                  setSelectAll(false);
+                  handleMudancaTipo(novoTipo);
                 }}
                 sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
               >
@@ -577,7 +584,7 @@ const Movimentacao: React.FC = () => {
               destino={destino}
               setOrigem={setOrigem}
               setDestino={setDestino}
-              onLocalizacaoAberta={(ean) => setLocalizacoesAbertas(prev => [...prev, ean])}
+              onLocalizacaoAberta={(ean) => setEanLocalizacaoAberta(ean)}
             />
           ) : (
             <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
