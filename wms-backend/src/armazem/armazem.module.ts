@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Armazem } from './entities/armazem.entity';
 import { Usuario } from 'src/usuario/entities/usuario.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { UsuarioModule } from 'src/usuario/usuario.module';
 
 // Define um módulo NestJS usando o decorador @Module
 @Module({
@@ -19,6 +20,7 @@ import { AuthModule } from 'src/auth/auth.module';
     // dentro deste módulo (cria um repositório para a entidade)
     TypeOrmModule.forFeature([Armazem, Usuario]),
     AuthModule,
+    UsuarioModule,
   ],
   // Define os controllers que pertencem a este módulo
   controllers: [ArmazemController],
