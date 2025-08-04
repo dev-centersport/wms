@@ -4,9 +4,19 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { TimezoneInterceptor } from './interceptors/timezone.interceptor';
 import { Request, Response } from 'express';
+import session from 'express-session';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(
+    session({
+      secret: 'uma_senha_secreta', // Troque em produção!
+      resave: false,
+      saveUninitialized: false,
+      cookie: { maxAge: 3600000 }, // 1h
+    }),
+  );
 
   // Configuração global do ValidationPipe
   app.useGlobalPipes(
@@ -20,7 +30,37 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TimezoneInterceptor());
 
   // Configuração básica do CORS (permite todas as origens)
-  app.enableCors();
+  app.enableCors({
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: string | boolean) => void,
+    ) => {
+      // Permite requisições sem origin (como mobile apps)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Expressão regular para verificar IPs da rede local
+      const localNetworkRegex = /^http?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/;
+
+      // Verifica se é localhost, IP da rede local ou mobile app
+      if (
+        origin === 'http://151.243.0.78:3000' ||
+        origin === 'http://151.243.0.78:3001' ||
+        origin === 'http://151.243.0.78:3006' ||
+        localNetworkRegex.test(origin) ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
+        callback(null, origin);
+      } else {
+        callback(new Error('Not allowed by CORS'), false);
+      }
+    },
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-New-Token'],
+    exposedHeaders: ['X-New-Token'],
+  });
 
   // Habilitando o Cors
   // app.enableCors({
@@ -45,7 +85,9 @@ async function bootstrap() {
     }
   });
 
-  await app.listen(3001, () => {
+  const port = process.env.PORT || 3005;
+
+  await app.listen(port, () => {
     // Sinaliza prontidão para o PM2
     if (process.send) {
       process.send('ready');

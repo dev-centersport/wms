@@ -11,45 +11,135 @@ import {
   TextField,
   Paper,
   Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
 } from '@mui/material';
 import {
-  buscarProdutosEsperadosDaOcorrencia,
+  buscarOcorrenciasDaLocalizacao,
   registrarConferenciaAuditoria,
+  buscarProdutoPorEAN,
+  buscarAuditoria,
+  ItemAuditoriaPayload,
 } from '../services/API';
+import Layout from '../components/Layout';
 
-export default function ConferenciaAuditoria() {
+const ConferenciaAuditoria: React.FC = () => {
   const { id } = useParams();
   const [esperados, setEsperados] = useState<any[]>([]);
   const [bipados, setBipados] = useState<Record<string, number>>({});
+  const [produtosMap, setProdutosMap] = useState<Record<string, any>>({});
+  const [localizacaoNome, setLocalizacaoNome] = useState('');
+  const [armazemNome, setArmazemNome] = useState('');
+  const [eanLocalizacao, setEanLocalizacao] = useState('');
+  const [auditoriaId, setAuditoriaId] = useState<number | null>(null);
+  const [conclusaoTexto, setConclusaoTexto] = useState('');
+  const [motivos, setMotivos] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function carregarProdutos() {
       if (!id) return;
       try {
-        const produtos = await buscarProdutosEsperadosDaOcorrencia(Number(id));
+        const dados = await buscarOcorrenciasDaLocalizacao(Number(id));
+        const produtos = dados.flatMap((ocorrencia: any) => ocorrencia.produto || []);
         setEsperados(produtos);
+
+        if (dados.length > 0) {
+          setLocalizacaoNome(dados[0].localizacao || '');
+          setArmazemNome(dados[0].armazem || '');
+          setEanLocalizacao(dados[0].ean_localizacao || '');
+        }
       } catch (err) {
-        alert('Erro ao buscar produtos esperados para auditoria.');
+        alert('Erro ao buscar produtos da localização.');
       }
     }
+
+    async function carregarAuditoriaRelacionada() {
+      if (!id) return;
+      try {
+        const resultado = await buscarAuditoria({ status: 'em andamento' });
+        const auditorias = resultado.results || [];
+
+        const auditoriaRelacionada = auditorias.find(
+          (a: any) => a.localizacao?.localizacao_id === Number(id)
+        );
+
+        if (auditoriaRelacionada) {
+          setAuditoriaId(auditoriaRelacionada.auditoria_id);
+        } else {
+          alert('Nenhuma auditoria em andamento encontrada para esta localização.');
+        }
+      } catch {
+        alert('Erro ao buscar auditoria em andamento.');
+      }
+    }
+
     carregarProdutos();
+    carregarAuditoriaRelacionada();
   }, [id]);
 
-  const handleBipagem = (ean: string) => {
-    const produto = esperados.find((p) => p.ean === ean.trim());
-    if (!produto) {
-      alert('Produto não esperado nesta auditoria.');
-      return;
+  const handleBipagem = async (ean: string) => {
+    const eanLimpo = ean.trim();
+    try {
+      const produto = await buscarProdutoPorEAN(eanLimpo, eanLocalizacao);
+
+      if (!produto || !produto.produto_id) {
+        alert('Produto com esse EAN não foi encontrado no sistema.');
+        return;
+      }
+
+      setBipados((prev) => ({
+        ...prev,
+        [produto.produto_id]: (prev[produto.produto_id] || 0) + 1,
+      }));
+
+      setProdutosMap((prev) => ({
+        ...prev,
+        [produto.produto_id]: produto,
+      }));
+    } catch {
+      alert('Produto com esse EAN não foi encontrado no sistema.');
     }
-    setBipados((prev) => ({
+  };
+
+  const handleChangeMotivo = (produto_id: string, motivo: string) => {
+    setMotivos((prev) => ({
       ...prev,
-      [produto.sku]: (prev[produto.sku] || 0) + 1,
+      [produto_id]: motivo,
     }));
   };
 
   const handleSalvar = async () => {
+    if (!auditoriaId) {
+      alert('ID da auditoria não encontrado.');
+      return;
+    }
+
+    const itens: ItemAuditoriaPayload[] = Object.entries(bipados).map(
+      ([produto_id, quantidade]) => {
+        const produto = produtosMap[produto_id] || {};
+        return {
+          produto_estoque_id: produto.produto_estoque_id || null,
+          quantidade,
+          quantidades_sistema: produto.qtd_sistema || 0,
+          quantidades_fisico: quantidade,
+          motivo_diferenca: motivos[produto_id] || 'outro',
+          mais_informacoes: '',
+          acao_corretiva: 'Ajuste realizado',
+          estoque_anterior: produto.qtd_sistema || 0,
+          estoque_novo: quantidade,
+        };
+      }
+    );
+
     try {
-      await registrarConferenciaAuditoria(Number(id), bipados);
+      await registrarConferenciaAuditoria(
+        auditoriaId,
+        conclusaoTexto.trim() || 'Conferência concluída sem observações.',
+        itens
+      );
       alert('Conferência registrada com sucesso.');
     } catch (err: any) {
       alert(`Erro ao salvar conferência: ${err?.response?.data?.message || err.message}`);
@@ -57,64 +147,105 @@ export default function ConferenciaAuditoria() {
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h5" gutterBottom>
-        Conferência da Auditoria #{id}
-      </Typography>
+    <Layout show={false}>
+      <Box p={3}>
+        <Typography variant="h5" gutterBottom fontWeight={'bold'} fontSize={30}>
+          Conferência da Auditoria: {armazemNome} - {localizacaoNome}
+        </Typography>
 
-      <Box display="flex" gap={5} mt={3}>
-        {/* Produtos Esperados */}
-        <Box flex={1} component={Paper} p={2}>
-          <Typography variant="h6">Produtos Esperados</Typography>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>SKU</TableCell>
-                <TableCell>Descrição</TableCell>
-                <TableCell>Qtd Esperada</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {esperados.map((p) => (
-                <TableRow key={p.sku}>
-                  <TableCell>{p.sku}</TableCell>
-                  <TableCell>{p.descricao}</TableCell>
-                  <TableCell>{p.quantidade}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <Box display="flex" gap={5} mt={8}>
+          <Box flex={1} component={Paper} p={2}>
+            <Typography variant="h6">Produtos Esperados</Typography>
+            <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>SKU</TableCell>
+                    <TableCell>Descrição</TableCell>
+                    <TableCell align='center'>Qtd Esperada</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {esperados.map((p, index) => (
+                    <TableRow key={`${p.produto_id}-${index}`}>
+                      <TableCell>{p.sku || '-'}</TableCell>
+                      <TableCell>{p.descricao || '-'}</TableCell>
+                      <TableCell align='center'>{p.qtd_esperada ?? '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
+
+          <Box flex={1} component={Paper} p={2}>
+            <Typography variant="h6">Produtos Bipados</Typography>
+            <TextField
+              fullWidth
+              placeholder="Bipe o EAN aqui"
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  await handleBipagem((e.target as HTMLInputElement).value);
+                  (e.target as HTMLInputElement).value = '';
+                }
+              }}
+            />
+
+            {/* Caixa com scroll e altura fixa */}
+            <Box sx={{ maxHeight: 300, overflowY: 'auto', mt: 2 }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>SKU</TableCell>
+                    <TableCell>Descrição</TableCell>
+                    <TableCell>Qtd Bipado</TableCell>
+                    <TableCell>Motivo Diferença</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(bipados).map(([produto_id, qtd]) => {
+                    const produto = produtosMap[produto_id];
+                    return (
+                      <TableRow key={produto_id}>
+                        <TableCell>{produto?.sku || '-'}</TableCell>
+                        <TableCell>{produto?.descricao || '-'}</TableCell>
+                        <TableCell align="center">{qtd}</TableCell>
+                        <TableCell>
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Motivo</InputLabel>
+                            <Select
+                              value={motivos[produto_id] || ''}
+                              onChange={(e) => handleChangeMotivo(produto_id, e.target.value)}
+                              label="Motivo"
+                            >
+                              <MenuItem value="estoque zerado">Estoque zerado</MenuItem>
+                              <MenuItem value="produto a mais">Produto a mais</MenuItem>
+                              <MenuItem value="produto a menos">Produto a menos</MenuItem>
+                              <MenuItem value="outro">Outro</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
         </Box>
 
-        {/* Bipagem */}
-        <Box flex={1} component={Paper} p={2}>
-          <Typography variant="h6">Produtos Bipados</Typography>
+        <Box component={Paper} mt={5} p={3}>
+          <Typography variant="h6" gutterBottom>
+            Conclusão da Auditoria
+          </Typography>
           <TextField
+            label="Observações da Conclusão"
             fullWidth
-            placeholder="Bipe o EAN aqui"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleBipagem((e.target as HTMLInputElement).value);
-                (e.target as HTMLInputElement).value = '';
-              }
-            }}
+            multiline
+            rows={4}
+            value={conclusaoTexto}
+            onChange={(e) => setConclusaoTexto(e.target.value)}
           />
-          <Table size="small" sx={{ mt: 2 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>SKU</TableCell>
-                <TableCell>Qtd Bipado</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Object.entries(bipados).map(([sku, qtd]) => (
-                <TableRow key={sku}>
-                  <TableCell>{sku}</TableCell>
-                  <TableCell>{qtd}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
           <Button
             variant="contained"
             sx={{ mt: 2, backgroundColor: '#4CAF50', color: '#fff', fontWeight: 600 }}
@@ -124,6 +255,8 @@ export default function ConferenciaAuditoria() {
           </Button>
         </Box>
       </Box>
-    </Box>
+    </Layout>
   );
-}
+};
+
+export default ConferenciaAuditoria;

@@ -1,10 +1,47 @@
 import axios from 'axios'
+import Ocorrencia from '../pages/NovaOcorrencia';
+import Cookies from 'js-cookie';
 
 const BASE_URL = 'http://151.243.0.78:3001';
 
 const api = axios.create({
   baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
 });
+
+// Interceptor para adicionar token de autenticação automaticamente
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para tratar erros de autenticação e capturar novos tokens
+api.interceptors.response.use(
+  (response) => {
+    // Captura novo token se enviado pelo backend
+    const newToken = response.headers['x-new-token'];
+    if (newToken) {
+      Cookies.set('token', newToken, { expires: 1 });
+      console.log('Token renovado automaticamente');
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expirado ou inválido
+      Cookies.remove('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
 
@@ -31,52 +68,135 @@ export interface Ocorrencia {
 
 export interface AuditoriaItem {
   auditoria_id: number;
-  conclusao: string;
-  data_hora_inicio: string;
-  data_hora_fim: string;
-  status: string;
+  conclusao?: string | null;
+  data_hora_inicio?: string | null;
+  data_hora_fim?: string | null; // ou data_hora_conclusao, dependendo da sua API
+  status: 'pendente' | 'concluida' | 'em andamento';
   usuario: {
+    usuario_id: number;
     responsavel: string;
+    usuario: string;
+    senha: string;
+    nivel: number;
+    cpf: string;
+    ativo: boolean;
   };
   localizacao: {
+    localizacao_id: number;
+    status: string;
     nome: string;
+    altura: string;
+    largura: string;
+    comprimento: string;
     ean: string;
   };
-  ocorrencias: Ocorrencia[];
+  ocorrencias?: Ocorrencia[];
 }
 
-// ✅ Agora exportando corretamente
-export async function buscarAuditoria(): Promise<AuditoriaItem[]> {
+export type StatusAuditoria = 'pendente' | 'concluida' | 'em andamento';
+
+export async function buscarAuditoria(params?: {
+  search?: string;
+  offset?: number;
+  limit?: number;
+  status?: StatusAuditoria;
+}) {
   try {
-    const res = await axios.get('http://151.243.0.78:3001/auditoria');
-    return res.data;
-  } catch (err) {
-    console.error('Erro ao buscar auditorias →', err);
-    throw new Error('Falha ao carregar as auditorias do servidor.');
+    const queryParams: Record<string, any> = {};
+
+    if (params?.search) {
+      queryParams.search = params.search;
+    }
+
+    queryParams.offset = String(params?.offset ?? 0);
+    queryParams.limit = String(params?.limit ?? 50);
+
+    if (
+      params?.status === 'pendente' ||
+      params?.status === 'concluida' ||
+      params?.status === 'em andamento'
+    ) {
+      queryParams.status = params.status;
+    }
+
+
+    const response = await api.get(`/auditoria`, {
+      params: queryParams,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar auditorias:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Status:', error.response.status);
+    }
+    throw new Error('Falha ao carregar as auditorias.');
   }
 }
 
-export async function registrarConferenciaAuditoria(ocorrenciaId: number, bipados: Record<string, number>) {
-  return await axios.post(`/auditoria/${ocorrenciaId}/registrar`, { bipados });
+
+export interface ItemAuditoriaPayload {
+  produto_estoque_id: number;
+  quantidade: number;
+  quantidades_sistema: number;
+  quantidades_fisico: number;
+  motivo_diferenca: string;
+  acao_corretiva: string;
+  estoque_anterior: number;
+  estoque_novo: number;
+  mais_informacoes?: string;
 }
 
-export async function buscarProdutosEsperadosDaOcorrencia(ocorrenciaId: number) {
-  const response = await axios.get(`http://151.243.0.78:3001/ocorrencia/${ocorrenciaId}/produtos`);
-  return response.data;
+export async function registrarConferenciaAuditoria(
+  auditoriaId: number,
+  conclusao: string,
+  itens: ItemAuditoriaPayload[]
+) {
+  try {
+    const payload = {
+      conclusao,
+      itens,
+    };
+
+    const response = await api.post(
+      `/auditoria/${auditoriaId}/concluir`,
+      payload
+    );
+
+    return response.data;
+  } catch (err: any) {
+    console.error('Erro ao concluir auditoria:', err);
+    throw new Error(err?.response?.data?.message || 'Erro ao concluir auditoria.');
+  }
 }
+
 export async function login(usuario: string, senha: string) {
   try {
-    const res = await axios.post(`${BASE_URL}/usuario/validar-usuario`, {
-      usuario: usuario,
-      senha: senha
+    const res = await axios.post(`${BASE_URL}/auth/login`, {
+      usuario,
+      senha
     });
-    console.log(res)
-    const result = res.data;
 
-    return {status: result.status, message: result.message};
-  } catch (err) {
-    console.error('Erro na função login:', err);
-    throw new Error('Erro inesperado ao tentar login.');
+    console.log(res)
+
+    // Se vier o token, salva no cookie
+    if (res.data && res.data.access_token) {
+      Cookies.set('token', res.data.access_token, { expires: 1 }); // expira em 1 dia
+      return { status: 200, message: 'Login realizado com sucesso!' };
+    } else if (res.status === 201 && res.data) {
+      return { status: 401, message: 'Usuário ou senha inválido'}
+    } else {
+      // Caso não venha o token, retorna erro genérico
+      return { status: 401, message: 'Token não recebido.' };
+    }
+  } catch (err: any) {
+    // Se a API retornar mensagem de erro, repassa para o front
+    if (err.response && err.response.data && err.response.data.message) {
+      return { status: err.response.status, message: err.response.data.message };
+    }
+    // Erro inesperado
+    return { status: 500, message: 'Erro inesperado ao tentar login.' };
   }
 }
 
@@ -98,7 +218,6 @@ export async function buscarProdutosPorLocalizacao(localizacao_id: number) {
     throw err;
   }
 }
-
 
 
 // ---------- POST /armazem ----------
@@ -189,8 +308,8 @@ export const buscarLocalizacoes = async (
       params.set('tipoId', tipoId.toString());
     }
 
-    const res = await axios.get<{ results: any[]; total: number }>(
-      `http://151.243.0.78:3001/localizacao?${params.toString()}`
+    const res = await api.get<{ results: any[]; total: number }>(
+      `/localizacao?${params.toString()}`
     );
 
     const dados: Localizacao[] = res.data.results.map((item) => ({
@@ -259,7 +378,7 @@ export interface Produto {
 
 export const buscarProdutos = async (): Promise<Produto[]> => {
   try {
-    const res = await axios.get<{ results: any[] }>('http://151.243.0.78:3001/produto?limit=1000000000000');
+    const res = await api.get<{ results: any[] }>(`/produto?limit=1000000000000`);
 
     const dados: Produto[] = res.data.results.map((item) => ({
       produto_id: item.produto_id,
@@ -285,7 +404,7 @@ export async function buscarConsultaEstoque() {
     let total = Infinity;
 
     while (todos.length < total) {
-      const res = await axios.get('http://151.243.0.78:3001/produto-estoque', {
+      const res = await api.get('/produto-estoque', {
         params: { limit: limite, offset: offset }
       });
 
@@ -350,7 +469,7 @@ export interface RespostaSeparacaoProduto {
 
 export async function enviarArquivoSeparacaoPorProduto(formData: FormData): Promise<RespostaSeparacaoProduto> {
   try {
-    const response = await axios.post(`${BASE_URL}/separacao/agrupado-produto`, formData, {
+    const response = await api.post(`/separacao/agrupado-produto`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -366,7 +485,7 @@ export async function enviarArquivoSeparacaoPorProduto(formData: FormData): Prom
 
 export async function enviarArquivoSeparacao(formData: FormData): Promise<RespostaSeparacao> {
   try {
-    const response = await axios.post(`${BASE_URL}/separacao/agrupado-pedido`, formData, {
+    const response = await api.post(`/separacao/agrupado-pedido`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -375,7 +494,7 @@ export async function enviarArquivoSeparacao(formData: FormData): Promise<Respos
     const pedidos = response.data.pedidos;
 
     // Buscar todos os produtos disponíveis na base para enriquecimento
-    const produtosRes = await axios.get(`${BASE_URL}/produto`);
+    const produtosRes = await api.get(`/produto`);
     const produtos = produtosRes.data;
 
     const pedidosComDescricaoFoto = pedidos.map((pedido: any) => {
@@ -423,7 +542,7 @@ export interface Armazem {
 
 export const buscarArmazem = async (): Promise<Armazem[]> => {
   try {
-    const res = await axios.get<Armazem[]>('http://151.243.0.78:3001/armazem');
+    const res = await api.get<Armazem[]>('/armazem');
     return res.data;
   } catch (err) {
     console.error('Erro ao buscar armazéns →', err);
@@ -450,7 +569,7 @@ export interface TipoLocalizacao {
 
 export const buscarTiposDeLocalizacao = async (): Promise<TipoLocalizacao[]> => {
   try {
-    const res = await axios.get<TipoLocalizacao[]>('http://151.243.0.78:3001/tipo-localizacao');
+    const res = await api.get<TipoLocalizacao[]>('/tipo-localizacao');
 
     return res.data;
   } catch (err) {
@@ -497,7 +616,7 @@ export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Prom
       throw new Error(`Tipo de localização "${criarLocalizacao.tipo}" não encontrado.`);
     }
 
-    await axios.post('http://151.243.0.78:3001/localizacao', {
+    await api.post('/localizacao', {
       nome: criarLocalizacao.nome,
       status: 'fechada',
       altura: criarLocalizacao.altura,
@@ -537,7 +656,7 @@ export interface ExcluirLocalizacao {
 
 export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao): Promise<void> => {
   try {
-    await axios.delete(`http://151.243.0.78:3001/localizacao/${localizacao_id}`);
+    await api.delete(`/localizacao/${localizacao_id}`);
     console.log(`Localização ID ${localizacao_id} excluída com sucesso.`);
   } catch (err) {
     console.error('Erro ao excluir localização →', err);
@@ -562,7 +681,7 @@ export async function buscarProdutoPorEAN(ean: string, eanLocalizacao?: string) 
   const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
 
   try {
-    const response = await axios.get(`http://151.243.0.78:3001/produto/buscar-por-ean/${eanLimpo}`);
+    const response = await api.get(`/produto/buscar-por-ean/${eanLimpo}`);
     const produto = response.data;
 
     let produto_estoque_id;
@@ -588,21 +707,25 @@ export async function buscarProdutoPorEAN(ean: string, eanLocalizacao?: string) 
   }
 }
 
-
 export async function buscarLocalizacaoPorEAN(ean: string) {
-  const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
-  const response = await axios.get(`${BASE_URL}/localizacao/buscar-por-ean/${eanLimpo}`);
-  const localizacao = response.data;
+  try {
+    const eanLimpo = ean.replace(/[\n\r\t\s]/g, "").trim();
+    const response = await api.get(`/localizacao/buscar-por-ean/${eanLimpo}`);
+    const loc = response.data;
 
-  if (!localizacao) {
-    throw new Error("Localização com esse EAN não encontrada.");
+    if (!loc || !loc.localizacao_id) {
+      throw new Error("Localização com esse EAN não encontrada.");
+    }
+
+    return {
+      localizacao_id: loc.localizacao_id,
+      nome: loc.nome || loc.localizacao_nome || '',
+      armazem: loc.armazem_nome || '',
+    };
+  } catch (err) {
+    console.error("Erro ao buscar localização:", err);
+    throw new Error("Erro ao buscar localização.");
   }
-
-  return {
-    localizacao_id: localizacao.localizacao_id,
-    nome: localizacao.localizacao_nome,
-    armazem: localizacao.armazem_nome || "",
-  };
 }
 
 
@@ -616,7 +739,7 @@ export interface ProdutoEstoqueDTO {
 }
 
 export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number): Promise<ProdutoEstoqueDTO[]> {
-  const res = await axios.get(`http://151.243.0.78:3001/localizacao/${localizacao_id}/produtos`);
+  const res = await api.get(`/localizacao/${localizacao_id}/produtos`);
 
   const dados = res.data?.produtos_estoque || [];
 
@@ -632,7 +755,7 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacao_id: number)
 
 export async function buscarProdutoEstoquePorId(id: number) {
   try {
-    const res = await axios.get(`http://151.243.0.78:3001/produto-estoque/${id}`);
+    const res = await api.get(`/produto-estoque/${id}`);
     return res.data;
   } catch (err: any) {
     console.error(`❌ Erro ao buscar produto_estoque ID ${id}:`, err);
@@ -652,8 +775,8 @@ export async function enviarMovimentacao(payload: {
   }[];
 }) {
   try {
-    const { data } = await axios.post(
-      'http://151.243.0.78:3001/movimentacao',
+    const { data } = await api.post(
+      '/movimentacao',
       payload
     );
     return data;
@@ -677,7 +800,7 @@ export async function enviarMovimentacao(payload: {
 }
 
 export async function buscarLocalizacaoGeral(ean: string) {
-  const response = await axios.get('http://151.243.0.78:3001/localizacao');
+  const response = await api.get('/localizacao');
   const localizacoes = response.data.results;
 
   const encontrada = localizacoes.find((l: any) => l.ean === ean.trim());
@@ -689,50 +812,55 @@ export async function buscarLocalizacaoGeral(ean: string) {
   return encontrada;
 }
 
+const cacheProdutosPorLocalizacao = new Map<number, ProdutoEstoqueDTO[]>();
+
 export async function buscarProdutoEstoquePorLocalizacaoEAN(eanLocalizacao: string, eanProduto: string) {
   try {
-    const localizacao = await buscarLocalizacaoPorEAN(eanLocalizacao.trim());
-    const produto = await buscarProdutoPorEAN(eanProduto.trim());
+    const eanLoc = eanLocalizacao.replace(/[\n\r\t\s]/g, "").trim();
+    const codProd = eanProduto.replace(/[\n\r\t\s]/g, "").trim();
 
-    if (!localizacao?.localizacao_id || !produto?.produto_id) {
-      throw new Error('EAN inválido.');
+    const localizacao = await buscarLocalizacaoPorEAN(eanLoc);
+    const localizacaoID = localizacao.localizacao_id;
+
+    let produtos = cacheProdutosPorLocalizacao.get(localizacaoID);
+
+    if (!produtos) {
+      produtos = await buscarProdutosPorLocalizacaoDireto(localizacaoID);
+      cacheProdutosPorLocalizacao.set(localizacaoID, produtos);
     }
 
-    const produtoEstoqueRes = await axios.get(`http://151.243.0.78:3001/produto-estoque`);
-    const lista = produtoEstoqueRes.data;
-
-    const encontrado = lista.find(
-      (item: any) =>
-        item.produto?.produto_id === produto.produto_id &&
-        item.localizacao?.localizacao_id === localizacao.localizacao_id
+    const encontrado = produtos.find(p =>
+      p &&
+      (p.ean?.replace(/[\n\r\t\s]/g, "").trim() === codProd ||
+        p.sku?.replace(/[\n\r\t\s]/g, "").trim() === codProd)
     );
 
     if (!encontrado) {
-      throw new Error('Produto não encontrado nesta localização.');
+      throw new Error("Produto não encontrado nesta localização.");
     }
 
     return {
       produto_estoque_id: encontrado.produto_estoque_id,
-      localizacao_id: localizacao.localizacao_id,
-      quantidade: encontrado.quantidade || 0,
+      localizacao_id: localizacaoID,
+      quantidade: encontrado.quantidade,
     };
   } catch (err: any) {
-    console.error('Erro em buscarProdutoEstoquePorLocalizacaoEAN:', err);
-    throw err;
+    console.error("Erro em buscarProdutoEstoquePorLocalizacaoEAN:", err);
+    throw new Error(err?.message || "Erro ao buscar produto na localização.");
   }
 }
 export async function criarOcorrencia(payload: {
   usuario_id: number;
   produto_estoque_id: number;
   localizacao_id: number;
-  // quantidade: number;
+  quantidade_esperada: number;
 }) {
   try {
-    const { data } = await axios.post(`${BASE_URL}/ocorrencia`, {
+    const { data } = await api.post(`/ocorrencia`, {
       usuario_id: payload.usuario_id,
       produto_estoque_id: payload.produto_estoque_id,
       localizacao_id: payload.localizacao_id,
-      // quantidade: payload.quantidade,
+      quantidade_esperada: payload.quantidade_esperada,
     });
 
     return data; // opcional, caso queira retornar a ocorrência criada
@@ -741,34 +869,57 @@ export async function criarOcorrencia(payload: {
     throw new Error(err?.response?.data?.message || 'Erro ao registrar ocorrência.');
   }
 }
+
 export async function buscarOcorrencias(ativo?: true | false) {
   try {
     const query = ativo ? `?ativo=${ativo}` : '';
-    const res = await axios.get(`${BASE_URL}/ocorrencia/listar-por-localizacao${query}`);
+    const res = await api.get(`/ocorrencia/listar-por-localizacao${query}`);
     console.log(res)
-    console.log(res.data.map((o: any) => ({
-      ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
-      localizacao: o.localizacao || '-',
-      armazem: o.armazem || '-',
-      produto: o.nome_produto || '-',
-      sku: o.sku || '-',
-      quantidade: o.quantidade || '-',
-      ativo: o.ativo,
-    })))
+    console.log(res.data.flatMap((o: any) =>
+      o.produto.map((p: any) => ({
+        localizacao: o.localizacao || '-',
+        armazem: o.armazem || '-',
+        produto: p.descricao || '-',
+        sku: p.sku || '-',
+        quantidade: p.qtd_esperada || '-',
+        qtd_sistema: p.qtd_sistema || '-',
+        diferenca: p.diferenca || '-',
+        qtd_ocorrencias_produto: p.qtd_ocorrencias || '-',
+        ativo: p.ativo,
+        produto_id: p.produto_id || '-',
+        ean: p.ean || '-',
+        qtd_ocorrencias: p.qtd_ocorrencias || '-',
+        ocorrencia_id: o.ocorrencia_id,
+      }))
+    ));
 
-    return res.data.map((o: any) => ({
-      ocorrencias_id: o.ocorrencias.ocorrencia_id, // ou o.ocorrencia_id conforme o nome correto
-      localizacao: o.localizacao || '-',
-      armazem: o.armazem || '-',
-      produto: o.nome_produto || '-',
-      sku: o.sku || '-',
-      quantidade: o.quantidade || '-',
-      ativo: o.ativo,
-    }));
+    return res.data.flatMap((o: any) =>
+      o.produto.map((p: any) => ({
+        localizacao: o.localizacao || '-',
+        localizacao_id: o.localizacao_id, // ✅ Adicionado aqui
+        armazem: o.armazem || '-',
+        produto: p.descricao || '-',
+        sku: p.sku || '-',
+        quantidade: p.qtd_esperada || '-',
+        qtd_sistema: p.qtd_sistema || '-',
+        diferenca: p.diferenca || '-',
+        qtd_ocorrencias_produto: p.qtd_ocorrencias || '-',
+        ativo: p.ativo,
+        produto_id: p.produto_id || '-',
+        ean: p.ean || '-',
+        qtd_ocorrencias: p.qtd_ocorrencias || '-',
+        ocorrencia_id: o.ocorrencia_id,
+      }))
+    );
   } catch (err) {
     console.error('Erro ao buscar ocorrências:', err);
     throw new Error('Erro ao buscar ocorrências.');
   }
+}
+
+export async function buscarOcorrenciasDaLocalizacao(localizacaoId: number) {
+  const response = await api.get(`/ocorrencia/${localizacaoId}/ocorrencias-da-localizacao`);
+  return response.data;
 }
 
 export interface Armazem {
@@ -778,7 +929,7 @@ export interface Armazem {
 
 export async function buscarArmazemPorEAN(ean: string): Promise<Armazem | null> {
   try {
-    const res = await axios.get<Armazem[]>(`http://151.243.0.78:3001/armazem`, {
+    const res = await api.get<Armazem[]>(`/armazem`, {
       params: { ean }
     });
     return res.data.length > 0 ? res.data[0] : null;
@@ -787,3 +938,56 @@ export async function buscarArmazemPorEAN(ean: string): Promise<Armazem | null> 
     return null;
   }
 }
+
+export async function iniciarAuditoria(id: number) {
+  try {
+    const res = await api.post(`/auditoria/${id}/iniciar`);
+    return res.data;
+  } catch (err: any) {
+    console.error('Erro ao iniciar auditoria:', err);
+    throw new Error(err?.response?.data?.message || 'Erro ao iniciar auditoria.');
+  }
+}
+export async function criarAuditoria(data: {
+  usuario_id: number;
+  localizacao_id: number;
+  ocorrencias: { ocorrencia_id: number }[]; // ✅ array de objetos
+}) {
+  try {
+    console.log('📤 Dados enviados para /auditoria:', JSON.stringify(data, null, 2));
+
+    const res = await api.post(`/auditoria`, data);
+    console.log('✅ Resposta recebida da API /auditoria:', res.data);
+
+    return res.data;
+  } catch (err: any) {
+    console.error('❌ Erro ao criar auditoria:', err?.response?.data || err);
+    throw new Error(err?.response?.data?.message || 'Erro ao criar auditoria.');
+  }
+}
+
+// 🔓 Abrir localização
+export async function abrirLocalizacao(ean: string): Promise<void> {
+  try {
+    await api.get(`/movimentacao/abrir-localizacao/${ean}`);
+  } catch (err: any) {
+    console.error('Erro ao abrir localização:', err);
+    throw new Error(err?.response?.data?.message || 'Falha ao abrir localização.');
+  }
+}
+
+// 🔒 Fechar localização
+export async function fecharLocalizacao(ean: string): Promise<void> {
+  try {
+    await api.get(`/movimentacao/fechar-localizacao/${ean}`);
+  } catch (err: any) {
+    console.error('Erro ao fechar localização:', err);
+    throw new Error(err?.response?.data?.message || 'Falha ao fechar localização.');
+  }
+}
+
+export async function buscarUsuarios() {
+  const response = await api.get(`/usuario`);
+  return response.data;
+}
+

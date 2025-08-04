@@ -20,6 +20,7 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ItemAuditoriaModule } from './item_auditoria/item_auditoria.module';
 import { SeparacaoModule } from './separacao/separacao.module';
 import { RelatorioModule } from './relatorio/relatorio.module';
+import { AuthModule } from './auth/auth.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -61,11 +62,11 @@ import { RelatorioModule } from './relatorio/relatorio.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST', '192.168.56.1'),
-        port: config.get<number>('DB_PORT', 5433),
-        username: config.get<string>('DB_USERNAME', 'admin'),
-        password: config.get<string>('DB_PASSWORD', 'senha123'),
-        database: config.get<string>('DB_NAME', 'wms_db'),
+        host: config.get<string>('DB_HOST', '151.243.0.78'),
+        port: config.get<number>('DB_PORT', 5432),
+        username: config.get<string>('DB_USERNAME', 'wms_dev_user'),
+        password: config.get<string>('DB_PASSWORD', 'dev@teste'),
+        database: config.get<string>('DB_NAME', 'wms_testes_db'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         autoLoadEntities: true,
         synchronize: config.get<boolean>('DB_SYNCHRONIZE', true),
@@ -92,6 +93,7 @@ import { RelatorioModule } from './relatorio/relatorio.module';
     ItemAuditoriaModule,
     SeparacaoModule,
     RelatorioModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

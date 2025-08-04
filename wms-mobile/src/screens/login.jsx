@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,18 +9,49 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TouchableWithoutFeedback,
   Keyboard,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { removerToken } from '../api/config';
 
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [tecladoAtivo, setTecladoAtivo] = useState(false);
+
+  const scrollRef = useRef(null);
+  const usuarioInputRef = useRef(null);
+  const senhaInputRef = useRef(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+
+    const show = Keyboard.addListener('keyboardDidShow', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setTecladoAtivo(true);
+    });
+
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setTecladoAtivo(false);
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
+    });
+
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!usuario || !senha) {
@@ -29,79 +60,101 @@ export default function LoginScreen() {
     }
 
     try {
+      // Limpar token anterior antes de fazer novo login
+      await removerToken();
+      
       const resultado = await login(usuario, senha);
       if (resultado.success) {
         navigation.navigate('Home');
       } else {
-        alert('Usuário ou senha inválidos.');
+        alert(resultado.message || 'Usuário ou senha inválidos.');
       }
     } catch (err) {
-      console.log(err);
+      console.error("❌ Erro no login:", err);
       alert('Erro ao fazer login. Verifique seus dados.');
     }
+  };
+
+  const handleUsuarioSubmit = () => {
+    senhaInputRef.current?.focus();
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
+        ]}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        style={Platform.OS === 'web' ? { flex: 1 } : undefined}
+      >
+        <Image
+          source={require('../../assets/images/logo01.png')}
+          style={[styles.logo, tecladoAtivo && styles.logoPequena]}
+        />
+        <Text style={styles.brand}>WMS</Text>
+        <Text style={styles.welcome}>Bem Vindo!</Text>
+
+        <Text style={styles.label}>Usuário</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={usuarioInputRef}
+            placeholder="Usuário"
+            value={usuario}
+            onChangeText={setUsuario}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            onSubmitEditing={handleUsuarioSubmit}
+            blurOnSubmit={false}
+            autoCapitalize="none"
+            autoCorrect={false}
           />
-          <Text style={styles.brand}>WMS</Text>
-          <Text style={styles.welcome}>Bem Vindo!</Text>
+          <Icon name="user" size={20} color="#888" style={styles.icon} />
+        </View>
 
-          <Text style={styles.label}>Usuário</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Usuário"
-              value={usuario}
-              onChangeText={setUsuario}
-              style={styles.input}
-              placeholderTextColor="#888"
+        <Text style={styles.label}>Senha</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={senhaInputRef}
+            placeholder="Senha"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry={!mostrarSenha}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+            <Icon
+              name={mostrarSenha ? 'eye' : 'eye-slash'}
+              size={20}
+              color="#888"
+              style={styles.icon}
             />
-            <Icon name="user" size={20} color="#888" style={styles.icon} />
-          </View>
-
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!mostrarSenha}
-              style={styles.input}
-              placeholderTextColor="#888"
-            />
-            <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
-              <Icon
-                name={mostrarSenha ? 'eye' : 'eye-slash'}
-                size={20}
-                color="#888"
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
           </TouchableOpacity>
+        </View>
 
-          <Text style={styles.footer}>
-            <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
-              "Otimizando a gestão de armazém com tecnologia eficiente"
-            </Text>
+        <TouchableOpacity onPress={handleLogin} style={styles.button}>
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.footer}>
+          <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
+            &ldquo;Otimizando a gestão de armazém com tecnologia eficiente&rdquo;
           </Text>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+        </Text>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -113,10 +166,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
     paddingHorizontal: 20,
+  },
+  scrollSemTeclado: {
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  scrollComTeclado: {
+    justifyContent: 'flex-start',
+    paddingTop: 60,
   },
   logo: {
     width: 150,
@@ -130,6 +189,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 6,
+  },
+  logoPequena: {
+    width: 90,
+    height: 90,
   },
   brand: {
     fontSize: 36,

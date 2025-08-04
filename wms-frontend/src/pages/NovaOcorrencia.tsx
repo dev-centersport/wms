@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Button,
@@ -8,47 +8,64 @@ import {
   Container,
   Divider,
 } from '@mui/material';
-import { Save, Cancel } from '@mui/icons-material';
+import { Save } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import {
   criarOcorrencia,
   buscarProdutoEstoquePorLocalizacaoEAN,
+  buscarLocalizacaoPorEAN,
 } from '../services/API';
 import SearchIcon from '@mui/icons-material/Search';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function Ocorrencia() {
-  const [localizacao, setLocalizacao] = useState('');
+  const [eanLocalizacao, setEanLocalizacao] = useState('');
+  const [nomeLocalizacao, setNomeLocalizacao] = useState('');
+  const [localizacaoID, setLocalizacaoID] = useState<number | null>(null);
+
   const [skuEan, setSkuEan] = useState('');
-  const [quantidade, setQuantidade] = useState<number | ''>('');
+  const [produtoEstoqueID, setProdutoEstoqueID] = useState<number | null>(null);
+  const [quantidadeSistema, setQuantidadeSistema] = useState<number | ''>('');
+  const [quantidadeEsperada, setQuantidadeEsperada] = useState<number | ''>('');
+
   const [carregando, setCarregando] = useState(false);
+
   const navigate = useNavigate();
 
-  // Busca automática da quantidade após bipar localização + produto
-  const handleBuscarQuantidade = async () => {
-    if (!localizacao || !skuEan) return;
+  const limparCodigo = (valor: string) => valor.replace(/[\n\r\t\s]/g, '').trim();
+
+  const handleBuscarLocalizacao = async () => {
+    const ean = limparCodigo(eanLocalizacao);
+    if (!ean) return;
 
     try {
-      const resultado = await buscarProdutoEstoquePorLocalizacaoEAN(
-        localizacao.trim(),
-        skuEan.trim()
-      );
-
-      if (!resultado || !resultado.produto_estoque_id || !resultado.localizacao_id) {
-        alert('Produto não encontrado nesta localização.');
-        return;
-      }
-
-      setQuantidade(resultado.quantidade || 0);
-    } catch (err: any) {
-      console.error('Erro ao buscar quantidade:', err);
-      alert('Erro ao buscar quantidade.');
+      const res = await buscarLocalizacaoPorEAN(ean);
+      setNomeLocalizacao(`${res.armazem} - ${res.nome}`);
+      setLocalizacaoID(res.localizacao_id);
+    } catch {
+      alert('Localização não encontrada.');
+      setNomeLocalizacao('');
+      setLocalizacaoID(null);
     }
   };
 
-  // Envia a ocorrência + auditoria
+  const handleBuscarProduto = async () => {
+    const eanLocal = limparCodigo(eanLocalizacao);
+    const eanProduto = limparCodigo(skuEan);
+
+    try {
+      const res = await buscarProdutoEstoquePorLocalizacaoEAN(eanLocal, eanProduto);
+      setProdutoEstoqueID(res.produto_estoque_id);
+      setQuantidadeSistema(res.quantidade || 0);
+    } catch (err: any) {
+      alert(err?.message || 'Produto não encontrado nesta localização.');
+      setProdutoEstoqueID(null);
+      setQuantidadeSistema('');
+    }
+  };
+
   const handleSalvar = async () => {
-    if (!localizacao || !skuEan || quantidade === '') {
+    if (!localizacaoID || !produtoEstoqueID || quantidadeEsperada === '') {
       alert('Preencha todos os campos obrigatórios.');
       return;
     }
@@ -56,31 +73,25 @@ export default function Ocorrencia() {
     try {
       setCarregando(true);
 
-      const resultado = await buscarProdutoEstoquePorLocalizacaoEAN(
-        localizacao.trim(),
-        skuEan.trim()
-      );
-
-      if (!resultado || !resultado.produto_estoque_id || !resultado.localizacao_id) {
-        alert('Produto não encontrado nesta localização.');
-        return;
-      }
-
       const payload = {
-        usuario_id: 1, // ← fixo por enquanto
-        produto_estoque_id: resultado.produto_estoque_id,
-        localizacao_id: resultado.localizacao_id,
-        quantidade: Number(quantidade),
+        usuario_id: 1,
+        produto_estoque_id: produtoEstoqueID,
+        localizacao_id: localizacaoID,
+        quantidade_esperada: Number(quantidadeEsperada),
       };
 
       await criarOcorrencia(payload);
 
       alert('Ocorrência registrada com sucesso.');
 
-      // Limpa os campos
-      setLocalizacao('');
+      // Limpa tudo
+      setEanLocalizacao('');
+      setNomeLocalizacao('');
+      setLocalizacaoID(null);
       setSkuEan('');
-    //   setQuantidade('');
+      setProdutoEstoqueID(null);
+      setQuantidadeSistema('');
+      setQuantidadeEsperada('');
     } catch (err: any) {
       alert(`Erro ao salvar: ${err?.response?.data?.message || err.message}`);
     } finally {
@@ -100,10 +111,11 @@ export default function Ocorrencia() {
             label="EAN da Localização"
             variant="outlined"
             fullWidth
-            value={localizacao}
-            onChange={(e) => setLocalizacao(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleBuscarQuantidade()}
+            value={nomeLocalizacao || eanLocalizacao}
+            onChange={(e) => setEanLocalizacao(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleBuscarLocalizacao()}
             InputProps={{
+              readOnly: !!nomeLocalizacao,
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchIcon />
@@ -118,8 +130,9 @@ export default function Ocorrencia() {
             fullWidth
             value={skuEan}
             onChange={(e) => setSkuEan(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleBuscarQuantidade()}
+            onKeyDown={(e) => e.key === 'Enter' && handleBuscarProduto()}
             InputProps={{
+              readOnly: !!produtoEstoqueID,
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchIcon />
@@ -129,24 +142,27 @@ export default function Ocorrencia() {
           />
 
           <TextField
-            label="Quantidade"
+            label="Quantidade no Sistema"
             type="number"
             variant="outlined"
             fullWidth
-            value={quantidade}
+            value={quantidadeSistema}
             InputProps={{ readOnly: true }}
           />
-        </Box>
-        
-        <Divider sx={{ mt: 20, mb: 3 }} />
 
-        <Box 
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 2,
-          }}
-        >
+          <TextField
+            label="Quantidade Encontrada na Gaveta"
+            type="number"
+            variant="outlined"
+            fullWidth
+            value={quantidadeEsperada}
+            onChange={(e) => setQuantidadeEsperada(Number(e.target.value))}
+          />
+        </Box>
+
+        <Divider sx={{ mt: 10, mb: 3 }} />
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button
             variant="contained"
             color="success"

@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  // BadRequestException,
   HttpStatus,
   Injectable,
   NotFoundException,
@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
+import { PasswordUtils } from 'src/utils/password.utils';
 
 @Injectable()
 export class UsuarioService {
@@ -29,7 +30,7 @@ export class UsuarioService {
   async findOne(usuario_id: number): Promise<Usuario> {
     const usuario = await this.UsuarioRepository.findOne({
       where: { usuario_id },
-      relations: ['usuario'],
+      relations: ['perfil'],
     });
 
     if (!usuario)
@@ -48,8 +49,14 @@ export class UsuarioService {
     if (!perfil)
       throw new NotFoundException('Perfil de usuário não encontrado');
 
+    // Criptografa a senha antes de salvar
+    const senhaCriptografada = await PasswordUtils.criptografarSenha(
+      CreateUsuarioDto.senha,
+    );
+
     const usuario = this.UsuarioRepository.create({
       ...CreateUsuarioDto,
+      senha: senhaCriptografada,
       perfil,
     });
 
@@ -70,17 +77,59 @@ export class UsuarioService {
         message: 'Usuário não encontrado',
       };
 
-    const validacao = usuarioEncontrado.senha === senha;
+    // Verifica se a senha está criptografada e faz a comparação segura
+    const senhaValida = await PasswordUtils.verificarSenha(
+      senha,
+      usuarioEncontrado.senha,
+    );
 
-    if (!validacao)
+    if (!senhaValida)
       return {
         status: HttpStatus.BAD_REQUEST,
         message: 'Senha inválida',
       };
 
+    usuarioEncontrado.is_logged = true;
+    await this.UsuarioRepository.save(usuarioEncontrado);
+
     return {
       status: HttpStatus.OK,
-      message: 'Usuário logado com sucesso',
+      message: 'Usuário entrou com sucesso',
+    };
+  }
+
+  async logoutUsuario(
+    usuario: string,
+    senha: string,
+  ): Promise<{ status: number; message: string }> {
+    const usuarioEncontrado = await this.UsuarioRepository.findOne({
+      where: { usuario: usuario },
+    });
+
+    if (!usuarioEncontrado)
+      return {
+        status: HttpStatus.NOT_FOUND,
+        message: 'Usuário não encontrado',
+      };
+
+    // Verifica se a senha está criptografada e faz a comparação segura
+    const senhaValida = await PasswordUtils.verificarSenha(
+      senha,
+      usuarioEncontrado.senha,
+    );
+
+    if (!senhaValida)
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Senha inválida',
+      };
+
+    usuarioEncontrado.is_logged = false;
+    await this.UsuarioRepository.save(usuarioEncontrado);
+
+    return {
+      status: HttpStatus.OK,
+      message: 'Usuário saiu com sucesso',
     };
   }
 
@@ -99,9 +148,16 @@ export class UsuarioService {
       if (!perfil) throw new NotFoundException('Perfil não encontrado');
     }
 
-    const { perfil_id, ...camposSimpels } = updateUsuarioDto;
+    const { perfil_id, ...camposSimples } = updateUsuarioDto;
 
-    Object.assign(usuario, camposSimpels);
+    // Se uma nova senha foi fornecida, criptografa ela
+    if (camposSimples.senha) {
+      camposSimples.senha = await PasswordUtils.criptografarSenha(
+        camposSimples.senha,
+      );
+    }
+
+    Object.assign(usuario, camposSimples);
 
     return await this.UsuarioRepository.save(usuario);
   }
@@ -111,20 +167,4 @@ export class UsuarioService {
 
     await this.UsuarioRepository.remove(usuario);
   }
-
-  //   create(createUsuarioDto: CreateUsuarioDto) {
-  //     return 'This action adds a new usuario';
-  //   }
-  //   findAll() {
-  //     return `This action returns all usuario`;
-  //   }
-  //   findOne(id: number) {
-  //     return `This action returns a #${id} usuario`;
-  //   }
-  //   update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-  //     return `This action updates a #${id} usuario`;
-  //   }
-  //   remove(id: number) {
-  //     return `This action removes a #${id} usuario`;
-  //   }
 }

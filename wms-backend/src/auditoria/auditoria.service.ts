@@ -129,8 +129,8 @@ export class AuditoriaService {
 
     const { entities, raw } = await query.getRawAndEntities();
 
-    const results = entities.map((localizacao, index) => ({
-      ...localizacao,
+    const results = entities.map((auditoria, index) => ({
+      ...auditoria,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       total_auditoria: parseFloat(raw[index].total_auditoria) || 0,
     }));
@@ -145,7 +145,13 @@ export class AuditoriaService {
     const auditoria = await this.auditoriaRepository.findOne({
       where: { auditoria_id: id },
       ...options,
-      relations: ['usuario', 'ocorrencia', 'localizacao', 'itens_auditoria'],
+      relations: [
+        'usuario',
+        'ocorrencias',
+        'localizacao',
+        'localizacao.armazem',
+        'itens_auditoria',
+      ],
     });
 
     if (!auditoria) {
@@ -298,6 +304,69 @@ export class AuditoriaService {
 
     auditoria.status = StatusAuditoria.CANCELADA;
     return this.auditoriaRepository.save(auditoria);
+  }
+
+  async ocorrenciasDaAuditoria(auditoria_id: number): Promise<any> {
+    const auditoria = await this.auditoriaRepository.findOne({
+      where: { auditoria_id: auditoria_id },
+    });
+
+    if (!auditoria)
+      throw new NotFoundException(
+        `Auditoria com ID ${auditoria_id} não encontrada`,
+      );
+
+    const ocorrencias = await this.ocorrenciaRepository.find({
+      where: { auditoria: auditoria },
+      relations: ['produto_estoque.produto', 'localizacao.armazem'],
+    });
+
+    if (!ocorrencias || ocorrencias.length === 0)
+      throw new NotFoundException(
+        'Nenhuma ocorrência foi encontrada na auditoria',
+      );
+
+    const produtosAgrupados = ocorrencias.reduce(
+      (acc, ocorrencia) => {
+        const produtoId = ocorrencia.produto_estoque.produto.produto_id;
+
+        if (!acc[produtoId]) {
+          acc[produtoId] = {
+            produto_id: produtoId,
+            descricao: ocorrencia.produto_estoque.produto.descricao,
+            sku: ocorrencia.produto_estoque.produto.sku,
+            qtd_esperada: ocorrencia.quantidade_esperada,
+            qtd_ocorrencias: 0,
+          };
+        }
+
+        acc[produtoId].qtd_ocorrencias += 1;
+
+        return acc;
+      },
+      {} as Record<
+        number,
+        {
+          produto_id: number;
+          descricao: string;
+          sku: string;
+          qtd_esperada: number;
+          qtd_ocorrencias: number;
+        }
+      >,
+    );
+
+    const produtosArray = Object.values(produtosAgrupados);
+
+    return [
+      {
+        auditoria_id: auditoria.auditoria_id,
+        armazem: ocorrencias[0].localizacao.armazem?.nome || null,
+        localizacao: ocorrencias[0].localizacao?.nome || null,
+        quantidade: ocorrencias.length,
+        produto: produtosArray,
+      },
+    ];
   }
 
   // async findByStatus(status: StatusAuditoria): Promise<Auditoria[]> {
