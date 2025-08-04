@@ -64,7 +64,7 @@ import { AuthModule } from './auth/auth.module';
         host: config.get<string>('DB_HOST', '151.243.0.78'),
         port: config.get<number>('DB_PORT', 5432),
         username: config.get<string>('DB_USERNAME', 'wms_dev_user'),
-        password: config.get<string>('DB_PASSWORD', 'center2025'),
+        password: config.get<string>('DB_PASSWORD', 'dev@center'),
         database: config.get<string>('DB_NAME', 'wms_testes_db'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         autoLoadEntities: true,
