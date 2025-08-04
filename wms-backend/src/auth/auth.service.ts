@@ -19,6 +19,8 @@ export class AuthService {
       relations: ['perfil'],
     });
 
+    if (!user) return null;
+
     // Comparar com hash de senha mais tarde Ex: bcrypt.compare(senha, user.senha)
     // if (user && user.senha === senha) return user;
     if (user && (await PasswordUtils.verificarSenha(senha, user.senha)))
