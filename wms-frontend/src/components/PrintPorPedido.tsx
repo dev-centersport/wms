@@ -30,15 +30,15 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
       svgs.forEach((svg) => {
         const value = svg.getAttribute("data-barcode");
         if (value) {
-          JsBarcode(svg, value, {
-            format: value.length === 13 ? "EAN13" : "CODE128",
-            lineColor: "#000",
-            width: 1,
-            height: 18,
-            displayValue: value.length !== 13,
-            fontSize: 8,
-            margin: 0,
-          });
+                     JsBarcode(svg, value, {
+             format: value.length === 13 ? "EAN13" : "CODE128",
+             lineColor: "#000",
+             width: 0.8,
+             height: 18,
+             displayValue: value.length !== 13,
+             fontSize: 8,
+             margin: 0,
+           });
         }
       });
       setCodigosGerados(true);
@@ -85,55 +85,85 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
 
   return (
     <div id="relatorio-impressao">
-      <style>{`
-        @page { size: A4 portrait; margin: 1cm; }
-        body { font-family: Arial, sans-serif; font-size: 9pt; }
-        .pedido-header-content {
-          display: flex;
-          align-items: center;
-          gap: 6px;
+             <style>{`
+         @page { size: A4 portrait; margin: 0.5cm; }
+         body { font-family: Arial, sans-serif; font-size: 8pt; }
+         .pedido-header-content {
+           display: flex;
+           align-items: center;
+           gap: 4px;
+         }
+         .pedido-table {
+           width: 100%;
+           border-collapse: collapse;
+           margin-bottom: 3px;
+           page-break-inside: avoid;
+           table-layout: fixed;
+         }
+         .pedido-table th, .pedido-table td {
+           border: 1px solid #ddd;
+           padding: 2px 3px;
+           vertical-align: top;
+           word-wrap: break-word;
+           overflow-wrap: break-word;
+         }
+        .pedido-table th:nth-child(1), .pedido-table td:nth-child(1) {
+          width: 35%;
         }
-        .pedido-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 6px;
-          page-break-inside: avoid;
+        .pedido-table th:nth-child(2), .pedido-table td:nth-child(2) {
+          width: 8%;
+          text-align: center;
         }
-        .pedido-table th, .pedido-table td {
-          border: 1px solid #ddd;
-          padding: 3px 4px;
-          vertical-align: top;
+        .pedido-table th:nth-child(3), .pedido-table td:nth-child(3) {
+          width: 25%;
+          text-align: center;
+        }
+        .pedido-table th:nth-child(4), .pedido-table td:nth-child(4) {
+          width: 20%;
+        }
+        .pedido-table th:nth-child(5), .pedido-table td:nth-child(5) {
+          width: 12%;
         }
         .product-info {
           display: flex;
           align-items: flex-start;
+          gap: 4px;
         }
-        .product-image {
-          height: 32px;
-          width: 32px;
-          margin-right: 4px;
-          object-fit: contain;
-          border: 1px solid #000;
-          border-radius: 4px;
-        }
-        .codigo-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1px;
-        }
-        svg.barcode {
-          height: 18px !important;
-          margin: 0 !important;
-        }
-        .no-print {
-          margin: 6px 0;
-          text-align: center;
-        }
-        .header h1 {
-          margin-bottom: 4px;
-          font-size: 14px;
-        }
+                 .product-image {
+           height: 24px;
+           width: 24px;
+           object-fit: contain;
+           border: 1px solid #000;
+           border-radius: 2px;
+           flex-shrink: 0;
+         }
+         .product-details {
+           flex: 1;
+           min-width: 0;
+           font-size: 7pt;
+         }
+         .codigo-container {
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           gap: 1px;
+           font-size: 7pt;
+         }
+         svg.barcode {
+           height: 18px !important;
+           margin: 0 !important;
+         }
+                 .no-print {
+           margin: 3px 0;
+           text-align: center;
+         }
+         .header h1 {
+           margin-bottom: 2px;
+           font-size: 12px;
+         }
+         .localizacao-section {
+           margin-bottom: 2px;
+         }
         @media print {
           .no-print { display: none !important; }
           body * { visibility: hidden; }
@@ -182,7 +212,7 @@ const PrintPorPedido: React.FC<PrintPorPedidoProps> = ({ data }) => {
                       <td>
                         <div className="product-info">
                           <img src={item.urlFoto} alt="produto" className="product-image" />
-                          <div>
+                          <div className="product-details">
                             <strong>{item.sku}</strong><br />
                             {item.descricao || 'Sem descrição'}
                           </div>
