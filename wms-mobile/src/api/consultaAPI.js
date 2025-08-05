@@ -7,9 +7,11 @@ export async function buscarConsultaEstoque(termoBusca) {
 
 		// Usar endpoint que não requer autenticação
 		if (termoBusca) {
-			response = await api.get(`/produto-estoque/pesquisar?${termoBusca}`);
+			response = await api.get(
+				`/produto-estoque/pesquisar?show=false&search=${termoBusca}`
+			);
 		} else {
-			response = await api.get(`/produto-estoque/pesquisar`);
+			response = await api.get(`/produto-estoque/pesquisar?show=false`);
 		}
 
 		const resultados = response.data.results || response.data || [];
