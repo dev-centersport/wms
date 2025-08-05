@@ -6,67 +6,42 @@ export default {
     name: "WMS Mobile",
     slug: "wms-mobile",
     version: "1.0.0",
-    orientation: "portrait",
-    // Ícone principal otimizado com fundo verde igual ao menu
-    icon: "./assets/images/icon-optimized.png",
-    scheme: "wms",
-    userInterfaceStyle: "automatic",
-    splash: {
-      // Splash screen otimizada com logo centralizada
-      image: "./assets/images/splash-optimized.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff"
+    updates: {
+      url: "https://u.expo.dev/7c70b2ce-33f0-4e1c-beb5-67312ef48ebc"
     },
-    assetBundlePatterns: [
-      "**/*"
-    ],
+    runtimeVersion: {
+      policy: "appVersion"
+    },
+    icon: "./assets/images/icon-optimized.png",
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.wms.mobile",
       buildNumber: "1.0.0",
-      // Otimizações para iOS
+      icon: "./assets/images/icon-ios.png",
       infoPlist: {
         UIBackgroundModes: ["fetch", "remote-notification"],
         NSAppTransportSecurity: {
           NSAllowsArbitraryLoads: true
         }
-      },
-      // Ícones específicos para iOS - fundo verde
-      icon: {
-        image: "./assets/images/icon-ios.png",
-        backgroundColor: "#61DE25", // Verde igual ao menu
-        resizeMode: "contain"
       }
     },
     android: {
       adaptiveIcon: {
-        // Ícone adaptativo otimizado para Android - fundo verde
         foregroundImage: "./assets/images/adaptive-icon-optimized.png",
-        backgroundColor: "#61DE25", // Verde igual ao menu
-        // Configurações para evitar cortes
-        resizeMode: "contain",
-        // Padding interno para a logo
-        padding: 12
+        backgroundColor: "#61DE25"
       },
       package: "com.wms.mobile",
       versionCode: 1,
-      // Otimizações para Android
+      icon: "./assets/images/icon-android.png",
       permissions: [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "CAMERA",
         "VIBRATE"
       ],
-      // Configurações de performance
       allowBackup: false,
       enableProguardInReleaseBuilds: true,
-      enableShrinkResourcesInReleaseBuilds: true,
-      // Ícone padrão para Android - fundo verde
-      icon: {
-        image: "./assets/images/icon-android.png",
-        backgroundColor: "#61DE25", // Verde igual ao menu
-        resizeMode: "contain"
-      }
+      enableShrinkResourcesInReleaseBuilds: true
     },
     web: {
       bundler: "metro",
@@ -116,11 +91,11 @@ export default {
         "expo-updates",
         {
           // Configurações de atualização otimizadas
-          url: "https://u.expo.dev/your-project-id",
+          url: "https://u.expo.dev/7c70b2ce-33f0-4e1c-beb5-67312ef48ebc",
           runtimeVersion: {
             policy: "sdkVersion"
           },
-          updateUrl: "https://u.expo.dev/your-project-id"
+          updateUrl: "https://u.expo.dev/7c70b2ce-33f0-4e1c-beb5-67312ef48ebc"
         }
       ]
     ],
@@ -133,25 +108,25 @@ export default {
     extra: {
       // Configurações de API
       apiUrl: process.env.API_URL || "http://151.243.0.78:3001",
-      
+
       // Configurações de cache
       cacheEnabled: true,
       cacheTTL: 300000, // 5 minutos
-      
+
       // Configurações de debug
       debugEnabled: process.env.NODE_ENV !== "production",
-      
+
       // Configurações de performance
       enablePerformanceMonitoring: true,
       enableCrashReporting: true,
-      
+
       // Configurações de rede
       networkTimeout: 10000,
       retryAttempts: 3,
-      
+
       // Configurações de build
       eas: {
-        projectId: "your-project-id"
+        projectId: "7c70b2ce-33f0-4e1c-beb5-67312ef48ebc"
       }
     },
     // Configurações de desenvolvimento

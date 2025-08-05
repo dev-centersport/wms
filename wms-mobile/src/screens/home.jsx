@@ -61,7 +61,7 @@ export default function HomeScreen({ navigation }) {
             source={require('../../assets/images/logo01.png')}
             style={styles.logo}
           />
-          <View style={[styles.headerText, {marginTop: 30}]}>
+          <View style={[styles.headerText, {marginTop: 20}]}>
             <Text style={styles.brand}>WMS</Text>
             <Text style={styles.subtitle}>Warehouse Management System</Text>
           </View>
@@ -71,7 +71,7 @@ export default function HomeScreen({ navigation }) {
       {/* Barra de informações do usuário */}
       {!carregando && usuario && (
         <View style={styles.userInfoBar}>
-          <Icon name="account-circle" size={20} color={Colors.light.textInverse} style={styles.userIcon} />
+          <Icon name="account-circle" size={22} color={Colors.light.textInverse} style={styles.userIcon} />
           <Text style={styles.userInfoText}>
             {usuario.responsavel || usuario.usuario} • {usuario.perfil}
           </Text>
@@ -81,7 +81,7 @@ export default function HomeScreen({ navigation }) {
       {/* Conteúdo principal */}
       <View style={styles.content} marginTop={10}>
         {/* Cards de menu */}
-        <View style={[styles.menuContainer, { marginTop: 100 }]}>
+        <View style={[styles.menuContainer, { marginTop: 65 }]}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={item.id}
