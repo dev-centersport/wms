@@ -67,7 +67,7 @@ export default function PaginacaoConsulta({
 
   const renderPageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 5;
+    const maxVisiblePages = 3; // Reduzido de 5 para 3
     
     if (totalPaginas <= maxVisiblePages) {
       // Mostrar todas as páginas se houver poucas
@@ -93,11 +93,24 @@ export default function PaginacaoConsulta({
         );
       }
     } else {
-      // Lógica para muitas páginas
-      const startPage = Math.max(1, paginaAtual - 2);
-      const endPage = Math.min(totalPaginas, startPage + maxVisiblePages - 1);
+      // Lógica para muitas páginas - mais conservadora
+      let startPage, endPage;
       
-      // Primeira página
+      if (paginaAtual <= 2) {
+        // No início: mostrar páginas 1, 2, 3 + ... + última
+        startPage = 1;
+        endPage = 3;
+      } else if (paginaAtual >= totalPaginas - 1) {
+        // No final: mostrar primeira + ... + últimas 3 páginas
+        startPage = totalPaginas - 2;
+        endPage = totalPaginas;
+      } else {
+        // No meio: mostrar página atual e uma de cada lado
+        startPage = paginaAtual - 1;
+        endPage = paginaAtual + 1;
+      }
+      
+      // Primeira página (se não estiver no início)
       if (startPage > 1) {
         pages.push(
           <Animated.View key="first" style={{ transform: [{ scale: scaleValue }] }}>
@@ -148,7 +161,7 @@ export default function PaginacaoConsulta({
         );
       }
       
-      // Última página
+      // Última página (se não estiver no final)
       if (endPage < totalPaginas) {
         if (endPage < totalPaginas - 1) {
           pages.push(

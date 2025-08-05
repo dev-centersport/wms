@@ -56,7 +56,7 @@ export default function ConsultaScreen({ navigation }) {
       
       <View style={[styles.content, { marginTop: dados.length > 0 ? Spacing.sm : Spacing.xl }]}>
         {dados.length === 0 ? (
-          <EmptyState texto="Digite e pressione Enter para pesquisar um produto." />
+          <EmptyState texto="Digite ou bipe para pesquisar um produto." />
         ) : (
           <>
             <TableHeader />

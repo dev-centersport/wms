@@ -19,9 +19,10 @@ export default function EmptyState({ texto = 'Nenhum resultado encontrado.' }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
+    marginTop: 160, // Adiciona margem superior para subir o conteúdo
   },
   iconContainer: {
     width: 80,
