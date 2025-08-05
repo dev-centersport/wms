@@ -27,10 +27,12 @@ import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import SecurityIcon from '@mui/icons-material/Security';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
+import ViewInArIcon3D from '@mui/icons-material/ViewInAr';
 
 const menuItems = [
   { label: 'Dashboard', icon: <AnalyticsIcon />, path: '/dashboard' },
   { label: 'Armazém', icon: <HomeIcon />, path: '/armazem' },
+  { label: 'Armazém 3D', icon: <ViewInArIcon3D />, path: '/armazem-3d' },
   { label: 'Localização', icon: <RoomIcon />, path: '/localizacao' },
   { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
   { label: 'Produto', icon: <ViewInArIcon />, path: '/produto' },

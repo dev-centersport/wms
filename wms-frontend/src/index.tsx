@@ -14,6 +14,7 @@ import CriarLocalizacao from "./pages/CriarLocalizacao";
 import CriarArmazem from "./pages/CriarArmazem";
 import EditarLocalizacao from "./pages/EditarLocalizacao"
 import EditarArmazem from "./pages/EditarArmazem"
+import Armazem3D from "./pages/Armazem3D";
 import  TipoLocalizacao  from "./pages/TipoLocalizacao";
 import CriarTipoLocalizacao from "./pages/CriarTipoLocalizacao";
 import EditarTipoLocalizacao from "./pages/EditarTipoLocalizacao";
@@ -86,6 +87,13 @@ root.render(
           <Route path="/armazem/:id/editar" element={
             <ProtectedRoute>
               <EditarArmazem />
+            </ProtectedRoute>
+          } />
+          
+          {/* Página do Armazém 3D */}
+          <Route path="/armazem-3d" element={
+            <ProtectedRoute>
+              <Armazem3D />
             </ProtectedRoute>
           } />
 
