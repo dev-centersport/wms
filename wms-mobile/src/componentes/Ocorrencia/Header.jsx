@@ -1,29 +1,81 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors, Shadows, BorderRadius, Spacing } from '../../../constants/Colors';
 
 export default function Header({ onClose }) {
   return (
-    <View style={styles.header}>
-      <Text style={styles.headerTitle}>Ocorrência</Text>
-      <TouchableOpacity onPress={onClose}>
-        <Ionicons name="close" size={24} color="#000" />
-      </TouchableOpacity>
+    <View style={styles.headerContainer}>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={Colors.light.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={styles.headerTitle}>Registro de Ocorrência</Text>
+            <Text style={styles.headerSubtitle}>Divergências de estoque</Text>
+          </View>
+        </View>
+        <View style={styles.headerRight}>
+          <View style={styles.alertBadge}>
+            <Ionicons name="warning" size={16} color={Colors.light.textInverse} />
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  headerContainer: {
     marginTop: 40,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.light.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
+    ...Shadows.small,
+  },
+  titleContainer: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#000',
+    color: Colors.light.textPrimary,
+    marginBottom: 2,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    fontWeight: '500',
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  alertBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.light.warning,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.small,
   },
 });

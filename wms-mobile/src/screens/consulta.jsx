@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { buscarConsultaEstoque } from '../api/consultaAPI';
+import { Colors, Spacing } from '../../constants/Colors';
 
 // Componentes
 import HeaderConsulta from '../componentes/Consulta/HeaderConsulta';
@@ -52,7 +53,8 @@ export default function ConsultaScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <HeaderConsulta onClose={() => navigation.goBack()} />
       <SearchBarConsulta value={busca} onChange={setBusca} onSubmit={realizarBusca} />
-      <View style={{ flex: 1, marginTop: dados.length > 0 ? 8 : 60 }}>
+      
+      <View style={[styles.content, { marginTop: dados.length > 0 ? Spacing.sm : Spacing.xl }]}>
         {dados.length === 0 ? (
           <EmptyState texto="Digite e pressione Enter para pesquisar um produto." />
         ) : (
@@ -82,8 +84,9 @@ export default function ConsultaScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: 40,
-    paddingBottom: 30,
+    backgroundColor: Colors.light.background,
+  },
+  content: {
+    flex: 1,
   },
 });

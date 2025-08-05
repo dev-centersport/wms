@@ -2,11 +2,15 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Colors, Spacing } from '../../../constants/Colors';
 
 export default function EmptyState({ texto = 'Nenhum resultado encontrado.' }) {
   return (
     <View style={styles.container}>
-      <MaterialIcons name="search-off" size={64} color="#ccc" />
+      <View style={styles.iconContainer}>
+        <MaterialIcons name="search-off" size={48} color={Colors.light.textTertiary} />
+      </View>
+      <Text style={styles.title}>Nenhum resultado</Text>
       <Text style={styles.texto}>{texto}</Text>
     </View>
   );
@@ -14,13 +18,31 @@ export default function EmptyState({ texto = 'Nenhum resultado encontrado.' }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 80,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.light.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.light.textPrimary,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
   },
   texto: {
     fontSize: 14,
-    color: '#777',
-    marginTop: 16,
+    color: Colors.light.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
