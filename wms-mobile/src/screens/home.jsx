@@ -1,10 +1,28 @@
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors, Shadows, BorderRadius, Spacing } from '../../constants/Colors';
+import { Colors } from '../../constants/Colors';
 import { obterDadosUsuario } from '../api/homeAPI';
 
 const { width } = Dimensions.get('window');
+
+// Constantes de estilo que faltavam
+const Shadows = {
+  small: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+};
+
+const Spacing = {
+  sm: 8,
+  md: 16,
+  lg: 24,
+};
 
 export default function HomeScreen({ navigation }) {
   const [usuario, setUsuario] = useState(null);
@@ -31,7 +49,7 @@ export default function HomeScreen({ navigation }) {
       title: 'MOVIMENTAÇÃO',
       subtitle: 'Entrada e saída de produtos',
       icon: 'truck-delivery',
-      color: Colors.light.primary,
+      color: Colors.light.primary || '#61DE25',
       onPress: () => navigation.navigate('Movimentacao'),
     },
     {
@@ -39,7 +57,7 @@ export default function HomeScreen({ navigation }) {
       title: 'OCORRÊNCIA',
       subtitle: 'Registrar divergências',
       icon: 'alert-circle',
-      color: Colors.light.warning,
+      color: Colors.light.warning || '#FFA500',
       onPress: () => navigation.navigate('Ocorrencia'),
     },
     {
@@ -47,14 +65,14 @@ export default function HomeScreen({ navigation }) {
       title: 'CONSULTA',
       subtitle: 'Consultar estoque',
       icon: 'magnify',
-      color: Colors.light.info,
+      color: Colors.light.info || '#007BFF',
       onPress: () => navigation.navigate('Consulta'),
     },
   ];
 
   return (
     <View style={styles.container}>
-      {/* Header moderno */}
+      {/* Barra superior com a logo do WMS */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Image
@@ -71,7 +89,7 @@ export default function HomeScreen({ navigation }) {
       {/* Barra de informações do usuário */}
       {!carregando && usuario && (
         <View style={styles.userInfoBar}>
-          <Icon name="account-circle" size={20} color={Colors.light.textInverse} style={styles.userIcon} />
+          <Icon name="account-circle" size={20} color="#fff" style={styles.userIcon} />
           <Text style={styles.userInfoText}>
             {usuario.responsavel || usuario.usuario} • {usuario.perfil}
           </Text>
@@ -79,7 +97,7 @@ export default function HomeScreen({ navigation }) {
       )}
 
       {/* Conteúdo principal */}
-      <View style={styles.content} marginTop={10}>
+      <View style={[styles.content, { marginTop: 10 }]}>
         {/* Cards de menu */}
         <View style={[styles.menuContainer, { marginTop: 100 }]}>
           {menuItems.map((item, index) => (
@@ -96,7 +114,7 @@ export default function HomeScreen({ navigation }) {
               activeOpacity={0.8}
             >
               <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
-                <Icon name={item.icon} size={32} color={Colors.light.textInverse} />
+                <Icon name={item.icon} size={32} color="#fff" />
               </View>
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
@@ -105,7 +123,7 @@ export default function HomeScreen({ navigation }) {
               <Icon
                 name="chevron-right"
                 size={24}
-                color={Colors.light.textTertiary}
+                color="#888"
                 style={styles.arrowIcon}
               />
             </TouchableOpacity>
@@ -129,119 +147,38 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    paddingTop: 0,
   },
   header: {
-    backgroundColor: Colors.light.primary,
-    paddingTop: 50,
-    paddingBottom: Spacing.lg,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    zIndex: 2,
-  },
-  logo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: Colors.light.primaryDark,
-    resizeMode: 'contain',
-    marginRight: Spacing.md,
-    ...Shadows.small,
-  },
-  headerText: {
-    flex: 1,
-  },
-  brand: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.light.textInverse,
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: Colors.light.textInverse,
-    opacity: 0.8,
-    marginTop: 2,
-  },
-  headerDecoration: {
-    position: 'absolute',
-    bottom: -20,
-    left: 0,
-    right: 0,
-    height: 40,
-    backgroundColor: Colors.light.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-  },
-  welcomeText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.light.textPrimary,
-    textAlign: 'center',
-    marginBottom: Spacing.xl,
-  },
-  menuContainer: {
-    flex: 1,
-  },
-  menuCard: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: BorderRadius.large,
-    padding: Spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...Shadows.medium,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-  },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.medium,
+    backgroundColor: '#61DE25',
+    width: '100%',
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: Spacing.md,
-    ...Shadows.small,
+    paddingTop: 40,
+    paddingBottom: 10,
   },
-  cardContent: {
-    flex: 1,
+  logo: {
+    width: 60,
+    height: 60,
+    resizeMode: 'contain',
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.light.textPrimary,
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: Colors.light.textSecondary,
-    lineHeight: 18,
-  },
-  arrowIcon: {
-    marginLeft: Spacing.sm,
-  },
-  footer: {
-    paddingVertical: Spacing.lg,
+  button: {
+    backgroundColor: '#61DE25',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    marginVertical: 10,
+    width: '80%',
     alignItems: 'center',
+    marginTop: 20,
   },
-  footerText: {
-    fontSize: 14,
-    color: Colors.light.textSecondary,
-    fontWeight: '500',
-  },
-  footerSubtext: {
-    fontSize: 12,
-    color: Colors.light.textTertiary,
-    marginTop: 2,
+  buttonText: {
+    fontSize: 20,
+    color: '#000',
+    fontWeight: 'bold',
   },
   userInfoBar: {
     backgroundColor: '#6c757d',
@@ -257,8 +194,80 @@ const styles = StyleSheet.create({
   },
   userInfoText: {
     fontSize: 14,
-    color: Colors.light.textInverse,
+    color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  content: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    marginLeft: 10,
+  },
+  brand: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  subtitle: {
+    fontSize: 12,
+    color: '#000',
+    opacity: 0.8,
+  },
+  menuContainer: {
+    width: '100%',
+  },
+  menuCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    ...Shadows.small,
+  },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  cardContent: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  arrowIcon: {
+    marginLeft: 8,
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  footerText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 4,
+  },
+  footerSubtext: {
+    fontSize: 14,
+    color: '#666',
   },
 });

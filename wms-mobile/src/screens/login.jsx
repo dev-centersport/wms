@@ -13,6 +13,9 @@ import {
   SafeAreaView,
   Animated,
   Alert,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -30,11 +33,18 @@ export default function LoginScreen() {
   const scrollRef = useRef(null);
   const usuarioInputRef = useRef(null);
   const senhaInputRef = useRef(null);
+  
+  // Variáveis animadas
   const logoScale = useRef(new Animated.Value(1)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+
     const show = Keyboard.addListener('keyboardDidShow', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(true);
       Animated.timing(logoScale, {
         toValue: 0.8,
@@ -44,12 +54,17 @@ export default function LoginScreen() {
     });
 
     const hide = Keyboard.addListener('keyboardDidHide', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(false);
       Animated.timing(logoScale, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }).start();
+
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
     });
 
     return () => {
@@ -58,37 +73,18 @@ export default function LoginScreen() {
     };
   }, []);
 
-  const animateButtonPress = () => {
-    Animated.sequence([
-      Animated.timing(buttonScale, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(buttonScale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
   const handleLogin = async () => {
     if (!usuario || !senha) {
       Alert.alert('Campos obrigatórios', 'Usuário e senha são obrigatórios');
       return;
     }
 
-    if (usuario.trim().length < 2) {
-      Alert.alert('Usuário inválido', 'Digite um usuário válido');
-      return;
-    }
-
     setCarregando(true);
-    animateButtonPress();
 
     try {
+      // Limpar token anterior antes de fazer novo login
       await removerToken();
+
       const resultado = await login(usuario, senha);
 
       if (resultado.success) {
@@ -113,86 +109,84 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
-          tecladoAtivo && styles.scrollContentWithKeyboard
+          tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
         ]}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         showsVerticalScrollIndicator={false}
-        bounces={false}
+        style={Platform.OS === 'web' ? { flex: 1 } : undefined}
       >
-        <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
-          />
-        </Animated.View>
-
+        <Animated.Image
+          source={require('../../assets/images/logo01.png')}
+          style={[styles.logo, tecladoAtivo && styles.logoPequena, { transform: [{ scale: logoScale }] }]}
+        />
         <Text style={styles.brand}>WMS</Text>
         <Text style={styles.welcome}>Bem Vindo!</Text>
 
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>Usuário</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              ref={usuarioInputRef}
-              placeholder="Digite seu usuário"
-              value={usuario}
-              onChangeText={setUsuario}
-              style={styles.input}
-              placeholderTextColor="#888"
-              returnKeyType="next"
-              onSubmitEditing={handleUsuarioSubmit}
-              blurOnSubmit={false}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="username"
-            />
-            <Icon name="user" size={20} color="#888" style={styles.icon} />
-          </View>
-
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              ref={senhaInputRef}
-              placeholder="Digite sua senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!mostrarSenha}
-              style={styles.input}
-              placeholderTextColor="#888"
-              returnKeyType="done"
-              onSubmitEditing={handleSenhaSubmit}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="password"
-            />
-            <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
-              <Icon
-                name={mostrarSenha ? 'eye' : 'eye-slash'}
-                size={20}
-                color="#888"
-                style={styles.olhinho}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-            <TouchableOpacity
-              onPress={handleLogin}
-              style={[styles.button, carregando && styles.buttonDisabled]}
-              disabled={carregando}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>
-                {carregando ? 'Entrando...' : 'Entrar'}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
+        <Text style={styles.label}>Usuário</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={usuarioInputRef}
+            placeholder="Usuário"
+            value={usuario}
+            onChangeText={setUsuario}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            onSubmitEditing={handleUsuarioSubmit}
+            blurOnSubmit={false}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <Icon name="user" size={20} color="#888" style={styles.icon} />
         </View>
+
+        <Text style={styles.label}>Senha</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={senhaInputRef}
+            placeholder="Digite sua senha"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry={!mostrarSenha}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="done"
+            onSubmitEditing={handleSenhaSubmit}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="password"
+          />
+          <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+            <Icon
+              name={mostrarSenha ? 'eye' : 'eye-slash'}
+              size={20}
+              color="#888"
+              style={styles.olhinho}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+          <TouchableOpacity
+            onPress={handleLogin}
+            style={[styles.button, carregando && styles.buttonDisabled]}
+            disabled={carregando}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>
+              {carregando ? 'Entrando...' : 'Entrar'}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
 
         <Text style={styles.footer}>
           <Text style={styles.footerText}>
@@ -200,7 +194,7 @@ export default function LoginScreen() {
           </Text>
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -212,12 +206,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingBottom: 40,
+
   },
-  scrollContentWithKeyboard: {
+  scrollSemTeclado: {
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  scrollComTeclado: {
     justifyContent: 'flex-start',
     paddingTop: 40,
   },
@@ -237,6 +233,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 6,
+  },
+  logoPequena: {
+    width: 100,
+    height: 100,
   },
   brand: {
     fontSize: 36,
