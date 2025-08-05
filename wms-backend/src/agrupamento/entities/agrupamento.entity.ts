@@ -1,4 +1,11 @@
-import { Column, Entity, Polygon, PrimaryGeneratedColumn } from 'typeorm';
+import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  Polygon,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Agrupamento {
@@ -10,4 +17,7 @@ export class Agrupamento {
 
   @Column({ type: 'geometry', spatialFeatureType: 'Polygon', srid: 4326 })
   geometry: Polygon;
+
+  @OneToMany(() => Localizacao, (loc) => loc.agrupamento)
+  localizacoes: Localizacao[];
 }

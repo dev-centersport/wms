@@ -1,3 +1,4 @@
+import { Agrupamento } from 'src/agrupamento/entities/agrupamento.entity';
 import { Armazem } from 'src/armazem/entities/armazem.entity';
 import { Auditoria } from 'src/auditoria/entities/auditoria.entity';
 import { Movimentacao } from 'src/movimentacao/entities/movimentacao.entity';
@@ -60,6 +61,10 @@ export class Localizacao {
   @ManyToOne(() => Armazem, (armazem) => armazem.localizacoes)
   @JoinColumn()
   armazem: Armazem;
+
+  @ManyToOne(() => Agrupamento, (agrup) => agrup.localizacoes)
+  @JoinColumn()
+  agrupamento: Agrupamento;
 
   @OneToMany(
     () => ProdutoEstoque,
