@@ -3,22 +3,24 @@ import { api, tratarErro } from "./config";
 // ---------- CONSULTA DE ESTOQUE ----------
 export async function buscarConsultaEstoque(termoBusca) {
 	try {
-		// Usar endpoint de pesquisa que suporta busca por EAN da localização
-		const response = await api.get(`/produto-estoque/pesquisar`, {
-			params: {
-				search: termoBusca,
-				show: 'true' // Para mostrar resultados mesmo sem busca
-			}
-		});
+		// Usar endpoint que não requer autenticação
+		const response = await api.get(`/produto-estoque`);
 
 		const resultados = response.data.results || response.data || [];
 
-		// Se não há termo de busca, retornar array vazio para mostrar EmptyState
-		if (!termoBusca || termoBusca.trim().length < 2) {
-			return [];
-		}
+		// Filtrar localmente se houver termo de busca
+		const dadosFiltrados = termoBusca
+			? resultados.filter((item) => {
+					const searchTerm = termoBusca.toLowerCase();
+					return (
+						item.produto?.descricao?.toLowerCase().includes(searchTerm) ||
+						item.produto?.sku?.toLowerCase().includes(searchTerm) ||
+						item.produto?.ean?.toLowerCase().includes(searchTerm)
+					);
+			  })
+			: resultados;
 
-		return resultados.map((item) => ({
+		return dadosFiltrados.map((item) => ({
 			produto_id: item.produto?.produto_id,
 			localizacao_id: item.localizacao?.localizacao_id ?? null,
 			descricao: item.produto?.descricao || "",
