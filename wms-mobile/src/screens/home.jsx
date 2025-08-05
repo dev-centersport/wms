@@ -1,30 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Colors, Shadows, BorderRadius, Spacing } from '../../constants/Colors';
-import { obterDadosUsuario } from '../api/homeAPI';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
-  const [usuario, setUsuario] = useState(null);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    carregarDadosUsuario();
-  }, []);
-
-  const carregarDadosUsuario = async () => {
-    try {
-      const dadosUsuario = await obterDadosUsuario();
-      setUsuario(dadosUsuario);
-    } catch (error) {
-      console.error('Erro ao carregar dados do usuário:', error);
-    } finally {
-      setCarregando(false);
-    }
-  };
-
   const menuItems = [
     {
       id: 'movimentacao',
@@ -61,37 +42,25 @@ export default function HomeScreen({ navigation }) {
             source={require('../../assets/images/logo01.png')}
             style={styles.logo}
           />
-          <View style={[styles.headerText, {marginTop: 30}]}>
+          <View style={styles.headerText}>
             <Text style={styles.brand}>WMS</Text>
             <Text style={styles.subtitle}>Warehouse Management System</Text>
           </View>
         </View>
+        {/* Remover/Comentar a decoração */}
+        {/* <View style={styles.headerDecoration} /> */}
       </View>
-
-      {/* Barra de informações do usuário */}
-      {!carregando && usuario && (
-        <View style={styles.userInfoBar}>
-          <Icon name="account-circle" size={20} color={Colors.light.textInverse} style={styles.userIcon} />
-          <Text style={styles.userInfoText}>
-            {usuario.responsavel || usuario.usuario} • {usuario.perfil}
-          </Text>
-        </View>
-      )}
 
       {/* Conteúdo principal */}
       <View style={styles.content} marginTop={10}>
+
+
         {/* Cards de menu */}
-        <View style={[styles.menuContainer, { marginTop: 100 }]}>
+        <View style={[styles.menuContainer, { marginTop: 30 }]}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={item.id}
-              style={[
-                styles.menuCard,
-                {
-                  marginTop: index === 0 ? 0 : Spacing.md,
-                  marginBottom: Spacing.md,
-                },
-              ]}
+              style={[styles.menuCard, { marginTop: index === 0 ? 0 : Spacing.md }]}
               onPress={item.onPress}
               activeOpacity={0.8}
             >
@@ -113,7 +82,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* Footer informativo */}
-        <View style={[styles.footer, { marginBottom: 30}]}>
+        <View style={styles.footer}>
           <Text style={styles.footerText}>
             Sistema de Gestão de Armazém
           </Text>
@@ -242,23 +211,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.light.textTertiary,
     marginTop: 2,
-  },
-  userInfoBar: {
-    backgroundColor: '#6c757d',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.small,
-  },
-  userIcon: {
-    marginRight: Spacing.sm,
-  },
-  userInfoText: {
-    fontSize: 14,
-    color: Colors.light.textInverse,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
 });
