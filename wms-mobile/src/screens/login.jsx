@@ -28,20 +28,31 @@ export default function LoginScreen() {
   const scrollRef = useRef(null);
   const usuarioInputRef = useRef(null);
   const senhaInputRef = useRef(null);
+
   useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+
     const show = Keyboard.addListener('keyboardDidShow', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(true);
     });
+
     const hide = Keyboard.addListener('keyboardDidHide', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(false);
-      // Não faça scrollTo aqui!
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
     });
+
     return () => {
       show.remove();
       hide.remove();
     };
   }, []);
-  
+
   const handleLogin = async () => {
     if (!usuario || !senha) {
       alert('Usuário e senha são obrigatórios');
@@ -51,7 +62,7 @@ export default function LoginScreen() {
     try {
       // Limpar token anterior antes de fazer novo login
       await removerToken();
-
+      
       const resultado = await login(usuario, senha);
       if (resultado.success) {
         navigation.navigate('Home');
@@ -72,16 +83,25 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <View style={styles.scrollContent}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
+        ]}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        style={Platform.OS === 'web' ? { flex: 1 } : undefined}
+      >
         <Image
           source={require('../../assets/images/logo01.png')}
           style={[styles.logo, tecladoAtivo && styles.logoPequena]}
         />
         <Text style={styles.brand}>WMS</Text>
         <Text style={styles.welcome}>Bem Vindo!</Text>
-  
+
         <Text style={styles.label}>Usuário</Text>
         <View style={styles.inputContainer}>
           <TextInput
@@ -99,7 +119,7 @@ export default function LoginScreen() {
           />
           <Icon name="user" size={20} color="#888" style={styles.icon} />
         </View>
-  
+
         <Text style={styles.label}>Senha</Text>
         <View style={styles.inputContainer}>
           <TextInput
@@ -124,20 +144,19 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
-  
+
         <TouchableOpacity onPress={handleLogin} style={styles.button}>
           <Text style={styles.buttonText}>Entrar</Text>
         </TouchableOpacity>
-  
+
         <Text style={styles.footer}>
           <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
             &ldquo;Otimizando a gestão de armazém com tecnologia eficiente&rdquo;
           </Text>
         </Text>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
-  
 }
 
 const styles = StyleSheet.create({
@@ -146,13 +165,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#61DE25',
   },
   scrollContent: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 40,
   },
-  
   scrollSemTeclado: {
     justifyContent: 'center',
     paddingVertical: 40,
