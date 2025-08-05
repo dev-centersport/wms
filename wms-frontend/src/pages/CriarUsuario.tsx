@@ -11,7 +11,7 @@ import {
     Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/API';
 import Layout from "../components/Layout"
 
 interface Perfil {
@@ -34,7 +34,7 @@ export default function CriarUsuario() {
     useEffect(() => {
         async function carregarPerfis() {
             try {
-                const { data } = await axios.get('http://151.243.0.78:3001/perfil');
+                const { data } = await api.get('/perfil');
                 setPerfis(data);
             } catch (error) {
                 alert('Erro ao carregar perfis.');
@@ -60,7 +60,7 @@ export default function CriarUsuario() {
                 perfil_id: perfilId,
             };
 
-            await axios.post('http://151.243.0.78:3001/usuario', payload);
+            await api.post('/usuario', payload);
             alert('Usuário criado com sucesso!');
             navigate('/Usuarios');
         } catch (err) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
-import axios from 'axios';
+import api from '../services/API';
 
 interface LocalizacaoOption {
   id: number;
@@ -39,7 +39,7 @@ const InputLocalizacaoAutocomplete: React.FC<Props> = ({
 
       try {
         setLoading(true);
-        const response = await axios.get('http://151.243.0.78:3001/localizacao?limit=3000');
+        const response = await api.get('/localizacao?limit=3000');
         const todas = Array.isArray(response.data.results) ? response.data.results : [];
 
         const formatadas = todas.map((l: any) => ({

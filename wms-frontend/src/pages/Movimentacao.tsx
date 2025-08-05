@@ -30,7 +30,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Layout from '../components/Layout';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import axios from 'axios';
+import api from '../services/API';
 import { enviarMovimentacao, buscarProdutoPorEAN, buscarLocalizacaoPorEAN, buscarLocalizacaoGeral, buscarProdutosPorLocalizacaoDireto } from '../services/API';
 import CamposTransferencia from '../components/CamposTransferencia';
 import { useAuth } from '../contexts/AuthContext';
@@ -83,7 +83,7 @@ const Movimentacao: React.FC = () => {
   const carregarTodasLocalizacoes = async () => {
     try {
       setLoadingOpt(true);
-      const response = await axios.get('http://151.243.0.78:3001/localizacao?limit=3000');
+      const response = await api.get('/localizacao?limit=3000');
 
       const data = response.data;
       console.log('🔍 Resposta da API /localizacao:', data);
@@ -137,7 +137,7 @@ const Movimentacao: React.FC = () => {
           ean: item.ean,
           descricao: item.descricao,
           produto: item.descricao,
-          quantidade: item.quantidade || 0,
+          quantidade: Math.max(item.quantidade || 0, 1), // ✅ Garante quantidade mínima de 1
           contador: String(index + 1).padStart(3, '0'),
         }));
 
@@ -179,7 +179,7 @@ const Movimentacao: React.FC = () => {
           sku: novo.sku,
           ean: novo.ean,
           descricao: novo.descricao,
-          quantidade: 0,
+          quantidade: 1, // ✅ Corrigido: quantidade inicial como 1
           produto: novo.descricao,
           contador: String(contadorTotal).padStart(3, '0'),
         },
@@ -213,7 +213,7 @@ const Movimentacao: React.FC = () => {
 
     // Tenta abrir a localização no backend
     try {
-      await axios.get(`http://151.243.0.78:3001/movimentacao/abrir-localizacao/${eanLocalizacao}`);
+      await api.get(`/movimentacao/abrir-localizacao/${eanLocalizacao}`);
     } catch (erro: any) {
       alert(erro?.response?.data?.message || 'A localização já está em uso.');
       return;
@@ -284,14 +284,27 @@ const Movimentacao: React.FC = () => {
       return;
     }
 
+    // ✅ Validação adicional para garantir quantidades positivas
+    const itensComQuantidadeValida = lista.map((item) => {
+      // Garante que a quantidade seja um número válido e positivo
+      let quantidade = Number(item.quantidade);
+      
+      // Se não for um número válido ou for menor/igual a 0, define como 1
+      if (isNaN(quantidade) || quantidade <= 0) {
+        quantidade = 1;
+      }
+      
+      return {
+        produto_id: Number(item.produto_id),
+        produto_estoque_id: Number(item.produto_estoque_id),
+        quantidade: quantidade,
+      };
+    });
+
     const payload: any = {
       tipo,
       usuario_id: user.usuario_id, // 🔒 Usando o ID do usuário autenticado
-      itens_movimentacao: lista.map((item) => ({
-        produto_id: Number(item.produto_id),
-        produto_estoque_id: Number(item.produto_estoque_id),
-        quantidade: Number(item.quantidade ?? 1),
-      })),
+      itens_movimentacao: itensComQuantidadeValida,
       localizacao_origem_id: 0,
       localizacao_destino_id: 0,
     };
@@ -314,11 +327,11 @@ const Movimentacao: React.FC = () => {
     // ✅ FECHAR LOCALIZAÇÕES
     try {
       if (origem?.ean) {
-        await axios.get(`http://151.243.0.78:3001/movimentacao/fechar-localizacao/${origem.ean}`);
+        await api.get(`/movimentacao/fechar-localizacao/${origem.ean}`);
       }
 
       if (tipo === 'transferencia' && destino?.ean) {
-        await axios.get(`http://151.243.0.78:3001/movimentacao/fechar-localizacao/${destino.ean}`);
+        await api.get(`/movimentacao/fechar-localizacao/${destino.ean}`);
       }
     } catch (erro) {
       console.warn('⚠️ Erro ao tentar fechar a localização:', erro);

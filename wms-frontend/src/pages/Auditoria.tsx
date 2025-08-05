@@ -28,7 +28,6 @@ import {
 } from '@mui/material';
 import { Search, Add, CheckCircle, Cancel, Delete as DeleteIcon } from '@mui/icons-material';
 import Layout from '../components/Layout';
-import axios from 'axios';
 import { buscarAuditoria, buscarArmazemPorEAN } from '../services/API';
 
 interface Ocorrencia {

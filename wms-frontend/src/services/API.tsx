@@ -2,10 +2,10 @@ import axios from 'axios'
 import Ocorrencia from '../pages/NovaOcorrencia';
 import Cookies from 'js-cookie';
 
-const BASE_URL = 'http://151.243.0.78:3001';
+const BASE_URL = 'http://localhost:3001';
 
 const api = axios.create({
-  baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
+  baseURL: 'http://localhost:3001', // ou a URL da sua API
 });
 
 // Interceptor para adicionar token de autenticação automaticamente
@@ -173,7 +173,7 @@ export async function registrarConferenciaAuditoria(
 
 export async function login(usuario: string, senha: string) {
   try {
-    const res = await axios.post(`${BASE_URL}/auth/login`, {
+    const res = await api.post('/auth/login', {
       usuario,
       senha
     });

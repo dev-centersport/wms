@@ -9,15 +9,15 @@ import { CloudUpload, Print, Close } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import PrintPorPedido from '../components/PrintPorPedido';
 import PrintPorLocalizacao from '../components/PrintPorLocalizacao';
-import axios from 'axios';
+import api from '../services/API';
 import Layout from '../components/Layout';
 
 interface ProdutoPlanilha {
   [key: string]: string | number;
 }
 
-const ENDPOINT_PEDIDO = 'http://151.243.0.78:3001/separacao/agrupado-pedido';
-const ENDPOINT_SKU = 'http://151.243.0.78:3001/separacao/agrupado-produto';
+const ENDPOINT_PEDIDO = '/separacao/agrupado-pedido';
+const ENDPOINT_SKU = '/separacao/agrupado-produto';
 
 const columns = [
   { key: "Número do pedido", label: "Número do Pedido" },
@@ -114,7 +114,7 @@ export default function Separacao() {
 
     try {
       const url = tipo === 'pedido' ? ENDPOINT_PEDIDO : ENDPOINT_SKU;
-      const { data } = await axios.post(url, form);
+      const { data } = await api.post(url, form);
 
       let dadosCorrigidos;
 

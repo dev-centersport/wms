@@ -1,9 +1,10 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
 import { idRelations } from 'src/utils/decorator.id.relations';
 
 export class CreateItemMovimentacaoDto {
   @IsNotEmpty()
   @IsNumber()
+  @IsPositive()
   quantidade: number;
 
   @idRelations()
