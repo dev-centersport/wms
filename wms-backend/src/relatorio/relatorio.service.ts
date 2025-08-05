@@ -147,7 +147,19 @@ export class RelatorioService {
     });
 
     // 2. Agrupar por produto
-    const produtosMap = new Map<number, any>();
+    interface ProdutoReposicao {
+      produtoId: number;
+      produtoNome: string;
+      saldoDibJorge: number | null;
+      reposicaoPossivel: Array<{
+        armazem: string;
+        saldo: number;
+      }>;
+    }
+
+    const produtosMap = new Map<number, ProdutoReposicao>();
+
+    console.log(estoques);
 
     for (const estoque of estoques) {
       const produtoId = estoque.produto.produto_id;
@@ -164,7 +176,7 @@ export class RelatorioService {
         });
       }
 
-      const produtoData = produtosMap.get(produtoId);
+      const produtoData = produtosMap.get(produtoId)!;
 
       if (armazemNome.toLowerCase() === 'dib jorge') {
         produtoData.saldoDibJorge = quantidade;
@@ -177,7 +189,7 @@ export class RelatorioService {
     }
 
     // 3. Filtrar produtos com saldo em Dib Jorge < 10
-    const reposicoes = [];
+    const reposicoes: ProdutoReposicao[] = [];
     for (const produto of produtosMap.values()) {
       if (produto.saldoDibJorge !== null && produto.saldoDibJorge < 10) {
         reposicoes.push(produto);
