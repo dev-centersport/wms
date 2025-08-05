@@ -5,13 +5,13 @@ export async function buscarProdutoPorEAN(ean) {
 	try {
 		const eanLimpo = limparCodigo(ean);
 		const response = await api.get(`/produto/buscar-por-ean/${eanLimpo}`);
-		const localizacao = response.data;
+		const produto = response.data;
 
-		if (!localizacao) {
-			throw new Error("Localização com esse EAN não encontrado.");
+		if (!produto) {
+			throw new Error("Produto não encontrado.");
 		}
 
-		return localizacao;
+		return produto;
 	} catch (error) {
 		throw tratarErro(error, "Busca de produto por EAN");
 	}
@@ -24,7 +24,7 @@ export async function buscarLocalizacaoPorEAN(ean) {
 		const localizacao = response.data;
 
 		if (!localizacao) {
-			throw new Error("Localização com esse EAN não encontrada.");
+			throw new Error("Localização não encontrada.");
 		}
 
 		return {
@@ -40,17 +40,9 @@ export async function buscarLocalizacaoPorEAN(ean) {
 // 🚚 Enviar movimentação (entrada / saída)
 export async function enviarMovimentacao(payload) {
 	try {
-		console.log("✅ Payload sendo enviado:", JSON.stringify(payload, null, 2));
 		const { data } = await api.post("/movimentacao", payload);
 		return data;
 	} catch (error) {
-		console.error("❌ Erro ao salvar movimentação:", error);
-		if (error.response?.data) {
-			console.error(
-				"🔍 Detalhe do erro:",
-				JSON.stringify(error.response.data, null, 2)
-			);
-		}
 		throw tratarErro(error, "Envio de movimentação");
 	}
 }
@@ -58,11 +50,6 @@ export async function enviarMovimentacao(payload) {
 export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
 	try {
 		const res = await api.get(`/localizacao/${localizacao_id}/produtos`);
-		console.log(
-			"🔍 produtos_estoque[0]:",
-			JSON.stringify(res.data.produtos_estoque[0], null, 2)
-		);
-
 		const dados = res.data?.produtos_estoque || [];
 
 		return dados.map((item) => ({
@@ -99,11 +86,9 @@ export async function fecharLocalizacao(ean) {
 export async function obterUsuarioLogado() {
 	try {
 	  const response = await api.get('/auth/profile');
-	  return response.data; // Deve conter o usuario_id
+	  return response.data;
 	} catch (error) {
-	  // Tratar erros e, se for 401, redirecionar para login
-	  // ...
 	  throw error;
 	}
-  }
+}
   

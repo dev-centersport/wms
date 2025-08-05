@@ -1,17 +1,46 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Shadows, BorderRadius, Spacing } from '../../../constants/Colors';
 
-export default function HeaderMovimentacao({ onClose }) {
+export default function HeaderMovimentacao({ onClose, localizacao_id, eanLocalizacaoAberta, onCancelarMovimentacao }) {
   const navigation = useNavigation();
 
   const handleClose = () => {
-    if (onClose) {
-      onClose();
+    // Travar saída se localização estiver bipada
+    if (localizacao_id) {
+      Alert.alert(
+        'Movimentação em Andamento',
+        'Você tem uma movimentação em andamento. Finalize ou cancele a operação antes de sair.',
+        [
+          { 
+            text: 'Continuar Movimentação', 
+            style: 'cancel', 
+            onPress: () => { } 
+          },
+          {
+            text: 'Cancelar e Sair',
+            style: 'destructive',
+            onPress: async () => {
+              if (onCancelarMovimentacao) {
+                await onCancelarMovimentacao();
+              }
+              if (onClose) {
+                onClose();
+              } else {
+                navigation.navigate('Home');
+              }
+            },
+          },
+        ]
+      );
     } else {
-      navigation.navigate('Home');
+      if (onClose) {
+        onClose();
+      } else {
+        navigation.navigate('Home');
+      }
     }
   };
 

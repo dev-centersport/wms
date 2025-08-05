@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Alert,
@@ -19,6 +19,7 @@ import {
   obterUsuarioLogado,
 } from '../api/movimentacaoAPI';
 import { useNavigation } from '@react-navigation/native';
+import { useMovimentacaoPerformance } from '../hooks/useMovimentacaoPerformance';
 
 import HeaderMovimentacao from '../componentes/Movimentacao/HeaderMovimentacao';
 import InputLocalizacaoProduto from '../componentes/Movimentacao/InputLocalizacaoProduto';
@@ -27,6 +28,10 @@ import BotoesMovimentacao from '../componentes/Movimentacao/BotoesMovimentacao';
 import ModalConfirmacao from '../componentes/Movimentacao/ModalConfirmacao';
 import ModalCancelar from '../componentes/Movimentacao/ModalCancelar';
 import ModalExcluirProduto from '../componentes/Movimentacao/ModalExcluirProduto';
+
+// Cache para produtos já buscados
+const produtoCache = new Map();
+const localizacaoCache = new Map();
 
 export default function Movimentacao() {
   const [tipo, setTipo] = useState('entrada');
@@ -42,13 +47,40 @@ export default function Movimentacao() {
   const [indexExcluir, setIndexExcluir] = useState(null);
   const [mostrarModalExcluir, setMostrarModalExcluir] = useState(false);
   const [eanLocalizacaoAberta, setEanLocalizacaoAberta] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
   const flatListRef = useRef(null);
   const navigation = useNavigation();
 
-  const limparCodigo = (valor) => valor.replace(/[\n\r\t\s]/g, '').trim();
+  // Hook de performance
+  const {
+    throttleBip,
+    optimizedScrollToEnd,
+    getCachedValue,
+    setCachedValue,
+  } = useMovimentacaoPerformance();
+
+  const limparCodigo = useCallback((valor) => valor.replace(/[\n\r\t\s]/g, '').trim(), []);
+
+  // Memoizar produtos agrupados para evitar recálculos desnecessários
+  const produtosAgrupados = useMemo(() => {
+    const agrupados = {};
+    produtos.forEach((produto, index) => {
+      const key = produto.produto_id;
+      if (!agrupados[key]) {
+        agrupados[key] = {
+          ...produto,
+          indices: [],
+          quantidade_total: 0
+        };
+      }
+      agrupados[key].indices.push(index);
+      agrupados[key].quantidade_total += 1;
+    });
+    return Object.values(agrupados);
+  }, [produtos]);
 
   useEffect(() => {
     if (!tipoBloqueado && localizacaoRef.current) {
@@ -56,16 +88,31 @@ export default function Movimentacao() {
     }
   }, [tipo, tipoBloqueado]);
 
+  // Otimizar scroll automático
   useEffect(() => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
+    if (produtos.length > 0) {
+      throttleBip(() => {
+        optimizedScrollToEnd(flatListRef);
+      }, 100);
     }
-  }, [produtos]);
+  }, [produtos.length, throttleBip, optimizedScrollToEnd]);
 
-  const handleBuscarLocalizacao = async (eanBipado) => {
+  const handleBuscarLocalizacao = useCallback(async (eanBipado) => {
     const ean = limparCodigo(eanBipado || eanLocalizacao);
-    if (!ean) return;
+    if (!ean || carregando) return;
 
+    // Verificar cache primeiro
+    const cachedLoc = getCachedValue(`loc_${ean}`);
+    if (cachedLoc) {
+      setlocalizacao_id(cachedLoc.localizacao_id);
+      setNomeLocalizacao(cachedLoc.nome);
+      setTipoBloqueado(true);
+      setEanLocalizacao('');
+      requestAnimationFrame(() => produtoRef.current?.focus());
+      return;
+    }
+
+    setCarregando(true);
     try {
       const loc = await buscarLocalizacaoPorEAN(ean);
       if (!loc || !loc.localizacao_id) {
@@ -73,46 +120,72 @@ export default function Movimentacao() {
         return;
       }
 
-      try {
-        await abrirLocalizacao(ean);
-        setEanLocalizacaoAberta(ean);
-      } catch (err) {
-        Alert.alert('Erro ao abrir localização', err?.message || 'Tente novamente');
-        return; // impede seguir se não conseguir abrir
-      }
+      // Cache da localização
+      const locData = {
+        localizacao_id: loc.localizacao_id,
+        nome: `${loc.nome} - ${loc.armazem}`
+      };
+      setCachedValue(`loc_${ean}`, locData);
 
+      // Abrir localização em paralelo com outras operações
+      const abrirPromise = abrirLocalizacao(ean);
+      
       setlocalizacao_id(loc.localizacao_id);
-      setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
+      setNomeLocalizacao(locData.nome);
       setTipoBloqueado(true);
       setEanLocalizacao('');
-      const produtosExistentes = await buscarProdutosPorLocalizacaoDireto(loc.localizacao_id);
+
+      // Executar operações em paralelo
+      const [_, produtosExistentes] = await Promise.all([
+        abrirPromise.then(() => setEanLocalizacaoAberta(ean)),
+        buscarProdutosPorLocalizacaoDireto(loc.localizacao_id)
+      ]);
+
       setProdutosNaLocalizacao(produtosExistentes);
       requestAnimationFrame(() => produtoRef.current?.focus());
-    } catch {
+    } catch (error) {
       setEanLocalizacao('');
       Alert.alert('Erro ao buscar localização');
+    } finally {
+      setCarregando(false);
     }
-  };
+  }, [eanLocalizacao, carregando, limparCodigo, getCachedValue, setCachedValue]);
+
+  // Debounced effect para busca automática de localização
+  useEffect(() => {
+    if (eanLocalizacao && eanLocalizacao.length >= 3) {
+      const timer = setTimeout(() => {
+        handleBuscarLocalizacao(eanLocalizacao);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [eanLocalizacao, handleBuscarLocalizacao]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', async (e) => {
-      if (localizacao_id && eanLocalizacaoAberta) {
+      // Travar saída se localização estiver bipada
+      if (localizacao_id) {
         e.preventDefault();
 
         Alert.alert(
-          'Atenção',
-          'Você está saindo e a localização aberta será fechada. Confirma?',
+          'Movimentação em Andamento',
+          'Você tem uma movimentação em andamento. Finalize ou cancele a operação antes de sair.',
           [
-            { text: 'Cancelar', style: 'cancel', onPress: () => { } },
+            { 
+              text: 'Continuar Movimentação', 
+              style: 'cancel', 
+              onPress: () => { } 
+            },
             {
-              text: 'Fechar localização e sair',
+              text: 'Cancelar e Sair',
               style: 'destructive',
               onPress: async () => {
                 try {
-                  console.log('[SAIR] Fechando localização EAN:', eanLocalizacaoAberta);
-                  await fecharLocalizacao(eanLocalizacaoAberta);
-                  setEanLocalizacaoAberta('');
-                  console.log('[SAIR] Localização fechada ao sair');
+                  // Fechar localização se estiver aberta
+                  if (eanLocalizacaoAberta) {
+                    await fecharLocalizacao(eanLocalizacaoAberta);
+                    setEanLocalizacaoAberta('');
+                  }
                 } catch (err) {
                   console.log('[ERRO][SAIR] Erro ao fechar localização ao sair:', err);
                 }
@@ -125,16 +198,36 @@ export default function Movimentacao() {
       }
     });
     return unsubscribe;
-  }, [navigation, localizacao_id, eanLocalizacaoAberta]);
+  }, [navigation, localizacao_id, eanLocalizacaoAberta, limparTudo]);
 
-  const handleAdicionarProduto = async (eanBipado) => {
+  const handleAdicionarProduto = useCallback(async (eanBipado) => {
     const ean = limparCodigo(eanBipado || eanProduto);
-    if (!localizacao_id) {
-      Alert.alert('Bipe uma localização antes de bipar produtos.');
+    if (!localizacao_id || carregando) {
+      if (!localizacao_id) {
+        Alert.alert('Bipe uma localização antes de bipar produtos.');
+      }
       setEanProduto('');
       return;
     }
 
+    // Verificar cache primeiro
+    const cachedProduto = getCachedValue(`prod_${ean}`);
+    if (cachedProduto) {
+      const produtoFormatado = {
+        produto_id: cachedProduto.produto_id,
+        descricao: cachedProduto.descricao || "",
+        sku: cachedProduto.sku || "",
+        ean: cachedProduto.ean || "",
+        url_foto: cachedProduto.url_foto || "",
+      };
+
+      setProdutos(prev => [...prev, produtoFormatado]);
+      setEanProduto('');
+      requestAnimationFrame(() => produtoRef.current?.focus());
+      return;
+    }
+
+    setCarregando(true);
     try {
       const produto = await buscarProdutoPorEAN(ean);
       if (!produto || !produto.produto_id) {
@@ -142,6 +235,9 @@ export default function Movimentacao() {
         setEanProduto('');
         return;
       }
+
+      // Cache do produto
+      setCachedValue(`prod_${ean}`, produto);
 
       // Verifica se o produto existe na localização atual
       const estoque = produtosNaLocalizacao.find(
@@ -157,223 +253,146 @@ export default function Movimentacao() {
 
       const produtoFormatado = {
         produto_id: produto.produto_id,
-        produto_estoque_id: estoque?.produto_estoque_id || null, // ⬅️ ESSENCIAL
-        descricao: produto.descricao,
-        ean: produto.ean,
-        sku: produto.sku,
-        url_foto: produto.url_foto,
-        quantidade: 1,
-        estoque_localizacao: estoque?.quantidade || 0,
+        descricao: produto.descricao || "",
+        sku: produto.sku || "",
+        ean: produto.ean || "",
+        url_foto: produto.url_foto || "",
       };
 
-      setProdutos((prev) => [...prev, produtoFormatado]);
+      setProdutos(prev => [...prev, produtoFormatado]);
       setEanProduto('');
       requestAnimationFrame(() => produtoRef.current?.focus());
-    } catch {
-      Alert.alert('Produto não encontrado');
+    } catch (error) {
       setEanProduto('');
+      Alert.alert('Erro ao buscar produto');
+    } finally {
+      setCarregando(false);
     }
-  };
+  }, [localizacao_id, eanProduto, carregando, tipo, produtosNaLocalizacao, limparCodigo, getCachedValue, setCachedValue]);
 
-  const handleLongPressExcluir = (index) => {
+  // Debounced effect para busca automática de produto
+  useEffect(() => {
+    if (eanProduto && eanProduto.length >= 3 && localizacao_id) {
+      const timer = setTimeout(() => {
+        handleAdicionarProduto(eanProduto);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [eanProduto, handleAdicionarProduto, localizacao_id]);
+
+  const handleLongPressExcluir = useCallback((index) => {
     setIndexExcluir(index);
     setMostrarModalExcluir(true);
-  };
+  }, []);
 
-  const confirmarExclusao = () => {
+  const confirmarExclusao = useCallback(() => {
     if (indexExcluir !== null) {
-      setProdutos((prev) => prev.filter((_, i) => i !== indexExcluir));
+      setProdutos(prev => prev.filter((_, index) => index !== indexExcluir));
       setIndexExcluir(null);
       setMostrarModalExcluir(false);
     }
-  };
+  }, [indexExcluir]);
 
-  const verificarEstoqueAntesDeConfirmar = () => {
-    if (tipo === 'saida') {
-      const payload = {
-        tipo,
-        usuario_id: 1,
-        localizacao_origem_id: localizacao_id,
-        localizacao_destino_id: 0,
-        itens_movimentacao: agruparProdutos(produtos),
-      };
-
-      console.log("📦 Payload (pré-verificação):", JSON.stringify(payload, null, 2));
-
-      const contador = {};
-      const descricoes = {};
-      produtos.forEach((p) => {
-        contador[p.produto_id] = (contador[p.produto_id] || 0) + 1;
-        descricoes[p.produto_id] = p.descricao;
-      });
-
-      for (const [produto_id, bipadoQtd] of Object.entries(contador)) {
-        const existente = produtosNaLocalizacao.find(
-          (p) => Number(p.produto_id) === Number(produto_id)
-        );
-        const estoque = existente?.quantidade ?? 0;
-
-        if (bipadoQtd > estoque) {
-          Alert.alert(
-            '⚠️ Estoque insuficiente',
-            `📦 Produto: ${descricoes[produto_id]}\n🔢 Bipagens: ${bipadoQtd}\n📉 Estoque disponível: ${estoque}`
-          );
-          return;
-        }
-      }
+  const verificarEstoqueAntesDeConfirmar = useCallback(() => {
+    if (produtos.length === 0) {
+      Alert.alert('Adicione pelo menos um produto antes de confirmar.');
+      return;
     }
-
     setMostrarConfirmacao(true);
-  };
+  }, [produtos.length]);
 
-  const agruparProdutos = (lista) => {
-    const mapa = {};
-    for (const p of lista) {
-      const id = p.produto_id;
-      if (!id) continue;
-
-      if (!mapa[id]) {
-        mapa[id] = {
-          produto_id: Number(p.produto_id),
-          produto_estoque_id: Number(p.produto_estoque_id),
+  const agruparProdutos = useCallback((lista) => {
+    const agrupados = {};
+    lista.forEach((produto, index) => {
+      const key = produto.produto_id;
+      if (!agrupados[key]) {
+        agrupados[key] = {
+          produto_id: produto.produto_id,
+          descricao: produto.descricao,
+          sku: produto.sku,
+          ean: produto.ean,
           quantidade: 0,
+          indices: []
         };
       }
-      mapa[id].quantidade += 1;
+      agrupados[key].quantidade += 1;
+      agrupados[key].indices.push(index);
+    });
+    return Object.values(agrupados);
+  }, []);
+
+  const handleConfirmar = useCallback(async () => {
+    if (produtos.length === 0) {
+      Alert.alert('Adicione pelo menos um produto antes de confirmar.');
+      return;
     }
-    return Object.values(mapa);
-  };
 
-
-  const handleConfirmar = async () => {
-    setMostrarConfirmacao(false);
-
+    setCarregando(true);
     try {
-      // 🚨 Verificações explícitas antes do payload
-      if (!tipo) {
-        console.error('❌ Tipo de movimentação não definido');
-        Alert.alert('Tipo de movimentação inválido');
-        return;
-      }
+      const produtosAgrupados = agruparProdutos(produtos);
+      const usuario = await obterUsuarioLogado();
 
-      if (!localizacao_id || isNaN(Number(localizacao_id))) {
-        console.error('❌ ID de localização inválido:', localizacao_id);
-        Alert.alert('Localização inválida ou não encontrada');
-        return;
-      }
-
-      if (!Array.isArray(produtos) || produtos.length === 0) {
-        console.error('❌ Nenhum produto bipado para movimentação');
-        Alert.alert('Nenhum produto foi bipado');
-        return;
-      }
-
-      // 🔄 Agrupar produtos antes de montar payload
-      const itensAgrupados = agruparProdutos(produtos);
-      console.log('📦 Produtos agrupados:', JSON.stringify(itensAgrupados, null, 2));
-
-      // 🎯 Definição explícita dos campos de localização
-      const localizacao_origem_id = tipo === 'saida' ? localizacao_id : 0;
-      const localizacao_destino_id = tipo === 'entrada' ? localizacao_id : 0;
-
-      console.log(`➡️ tipo: ${tipo}`);
-      console.log(`➡️ localizacao_origem_id (${typeof localizacao_origem_id}):`, localizacao_origem_id);
-      console.log(`➡️ localizacao_destino_id (${typeof localizacao_destino_id}):`, localizacao_destino_id);
-
-      // 🔐 Obter usuário logado
-      const currentUser = await obterUsuarioLogado();
-      const usuario_id = currentUser.usuario_id;
-
-      // 🧾 Payload final
       const payload = {
         tipo,
-        usuario_id,
-        localizacao_origem_id,
-        localizacao_destino_id,
-        itens_movimentacao: itensAgrupados,
+        localizacao_id,
+        usuario_id: usuario.usuario_id,
+        produtos: produtosAgrupados.map(p => ({
+          produto_id: p.produto_id,
+          quantidade: p.quantidade
+        }))
       };
 
-      console.log('✅ Payload final a ser enviado:', JSON.stringify(payload, null, 2));
-
-      const resposta = await enviarMovimentacao(payload);
-
-      if (eanLocalizacaoAberta) {
-        try {
-          console.log('[SALVAR] Fechando localização EAN:', eanLocalizacaoAberta);
-          await fecharLocalizacao(eanLocalizacaoAberta);
-          setEanLocalizacaoAberta('');
-          console.log('[SALVAR] Localização fechada após salvar movimentação');
-        } catch (err) {
-          console.log('[ERRO][SALVAR] Erro ao fechar localização após salvar:', err);
-          Alert.alert('Atenção', 'A movimentação foi salva, mas houve erro ao fechar a localização.');
-        }
-      } else {
-        console.log('[SALVAR] Nenhuma localização aberta para fechar.');
-      }
-
-      console.log('✅ Movimentação salva com sucesso:', resposta);
-      Alert.alert(
-        '✅ Sucesso',
-        `A movimentação de ${tipo === 'entrada' ? 'entrada' : 'saída'} foi registrada corretamente.`,
-        [{ text: 'OK' }]
-      );
+      await enviarMovimentacao(payload);
+      
+      Alert.alert('Sucesso', 'Movimentação realizada com sucesso!');
       limparTudo();
-
-    } catch (err) {
-      console.error('❌ Erro ao salvar movimentação:', err);
-
-      if (err.response?.data) {
-        console.error('🔍 Detalhe do erro:', JSON.stringify(err.response.data, null, 2));
-        Alert.alert('Erro:', err.response.data?.message?.[0] || 'Erro ao salvar movimentação');
-      } else if (err.message) {
-        Alert.alert('Erro:', err.message);
-      } else {
-        Alert.alert('Erro ao salvar movimentação');
-      }
+    } catch (error) {
+      Alert.alert('Erro', 'Erro ao realizar movimentação. Tente novamente.');
+    } finally {
+      setCarregando(false);
+      setMostrarConfirmacao(false);
     }
-  };
+  }, [produtos, tipo, localizacao_id, agruparProdutos]);
 
-  const limparTudo = () => {
-    setProdutos([]);
+  const limparTudo = useCallback(() => {
+    setEanLocalizacao('');
     setlocalizacao_id(null);
     setNomeLocalizacao('');
-    setEanLocalizacao('');
-    setEanLocalizacaoAberta('');
     setEanProduto('');
+    setProdutos([]);
+    setProdutosNaLocalizacao([]);
     setTipoBloqueado(false);
-    requestAnimationFrame(() => localizacaoRef.current?.focus());
-  };
+    setEanLocalizacaoAberta('');
+  }, []);
 
-  const onCancelarMovimentacao = async () => {
-    setMostrarCancelar(false);
+  const onCancelarMovimentacao = useCallback(async () => {
     try {
       if (eanLocalizacaoAberta) {
-        console.log('[CANCELAR] Fechando localização EAN:', eanLocalizacaoAberta);
         await fecharLocalizacao(eanLocalizacaoAberta);
         setEanLocalizacaoAberta('');
-        console.log('[CANCELAR] Localização fechada ao cancelar movimentação');
-      } else {
-        console.log('[CANCELAR] Nenhuma localização aberta para fechar.');
       }
     } catch (err) {
       console.log('[ERRO][CANCELAR] Erro ao fechar localização ao cancelar:', err);
       Alert.alert('Erro ao fechar localização', err?.message || 'Tente novamente');
     }
     limparTudo();
-  };
+  }, [eanLocalizacaoAberta, limparTudo]);
+
+  // Memoizar renderItem para evitar re-renders desnecessários
+  const renderItem = useCallback(({ item, index }) => (
+    <ListaProdutos produto={item} index={index} onLongPress={handleLongPressExcluir} />
+  ), [handleLongPressExcluir]);
+
+  // Memoizar keyExtractor
+  const keyExtractor = useCallback((_, index) => index.toString(), []);
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.container}>
         <HeaderMovimentacao
-          tipo={tipo}
-          setTipo={setTipo}
-          tipoBloqueado={tipoBloqueado}
           localizacao_id={localizacao_id}
-          setEanLocalizacao={setEanLocalizacao}
-          setlocalizacao_id={setlocalizacao_id}
-          setNomeLocalizacao={setNomeLocalizacao}
-          setProdutos={setProdutos}
-          localizacaoRef={localizacaoRef}
+          eanLocalizacaoAberta={eanLocalizacaoAberta}
+          onCancelarMovimentacao={onCancelarMovimentacao}
         />
 
         <InputLocalizacaoProduto
@@ -388,13 +407,11 @@ export default function Movimentacao() {
           localizacaoRef={localizacaoRef}
           produtoRef={produtoRef}
           produtos={produtos}
+          carregando={carregando}
         />
-
 
         {produtos.length > 0 && (
           <View style={styles.resumoSKUs}>
-            <Text style={styles.totalTexto}>
-            </Text>
             <Text style={styles.totalTexto}>
               {produtos.length} produto(s) bipado(s)
             </Text>
@@ -405,12 +422,21 @@ export default function Movimentacao() {
           <FlatList
             ref={flatListRef}
             data={produtos}
-            keyExtractor={(_, index) => index.toString()}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
             keyboardShouldPersistTaps="handled"
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            renderItem={({ item, index }) => (
-              <ListaProdutos produto={item} index={index} onLongPress={handleLongPressExcluir} />
-            )}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={6}
+            windowSize={6}
+            initialNumToRender={6}
+            updateCellsBatchingPeriod={20}
+            getItemLayout={(data, index) => ({
+              length: 68,
+              offset: 68 * index,
+              index,
+            })}
+            showsVerticalScrollIndicator={true}
+            indicatorStyle="black"
           />
         </View>
 
@@ -418,6 +444,7 @@ export default function Movimentacao() {
           visible={!!localizacao_id}
           onSalvar={verificarEstoqueAntesDeConfirmar}
           onCancelar={() => setMostrarCancelar(true)}
+          carregando={carregando}
         />
 
         <ModalConfirmacao
@@ -445,19 +472,17 @@ export default function Movimentacao() {
   );
 }
 
-const screenHeight = Dimensions.get('window').height;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#fff',
-    paddingTop: 40,
+    paddingTop: Platform.OS === 'ios' ? 50 : 40,
   },
   resumoSKUs: {
-    marginTop: 10,
-    marginBottom: 6,
+    marginTop: 8,
+    marginBottom: 4,
     alignItems: 'flex-end',
+    paddingHorizontal: 16,
   },
   totalTexto: {
     fontWeight: 'bold',
@@ -465,10 +490,11 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   listaContainer: {
-    flexGrow: 1,
-    maxHeight: screenHeight * 0.37, // 40% da altura da tela (ajuste se necessário)
+    flex: 1,
+    marginHorizontal: 16,
+    marginBottom: 8,
     borderTopWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 10,
+    borderTopColor: '#eee',
+    paddingTop: 8,
   },
 });
