@@ -3,8 +3,14 @@ import { api, tratarErro } from "./config";
 // ---------- CONSULTA DE ESTOQUE ----------
 export async function buscarConsultaEstoque(termoBusca) {
 	try {
+		let response;
+
 		// Usar endpoint que não requer autenticação
-		const response = await api.get(`/produto-estoque`);
+		if (termoBusca) {
+			response = await api.get(`/produto-estoque/pesquisar?${termoBusca}`);
+		} else {
+			response = await api.get(`/produto-estoque/pesquisar`);
+		}
 
 		const resultados = response.data.results || response.data || [];
 
