@@ -5,7 +5,7 @@ export function TableHeader() {
     return (
         <View style={styles.tableHeader}>
             <Text style={[styles.tableCell, { flex: 2 }]}>SKU</Text>
-            <Text style={[styles.tableCell, { flex: 2 }]}>Localização</Text>
+            <Text style={[styles.tableCell, { flex: 3 }]}>Localização</Text>
             <Text style={[styles.tableCell, { flex: 1 }]}>Qtd</Text>
         </View>
     );
@@ -19,9 +19,11 @@ export function TableBody({ data }) {
             renderItem={({ item }) => (
                 <View style={styles.tableRow}>
                     <Text style={[styles.tableCell, { flex: 2 }]}>{item.sku}</Text>
-                    <Text style={[styles.tableCell, { flex: 2, textAlign: 'left', marginRight: 42 }]}>
-                        {item.localizacao} - {item.armazem}
-                    </Text>
+                    <View style={[styles.tableCell, { flex: 3, marginRight: 20 }]}>
+                        <Text style={styles.localizacaoText}>
+                            {item.localizacao} - {item.armazem}
+                        </Text>
+                    </View>
                     <Text style={[styles.tableCell, { flex: 1, marginLeft: 10 }]}>
                         {item.quantidade}
                     </Text>
@@ -52,5 +54,16 @@ const styles = StyleSheet.create({
     tableCell: {
         fontSize: 13,
         color: '#333',
+    },
+    localizacaoText: {
+        fontSize: 13,
+        color: '#333',
+        fontWeight: '500',
+    },
+    eanLocalizacaoText: {
+        fontSize: 11,
+        color: '#666',
+        fontStyle: 'italic',
+        marginTop: 2,
     },
 });

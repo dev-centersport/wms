@@ -21,8 +21,7 @@ const styles = StyleSheet.create({
   botoesFlexiveis: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 30,
     paddingHorizontal: 10,
   },
   btnSalvar: {

@@ -65,7 +65,7 @@ export default function HeaderMovimentacao({ tipo, localizacao_id, setTipo, setE
 
 const styles = StyleSheet.create({
   headerContainer: {
-    marginTop: 40,
+    marginTop: 65,
   },
   header: {
     flexDirection: 'row',
