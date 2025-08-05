@@ -23,6 +23,7 @@ import { RelatorioModule } from './relatorio/relatorio.module';
 import { AuthModule } from './auth/auth.module';
 import { PermissaoModule } from './permissao/permissao.module';
 import { PermissoesModule } from './auth/permissoes.module';
+import { AgrupamentoModule } from './agrupamento/agrupamento.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -98,6 +99,7 @@ import { PermissoesModule } from './auth/permissoes.module';
     AuthModule,
     PermissaoModule,
     PermissoesModule,
+    AgrupamentoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
