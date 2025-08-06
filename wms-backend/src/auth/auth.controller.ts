@@ -17,7 +17,13 @@ declare module 'express' {
   export interface Request {
     user?: {
       usuario: string;
+      responsavel: string;
       perfil: string;
+      perfil_id: number;
+      pode_ver: boolean;
+      pode_add: boolean;
+      pode_edit: boolean;
+      pode_delete: boolean;
       sub: number;
       // adicione outras propriedades se precisar
     };
@@ -53,7 +59,13 @@ export class AuthController {
     // req.user será preenchido pelo guard com os dados do login JWT
     return {
       usuario: req.user['usuario'],
+      responsavel: req.user['responsavel'],
       perfil: req.user['perfil'],
+      perfil_id: req.user['perfil_id'],
+      pode_ver: req.user['pode_ver'],
+      pode_add: req.user['pode_add'],
+      pode_edit: req.user['pode_edit'],
+      pode_delete: req.user['pode_delete'],
       usuario_id: req.user['sub'],
     };
   }

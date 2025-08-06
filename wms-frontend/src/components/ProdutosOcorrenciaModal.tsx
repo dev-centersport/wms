@@ -34,7 +34,7 @@ import {
     Error
 } from '@mui/icons-material';
 
-interface ProdutoDaOcorrencia {
+interface ProdutoDaOcorrenciaModal {
     produto_id: number;
     descricao: string;
     sku: string;
@@ -49,7 +49,7 @@ interface ProdutosOcorrenciaModalProps {
     open: boolean;
     onClose: () => void;
     ocorrenciaNome: string;
-    produtos: ProdutoDaOcorrencia[];
+    produtos: ProdutoDaOcorrenciaModal[];
 }
 
 const ProdutosOcorrenciaModal: React.FC<ProdutosOcorrenciaModalProps> = ({

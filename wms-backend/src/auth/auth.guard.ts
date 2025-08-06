@@ -18,7 +18,13 @@ import { JwtService } from '@nestjs/jwt';
 interface JwtPayload {
   sub: number;
   usuario: string;
+  responsavel: string;
   perfil: string;
+  perfil_id: number;
+  pode_ver: boolean;
+  pode_add: boolean;
+  pode_edit: boolean;
+  pode_delete: boolean;
   iat: number; // issued at
   exp: number; // expiration
 }
@@ -63,7 +69,13 @@ export class Autenticacao implements CanActivate {
         const newPayload = {
           sub: decoded.sub,
           usuario: decoded.usuario,
+          responsavel: decoded.responsavel,
           perfil: decoded.perfil,
+          perfil_id: decoded.perfil_id,
+          pode_ver: decoded.pode_ver,
+          pode_add: decoded.pode_add,
+          pode_edit: decoded.pode_edit,
+          pode_delete: decoded.pode_delete,
         };
 
         const newToken = this.jwtService.sign(newPayload);

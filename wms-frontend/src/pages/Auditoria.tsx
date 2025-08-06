@@ -76,13 +76,13 @@ import {
 import Layout from '../components/Layout';
 import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria, buscarProdutosAuditoria, cancelarAuditoria } from '../services/API';
 
-interface Ocorrencia {
+interface OcorrenciaLocal {
   ocorrencia_id: number;
   dataHora: string;
   ativo: boolean;
 }
 
-export interface AuditoriaItem {
+export interface AuditoriaItemLocal {
   auditoria_id: number;
   conclusao: string;
   data_hora_inicio: string;
@@ -95,7 +95,7 @@ export interface AuditoriaItem {
     nome: string;
     ean: string;
   };
-  ocorrencias: Ocorrencia[];
+  ocorrencias: OcorrenciaLocal[];
   armazem?: {
     nome: string;
   };
@@ -108,7 +108,7 @@ export default function Auditoria() {
   const navigate = useNavigate();
   const [busca, setBusca] = useState('');
   const [aba, setAba] = useState<'todos' | 'pendente' | 'concluida' | 'em andamento' | 'cancelada'>('todos');
-  const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
+  const [auditorias, setAuditorias] = useState<AuditoriaItemLocal[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [filtroArmazem, setFiltroArmazem] = useState('');
@@ -116,12 +116,12 @@ export default function Auditoria() {
   const [filtroStatus, setFiltroStatus] = useState('');
   const [appliedFiltroStatus, setAppliedFiltroStatus] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [modalIniciar, setModalIniciar] = useState<AuditoriaItem | null>(null);
-  const [modalConferir, setModalConferir] = useState<AuditoriaItem | null>(null);
-  const [modalCancelar, setModalCancelar] = useState<{ open: boolean; auditoria?: AuditoriaItem }>({ open: false });
+  const [modalIniciar, setModalIniciar] = useState<AuditoriaItemLocal | null>(null);
+  const [modalConferir, setModalConferir] = useState<AuditoriaItemLocal | null>(null);
+  const [modalCancelar, setModalCancelar] = useState<{ open: boolean; auditoria?: AuditoriaItemLocal }>({ open: false });
   const [ocorrenciasModal, setOcorrenciasModal] = useState<{
     open: boolean;
-    ocorrencias: Ocorrencia[];
+    ocorrencias: OcorrenciaLocal[];
     localizacao: string;
   }>({
     open: false,
@@ -164,7 +164,7 @@ export default function Auditoria() {
           status: aba === 'pendente' || aba === 'concluida' || aba === 'em andamento' || aba === 'cancelada' ? aba : undefined,
         });
 
-        const lista: AuditoriaItem[] = Array.isArray(dados)
+        const lista: AuditoriaItemLocal[] = Array.isArray(dados)
           ? dados
           : Array.isArray(dados.results)
             ? dados.results
@@ -248,7 +248,7 @@ export default function Auditoria() {
     return data.toLocaleString('pt-BR');
   }
 
-  const abrirModalOcorrencias = (ocorrencias: Ocorrencia[], localizacao: string) => {
+  const abrirModalOcorrencias = (ocorrencias: OcorrenciaLocal[], localizacao: string) => {
     setOcorrenciasModal({
       open: true,
       ocorrencias,
@@ -309,7 +309,7 @@ export default function Auditoria() {
     );
   };
 
-  const onClickIniciar = (item: AuditoriaItem) => {
+  const onClickIniciar = (item: AuditoriaItemLocal) => {
     if (item.status === 'cancelada') {
       showSnackbar("Esta auditoria foi cancelada", 'warning');
       return;
@@ -325,7 +325,7 @@ export default function Auditoria() {
     setModalIniciar(item);
   };
 
-  const onClickConferir = (item: AuditoriaItem) => {
+  const onClickConferir = (item: AuditoriaItemLocal) => {
     if (item.status === 'cancelada') {
       showSnackbar("Esta auditoria foi cancelada", 'warning');
       return;

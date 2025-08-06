@@ -1,53 +1,36 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import CustomPagination from './CustomPagination';
-
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   totalPages?: number;
   currentPage?: number;
-  show?: boolean;
   onPageChange?: (page: number) => void;
+  show?: boolean;
   itemsPerPage?: number;
-  onItemsPerPageChange?: (size: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({
-  children,
-  totalPages = 1,
-  currentPage = 1,
+const Layout: React.FC<LayoutProps> = ({ 
+  children, 
+  totalPages, 
+  currentPage, 
+  onPageChange, 
   show = true,
-  onPageChange = () => {},
-  itemsPerPage = 50,
-  onItemsPerPageChange,
+  itemsPerPage,
+  onItemsPerPageChange
 }) => {
   return (
-    <Sidebar>
-      <Box sx={{ 
-        display: 'flex', 
-        minHeight: '100vh', 
-        flexDirection: 'column',
-        position: 'relative'
-      }}>
-        <Box sx={{ 
-          flex: 1, 
-          p: 3,
-          overflow: 'auto'
-        }}>
-          {children}
-        </Box>
-
-        <CustomPagination
-          show={show}
-          totalPages={totalPages}
-          currentPage={currentPage}
-          onPageChange={onPageChange}
-          itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={onItemsPerPageChange}
-        />
-      </Box>
+    <Sidebar 
+      totalPages={totalPages}
+      currentPage={currentPage}
+      onPageChange={onPageChange}
+      show={show}
+      itemsPerPage={itemsPerPage}
+      onItemsPerPageChange={onItemsPerPageChange}
+    >
+      {children || <Outlet />}
     </Sidebar>
   );
 };
