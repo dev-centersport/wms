@@ -168,7 +168,8 @@ export class MovimentacaoService {
         // Se o usuário não especificou produtos, transferir todos
         if (
           !CreateMovimentacaoDto.itens_movimentacao ||
-          CreateMovimentacaoDto.itens_movimentacao.length === 0
+          CreateMovimentacaoDto.itens_movimentacao.length === 0 ||
+          CreateMovimentacaoDto.tipo === TipoMovimentacao.TRANSFERENCIA
         ) {
           CreateMovimentacaoDto.itens_movimentacao = produtosEstoque.map(
             (pe) => ({
