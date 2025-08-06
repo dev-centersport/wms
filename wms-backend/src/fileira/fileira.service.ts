@@ -1,26 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateFileiraDto } from './dto/create-fileira.dto';
 import { UpdateFileiraDto } from './dto/update-fileira.dto';
+import { Fileira } from './entities/fileira.entity';
 
 @Injectable()
 export class FileiraService {
-  create(createFileiraDto: CreateFileiraDto) {
-    return 'This action adds a new fileira';
+  constructor(
+    @InjectRepository(Fileira)
+    private readonly fileiraRepository: Repository<Fileira>,
+  ) {}
+
+  async create(createFileiraDto: CreateFileiraDto): Promise<Fileira> {
+    const fileira = this.fileiraRepository.create(createFileiraDto);
+    return await this.fileiraRepository.save(fileira);
   }
 
-  findAll() {
-    return `This action returns all fileira`;
+  async findAll(): Promise<Fileira[]> {
+    return await this.fileiraRepository.find({
+      relations: ['agrupamentos'],
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} fileira`;
+  async findOne(fileira_id: number): Promise<Fileira> {
+    const fileira = await this.fileiraRepository.findOne({
+      where: { fileira_id },
+      relations: ['agrupamentos'],
+    });
+
+    if (!fileira) {
+      throw new NotFoundException(
+        `Fileira com ID ${fileira_id} não encontrada`,
+      );
+    }
+
+    return fileira;
   }
 
-  update(id: number, updateFileiraDto: UpdateFileiraDto) {
-    return `This action updates a #${id} fileira`;
+  async update(
+    fileira_id: number,
+    updateFileiraDto: UpdateFileiraDto,
+  ): Promise<Fileira> {
+    const fileira = await this.findOne(fileira_id);
+
+    this.fileiraRepository.merge(fileira, updateFileiraDto);
+
+    return await this.fileiraRepository.save(fileira);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} fileira`;
+  async remove(fileira_id: number): Promise<void> {
+    const fileira = await this.findOne(fileira_id);
+    await this.fileiraRepository.remove(fileira);
   }
 }
