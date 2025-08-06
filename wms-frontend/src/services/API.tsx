@@ -418,6 +418,7 @@ export async function buscarConsultaEstoque() {
         quantidade: item.quantidade || 0,
         localizacao_id: item.localizacao?.localizacao_id ?? null,
         localizacao: item.localizacao?.nome || '',
+        localizacao_ean: item.localizacao?.ean,
         armazem: item.localizacao?.armazem?.nome || '',
       }));
 
