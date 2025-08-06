@@ -9,10 +9,9 @@ import {
   Platform,
   ScrollView,
   Keyboard,
-  Dimensions,
+  LayoutAnimation,
+  UIManager,
   SafeAreaView,
-  Animated,
-  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/loginAPI';
@@ -22,34 +21,28 @@ import { removerToken } from '../api/config';
 export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
+  const navigation = useNavigation();
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [tecladoAtivo, setTecladoAtivo] = useState(false);
-  const [carregando, setCarregando] = useState(false);
-  const navigation = useNavigation();
 
   const scrollRef = useRef(null);
   const usuarioInputRef = useRef(null);
   const senhaInputRef = useRef(null);
-  const logoScale = useRef(new Animated.Value(1)).current;
-  const buttonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+
     const show = Keyboard.addListener('keyboardDidShow', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(true);
-      Animated.timing(logoScale, {
-        toValue: 0.8,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
     });
 
     const hide = Keyboard.addListener('keyboardDidHide', () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(false);
-      Animated.timing(logoScale, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      // Remover o scroll automático que pode causar problemas
     });
 
     return () => {
@@ -58,58 +51,30 @@ export default function LoginScreen() {
     };
   }, []);
 
-  const animateButtonPress = () => {
-    Animated.sequence([
-      Animated.timing(buttonScale, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(buttonScale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
   const handleLogin = async () => {
     if (!usuario || !senha) {
-      Alert.alert('Campos obrigatórios', 'Usuário e senha são obrigatórios');
+      alert('Usuário e senha são obrigatórios');
       return;
     }
-
-    if (usuario.trim().length < 2) {
-      Alert.alert('Usuário inválido', 'Digite um usuário válido');
-      return;
-    }
-
-    setCarregando(true);
-    animateButtonPress();
 
     try {
+      // Limpar token anterior antes de fazer novo login
       await removerToken();
+      
       const resultado = await login(usuario, senha);
-
       if (resultado.success) {
         navigation.navigate('Home');
       } else {
-        Alert.alert('Erro no login', resultado.message || 'Usuário ou senha inválidos.');
+        alert(resultado.message || 'Usuário ou senha inválidos.');
       }
     } catch (err) {
       console.error("❌ Erro no login:", err);
-      Alert.alert('Erro de conexão', 'Verifique sua conexão e tente novamente.');
-    } finally {
-      setCarregando(false);
+      alert('Erro ao fazer login. Verifique seus dados.');
     }
   };
 
   const handleUsuarioSubmit = () => {
     senhaInputRef.current?.focus();
-  };
-
-  const handleSenhaSubmit = () => {
-    handleLogin();
   };
 
   return (
@@ -118,84 +83,69 @@ export default function LoginScreen() {
         ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
-          tecladoAtivo && styles.scrollContentWithKeyboard
+          tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bounces={false}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
-        <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-          <Image
-            source={require('../../assets/images/logo01.png')}
-            style={styles.logo}
-          />
-        </Animated.View>
-
+        <Image
+          source={require('../../assets/images/logo01.png')}
+          style={[styles.logo, tecladoAtivo && styles.logoPequena]}
+        />
         <Text style={styles.brand}>WMS</Text>
         <Text style={styles.welcome}>Bem Vindo!</Text>
 
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>Usuário</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              ref={usuarioInputRef}
-              placeholder="Digite seu usuário"
-              value={usuario}
-              onChangeText={setUsuario}
-              style={styles.input}
-              placeholderTextColor="#888"
-              returnKeyType="next"
-              onSubmitEditing={handleUsuarioSubmit}
-              blurOnSubmit={false}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="username"
-            />
-            <Icon name="user" size={20} color="#888" style={styles.icon} />
-          </View>
-
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              ref={senhaInputRef}
-              placeholder="Digite sua senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry={!mostrarSenha}
-              style={styles.input}
-              placeholderTextColor="#888"
-              returnKeyType="done"
-              onSubmitEditing={handleSenhaSubmit}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="password"
-            />
-            <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
-              <Icon
-                name={mostrarSenha ? 'eye' : 'eye-slash'}
-                size={20}
-                color="#888"
-                style={styles.olhinho}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-            <TouchableOpacity
-              onPress={handleLogin}
-              style={[styles.button, carregando && styles.buttonDisabled]}
-              disabled={carregando}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>
-                {carregando ? 'Entrando...' : 'Entrar'}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
+        <Text style={styles.label}>Usuário</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={usuarioInputRef}
+            placeholder="Usuário"
+            value={usuario}
+            onChangeText={setUsuario}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            onSubmitEditing={handleUsuarioSubmit}
+            blurOnSubmit={false}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <Icon name="user" size={20} color="#888" style={styles.icon} />
         </View>
 
+        <Text style={styles.label}>Senha</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={senhaInputRef}
+            placeholder="Senha"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry={!mostrarSenha}
+            style={styles.input}
+            placeholderTextColor="#888"
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+            <Icon
+              name={mostrarSenha ? 'eye' : 'eye-slash'}
+              size={20}
+              color="#888"
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={handleLogin} style={styles.button}>
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
+
         <Text style={styles.footer}>
-          <Text style={styles.footerText}>
+          <Text style={{ fontStyle: 'italic', fontWeight: '600' }}>
             &ldquo;Otimizando a gestão de armazém com tecnologia eficiente&rdquo;
           </Text>
         </Text>
@@ -212,23 +162,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingBottom: 40,
   },
-  scrollContentWithKeyboard: {
-    justifyContent: 'flex-start',
-    paddingTop: 40,
-  },
-  logoContainer: {
-    alignItems: 'center',
+  scrollSemTeclado: {
     justifyContent: 'center',
-    marginBottom: 20,
+    paddingVertical: 40,
+  },
+  scrollComTeclado: {
+    justifyContent: 'flex-start',
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   logo: {
     width: 150,
     height: 150,
+    marginBottom: 10,
     borderRadius: 75,
     backgroundColor: '#4BCC1C',
     resizeMode: 'contain',
@@ -238,97 +186,66 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 6,
   },
+  logoPequena: {
+    width: 90,
+    height: 90,
+  },
   brand: {
     fontSize: 36,
     fontWeight: 'bold',
     color: '#000',
     marginBottom: 10,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   welcome: {
     fontSize: 16,
-    marginBottom: 30,
+    marginBottom: 20,
     color: '#000',
-    fontWeight: '500',
-  },
-  formContainer: {
-    width: '100%',
-    maxWidth: 320,
   },
   label: {
     alignSelf: 'flex-start',
+    marginLeft: '10%',
     fontWeight: 'bold',
     color: '#000',
-    marginTop: 15,
-    marginBottom: 8,
-    fontSize: 16,
+    marginTop: 10,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    marginBottom: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#eef4ff',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    width: '80%',
+    marginTop: 10,
   },
   input: {
     flex: 1,
     fontSize: 16,
     color: '#000',
-    paddingVertical: 15,
+    paddingVertical: 12,
   },
   icon: {
-    marginLeft: 10,
-  },
-  eyeButton: {
-    padding: 5,
-    marginLeft: 5,
-  },
-  olhinho: {
-    marginLeft: 12,
-    marginBottom: 2, // leve margem inferior
     fontSize: 20,
-    color: '#888',
+    color: '#000',
+    marginLeft: 10,
   },
   button: {
     backgroundColor: '#000',
-    marginTop: 25,
-    paddingVertical: 16,
+    marginTop: 20,
+    paddingVertical: 12,
     paddingHorizontal: 32,
-    borderRadius: 12,
+    borderRadius: 6,
+    width: '80%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  buttonDisabled: {
-    backgroundColor: '#666',
-    opacity: 0.7,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
   },
   footer: {
-    marginTop: 40,
-    paddingHorizontal: 20,
-  },
-  footerText: {
+    marginTop: 30,
     fontSize: 14,
     color: '#000',
     textAlign: 'center',
-    fontStyle: 'italic',
-    fontWeight: '600',
-    lineHeight: 20,
+    paddingBottom: 20,
   },
 });

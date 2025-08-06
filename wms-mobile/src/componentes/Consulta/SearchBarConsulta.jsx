@@ -1,93 +1,72 @@
 // componentes/Consulta/SearchBarConsulta.js
-import React from 'react';
-import { View, TextInput, StyleSheet, Keyboard, TouchableOpacity } from 'react-native';
+import React, { forwardRef } from 'react';
+import { View, TextInput, StyleSheet, Keyboard, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Shadows, BorderRadius, Spacing } from '../../../constants/Colors';
 
-export default function SearchBarConsulta({ value, onChange, onSubmit }) {
+const SearchBarConsulta = forwardRef(({ value, onChange, onSubmit, onClear }, ref) => {
   return (
     <View style={styles.searchContainer}>
-      <View style={styles.searchInputContainer}>
-        <Ionicons name="search" size={20} color={Colors.light.textTertiary} style={styles.icon} />
-        <TextInput
-          placeholder="Buscar por Nome, SKU ou EAN"
-          style={styles.searchInput}
-          value={value}
-          onChangeText={onChange}
-          onSubmitEditing={() => {
-            Keyboard.dismiss();
-            onSubmit();
-          }}
-          returnKeyType="search"
-          placeholderTextColor={Colors.light.placeholder}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {value.length > 0 && (
-          <TouchableOpacity onPress={() => onChange('')} style={styles.clearButton}>
-            <Ionicons name="close-circle" size={18} color={Colors.light.textTertiary} />
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      <TouchableOpacity 
-        style={styles.searchButton} 
-        onPress={() => {
+      <Ionicons name="search" size={18} color="#444" style={styles.icon} />
+      <TextInput
+        ref={ref}
+        placeholder="Buscar por Nome, SKU ou EAN"
+        style={styles.searchInput}
+        value={value}
+        onChangeText={onChange}
+        onSubmitEditing={() => {
           Keyboard.dismiss();
           onSubmit();
         }}
-        disabled={value.trim().length < 2}
-      >
-        <Ionicons 
-          name="arrow-forward" 
-          size={20} 
-          color={value.trim().length >= 2 ? Colors.light.textInverse : Colors.light.textTertiary} 
-        />
-      </TouchableOpacity>
+        returnKeyType="search"
+        placeholderTextColor="#888"
+        autoFocus={true}
+      />
+      {value.length > 0 && (
+        <TouchableOpacity 
+          onPress={onClear} 
+          style={styles.clearButton}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="close-circle" size={22} color="#999" />
+        </TouchableOpacity>
+      )}
     </View>
   );
-}
+});
+
+SearchBarConsulta.displayName = 'SearchBarConsulta';
+
+export default SearchBarConsulta;
 
 const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
+    marginHorizontal: 16,
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
-  },
-  searchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.light.inputBackground,
-    borderRadius: BorderRadius.medium,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.light.inputBorder,
-    ...Shadows.small,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 1,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: Colors.light.textPrimary,
-    paddingVertical: Spacing.xs,
-    fontWeight: '500',
+    fontSize: 14,
+    color: '#000',
+    paddingRight: 8,
   },
   icon: {
-    marginRight: Spacing.sm,
+    marginRight: 8,
   },
   clearButton: {
-    padding: Spacing.xs,
-  },
-  searchButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.medium,
-    backgroundColor: Colors.light.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.small,
+    padding: 6,
+    marginLeft: 4,
+    borderRadius: 12,
+    backgroundColor: '#e0e0e0',
   },
 });

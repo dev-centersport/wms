@@ -33,7 +33,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.centersporti.wmsmobile"
+      "package": "com.centersporti.wmsmobile",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/images/icon-centersport-1024x1024.png"

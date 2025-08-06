@@ -1,9 +1,8 @@
 // screens/ConsultaScreen.js
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { buscarConsultaEstoque } from '../api/consultaAPI';
-import { Colors, Spacing } from '../../constants/Colors';
 
 // Componentes
 import HeaderConsulta from '../componentes/Consulta/HeaderConsulta';
@@ -20,7 +19,19 @@ export default function ConsultaScreen({ navigation }) {
   const [inputPagina, setInputPagina] = useState('');
   const [modalVisivel, setModalVisivel] = useState(false);
 
+  const searchInputRef = useRef(null);
   const itensPorPagina = 50;
+
+  // Foco automático no input quando a tela é montada
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const realizarBusca = async () => {
     if (busca.trim().length < 2) return;
@@ -32,6 +43,17 @@ export default function ConsultaScreen({ navigation }) {
       setTotalPaginas(Math.ceil(resultado.length / itensPorPagina));
     } catch (err) {
       console.error('Erro ao buscar dados:', err);
+    }
+  };
+
+  const limparBusca = () => {
+    setBusca('');
+    setDados([]);
+    setPaginaAtual(1);
+    setTotalPaginas(1);
+    // Foca novamente no input após limpar
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
     }
   };
 
@@ -52,9 +74,14 @@ export default function ConsultaScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <HeaderConsulta onClose={() => navigation.goBack()} />
-      <SearchBarConsulta value={busca} onChange={setBusca} onSubmit={realizarBusca} />
-      
-      <View style={[styles.content, { marginTop: dados.length > 0 ? Spacing.sm : Spacing.xl }]}>
+      <SearchBarConsulta 
+        ref={searchInputRef}
+        value={busca} 
+        onChange={setBusca} 
+        onSubmit={realizarBusca}
+        onClear={limparBusca}
+      />
+      <View style={{ flex: 1, marginTop: dados.length > 0 ? 8 : 60 }}>
         {dados.length === 0 ? (
           <EmptyState texto="Digite ou bipe para pesquisar um produto." />
         ) : (
@@ -84,9 +111,8 @@ export default function ConsultaScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  content: {
-    flex: 1,
+    backgroundColor: '#fff',
+    paddingTop: 40,
+    paddingBottom: 30,
   },
 });

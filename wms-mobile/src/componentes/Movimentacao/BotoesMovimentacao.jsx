@@ -1,15 +1,16 @@
+// componentes/BotoesMovimentacao.jsx
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 
 export default function BotoesMovimentacao({ onSalvar, onCancelar, visible }) {
   if (!visible) return null;
 
   return (
     <View style={styles.botoesFlexiveis}>
-      <TouchableOpacity style={styles.btnSalvar} onPress={onSalvar} activeOpacity={0.85}>
+      <TouchableOpacity style={styles.btnSalvar} onPress={onSalvar}>
         <Text style={styles.salvarText}>Salvar</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.btnCancelar} onPress={onCancelar} activeOpacity={0.85}>
+      <TouchableOpacity style={styles.btnCancelar} onPress={onCancelar}>
         <Text style={styles.cancelarText}>Cancelar</Text>
       </TouchableOpacity>
     </View>
@@ -20,48 +21,34 @@ const styles = StyleSheet.create({
   botoesFlexiveis: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16, // Mais espaço entre botões
-    marginTop: 24,
-    marginBottom: 32,
-    paddingHorizontal: 12,
+    marginTop: 30,
+    paddingHorizontal: 10,
   },
   btnSalvar: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 14,
     flex: 1,
-    backgroundColor: '#43A047',
-    paddingVertical: 12,
-    borderRadius: 999,
+    marginRight: 8,
+    borderRadius: 6,
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#43A047',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.18,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
   },
   btnCancelar: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderColor: '#43A047',
+    borderColor: '#4CAF50',
     borderWidth: 2,
-    paddingVertical: 12,
-    borderRadius: 999,
+    paddingVertical: 14,
+    flex: 1,
+    marginLeft: 8,
+    borderRadius: 6,
     alignItems: 'center',
   },
   salvarText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 15,
-    letterSpacing: 0.5,
+    fontSize: 16,
   },
   cancelarText: {
-    color: '#43A047',
+    color: '#4CAF50',
     fontWeight: 'bold',
-    fontSize: 15,
-    letterSpacing: 0.5,
+    fontSize: 16,
   },
 });

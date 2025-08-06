@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   FlatList,
   StyleSheet,
   Text,
-  Dimensions
+  Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import {
   buscarLocalizacaoPorEAN,
@@ -361,9 +361,10 @@ export default function Movimentacao() {
     }
     limparTudo();
   };
+  
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
         <HeaderMovimentacao
           tipo={tipo}
           setTipo={setTipo}
@@ -390,11 +391,8 @@ export default function Movimentacao() {
           produtos={produtos}
         />
 
-
         {produtos.length > 0 && (
           <View style={styles.resumoSKUs}>
-            <Text style={styles.totalTexto}>
-            </Text>
             <Text style={styles.totalTexto}>
               {produtos.length} produto(s) bipado(s)
             </Text>
@@ -441,7 +439,7 @@ export default function Movimentacao() {
           onClose={() => setMostrarModalExcluir(false)}
         />
       </View>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -450,9 +448,11 @@ const screenHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#fff',
-    paddingTop: 40,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
   },
   resumoSKUs: {
     marginTop: 10,
@@ -465,8 +465,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   listaContainer: {
-    flexGrow: 1,
-    maxHeight: screenHeight * 0.37, // 40% da altura da tela (ajuste se necessário)
+    flex: 0.85,
     borderTopWidth: 1,
     borderColor: '#eee',
     marginBottom: 10,

@@ -1,15 +1,29 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { Colors, Shadows, BorderRadius, Spacing } from '../../../constants/Colors';
 
-export default function HeaderMovimentacao({ onClose }) {
+export default function HeaderMovimentacao({ tipo, localizacao_id, setTipo, setEanLocalizacao, setlocalizacao_id, setNomeLocalizacao, setProdutos, tipoBloqueado, localizacaoRef }) {
   const navigation = useNavigation();
 
+  const handleTipoChange = (novoTipo) => {
+    if (tipoBloqueado) return;
+    setTipo(novoTipo);
+    setEanLocalizacao('');
+    setlocalizacao_id(null);
+    setNomeLocalizacao('');
+    setProdutos([]);
+    setTimeout(() => {
+      localizacaoRef.current?.focus();
+    }, 100);
+  };
+
   const handleClose = () => {
-    if (onClose) {
-      onClose();
+    if (localizacao_id) {
+      Alert.alert(
+        'Movimentação pendente',
+        `Movimentação do tipo ${tipo.toUpperCase()} está em andamento.\nFinalize ou cancele antes de sair.`
+      );
     } else {
       navigation.navigate('Home');
     }
@@ -18,20 +32,32 @@ export default function HeaderMovimentacao({ onClose }) {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={handleClose} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={Colors.light.textPrimary} />
-          </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={styles.headerTitle}>Movimentação de Estoque</Text>
-            <Text style={styles.headerSubtitle}>Transferência entre localizações</Text>
-          </View>
-        </View>
-        <View style={styles.headerRight}>
-          <View style={styles.moveBadge}>
-            <Ionicons name="swap-horizontal" size={16} color={Colors.light.textInverse} />
-          </View>
-        </View>
+        <Text style={styles.headerTitle}>Movimentação - {tipo.toUpperCase()}</Text>
+        <TouchableOpacity onPress={handleClose}>
+          <Ionicons name="close" size={28} color="#000" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={[styles.toggleContainer, { marginTop: 20 }]}>
+        <TouchableOpacity
+          style={[styles.toggleBtn, tipo === 'entrada' && styles.active]}
+          onPress={() => handleTipoChange('entrada')}
+          disabled={tipoBloqueado}
+        >
+          <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+            ENTRADA
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.toggleBtn, tipo === 'saida' && styles.active]}
+          onPress={() => handleTipoChange('saida')}
+          disabled={tipoBloqueado}
+        >
+          <Text style={[styles.toggleText, tipoBloqueado && styles.disabledText]}>
+            SAÍDA
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -39,55 +65,39 @@ export default function HeaderMovimentacao({ onClose }) {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    marginTop: 40,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    marginTop: 65,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.light.surfaceVariant,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-    ...Shadows.small,
-  },
-  titleContainer: {
-    flex: 1,
+    marginBottom: 10,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.light.textPrimary,
-    marginBottom: 2,
+    color: '#000',
   },
-  headerSubtitle: {
-    fontSize: 12,
-    color: Colors.light.textSecondary,
-    fontWeight: '500',
+  toggleContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
   },
-  headerRight: {
-    alignItems: 'flex-end',
-  },
-  moveBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.light.success,
-    justifyContent: 'center',
+  toggleBtn: {
+    flex: 1,
+    backgroundColor: '#ccc',
+    padding: 12,
+    marginHorizontal: 5,
+    borderRadius: 8,
     alignItems: 'center',
-    ...Shadows.small,
+  },
+  active: {
+    backgroundColor: '#4CAF50',
+  },
+  toggleText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  disabledText: {
+    opacity: 0.5,
   },
 });
-

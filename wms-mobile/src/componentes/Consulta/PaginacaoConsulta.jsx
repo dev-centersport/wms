@@ -67,7 +67,8 @@ export default function PaginacaoConsulta({
 
   const renderPageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 3; // Reduzido de 5 para 3
+    // Reduzido para 3 páginas visíveis no mobile para economizar espaço
+    const maxVisiblePages = 3;
     
     if (totalPaginas <= maxVisiblePages) {
       // Mostrar todas as páginas se houver poucas
@@ -93,16 +94,16 @@ export default function PaginacaoConsulta({
         );
       }
     } else {
-      // Lógica para muitas páginas - mais conservadora
+      // Lógica otimizada para mobile - mostrar apenas 3 páginas
       let startPage, endPage;
       
       if (paginaAtual <= 2) {
-        // No início: mostrar páginas 1, 2, 3 + ... + última
+        // No início: mostrar páginas 1, 2, 3
         startPage = 1;
-        endPage = 3;
+        endPage = Math.min(3, totalPaginas);
       } else if (paginaAtual >= totalPaginas - 1) {
-        // No final: mostrar primeira + ... + últimas 3 páginas
-        startPage = totalPaginas - 2;
+        // No final: mostrar últimas 3 páginas
+        startPage = Math.max(1, totalPaginas - 2);
         endPage = totalPaginas;
       } else {
         // No meio: mostrar página atual e uma de cada lado
@@ -110,7 +111,7 @@ export default function PaginacaoConsulta({
         endPage = paginaAtual + 1;
       }
       
-      // Primeira página (se não estiver no início)
+      // Primeira página se não estiver visível
       if (startPage > 1) {
         pages.push(
           <Animated.View key="first" style={{ transform: [{ scale: scaleValue }] }}>
@@ -161,7 +162,7 @@ export default function PaginacaoConsulta({
         );
       }
       
-      // Última página (se não estiver no final)
+      // Última página se não estiver visível
       if (endPage < totalPaginas) {
         if (endPage < totalPaginas - 1) {
           pages.push(
@@ -218,7 +219,7 @@ export default function PaginacaoConsulta({
             >
               <Ionicons 
                 name="chevron-back" 
-                size={20} 
+                size={18} 
                 color={paginaAtual === 1 ? "#ccc" : "#4CAF50"} 
               />
             </TouchableOpacity>
@@ -242,7 +243,7 @@ export default function PaginacaoConsulta({
             >
               <Ionicons 
                 name="chevron-forward" 
-                size={20} 
+                size={18} 
                 color={paginaAtual === totalPaginas ? "#ccc" : "#4CAF50"} 
               />
             </TouchableOpacity>
@@ -310,15 +311,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderTopWidth: 1,
     borderTopColor: '#e9ecef',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
   },
   infoContainer: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   infoText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6c757d',
     fontWeight: '500',
   },
@@ -328,13 +329,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   navButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -349,16 +350,16 @@ const styles = StyleSheet.create({
   pageNumbersContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: 4,
   },
   pageButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 2,
+    marginHorizontal: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   pageButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#495057',
   },
@@ -380,13 +381,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   dotsContainer: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 2,
+    marginHorizontal: 1,
     backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -394,7 +395,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   dotsText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#4CAF50',
     fontWeight: '600',
   },
@@ -407,9 +408,9 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 24,
+    padding: 20,
     width: width * 0.85,
-    maxWidth: 320,
+    maxWidth: 300,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#212529',
   },
@@ -431,7 +432,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   modalSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6c757d',
     marginBottom: 16,
     textAlign: 'center',
