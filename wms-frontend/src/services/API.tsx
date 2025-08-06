@@ -2,10 +2,10 @@ import axios from 'axios'
 import Ocorrencia from '../pages/NovaOcorrencia';
 import Cookies from 'js-cookie';
 
-const BASE_URL = 'http://151.243.0.78:3001';
+const BASE_URL = 'http://192.168.2.41:3005';
 
 const api = axios.create({
-  baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
+  baseURL: 'http://192.168.2.41:3005', // ou a URL da sua API
 });
 
 // Interceptor para adicionar token de autenticação automaticamente

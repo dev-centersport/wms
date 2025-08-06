@@ -83,7 +83,7 @@ const Movimentacao: React.FC = () => {
   const carregarTodasLocalizacoes = async () => {
     try {
       setLoadingOpt(true);
-      const response = await api.get('/localizacao?limit=3000');
+      const response = await api.get('/localizacao');
 
       const data = response.data;
       console.log('🔍 Resposta da API /localizacao:', data);
