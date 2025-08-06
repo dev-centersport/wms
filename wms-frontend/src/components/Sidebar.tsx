@@ -28,38 +28,36 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import SecurityIcon from '@mui/icons-material/Security';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import ViewInArIcon3D from '@mui/icons-material/ViewInAr';
-import { usePermissions } from '../hooks/usePermissions';
-import UserInfo from './UserInfo';
-import CustomPagination from './CustomPagination';
+
+const menuItems = [
+  { label: 'Dashboard', icon: <AnalyticsIcon />, path: '/dashboard' },
+  { label: 'Armazém', icon: <HomeIcon />, path: '/armazem' },
+  { label: 'Armazém 3D', icon: <ViewInArIcon3D />, path: '/armazem-3d' },
+  { label: 'Localização', icon: <RoomIcon />, path: '/localizacao' },
+  { label: 'Tipo de Localização', icon: <AssignmentIcon />, path: '/tipo-localizacao' },
+  { label: 'Produto', icon: <ViewInArIcon />, path: '/produto' },
+  { label: 'Consulta', icon: <SearchIcon />, path: '/consulta' },
+  { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
+  { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
+  { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
+  { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
+  { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
+  { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' },
+  { label: 'Perfis', icon: <SecurityIcon />, path: '/perfil-usuario' },
+];
 
 const SIDEBAR_WIDTH = 210;
 
 interface SidebarProps {
   children: React.ReactNode;
   gavetaAberta?: boolean; // ADICIONADO: se true, bloqueia navegação
-  totalPages?: number;
-  currentPage?: number;
-  onPageChange?: (page: number) => void;
-  show?: boolean;
-  itemsPerPage?: number;
-  onItemsPerPageChange?: (itemsPerPage: number) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  children, 
-  gavetaAberta = false,
-  totalPages,
-  currentPage,
-  onPageChange,
-  show = true,
-  itemsPerPage,
-  onItemsPerPageChange
-}) => {
+const Sidebar: React.FC<SidebarProps> = ({ children, gavetaAberta = false }) => {
   const currentLocation = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { permissions, loading } = usePermissions();
 
   // Fechar menu mobile quando navegar
   useEffect(() => {
@@ -71,97 +69,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
-
-  // Define os itens do menu com suas respectivas permissões
-  const menuItems = [
-    { 
-      label: 'Dashboard', 
-      icon: <AnalyticsIcon />, 
-      path: '/dashboard',
-      permission: permissions?.canViewDashboard ?? false
-    },
-    { 
-      label: 'Armazém', 
-      icon: <HomeIcon />, 
-      path: '/armazem',
-      permission: permissions?.canViewArmazem ?? false
-    },
-    { 
-      label: 'Armazém 3D', 
-      icon: <ViewInArIcon3D />, 
-      path: '/armazem-3d',
-      permission: permissions?.canViewArmazem3D ?? false
-    },
-    { 
-      label: 'Localização', 
-      icon: <RoomIcon />, 
-      path: '/localizacao',
-      permission: permissions?.canViewLocalizacao ?? false
-    },
-    { 
-      label: 'Tipo de Localização', 
-      icon: <AssignmentIcon />, 
-      path: '/tipo-localizacao',
-      permission: permissions?.canViewTipoLocalizacao ?? false
-    },
-    { 
-      label: 'Produto', 
-      icon: <ViewInArIcon />, 
-      path: '/produto',
-      permission: permissions?.canViewProduto ?? false
-    },
-    { 
-      label: 'Consulta', 
-      icon: <SearchIcon />, 
-      path: '/consulta',
-      permission: permissions?.canViewConsulta ?? false
-    },
-    { 
-      label: 'Movimentação', 
-      icon: <TrolleyIcon />, 
-      path: '/movimentacao',
-      permission: permissions?.canViewMovimentacao ?? false
-    },
-    { 
-      label: 'Separação', 
-      icon: <LocalShippingIcon />, 
-      path: '/separacao',
-      permission: permissions?.canViewSeparacao ?? false
-    },
-    { 
-      label: 'Ocorrência', 
-      icon: <ReportProblemIcon />, 
-      path: '/ocorrencias',
-      permission: permissions?.canViewOcorrencia ?? false
-    },
-    { 
-      label: 'Auditoria', 
-      icon: <ThumbUpIcon />, 
-      path: '/auditoria',
-      permission: permissions?.canViewAuditoria ?? false
-    },
-    { 
-      label: 'Relatorio', 
-      icon: <AssignmentIcon />, 
-      path: '/Relatorio',
-      permission: permissions?.canViewRelatorio ?? false
-    },
-    { 
-      label: 'Usuários', 
-      icon: <PeopleAltIcon />, 
-      path: '/usuarios',
-      permission: permissions?.canViewUsuario ?? false
-    },
-    { 
-      label: 'Perfis', 
-      icon: <SecurityIcon />, 
-      path: '/perfil-usuario',
-      permission: permissions?.canViewPerfil ?? false
-    },
-  ];
-
-  // Filtra os itens do menu baseado nas permissões
-  const filteredMenuItems = loading ? [] : menuItems.filter(item => item.permission);
 
   const drawerContent = (
     <>
@@ -195,7 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           flexGrow: 1,
         }}
       >
-        {filteredMenuItems.map(({ label, icon, path }) => {
+        {menuItems.map(({ label, icon, path }) => {
           const isActive =
             currentLocation.pathname === path ||
             currentLocation.pathname.startsWith(path + '/');
@@ -276,9 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </List>
-      
-      {/* Informações do usuário */}
-      <UserInfo />
+      <Box sx={{ height: 32 }} />
     </>
   );
 
@@ -392,18 +297,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         }}
       >
         {children}
-        
-        {/* Paginação */}
-        {show && totalPages && currentPage && onPageChange && (
-          <CustomPagination
-            totalPages={totalPages}
-            currentPage={currentPage}
-            onPageChange={onPageChange}
-            show={show}
-            itemsPerPage={itemsPerPage || 100}
-            onItemsPerPageChange={onItemsPerPageChange}
-          />
-        )}
       </Box>
     </Box>
   );

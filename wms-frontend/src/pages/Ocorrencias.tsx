@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import ProdutosOcorrenciaModal from '../components/ProdutosOcorrenciaModal';
 import ConfirmacaoAuditoria from '../components/ConfirmacaoAuditoria';
 
-interface ProdutoDaOcorrenciaLocal {
+interface ProdutoDaOcorrencia {
   produto_id: number;
   descricao: string;
   sku: string;
@@ -43,7 +43,7 @@ interface OcorrenciaItem {
   armazem: string;
   ativo: boolean;
   prioridade?: 'Baixa' | 'Media' | 'Alta';
-  produtos: ProdutoDaOcorrenciaLocal[];
+  produtos: ProdutoDaOcorrencia[];
   qtd_ocorrencias: number;
   localizacao_id: number;
 }
@@ -61,7 +61,7 @@ export default function Ocorrencias() {
   const [localizacaoIdSelecionada, setLocalizacaoIdSelecionada] = useState<number | null>(null);
   const [ocorrenciaSelecionada, setOcorrenciaSelecionada] = useState<{
     nome: string;
-    produtos: ProdutoDaOcorrenciaLocal[];
+    produtos: ProdutoDaOcorrencia[];
   } | null>(null);
 
   const [filtroArmazem, setFiltroArmazem] = useState('');

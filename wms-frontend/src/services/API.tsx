@@ -573,7 +573,11 @@ export const atualizarLocalizacao = async (id: number, payload: any) => {
 };
 
 
-
+export interface Armazem {
+  armazem_id: number;
+  nome: string;
+  endereco: string;
+}
 
 export const buscarArmazem = async (): Promise<Armazem[]> => {
   try {
@@ -613,7 +617,7 @@ export const buscarTiposDeLocalizacao = async (): Promise<TipoLocalizacao[]> => 
   }
 };
 
-export interface CriarLocalizacaoPayload {
+export interface criarLocalizacao {
   nome: string;
   status: string;
   tipo: string;
@@ -624,7 +628,7 @@ export interface CriarLocalizacaoPayload {
 }
 
 
-export const criarLocalizacao = async (criarLocalizacao: CriarLocalizacaoPayload): Promise<void> => {
+export const criarLocalizacao = async (criarLocalizacao: criarLocalizacao): Promise<void> => {
   try {
     const armazens = await buscarArmazem();
     const tipos = await buscarTiposDeLocalizacao();
@@ -685,11 +689,11 @@ export const criarLocalizacao = async (criarLocalizacao: CriarLocalizacaoPayload
   }
 };
 
-export interface ExcluirLocalizacaoPayload {
+export interface ExcluirLocalizacao {
   localizacao_id: number;
 }
 
-export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacaoPayload): Promise<void> => {
+export const excluirLocalizacao = async ({ localizacao_id }: ExcluirLocalizacao): Promise<void> => {
   try {
     await api.delete(`/localizacao/${localizacao_id}`);
     console.log(`Localização ID ${localizacao_id} excluída com sucesso.`);
@@ -958,7 +962,10 @@ export async function buscarOcorrenciasDaLocalizacao(localizacaoId: number) {
   return response.data;
 }
 
-
+export interface Armazem {
+  armazem_id: number;
+  nome: string;
+}
 
 export async function buscarArmazemPorEAN(ean: string): Promise<Armazem | null> {
   try {
@@ -1019,7 +1026,10 @@ export async function fecharLocalizacao(ean: string): Promise<void> {
   }
 }
 
-
+export async function buscarUsuarios() {
+  const response = await api.get(`/usuario`);
+  return response.data;
+}
 
 // ---------- PERFIL FUNCTIONS ----------
 export interface Perfil {
@@ -1119,84 +1129,5 @@ export async function cancelarAuditoria(auditoriaId: number) {
   } catch (error: any) {
     console.error('Erro ao cancelar auditoria:', error.message);
     throw new Error(error?.response?.data?.message || 'Falha ao cancelar a auditoria.');
-  }
-}
-
-// ---------- USUARIO FUNCTIONS ----------
-export interface Usuario {
-  usuario_id: number;
-  responsavel: string;
-  usuario: string;
-  nivel: number;
-  cpf: string;
-  ativo: boolean;
-  perfil: {
-    perfil_id: number;
-    nome: string;
-  };
-}
-
-export async function buscarUsuarios(): Promise<Usuario[]> {
-  try {
-    const response = await api.get('/usuario');
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar usuários:', error.message);
-    throw new Error('Falha ao carregar os usuários.');
-  }
-}
-
-export async function buscarUsuario(id: number): Promise<Usuario> {
-  try {
-    const response = await api.get(`/usuario/${id}`);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao buscar usuário:', error.message);
-    throw new Error('Falha ao carregar o usuário.');
-  }
-}
-
-export async function criarUsuario(dados: {
-  responsavel: string;
-  usuario: string;
-  senha: string;
-  nivel: number;
-  cpf: string;
-  perfil_id: number;
-  ativo?: boolean;
-}): Promise<Usuario> {
-  try {
-    const response = await api.post('/usuario', dados);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao criar usuário:', error.message);
-    throw new Error('Falha ao criar o usuário.');
-  }
-}
-
-export async function atualizarUsuario(id: number, dados: {
-  responsavel?: string;
-  usuario?: string;
-  senha?: string;
-  nivel?: number;
-  cpf?: string;
-  perfil_id?: number;
-  ativo?: boolean;
-}): Promise<Usuario> {
-  try {
-    const response = await api.patch(`/usuario/${id}`, dados);
-    return response.data;
-  } catch (error: any) {
-    console.error('Erro ao atualizar usuário:', error.message);
-    throw new Error('Falha ao atualizar o usuário.');
-  }
-}
-
-export async function excluirUsuario(id: number): Promise<void> {
-  try {
-    await api.delete(`/usuario/${id}`);
-  } catch (error: any) {
-    console.error('Erro ao excluir usuário:', error.message);
-    throw new Error('Falha ao excluir o usuário.');
   }
 }

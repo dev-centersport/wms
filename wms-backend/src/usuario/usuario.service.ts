@@ -141,15 +141,11 @@ export class UsuarioService {
 
     if (!usuario) throw new NotFoundException('Usuário não encontrado');
 
-    // Se um novo perfil foi fornecido, busca e valida
     if (updateUsuarioDto.perfil_id !== undefined) {
       const perfil = await this.PerfilRepository.findOneBy({
         perfil_id: updateUsuarioDto.perfil_id,
       });
       if (!perfil) throw new NotFoundException('Perfil não encontrado');
-      
-      // Atualiza o perfil do usuário
-      usuario.perfil = perfil;
     }
 
     const { perfil_id, ...camposSimples } = updateUsuarioDto;
@@ -161,7 +157,6 @@ export class UsuarioService {
       );
     }
 
-    // Atualiza os outros campos
     Object.assign(usuario, camposSimples);
 
     return await this.UsuarioRepository.save(usuario);

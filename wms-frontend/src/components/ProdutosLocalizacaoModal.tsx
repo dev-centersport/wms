@@ -21,7 +21,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { buscarProdutosPorLocalizacao } from '../services/API';
 
 
-interface ProdutoLocalizacao {
+interface Produto {
   produto_id: number;
   descricao: string;
   sku: string;
@@ -44,7 +44,7 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
   localizacaoNome,
   onQuantidadeAtualizada
 }) => {
-  const [produtos, setProdutos] = useState<ProdutoLocalizacao[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quantidadeTotal, setQuantidadeTotal] = useState(0);
@@ -71,7 +71,7 @@ const ProdutosLocalizacaoModal: React.FC<ProdutosLocalizacaoModalProps> = ({
       }
 
       setProdutos(data);
-      const total = data.reduce((sum: number, item: ProdutoLocalizacao) => sum + (item.quantidade || 0), 0);
+      const total = data.reduce((sum: number, item: Produto) => sum + (item.quantidade || 0), 0);
       setQuantidadeTotal(total);
 
       if (onQuantidadeAtualizada) {

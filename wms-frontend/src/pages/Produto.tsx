@@ -23,7 +23,7 @@ import { buscarProdutos } from '../services/API'; // crie essa função no backe
 
 const itemsPerPage = 50;
 
-interface ProdutoLocal {
+interface Produto {
   produto_id: number;
   url_foto: string;
   descricao: string;
@@ -32,12 +32,12 @@ interface ProdutoLocal {
 }
 
 const Produto: React.FC = () => {
-  const [listaProdutos, setListaProdutos] = useState<ProdutoLocal[]>([]);
+  const [listaProdutos, setListaProdutos] = useState<Produto[]>([]);
   const [busca, setBusca] = useState('');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [orderBy, setOrderBy] = useState<keyof ProdutoLocal>('descricao');
+  const [orderBy, setOrderBy] = useState<keyof Produto>('descricao');
   const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
@@ -70,7 +70,7 @@ const Produto: React.FC = () => {
     }, []);
   }, [listaProdutos, busca]);
 
-  const handleSort = (property: keyof ProdutoLocal) => {
+  const handleSort = (property: keyof Produto) => {
     const isAsc = orderBy === property && orderDirection === 'asc';
     setOrderDirection(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
