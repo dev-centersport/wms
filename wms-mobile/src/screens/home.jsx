@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,11 +25,11 @@ export default function HomeScreen({ navigation }) {
         },
       ]
     );
+
   };
 
   return (
     <View style={styles.container}>
-
       {/* Barra superior com a logo do WMS */}
       <View style={styles.header}>
         <Image
@@ -50,9 +51,12 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Barra de informações do usuário - sempre visível */}
+      {!loading && <UserInfoBar usuario={usuario} />}
+
       {/* Botões principais */}
       <TouchableOpacity
-        style={[styles.button, { marginTop: 180 }]} // margem de 30 pixels no topo
+        style={[styles.button, { marginTop: 100 }]} // Margem fixa já que a barra sempre aparece
         onPress={() => navigation.navigate('Movimentacao')}
       >
         <Text style={styles.buttonText}>MOVIMENTAÇÃO</Text>

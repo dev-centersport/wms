@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   Keyboard,
   LayoutAnimation,
   UIManager,
+
   ActivityIndicator,
+
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,9 +46,7 @@ export default function LoginScreen() {
     const hide = Keyboard.addListener('keyboardDidHide', () => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTecladoAtivo(false);
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({ y: 0, animated: true });
-      }, 100);
+      // Remover o scroll automático que pode causar problemas
     });
 
     return () => {
@@ -87,20 +86,17 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
+    <SafeAreaView style={styles.container}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
           tecladoAtivo ? styles.scrollComTeclado : styles.scrollSemTeclado,
         ]}
-        keyboardShouldPersistTaps="always"
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        style={Platform.OS === 'web' ? { flex: 1 } : undefined}
+        bounces={false}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
         <Image
           source={require('../../assets/images/logo01.png')}
@@ -170,7 +166,7 @@ export default function LoginScreen() {
           </Text>
         </Text>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -191,6 +187,7 @@ const styles = StyleSheet.create({
   scrollComTeclado: {
     justifyContent: 'flex-start',
     paddingTop: 60,
+    paddingBottom: 20,
   },
   logo: {
     width: 150,

@@ -268,6 +268,65 @@ const Localizacao: React.FC = () => {
     carregar();
   };
 
+  const processarNomePrateleira = (nome: string): string => {
+    console.log('=== INÍCIO PROCESSAMENTO PRATELEIRA ===');
+    console.log('Nome original:', nome);
+
+    if (!nome || typeof nome !== 'string') {
+      console.log('Nome inválido, retornando nome original');
+      return nome;
+    }
+
+    let nomeProcessado = nome.trim();
+    console.log('Nome após trim:', nomeProcessado);
+
+    // Remove prefixo CEN- se existir (case insensitive)
+    if (nomeProcessado.toUpperCase().startsWith('CEN-')) {
+      nomeProcessado = nomeProcessado.substring(4); // Remove "CEN-"
+      console.log('Após remoção CEN-:', nomeProcessado);
+    }
+
+    // Se tem #, remove tudo até # (lógica anterior)
+    const indexHash = nomeProcessado.indexOf('#');
+    if (indexHash !== -1) {
+      nomeProcessado = nomeProcessado.substring(indexHash + 1);
+      console.log('Após remoção até #:', nomeProcessado);
+    } else {
+      // Se não tem #, aplica a lógica usando - como delimitador
+      console.log('Não encontrou #, aplicando lógica com - como delimitador');
+      
+      // Se já removeu CEN-, então o nome já está correto
+      // Se não removeu CEN-, então divide pelo primeiro - e pega a parte após
+      if (!nome.toUpperCase().startsWith('CEN-')) {
+        const partes = nomeProcessado.split('-');
+        if (partes.length > 1) {
+          nomeProcessado = partes.slice(1).join('-'); // Pega tudo após o primeiro -
+          console.log('Após divisão por -:', nomeProcessado);
+        }
+      }
+    }
+
+    // Converte AAA para AA (lógica anterior)
+    if (nomeProcessado.toUpperCase().startsWith('AAA')) {
+      nomeProcessado = 'AA' + nomeProcessado.substring(3);
+      console.log('Após conversão AAA->AA:', nomeProcessado);
+    }
+
+    // Converte 3 ou mais letras iguais para 2 (lógica anterior)
+    const match = nomeProcessado.match(/^([A-Z])\1{2,}/i);
+    if (match) {
+      const letra = match[1];
+      const resto = nomeProcessado.substring(match[0].length);
+      nomeProcessado = letra + letra + resto;
+      console.log('Após conversão letras repetidas:', nomeProcessado);
+    }
+
+    console.log('Nome final processado:', nomeProcessado);
+    console.log('=== FIM PROCESSAMENTO PRATELEIRA ===');
+
+    return nomeProcessado;
+  };
+
   const handleImprimir = (localizacao: string, ean: string, tipo: string, armazem: string) => {
   const tipoLower = tipo.toLowerCase();
 
@@ -295,7 +354,7 @@ const Localizacao: React.FC = () => {
   const barFont = isCaixa ? 22 : 10;
 
   const nomeImpresso = isPrateleira
-    ? localizacao.replace(/^.*?#/, '')
+    ? processarNomePrateleira(localizacao)
     : localizacao;
 
   const bodyJustify = isPrateleira ? 'flex-start' : 'center';
@@ -346,25 +405,60 @@ const Localizacao: React.FC = () => {
 
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
       <script>
-        const nomeEl  = document.getElementById('nome');
-        const texto   = '${nomeImpresso}';
-        let tamanho   = ${fontNome.replace('px', '')};
-
-        if (texto.length > 8)      tamanho = 50;
-        else if (texto.length > 5) tamanho = 180;
-
-        nomeEl.style.fontSize = tamanho + 'px';
-
-        JsBarcode('#barcode', '${ean}', {
-          format: 'ean13',
-          height: ${barHeight},
-          displayValue: true,
-          fontSize: ${barFont}
-        });
-
         window.onload = () => {
-          window.print();
-          window.onafterprint = () => window.close();
+          console.log('=== INÍCIO GERAÇÃO DE ETIQUETA ===');
+          
+          const nomeEl = document.getElementById('nome');
+          const texto = '${nomeImpresso}';
+          let tamanho = ${fontNome.replace('px', '')};
+
+          if (texto.length > 8)      tamanho = 50;
+          else if (texto.length > 5) tamanho = 180;
+
+          nomeEl.style.fontSize = tamanho + 'px';
+          console.log('Tamanho da fonte ajustado para:', tamanho + 'px');
+
+          console.log('Generating barcode for EAN:', '${ean}');
+          console.log('Barcode element:', document.getElementById('barcode'));
+          
+          if (!'${ean}' || '${ean}'.trim() === '') {
+            console.error('EAN vazio ou inválido:', '${ean}');
+            alert('EAN vazio ou inválido: ' + '${ean}');
+            return;
+          }
+          
+          try {
+            const barcodeElement = document.getElementById('barcode');
+            if (!barcodeElement) {
+              console.error('Elemento barcode não encontrado');
+              alert('Elemento barcode não encontrado');
+              return;
+            }
+            
+            console.log('Tentando gerar barcode...');
+            JsBarcode('#barcode', '${ean}', {
+              format: 'ean13',
+              height: ${barHeight},
+              displayValue: true,
+              fontSize: ${barFont}
+            });
+            console.log('Barcode generated successfully for EAN:', '${ean}');
+            
+            // Aguarda um pouco para garantir que o barcode foi renderizado
+            setTimeout(() => {
+              console.log('Iniciando impressão...');
+              window.print();
+              window.onafterprint = () => {
+                console.log('Fechando janela após impressão...');
+                window.close();
+              };
+            }, 500);
+            
+          } catch (error) {
+            console.error('Error generating barcode for EAN:', '${ean}', error);
+            console.error('Error details:', error.message, error.stack);
+            alert('Erro ao gerar código de barras: ' + error.message);
+          }
         };
       </script>
     </body>
@@ -977,7 +1071,7 @@ const Localizacao: React.FC = () => {
 
     indicesParaImprimir.forEach((idx, i) => {
       const item = listaLocalizacoes[idx];
-      const nomeLimpo = isPrateleira ? item.nome.replace(/^.*?#/, '') : item.nome;
+      const nomeLimpo = isPrateleira ? processarNomePrateleira(item.nome) : item.nome;
       const nomeEscapado = nomeLimpo.replace(/'/g, "\\'");
       const eanEscapado = item.ean.replace(/'/g, "\\'");
 
@@ -994,6 +1088,11 @@ const Localizacao: React.FC = () => {
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
         <script>
           window.onload = () => {
+            console.log('=== INÍCIO GERAÇÃO DE ETIQUETAS EM LOTE ===');
+            
+            let barcodesProcessados = 0;
+            const totalBarcodes = document.querySelectorAll('.etiqueta').length;
+            
             document.querySelectorAll('.etiqueta').forEach((div, index) => {
               const nome = div.querySelector('.nome').innerText;
               const svg = div.querySelector('.barcode');
@@ -1004,17 +1103,49 @@ const Localizacao: React.FC = () => {
               else if (nome.length > 6) tamanho = 90;
 
               document.getElementById('nome-' + index).style.fontSize = tamanho + 'px';
+              console.log('Ajustando fonte do item ' + index + ' para:', tamanho + 'px');
 
-              JsBarcode(svg, ean, {
-                format: 'ean13',
-                height: ${barHeight},
-                displayValue: true,
-                fontSize: ${barFont}
-              });
+              console.log('Batch generating barcode for EAN:', ean);
+              console.log('Barcode element:', svg);
+              
+              if (!ean || ean.trim() === '') {
+                console.error('EAN vazio ou inválido:', ean);
+                return;
+              }
+              
+              try {
+                if (!svg) {
+                  console.error('Elemento SVG não encontrado');
+                  return;
+                }
+                
+                console.log('Tentando gerar barcode ' + (index + 1) + '/' + totalBarcodes + '...');
+                JsBarcode(svg, ean, {
+                  format: 'ean13',
+                  height: ${barHeight},
+                  displayValue: true,
+                  fontSize: ${barFont}
+                });
+                console.log('Batch barcode generated successfully for EAN:', ean);
+                barcodesProcessados++;
+                
+                // Se todos os barcodes foram processados, inicia a impressão
+                if (barcodesProcessados === totalBarcodes) {
+                  setTimeout(() => {
+                    console.log('Todos os barcodes processados. Iniciando impressão...');
+                    window.print();
+                    window.onafterprint = () => {
+                      console.log('Fechando janela após impressão...');
+                      window.close();
+                    };
+                  }, 1000);
+                }
+              } catch (error) {
+                console.error('Error generating batch barcode for EAN:', ean, error);
+                console.error('Error details:', error.message, error.stack);
+                alert('Erro ao gerar código de barras para EAN: ' + ean + ' - ' + error.message);
+              }
             });
-
-            window.print();
-            window.onafterprint = () => window.close();
           };
         </script>
         </body>

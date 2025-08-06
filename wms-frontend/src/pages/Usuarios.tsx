@@ -152,6 +152,7 @@ export default function Usuarios() {
                 >
                     Novo Usuário
                 </Button>
+
             </Box>
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>

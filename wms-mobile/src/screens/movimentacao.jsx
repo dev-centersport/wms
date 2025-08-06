@@ -2,18 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   FlatList,
   StyleSheet,
   Text,
-  Dimensions
+  Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import {
   buscarLocalizacaoPorEAN,
   buscarProdutoPorEAN,
   enviarMovimentacao,
   buscarProdutosPorLocalizacaoDireto,
+  abrirLocalizacao,
+  fecharLocalizacao,
+  obterUsuarioLogado,
 } from '../api/movimentacaoAPI';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
@@ -40,6 +43,7 @@ export default function Movimentacao() {
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
   const [indexExcluir, setIndexExcluir] = useState(null);
   const [mostrarModalExcluir, setMostrarModalExcluir] = useState(false);
+  const [eanLocalizacaoAberta, setEanLocalizacaoAberta] = useState('');
 
   const localizacaoRef = useRef(null);
   const produtoRef = useRef(null);
@@ -63,12 +67,22 @@ export default function Movimentacao() {
   const handleBuscarLocalizacao = async (eanBipado) => {
     const ean = limparCodigo(eanBipado || eanLocalizacao);
     if (!ean) return;
+
     try {
       const loc = await buscarLocalizacaoPorEAN(ean);
       if (!loc || !loc.localizacao_id) {
         Alert.alert('Localização não encontrada');
         return;
       }
+
+      try {
+        await abrirLocalizacao(ean);
+        setEanLocalizacaoAberta(ean);
+      } catch (err) {
+        Alert.alert('Erro ao abrir localização', err?.message || 'Tente novamente');
+        return; // impede seguir se não conseguir abrir
+      }
+
       setlocalizacao_id(loc.localizacao_id);
       setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
       setTipoBloqueado(true);
@@ -81,6 +95,39 @@ export default function Movimentacao() {
       Alert.alert('Erro ao buscar localização');
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', async (e) => {
+      if (localizacao_id && eanLocalizacaoAberta) {
+        e.preventDefault();
+
+        Alert.alert(
+          'Atenção',
+          'Você está saindo e a localização aberta será fechada. Confirma?',
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => { } },
+            {
+              text: 'Fechar localização e sair',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  console.log('[SAIR] Fechando localização EAN:', eanLocalizacaoAberta);
+                  await fecharLocalizacao(eanLocalizacaoAberta);
+                  setEanLocalizacaoAberta('');
+                  console.log('[SAIR] Localização fechada ao sair');
+                } catch (err) {
+                  console.log('[ERRO][SAIR] Erro ao fechar localização ao sair:', err);
+                }
+                limparTudo();
+                navigation.dispatch(e.data.action);
+              },
+            },
+          ]
+        );
+      }
+    });
+    return unsubscribe;
+  }, [navigation, localizacao_id, eanLocalizacaoAberta]);
 
   const handleAdicionarProduto = async (eanBipado) => {
     const ean = limparCodigo(eanBipado || eanProduto);
@@ -181,7 +228,6 @@ export default function Movimentacao() {
     setMostrarConfirmacao(true);
   };
 
-
   const agruparProdutos = (lista) => {
     const mapa = {};
     for (const p of lista) {
@@ -236,10 +282,17 @@ export default function Movimentacao() {
       console.log(`➡️ localizacao_origem_id (${typeof localizacao_origem_id}):`, localizacao_origem_id);
       console.log(`➡️ localizacao_destino_id (${typeof localizacao_destino_id}):`, localizacao_destino_id);
 
+      // 🔐 Obter usuário logado
+      const currentUser = await obterUsuarioLogado();
+      const usuario_id = currentUser.usuario_id;
+
       // 🧾 Payload final
       const payload = {
         tipo,
+
         usuario_id: user?.usuario_id || 1, // 🔒 Usando o ID do usuário autenticado
+
+
         localizacao_origem_id,
         localizacao_destino_id,
         itens_movimentacao: itensAgrupados,
@@ -248,6 +301,20 @@ export default function Movimentacao() {
       console.log('✅ Payload final a ser enviado:', JSON.stringify(payload, null, 2));
 
       const resposta = await enviarMovimentacao(payload);
+
+      if (eanLocalizacaoAberta) {
+        try {
+          console.log('[SALVAR] Fechando localização EAN:', eanLocalizacaoAberta);
+          await fecharLocalizacao(eanLocalizacaoAberta);
+          setEanLocalizacaoAberta('');
+          console.log('[SALVAR] Localização fechada após salvar movimentação');
+        } catch (err) {
+          console.log('[ERRO][SALVAR] Erro ao fechar localização após salvar:', err);
+          Alert.alert('Atenção', 'A movimentação foi salva, mas houve erro ao fechar a localização.');
+        }
+      } else {
+        console.log('[SALVAR] Nenhuma localização aberta para fechar.');
+      }
 
       console.log('✅ Movimentação salva com sucesso:', resposta);
       Alert.alert(
@@ -276,14 +343,33 @@ export default function Movimentacao() {
     setlocalizacao_id(null);
     setNomeLocalizacao('');
     setEanLocalizacao('');
+    setEanLocalizacaoAberta('');
     setEanProduto('');
     setTipoBloqueado(false);
     requestAnimationFrame(() => localizacaoRef.current?.focus());
   };
 
+  const onCancelarMovimentacao = async () => {
+    setMostrarCancelar(false);
+    try {
+      if (eanLocalizacaoAberta) {
+        console.log('[CANCELAR] Fechando localização EAN:', eanLocalizacaoAberta);
+        await fecharLocalizacao(eanLocalizacaoAberta);
+        setEanLocalizacaoAberta('');
+        console.log('[CANCELAR] Localização fechada ao cancelar movimentação');
+      } else {
+        console.log('[CANCELAR] Nenhuma localização aberta para fechar.');
+      }
+    } catch (err) {
+      console.log('[ERRO][CANCELAR] Erro ao fechar localização ao cancelar:', err);
+      Alert.alert('Erro ao fechar localização', err?.message || 'Tente novamente');
+    }
+    limparTudo();
+  };
+  
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
         <HeaderMovimentacao
           tipo={tipo}
           setTipo={setTipo}
@@ -310,11 +396,8 @@ export default function Movimentacao() {
           produtos={produtos}
         />
 
-
         {produtos.length > 0 && (
           <View style={styles.resumoSKUs}>
-            <Text style={styles.totalTexto}>
-            </Text>
             <Text style={styles.totalTexto}>
               {produtos.length} produto(s) bipado(s)
             </Text>
@@ -351,11 +434,8 @@ export default function Movimentacao() {
         <ModalCancelar
           visible={mostrarCancelar}
           onClose={() => setMostrarCancelar(false)}
-          onCancelar={() => {
-            setMostrarCancelar(false);
-            limparTudo();
-          }}
-          tipo={tipo}
+          onCancelar={onCancelarMovimentacao}
+          tipo="movimentação"
         />
 
         <ModalExcluirProduto
@@ -364,7 +444,7 @@ export default function Movimentacao() {
           onClose={() => setMostrarModalExcluir(false)}
         />
       </View>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -373,9 +453,11 @@ const screenHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#fff',
-    paddingTop: 40,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
   },
   resumoSKUs: {
     marginTop: 10,
@@ -388,8 +470,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   listaContainer: {
-    flexGrow: 1,
-    maxHeight: screenHeight * 0.37, // 40% da altura da tela (ajuste se necessário)
+    flex: 0.85,
     borderTopWidth: 1,
     borderColor: '#eee',
     marginBottom: 10,

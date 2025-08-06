@@ -14,6 +14,7 @@ import {
   criarOcorrencia,
   buscarProdutoEstoquePorLocalizacaoEAN,
   buscarLocalizacaoPorEAN,
+  getCurrentUser,
 } from '../services/API';
 import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from 'react-router-dom';
@@ -73,8 +74,12 @@ export default function Ocorrencia() {
     try {
       setCarregando(true);
 
+      // Buscar o usuário logado
+      const currentUser = await getCurrentUser();
+      const usuario_id = currentUser.usuario_id;
+
       const payload = {
-        usuario_id: 1,
+        usuario_id: usuario_id,
         produto_estoque_id: produtoEstoqueID,
         localizacao_id: localizacaoID,
         quantidade_esperada: Number(quantidadeEsperada),

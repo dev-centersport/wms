@@ -17,6 +17,7 @@ interface Props {
   onChangeEAN: (value: string) => void;
   onSelecionar: (loc: LocalizacaoOption | null) => void;
   valorSelecionado: LocalizacaoOption | null;
+  onLocalizacaoAberta?: (ean: string) => void;
 }
 
 const InputLocalizacaoAutocomplete: React.FC<Props> = ({
@@ -24,7 +25,8 @@ const InputLocalizacaoAutocomplete: React.FC<Props> = ({
   eanDigitado,
   onChangeEAN,
   onSelecionar,
-  valorSelecionado
+  valorSelecionado,
+  onLocalizacaoAberta
 }) => {
   const [options, setOptions] = useState<LocalizacaoOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,6 +56,16 @@ const InputLocalizacaoAutocomplete: React.FC<Props> = ({
         const encontrada = formatadas.find((l: LocalizacaoOption) => l.ean === eanDigitado.trim());
         if (encontrada) {
           onSelecionar(encontrada);
+          
+          // Tenta abrir a localização se a função estiver disponível
+          if (onLocalizacaoAberta && encontrada.ean) {
+            try {
+              await api.get(`/movimentacao/abrir-localizacao/${encontrada.ean}`);
+              onLocalizacaoAberta(encontrada.ean);
+            } catch (erro: any) {
+              console.warn('Erro ao abrir localização:', erro);
+            }
+          }
         }
       } catch (err) {
         console.error('Erro ao buscar localizações:', err);

@@ -31,11 +31,19 @@ export class Autenticacao implements CanActivate {
     const response = context.switchToHttp().getResponse<Response>();
     const authHeader = request.headers['authorization'];
 
-    if (!authHeader) throw new UnauthorizedException('Token não fornecido');
+    console.log('Verificando autenticação para:', request.url);
+    console.log('Headers de autorização:', authHeader ? 'Presente' : 'Ausente');
+
+    if (!authHeader) {
+      console.log('Token não fornecido');
+      throw new UnauthorizedException('Token não fornecido');
+    }
 
     const [bearer, token] = authHeader.split(' ');
-    if (bearer !== 'Bearer' || !token)
+    if (bearer !== 'Bearer' || !token) {
+      console.log('Token inválido - formato incorreto');
       throw new UnauthorizedException('Token inválido');
+    }
 
     try {
       const decoded = this.jwtService.verify<JwtPayload>(token, {
@@ -59,6 +67,7 @@ export class Autenticacao implements CanActivate {
         );
       }
 
+
       // Verifica se o token expira em menos de 10 minutos
       const now = Math.floor(Date.now() / 1000);
       const timeUntilExpiry = decoded.exp - now;
@@ -80,13 +89,16 @@ export class Autenticacao implements CanActivate {
 
         // Envia o novo token no header da resposta
         response.setHeader('X-New-Token', newToken);
+        console.log('Token renovado automaticamente');
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (request as any).user = decoded; // Para manter o padrão do Express
       return true;
     } catch (err) {
+
       console.log('Erro de autenticação:', err);
+
       throw new UnauthorizedException('Token inválido ou expirado');
     }
   }

@@ -16,6 +16,7 @@ import {
   buscarProdutoEstoquePorLocalizacaoEAN,
   criarOcorrencia,
 } from '../api/ocorrenciaAPI';
+import { obterUsuarioLogado } from '../api/movimentacaoAPI';
 
 export default function Ocorrencia() {
   const { user } = useAuth();
@@ -106,8 +107,14 @@ export default function Ocorrencia() {
 
   const confirmarSalvar = async () => {
     try {
+      // 🔐 Obter usuário logado
+      const currentUser = await obterUsuarioLogado();
+      const usuario_id = currentUser.usuario_id;
+
       const payload = {
+
         usuario_id: user?.usuario_id || 1, // 🔒 Usando o ID do usuário autenticado
+
         localizacao_id: Number(localizacaoBloqueada ? (await buscarLocalizacaoPorEAN(localizacao)).localizacao_id : 0),
         produto_estoque_id: Number((await buscarProdutoEstoquePorLocalizacaoEAN(localizacao, sku)).produto_estoque_id),
         quantidade_esperada: Number(quantidadeEsperada),
@@ -191,11 +198,13 @@ export default function Ocorrencia() {
       <ModalCancelar
         visible={mostrarCancelar}
         onClose={() => setMostrarCancelar(false)}
-        onConfirmar={() => {
+        onCancelar={() => {
           setMostrarCancelar(false);
           limparTudo();
         }}
+        tipo="ocorrência" // ou qualquer valor desejado
       />
+
     </KeyboardAvoidingView>
   );
 }

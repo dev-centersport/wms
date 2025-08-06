@@ -8,8 +8,8 @@ export default function ModalCancelar({ visible, onClose, onCancelar, tipo }) {
       <View style={styles.overlay}>
         <View style={styles.modalBox}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Cancelar</Text>
-            <TouchableOpacity onPress={onClose}>
+          <Text style={[styles.modalTitle, { color: '#fff' }]}>Cancelar</Text>
+          <TouchableOpacity onPress={onClose}>
               <Text style={styles.modalClose}>×</Text>
             </TouchableOpacity>
           </View>
@@ -18,7 +18,10 @@ export default function ModalCancelar({ visible, onClose, onCancelar, tipo }) {
             <Text style={styles.modalMessage}>
               Deseja realmente cancelar a {tipo}?
             </Text>
-            <TouchableOpacity style={styles.btnConfirmar} onPress={onCancelar}>
+            <TouchableOpacity style={styles.btnConfirmar} onPress={() => {
+              onCancelar();
+              onClose();
+            }}>
               <Text style={styles.confirmarText}>Sim, Cancelar</Text>
             </TouchableOpacity>
           </View>

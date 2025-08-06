@@ -5,34 +5,41 @@ export async function buscarProdutoPorEAN(ean) {
 	try {
 		const eanLimpo = limparCodigo(ean);
 		const response = await api.get(`/produto/buscar-por-ean/${eanLimpo}`);
-		const localizacao = response.data;
+		const produto = response.data;
 
-		if (!localizacao) {
-			throw new Error("Localização com esse EAN não encontrado.");
+		if (!produto) {
+			throw new Error("Produto com esse EAN não encontrado.");
 		}
 
-		return localizacao;
+		return produto;
 	} catch (error) {
 		throw tratarErro(error, "Busca de produto por EAN");
 	}
 }
 
+// 🔍 Buscar localização por EAN
 export async function buscarLocalizacaoPorEAN(ean) {
 	try {
 		const eanLimpo = limparCodigo(ean);
+		console.log("🔍 Buscando localização por EAN:", eanLimpo);
+		
 		const response = await api.get(`/localizacao/buscar-por-ean/${eanLimpo}`);
 		const localizacao = response.data;
 
-		if (!localizacao) {
+		console.log("📦 Resposta da API:", JSON.stringify(localizacao, null, 2));
+
+		if (!localizacao || !localizacao.localizacao_id) {
 			throw new Error("Localização com esse EAN não encontrada.");
 		}
 
 		return {
 			localizacao_id: localizacao.localizacao_id,
-			nome: localizacao.localizacao_nome,
+			nome: localizacao.localizacao_nome || localizacao.nome || "",
 			armazem: localizacao.armazem_nome || "",
+			ean: localizacao.ean || eanLimpo,
 		};
 	} catch (error) {
+		console.error("❌ Erro ao buscar localização por EAN:", error);
 		throw tratarErro(error, "Busca de localização por EAN");
 	}
 }
@@ -77,3 +84,33 @@ export async function buscarProdutosPorLocalizacaoDireto(localizacao_id) {
 		throw tratarErro(error, "Busca de produtos por localização");
 	}
 }
+
+export async function abrirLocalizacao(ean) {
+	try {
+		const res = await api.get(`/movimentacao/abrir-localizacao/${ean}`);
+		return res.data;
+	} catch (error) {
+		throw tratarErro(error, "Abertura de localização");
+	}
+}
+
+export async function fecharLocalizacao(ean) {
+	try {
+		const res = await api.get(`/movimentacao/fechar-localizacao/${ean}`);
+		return res.data;
+	} catch (error) {
+		throw tratarErro(error, "Fechamento de localização");
+	}
+}
+
+export async function obterUsuarioLogado() {
+	try {
+	  const response = await api.get('/auth/profile');
+	  return response.data; // Deve conter o usuario_id
+	} catch (error) {
+	  // Tratar erros e, se for 401, redirecionar para login
+	  // ...
+	  throw error;
+	}
+  }
+  
