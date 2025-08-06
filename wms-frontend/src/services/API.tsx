@@ -291,7 +291,7 @@ export const buscarLocalizacoes = async (
   busca: string = '',
   armazemId?: number,
   tipoId?: number,
-): Promise<{ results: Localizacao[]; total: number }> => {
+): Promise<{ results: Localizacao[]; total: any }> => {
   try {
     const params = new URLSearchParams();
 
@@ -308,7 +308,7 @@ export const buscarLocalizacoes = async (
       params.set('tipoId', tipoId.toString());
     }
 
-    const res = await api.get<{ results: any[]; total: number }>(
+    const res = await api.get<{ results: any[]; total: any }>(
       `/localizacao?${params.toString()}`
     );
 
@@ -323,9 +323,11 @@ export const buscarLocalizacoes = async (
       total_produtos: item.total_produtos ?? 0,
     }));
 
+    console.log(res.data.total.total_itens)
+
     return {
       results: dados,
-      total: res.data.total
+      total: res.data.total.total_itens
     };
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);

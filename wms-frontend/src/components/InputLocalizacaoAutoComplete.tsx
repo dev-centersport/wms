@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Autocomplete, CircularProgress, TextField, InputAdornment } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import api from '../services/API';
 
 interface LocalizacaoOption {
@@ -30,41 +31,47 @@ const InputLocalizacaoAutocomplete: React.FC<Props> = ({
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-  useEffect(() => {
-    const fetchLocalizacoes = async () => {
-      if (!eanDigitado || eanDigitado.trim().length === 0) {
-        setOptions([]); // Limpa opções se o campo estiver vazio
-        return;
+  // Função para buscar localizações quando o usuário pressionar Enter
+  const buscarLocalizacoes = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.trim().length === 0) {
+      setOptions([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await api.get(`/localizacao?search=${encodeURIComponent(searchTerm.trim())}`);
+      const todas = Array.isArray(response.data.results) ? response.data.results : [];
+
+      const formatadas = todas.map((l: any) => ({
+        id: l.localizacao_id,
+        nome: l.nome,
+        ean: l.ean,
+        armazem: l.armazem,
+      }));
+
+      setOptions(formatadas);
+
+      // Se encontrou exatamente uma localização com o EAN digitado, seleciona automaticamente
+      const encontrada = formatadas.find((l: LocalizacaoOption) => l.ean === searchTerm.trim());
+      if (encontrada) {
+        onSelecionar(encontrada);
       }
+    } catch (err) {
+      console.error('Erro ao buscar localizações:', err);
+      setOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-        setLoading(true);
-        const response = await api.get('/localizacao?limit=3000');
-        const todas = Array.isArray(response.data.results) ? response.data.results : [];
-
-        const formatadas = todas.map((l: any) => ({
-          id: l.localizacao_id,
-          nome: l.nome,
-          ean: l.ean,
-          armazem: l.armazem,
-        }));
-
-        setOptions(formatadas);
-
-        const encontrada = formatadas.find((l: LocalizacaoOption) => l.ean === eanDigitado.trim());
-        if (encontrada) {
-          onSelecionar(encontrada);
-        }
-      } catch (err) {
-        console.error('Erro ao buscar localizações:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLocalizacoes();
-  }, [eanDigitado]);
-
+  // Handler para quando o usuário pressionar Enter
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      buscarLocalizacoes(inputValue);
+    }
+  };
 
   return (
     <Autocomplete
@@ -84,9 +91,15 @@ const InputLocalizacaoAutocomplete: React.FC<Props> = ({
         <TextField
           {...params}
           label={label}
+          onKeyDown={handleKeyDown}
           sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
           InputProps={{
             ...params.InputProps,
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: 'text.secondary' }} />
+              </InputAdornment>
+            ),
             endAdornment: (
               <>
                 {loading ? <CircularProgress size={18} /> : null}

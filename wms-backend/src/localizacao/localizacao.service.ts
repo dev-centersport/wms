@@ -55,7 +55,7 @@ export class LocalizacaoService {
     status?: StatusPrateleira,
     armazemId?: number,
     tipoId?: number,
-  ): Promise<{ results: any[]; total: number }> {
+  ): Promise<{ results: any[]; total: any }> {
     const query = this.LocalizacaoRepository.createQueryBuilder('localizacao')
       .leftJoin('localizacao.produtos_estoque', 'estoque')
       .leftJoinAndSelect('localizacao.tipo', 'tipo')
@@ -92,8 +92,14 @@ export class LocalizacaoService {
       query.andWhere('tipo.tipo_localizacao_id = :tipoId', { tipoId });
     }
 
+    const total_itens = await query.getCount();
+
     // total para paginação
-    const total = await query.getCount();
+    const total = {
+      offset: offset,
+      limit: limit,
+      total_itens: total_itens,
+    };
 
     // Paginação e ordenação
     query
