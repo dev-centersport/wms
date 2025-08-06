@@ -24,6 +24,7 @@ import { AuthModule } from './auth/auth.module';
 import { PermissaoModule } from './permissao/permissao.module';
 import { PermissoesModule } from './auth/permissoes.module';
 import { AgrupamentoModule } from './agrupamento/agrupamento.module';
+import { FileiraModule } from './fileira/fileira.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -100,6 +101,7 @@ import { AgrupamentoModule } from './agrupamento/agrupamento.module';
     PermissaoModule,
     PermissoesModule,
     AgrupamentoModule,
+    FileiraModule,
   ],
   controllers: [AppController],
   providers: [AppService],

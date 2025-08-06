@@ -16,7 +16,7 @@ export class Agrupamento {
   nome: string;
 
   @Column({ type: 'geometry', spatialFeatureType: 'Polygon', srid: 4326 })
-  geometry: Polygon;
+  geom: Polygon;
 
   @OneToMany(() => Localizacao, (loc) => loc.agrupamento)
   localizacoes: Localizacao[];
