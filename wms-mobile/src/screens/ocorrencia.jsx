@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
 
 import Header from '../componentes/Ocorrencia/Header';
 import InputLocalizacao from '../componentes/Ocorrencia/InputLocalizacao';
@@ -18,6 +19,7 @@ import {
 import { obterUsuarioLogado } from '../api/movimentacaoAPI';
 
 export default function Ocorrencia() {
+  const { user } = useAuth();
   const [localizacao, setLocalizacao] = useState('');
   const [sku, setSku] = useState('');
   const [quantidade, setQuantidade] = useState('');
@@ -110,7 +112,9 @@ export default function Ocorrencia() {
       const usuario_id = currentUser.usuario_id;
 
       const payload = {
-        usuario_id,
+
+        usuario_id: user?.usuario_id || 1, // 🔒 Usando o ID do usuário autenticado
+
         localizacao_id: Number(localizacaoBloqueada ? (await buscarLocalizacaoPorEAN(localizacao)).localizacao_id : 0),
         produto_estoque_id: Number((await buscarProdutoEstoquePorLocalizacaoEAN(localizacao, sku)).produto_estoque_id),
         quantidade_esperada: Number(quantidadeEsperada),

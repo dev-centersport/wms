@@ -1,38 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { obterUsuarioLogado } from '../api/usuarioAPI';
-import UserInfoBar from '../componentes/Home/UserInfoBar';
+
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { useAuth } from '../contexts/AuthContext';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 export default function HomeScreen({ navigation }) {
-  const [usuario, setUsuario] = useState({
-    usuario_id: 0,
-    responsavel: "Usuário",
-    usuario: "usuario",
-    perfil: "Sem perfil",
-    nivel: 0,
-    ativo: false,
-  });
-  const [loading, setLoading] = useState(true);
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    carregarUsuario();
-  }, []);
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sair',
+      'Deseja realmente sair do sistema?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+          },
+        },
+      ]
+    );
 
-  const carregarUsuario = async () => {
-    try {
-      setLoading(true);
-      console.log("🔄 Iniciando carregamento do usuário...");
-      
-      const dadosUsuario = await obterUsuarioLogado();
-      console.log("✅ Dados do usuário carregados:", dadosUsuario);
-      
-      setUsuario(dadosUsuario);
-    } catch (error) {
-      console.error('❌ Erro ao carregar usuário:', error);
-      // Mantém os dados padrão em caso de erro
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -43,6 +36,19 @@ export default function HomeScreen({ navigation }) {
           source={require('../../assets/images/wms.png')}
           style={styles.logo}
         />
+        
+        {/* Informações do usuário */}
+        {user && (
+          <View style={styles.userInfo}>
+            <Text style={styles.userText}>Usuário: {user.usuario}</Text>
+            <Text style={styles.userText}>Perfil: {user.perfil}</Text>
+          </View>
+        )}
+        
+        {/* Botão de logout */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Icon name="sign-out" size={20} color="#000" />
+        </TouchableOpacity>
       </View>
 
       {/* Barra de informações do usuário - sempre visível */}
@@ -84,16 +90,34 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#61DE25',
     width: '100%',
-    height: 100,
+    height: 120,
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 40,
     paddingBottom: 10,
+    position: 'relative',
   },
   logo: {
     width: 60,
     height: 60,
     resizeMode: 'contain',
+  },
+  userInfo: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    alignItems: 'flex-start',
+  },
+  userText: {
+    fontSize: 12,
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    padding: 10,
   },
   button: {
     backgroundColor: '#61DE25',

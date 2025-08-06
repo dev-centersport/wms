@@ -30,6 +30,7 @@ interface ConsultaEstoque {
   ean: string;
   armazem: string;
   localizacao: string;
+  localizacao_ean: string
   quantidade: number;
 }
 
@@ -71,7 +72,7 @@ const Consulta: React.FC = () => {
   const termo = normalizar(busca);
 
   const filteredItems = lista.filter((item) => {
-    const campos = [item.descricao, item.sku, item.ean, item.armazem, item.localizacao].map((c) =>
+    const campos = [item.descricao, item.sku, item.ean, item.armazem, item.localizacao, item.localizacao_ean].map((c) =>
       normalizar(c)
     );
 
@@ -225,7 +226,7 @@ const Consulta: React.FC = () => {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {(['descricao', 'sku', 'ean', 'armazem', 'quantidade', 'localizacao'] as (keyof ConsultaEstoque)[]).map(
+              {(['descricao', 'sku', 'ean', 'armazem', 'quantidade', 'localizacao', 'ean'] as (keyof ConsultaEstoque)[]).map(
                 (col) => (
                   <TableCell
                     key={col}
@@ -254,6 +255,7 @@ const Consulta: React.FC = () => {
                   <TableCell>{item.armazem}</TableCell>
                   <TableCell align='center'>{item.quantidade}</TableCell>
                   <TableCell align='center'>{item.localizacao}</TableCell>
+                  <TableCell align='center'>{item.localizacao_ean}</TableCell>
                 </TableRow>
               ))
             ) : (

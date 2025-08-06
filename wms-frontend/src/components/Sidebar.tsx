@@ -8,10 +8,12 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+
   Tooltip,
   IconButton,
   useMediaQuery,
   useTheme
+
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
@@ -25,9 +27,11 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import TrolleyIcon from '@mui/icons-material/Trolley';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+
 import SecurityIcon from '@mui/icons-material/Security';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import ViewInArIcon3D from '@mui/icons-material/ViewInAr';
+
 
 const menuItems = [
   { label: 'Dashboard', icon: <AnalyticsIcon />, path: '/dashboard' },
@@ -38,12 +42,14 @@ const menuItems = [
   { label: 'Produto', icon: <ViewInArIcon />, path: '/produto' },
   { label: 'Consulta', icon: <SearchIcon />, path: '/consulta' },
   { label: 'Movimentação', icon: <TrolleyIcon />, path: '/movimentacao' },
+
   { label: 'Separação', icon: <LocalShippingIcon />, path: '/separacao' },
   { label: 'Ocorrência', icon: <ReportProblemIcon />, path: '/ocorrencias' },
   { label: 'Auditoria', icon: <ThumbUpIcon />, path: '/auditoria' },
   { label: 'Relatorio', icon: <AssignmentIcon />, path: '/Relatorio' },
   { label: 'Usuários', icon: <PeopleAltIcon />, path: '/Usuarios' },
   { label: 'Perfis', icon: <SecurityIcon />, path: '/perfil-usuario' },
+
 ];
 
 const SIDEBAR_WIDTH = 210;
@@ -53,11 +59,13 @@ interface SidebarProps {
   gavetaAberta?: boolean; // ADICIONADO: se true, bloqueia navegação
 }
 
+
 const Sidebar: React.FC<SidebarProps> = ({ children, gavetaAberta = false }) => {
   const currentLocation = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+
 
   // Fechar menu mobile quando navegar
   useEffect(() => {
@@ -247,6 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children, gavetaAberta = false }) => 
         </Drawer>
       )}
 
+
       {/* Drawer para mobile */}
       {isMobile && (
         <Drawer
@@ -282,6 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children, gavetaAberta = false }) => 
           {drawerContent}
         </Drawer>
       )}
+
 
       {/* Conteúdo principal */}
       <Box

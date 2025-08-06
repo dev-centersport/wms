@@ -20,7 +20,6 @@ import {
 import { Search, Edit, Delete } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { buscarUsuarios } from '../services/API';
 
 interface Usuario {

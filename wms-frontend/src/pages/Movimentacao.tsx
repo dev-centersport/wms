@@ -40,6 +40,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Layout from '../components/Layout';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+
 import axios from 'axios';
 import api from '../services/API';
 import {
@@ -48,6 +49,7 @@ import {
 } from '../services/API';
 import CamposTransferencia from '../components/CamposTransferencia';
 import Sidebar from '../components/Sidebar';
+
 
 interface Item {
   produto_id: number;
@@ -75,6 +77,7 @@ interface ProdutoBusca {
 }
 
 const Movimentacao: React.FC = () => {
+  const { user } = useAuth();
   const [tipo, setTipo] = useState<'entrada' | 'saida' | 'transferencia'>('entrada');
 
   // Localizações
@@ -234,7 +237,7 @@ const Movimentacao: React.FC = () => {
           ean: item.ean,
           descricao: item.descricao,
           produto: item.descricao,
-          quantidade: item.quantidade || 0,
+          quantidade: Math.max(item.quantidade || 0, 1), // ✅ Garante quantidade mínima de 1
           contador: String(index + 1).padStart(3, '0'),
         }));
 
@@ -282,6 +285,7 @@ const Movimentacao: React.FC = () => {
       const novaLista: Item[] = [
         ...prevLista,
         {
+
           produto_id: novo!.produto_id,
           // Se não houver produto_estoque_id (caso entrada), envia 0
           produto_estoque_id: novo!.produto_estoque_id ? novo!.produto_estoque_id : 0,
@@ -290,6 +294,7 @@ const Movimentacao: React.FC = () => {
           descricao: novo!.descricao,
           quantidade: 1,
           produto: novo!.descricao,
+
           contador: String(contadorTotal).padStart(3, '0'),
         },
       ];
@@ -308,7 +313,9 @@ const Movimentacao: React.FC = () => {
     let resultado;
 
     try {
+
       console.log('🔍 Buscando localização:', eanLocalizacao);
+
 
       // Busca a localização (entrada, saída ou transferência)
       if (tipo === 'transferencia') {
@@ -424,8 +431,10 @@ const Movimentacao: React.FC = () => {
     console.log('✅ Movimentação cancelada e localizações fechadas');
   };
 
+
   const handleMudancaTipo = async (novoTipo: 'entrada' | 'saida' | 'transferencia') => {
     console.log('🔄 Mudando tipo de movimentação de', tipo, 'para', novoTipo);
+
 
     // Fechar localização aberta antes de mudar o tipo
     await fecharLocalizacaoAberta();
@@ -448,6 +457,7 @@ const Movimentacao: React.FC = () => {
 
   const handleConfirmarOperacao = async () => {
     try {
+
       setLoading(true);
       console.log('✅ Confirmando operação de movimentação');
 
@@ -489,6 +499,7 @@ const Movimentacao: React.FC = () => {
       } else if (tipo === 'transferencia') {
         payload.localizacao_origem_id = origem?.id;
         payload.localizacao_destino_id = destino?.id;
+
       }
 
       console.log('📦 Payload final:', payload);

@@ -74,7 +74,9 @@ import {
   Analytics
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
+
 import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria, buscarProdutosAuditoria, cancelarAuditoria } from '../services/API';
+
 
 interface Ocorrencia {
   ocorrencia_id: number;

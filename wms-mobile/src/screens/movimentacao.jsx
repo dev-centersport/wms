@@ -19,6 +19,7 @@ import {
   obterUsuarioLogado,
 } from '../api/movimentacaoAPI';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
 
 import HeaderMovimentacao from '../componentes/Movimentacao/HeaderMovimentacao';
 import InputLocalizacaoProduto from '../componentes/Movimentacao/InputLocalizacaoProduto';
@@ -29,6 +30,7 @@ import ModalCancelar from '../componentes/Movimentacao/ModalCancelar';
 import ModalExcluirProduto from '../componentes/Movimentacao/ModalExcluirProduto';
 
 export default function Movimentacao() {
+  const { user } = useAuth();
   const [tipo, setTipo] = useState('entrada');
   const [tipoBloqueado, setTipoBloqueado] = useState(false);
   const [eanLocalizacao, setEanLocalizacao] = useState('');
@@ -192,7 +194,7 @@ export default function Movimentacao() {
     if (tipo === 'saida') {
       const payload = {
         tipo,
-        usuario_id: 1,
+        usuario_id: user?.usuario_id || 1, // 🔒 Usando o ID do usuário autenticado
         localizacao_origem_id: localizacao_id,
         localizacao_destino_id: 0,
         itens_movimentacao: agruparProdutos(produtos),
@@ -287,7 +289,10 @@ export default function Movimentacao() {
       // 🧾 Payload final
       const payload = {
         tipo,
-        usuario_id,
+
+        usuario_id: user?.usuario_id || 1, // 🔒 Usando o ID do usuário autenticado
+
+
         localizacao_origem_id,
         localizacao_destino_id,
         itens_movimentacao: itensAgrupados,

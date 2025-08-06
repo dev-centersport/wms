@@ -19,6 +19,8 @@ export class AuthService {
       relations: ['perfil'],
     });
 
+    if (!user) return null;
+
     // Comparar com hash de senha mais tarde Ex: bcrypt.compare(senha, user.senha)
     // if (user && user.senha === senha) return user;
     if (user && (await PasswordUtils.verificarSenha(senha, user.senha)))
@@ -27,14 +29,42 @@ export class AuthService {
     return null;
   }
 
-  login(user: Usuario) {
+  async login(user: Usuario) {
     const payload = {
       sub: user.usuario_id,
       usuario: user.usuario,
       perfil: user.perfil.nome,
     };
+
+    const access_token = this.jwtService.sign(payload, {
+      expiresIn: '1d',
+    });
+
+    // 🔒 SESSÃO ÚNICA: Atualiza o token atual do usuário
+    // Isso invalida automaticamente qualquer sessão anterior
+    user.current_token = access_token;
+    user.is_logged = true;
+    await this.usuarioRepository.save(user);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
+      usuario_id: user.usuario_id,
+      usuario: user.usuario,
+      nivel: user.nivel,
+      perfil: user.perfil.nome,
     };
+  }
+
+  // 🔒 MÉTODO PARA LOGOUT (opcional, mas recomendado)
+  async logout(usuario_id: number): Promise<void> {
+    const user = await this.usuarioRepository.findOne({
+      where: { usuario_id },
+    });
+
+    if (user) {
+      user.current_token = null;
+      user.is_logged = false;
+      await this.usuarioRepository.save(user);
+    }
   }
 }

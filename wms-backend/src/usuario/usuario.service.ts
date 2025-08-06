@@ -10,7 +10,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
+import { Permissao } from 'src/permissao/entities/permissao.entity';
 import { PasswordUtils } from 'src/utils/password.utils';
+import { getPermissoesEfetivas } from 'src/utils/permissoes-efetivas.utils';
 
 @Injectable()
 export class UsuarioService {
@@ -19,6 +21,8 @@ export class UsuarioService {
     private readonly UsuarioRepository: Repository<Usuario>,
     @InjectRepository(Perfil)
     private readonly PerfilRepository: Repository<Perfil>,
+    @InjectRepository(Permissao)
+    private readonly PermissaoRepository: Repository<Permissao>,
   ) {}
 
   async findAll(): Promise<Usuario[]> {
@@ -166,5 +170,92 @@ export class UsuarioService {
     const usuario = await this.findOne(usuario_id);
 
     await this.UsuarioRepository.remove(usuario);
+  }
+
+  async getPermissoesEfetivas(usuario_id: number): Promise<Permissao[]> {
+    const usuario = await this.UsuarioRepository.findOne({
+      where: { usuario_id },
+      relations: ['perfil', 'perfil.permissoes', 'permissoes_extras'],
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(
+        `Usuário com ID ${usuario_id} não encontrado`,
+      );
+    }
+
+    return getPermissoesEfetivas(usuario);
+  }
+
+  // Método para adicionar permissões extras ao usuário
+  async adicionarPermissoesExtras(
+    usuario_id: number,
+    permissao_ids: number[],
+  ): Promise<Usuario> {
+    const usuario = await this.findOne(usuario_id);
+    const permissoes = await this.PermissaoRepository.createQueryBuilder(
+      'permissao',
+    )
+      .where('permissao.permissao_id IN (:...ids)', { ids: permissao_ids })
+      .getMany();
+
+    usuario.permissoes_extras = [
+      ...(usuario.permissoes_extras || []),
+      ...permissoes,
+    ];
+    return await this.UsuarioRepository.save(usuario);
+  }
+
+  // Método para remover permissões extras do usuário
+  async removerPermissoesExtras(
+    usuario_id: number,
+    permissao_ids: number[],
+  ): Promise<Usuario> {
+    const usuario = await this.findOne(usuario_id);
+
+    usuario.permissoes_extras = usuario.permissoes_extras.filter(
+      (p) => !permissao_ids.includes(p.permissao_id),
+    );
+
+    return await this.UsuarioRepository.save(usuario);
+  }
+
+  // Método para verificar se usuário tem permissão específica
+  async temPermissao(
+    usuario_id: number,
+    modulo: string,
+    acao: 'incluir' | 'editar' | 'excluir',
+  ): Promise<boolean> {
+    const permissoes = await this.getPermissoesEfetivas(usuario_id);
+    const permissao = permissoes.find((p) => p.modulo === modulo);
+
+    if (!permissao) return false;
+
+    switch (acao) {
+      case 'incluir':
+        return permissao.pode_incluir;
+      case 'editar':
+        return permissao.pode_editar;
+      case 'excluir':
+        return permissao.pode_excluir;
+      default:
+        return false;
+    }
+  }
+
+  // Método para obter usuário com todas as permissões carregadas
+  async findOneComPermissoes(usuario_id: number): Promise<Usuario> {
+    const usuario = await this.UsuarioRepository.findOne({
+      where: { usuario_id },
+      relations: ['perfil', 'perfil.permissoes', 'permissoes_extras'],
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(
+        `Usuário com ID ${usuario_id} não encontrado`,
+      );
+    }
+
+    return usuario;
   }
 }

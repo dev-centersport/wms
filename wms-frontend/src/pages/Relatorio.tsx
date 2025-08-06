@@ -44,11 +44,12 @@ export default function Relatorio() {
 
   const handleGerarRelatorio = async () => {
     try {
+
       console.log('Iniciando geração do relatório...');
       
       const response = await api.get('/produto-estoque/relatorio');
       console.log('Resposta do relatório:', response);
-      
+
       const dados = Array.isArray(response.data) ? response.data : response.data?.data || [];
       console.log('Dados formatados:', dados);
 
@@ -109,6 +110,7 @@ export default function Relatorio() {
 
 const handleGerarInventarioTiny = async () => {
   try {
+
     console.log('Iniciando geração do inventário Tiny...');
     
     const response = await api.get('/produto-estoque/relatorio');
@@ -140,6 +142,7 @@ const handleGerarInventarioTiny = async () => {
     console.log('Total de itens formatados:', formatados.length);
     console.log('Itens com localização vazia:', formatados.filter(item => !item.Localização).length);
     console.log('Itens com saldo 0:', formatados.filter(item => item['Saldo em estoque'] === 0).length);
+
 
     if (formatados.length === 0) {
       alert('Nenhum dado encontrado para exportar.');

@@ -3,10 +3,18 @@ import { api, tratarErro } from "./config";
 // ---------- CONSULTA DE ESTOQUE ----------
 export async function buscarConsultaEstoque(termoBusca) {
 	try {
+
 		console.log("🔍 Iniciando busca com termo:", termoBusca);
 		
+
 		// Usar endpoint que não requer autenticação
-		const response = await api.get(`/produto-estoque`);
+		if (termoBusca) {
+			response = await api.get(
+				`/produto-estoque/pesquisar?show=false&search=${termoBusca}`
+			);
+		} else {
+			response = await api.get(`/produto-estoque/pesquisar?show=false`);
+		}
 
 		const resultados = response.data.results || response.data || [];
 		console.log("📦 Total de resultados brutos:", resultados.length);

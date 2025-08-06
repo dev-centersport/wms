@@ -176,8 +176,10 @@ export async function registrarConferenciaAuditoria(
 
 export async function login(usuario: string, senha: string) {
   try {
+
     // Para login, usamos axios diretamente pois ainda não temos token
     const res = await axios.post(`${BASE_URL}/auth/login`, {
+
       usuario,
       senha
     });
@@ -457,6 +459,7 @@ export async function buscarConsultaEstoque() {
         quantidade: item.quantidade || 0,
         localizacao_id: item.localizacao?.localizacao_id ?? null,
         localizacao: item.localizacao?.nome || '',
+        localizacao_ean: item.localizacao?.ean,
         armazem: item.localizacao?.armazem?.nome || '',
       }));
 

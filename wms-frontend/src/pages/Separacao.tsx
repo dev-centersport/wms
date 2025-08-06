@@ -16,8 +16,8 @@ interface ProdutoPlanilha {
   [key: string]: string | number;
 }
 
-const ENDPOINT_PEDIDO = 'http://151.243.0.78:3001/separacao/agrupado-pedido';
-const ENDPOINT_SKU = 'http://151.243.0.78:3001/separacao/agrupado-produto';
+const ENDPOINT_PEDIDO = '/separacao/agrupado-pedido';
+const ENDPOINT_SKU = '/separacao/agrupado-produto';
 
 const columns = [
   { key: "Número do pedido", label: "Número do Pedido" },

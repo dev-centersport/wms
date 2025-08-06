@@ -11,7 +11,7 @@ import {
   styled
 } from "@mui/material";
 import logo from "../img/image.png";
-import { login } from '../services/API';
+import { useAuth } from '../contexts/AuthContext';
 
 // -------- Styled Components --------
 const StyledLoginContainer = styled(Box)({
@@ -59,23 +59,33 @@ const StyledButton = styled(Button)({
 // -------- Componente Login --------
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!usuario.trim() || !senha.trim()) {
+      alert('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setLoading(true);
     try {
       const resultado = await login(usuario, senha);
 
       if (resultado.status === 200) {
-        console.log('Login OK');
-        navigate('/armazem');
+        console.log('Login realizado com sucesso!');
+        // O redirecionamento será feito automaticamente pelo AuthContext
       } else {
-        alert(`${resultado.status} ${resultado.message}`);
+        alert(`${resultado.message}`);
       }
     } catch (err: any) {
       console.error('Erro no login:', err);
       alert('Erro inesperado ao tentar login.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -101,6 +111,7 @@ const Login: React.FC = () => {
             fullWidth
             value={usuario}
             onChange={(e) => setUsuario(e.target.value)}
+            disabled={loading}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -127,12 +138,14 @@ const Login: React.FC = () => {
             type={mostrarSenha ? "text" : "password"}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
+            disabled={loading}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
                     onClick={() => setMostrarSenha(!mostrarSenha)}
                     edge="end"
+                    disabled={loading}
                     aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
                   >
                     {mostrarSenha ? (
@@ -156,8 +169,13 @@ const Login: React.FC = () => {
             }}
           />
 
-          <StyledButton variant="contained" onClick={handleLogin} type="submit">
-            Entrar
+          <StyledButton 
+            variant="contained" 
+            onClick={handleLogin} 
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Entrando...' : 'Entrar'}
           </StyledButton>
         </form>
 

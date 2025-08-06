@@ -47,6 +47,7 @@ async function bootstrap() {
       if (
         origin === 'http://151.243.0.78:3000' ||
         origin === 'http://151.243.0.78:3001' ||
+        origin === 'http://151.243.0.78:3006' ||
         localNetworkRegex.test(origin) ||
         origin.includes('localhost') ||
         origin.includes('127.0.0.1')
@@ -84,7 +85,9 @@ async function bootstrap() {
     }
   });
 
-  await app.listen(3001, () => {
+  const port = process.env.PORT || 3005;
+
+  await app.listen(port, () => {
     // Sinaliza prontidão para o PM2
     if (process.send) {
       process.send('ready');
