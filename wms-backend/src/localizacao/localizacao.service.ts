@@ -237,8 +237,11 @@ export class LocalizacaoService {
     }
 
     // this.LocalizacaoRepository.merge(localizacao, updateLocalizacaoDto);
-    const { armazem_id, tipo_localizacao_id, ...camposSimples } =
-      updateLocalizacaoDto;
+    const {
+      armazem_id, // eslint-disable-line @typescript-eslint/no-unused-vars
+      tipo_localizacao_id, // eslint-disable-line @typescript-eslint/no-unused-vars
+      ...camposSimples
+    } = updateLocalizacaoDto;
 
     Object.assign(localizacao, camposSimples);
 
