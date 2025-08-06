@@ -33,6 +33,7 @@ export class LocalizacaoController {
     @Query('status') status?: StatusPrateleira,
     @Query('armazemId') armazemId?: string,
     @Query('tipoId') tipoId?: string,
+    @Query('agrupamentoId') agrupamentoId?: string,
   ) {
     const results = await this.localizacaoService.search(
       search,
@@ -41,6 +42,7 @@ export class LocalizacaoController {
       status,
       armazemId ? Number(armazemId) : undefined,
       tipoId ? Number(tipoId) : undefined,
+      agrupamentoId ? Number(agrupamentoId) : undefined,
     );
     return results;
   }

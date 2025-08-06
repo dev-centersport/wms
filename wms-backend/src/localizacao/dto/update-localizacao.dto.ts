@@ -17,4 +17,7 @@ export class UpdateLocalizacaoDto extends PartialType(CreateLocalizacaoDto) {
   @IsEAN()
   @Length(13, 13, { message: 'O EAN deve ter 13 caracteres' })
   ean?: string;
+
+  // Agrupamento pode ser removido passando null
+  agrupamento_id?: number | null;
 }

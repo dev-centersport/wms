@@ -62,9 +62,11 @@ export class Localizacao {
   @JoinColumn()
   armazem: Armazem;
 
-  @ManyToOne(() => Agrupamento, (agrup) => agrup.localizacoes)
+  @ManyToOne(() => Agrupamento, (agrup) => agrup.localizacoes, {
+    nullable: true,
+  })
   @JoinColumn()
-  agrupamento: Agrupamento;
+  agrupamento: Agrupamento | null;
 
   @OneToMany(
     () => ProdutoEstoque,

@@ -7,10 +7,11 @@ import { CreateLocalizacaoDto } from './dto/create-localizacao.dto';
 import { UpdateLocalizacaoDto } from './dto/update-localizacao.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Localizacao, StatusPrateleira } from './entities/localizacao.entity';
-import { Brackets, FindManyOptions, Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { TipoLocalizacao } from 'src/tipo_localizacao/entities/tipo_localizacao.entity';
 import { Armazem } from 'src/armazem/entities/armazem.entity';
 import { EAN13Generator } from 'src/utils/ean13.generator';
+import { Agrupamento } from 'src/agrupamento/entities/agrupamento.entity';
 
 @Injectable()
 export class LocalizacaoService {
@@ -21,6 +22,8 @@ export class LocalizacaoService {
     private readonly tipoLocalizacaoRepository: Repository<TipoLocalizacao>,
     @InjectRepository(Armazem)
     private readonly armazemRepository: Repository<Armazem>,
+    @InjectRepository(Agrupamento)
+    private readonly agrupamentoRepository: Repository<Agrupamento>,
   ) {}
 
   async getProdutosPorLocalizacao(localizacao_id: number) {
@@ -83,20 +86,24 @@ export class LocalizacaoService {
     status?: StatusPrateleira,
     armazemId?: number,
     tipoId?: number,
+    agrupamentoId?: number,
   ): Promise<{ results: any[]; total: number }> {
     const query = this.LocalizacaoRepository.createQueryBuilder('localizacao')
       .leftJoin('localizacao.produtos_estoque', 'estoque')
       .leftJoinAndSelect('localizacao.tipo', 'tipo')
       .leftJoinAndSelect('localizacao.armazem', 'armazem')
+      .leftJoinAndSelect('localizacao.agrupamento', 'agrupamento')
       .select([
         'localizacao',
         'tipo',
         'armazem',
+        'agrupamento',
         'SUM(estoque.quantidade) as total_produtos',
       ])
       .groupBy('localizacao.localizacao_id')
       .addGroupBy('tipo.tipo_localizacao_id')
-      .addGroupBy('armazem.armazem_id');
+      .addGroupBy('armazem.armazem_id')
+      .addGroupBy('agrupamento.agrupamento_id');
 
     if (search) {
       query.andWhere(
@@ -118,6 +125,11 @@ export class LocalizacaoService {
     }
     if (tipoId) {
       query.andWhere('tipo.tipo_localizacao_id = :tipoId', { tipoId });
+    }
+    if (agrupamentoId) {
+      query.andWhere('agrupamento.agrupamento_id = :agrupamentoId', {
+        agrupamentoId,
+      });
     }
 
     // total para paginação
@@ -144,7 +156,7 @@ export class LocalizacaoService {
   async findOne(localizacao_id: number): Promise<Localizacao> {
     const localizacao = await this.LocalizacaoRepository.findOne({
       where: { localizacao_id },
-      relations: ['tipo', 'armazem'],
+      relations: ['tipo', 'armazem', 'agrupamento'],
     });
 
     if (!localizacao) {
@@ -177,7 +189,7 @@ export class LocalizacaoService {
   async create(
     createLocalizacaoDto: CreateLocalizacaoDto,
   ): Promise<Localizacao> {
-    // Verifica se tipo existe
+    // Verifica se tipo e armazem existem
     const [armazem, tipo] = await Promise.all([
       this.armazemRepository.findOne({
         where: { armazem_id: createLocalizacaoDto.armazem_id },
@@ -188,10 +200,21 @@ export class LocalizacaoService {
         },
       }),
     ]);
+
     if (!tipo)
       throw new NotFoundException('Tipo de localização não encontrado');
     if (!armazem)
       throw new NotFoundException('Armazem de localização não encontrado');
+
+    // Verifica agrupamento apenas se foi fornecido
+    let agrupamento: Agrupamento | null = null;
+    if (createLocalizacaoDto.agrupamento_id) {
+      agrupamento = await this.agrupamentoRepository.findOne({
+        where: { agrupamento_id: createLocalizacaoDto.agrupamento_id },
+      });
+      if (!agrupamento)
+        throw new NotFoundException('Agrupamento não encontrado');
+    }
 
     const localizacaoExistente = await this.LocalizacaoRepository.findOne({
       where: {
@@ -224,12 +247,15 @@ export class LocalizacaoService {
       throw new Error('EAN já existe. Tente novamente');
     }
 
-    const localizacao = this.LocalizacaoRepository.create({
+    const novaLocalizacao = {
       ...createLocalizacaoDto,
       tipo,
       armazem,
       ean,
-    });
+      ...(agrupamento && { agrupamento }),
+    };
+
+    const localizacao = this.LocalizacaoRepository.create(novaLocalizacao);
 
     return await this.LocalizacaoRepository.save(localizacao);
   }
@@ -257,10 +283,26 @@ export class LocalizacaoService {
         throw new NotFoundException('Tipo de localização não encontrado');
       localizacao.tipo = tipo_localizacao;
     }
+    if (updateLocalizacaoDto.agrupamento_id !== undefined) {
+      if (updateLocalizacaoDto.agrupamento_id === null) {
+        localizacao.agrupamento = null;
+      } else {
+        const agrupamento = await this.agrupamentoRepository.findOneBy({
+          agrupamento_id: updateLocalizacaoDto.agrupamento_id,
+        });
+        if (!agrupamento)
+          throw new NotFoundException('Agrupamento não encontrado');
+        localizacao.agrupamento = agrupamento;
+      }
+    }
 
     // this.LocalizacaoRepository.merge(localizacao, updateLocalizacaoDto);
-    const { armazem_id, tipo_localizacao_id, ...camposSimples } =
-      updateLocalizacaoDto;
+    const {
+      armazem_id, // eslint-disable-line @typescript-eslint/no-unused-vars
+      tipo_localizacao_id, // eslint-disable-line @typescript-eslint/no-unused-vars
+      agrupamento_id, // eslint-disable-line @typescript-eslint/no-unused-vars
+      ...camposSimples
+    } = updateLocalizacaoDto;
 
     Object.assign(localizacao, camposSimples);
 

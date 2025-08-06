@@ -38,4 +38,8 @@ export class CreateLocalizacaoDto {
 
   @idRelations()
   armazem_id: number;
+
+  @IsOptional()
+  @idRelations()
+  agrupamento_id?: number;
 }
