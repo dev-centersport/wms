@@ -4,9 +4,9 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 export function TableHeader() {
     return (
         <View style={styles.tableHeader}>
-            <Text style={[styles.tableCell, { flex: 2 }]}>SKU</Text>
-            <Text style={[styles.tableCell, { flex: 3 }]}>Localização</Text>
-            <Text style={[styles.tableCell, { flex: 1 }]}>Qtd</Text>
+            <Text style={[styles.headerCell, { flex: 2 }]}>SKU</Text>
+            <Text style={[styles.headerCell, { flex: 3 }]}>Localização</Text>
+            <Text style={[styles.headerCell, { flex: 1 }]}>Qtd</Text>
         </View>
     );
 }
@@ -38,32 +38,46 @@ export function TableBody({ data }) {
 const styles = StyleSheet.create({
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: '#e9e9e9',
+        backgroundColor: '#f8f9fa',
         paddingHorizontal: 16,
-        paddingVertical: 6,
-        borderBottomWidth: 1,
-        borderColor: '#ccc',
+        paddingVertical: 12,
+        borderBottomWidth: 2,
+        borderColor: '#dee2e6',
+        marginHorizontal: 16,
+        marginTop: 8,
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
     },
     tableRow: {
         flexDirection: 'row',
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderBottomWidth: 0.5,
-        borderColor: '#e0e0e0',
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderColor: '#f1f3f4',
+        backgroundColor: '#ffffff',
+        marginHorizontal: 16,
     },
     tableCell: {
-        fontSize: 13,
-        color: '#333',
-    },
-    localizacaoText: {
-        fontSize: 13,
-        color: '#333',
+        fontSize: 14,
+        color: '#495057',
         fontWeight: '500',
     },
+    localizacaoText: {
+        fontSize: 14,
+        color: '#212529',
+        fontWeight: '600',
+    },
     eanLocalizacaoText: {
-        fontSize: 11,
-        color: '#666',
+        fontSize: 12,
+        color: '#6c757d',
         fontStyle: 'italic',
         marginTop: 2,
+    },
+    headerCell: {
+        fontSize: 13,
+        color: '#495057',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
 });

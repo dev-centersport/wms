@@ -6,7 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function EmptyState({ texto = 'Nenhum resultado encontrado.' }) {
   return (
     <View style={styles.container}>
-      <MaterialIcons name="search-off" size={64} color="#ccc" />
+      <MaterialIcons name="search-off" size={72} color="#adb5bd" />
       <Text style={styles.texto}>{texto}</Text>
     </View>
   );
@@ -14,13 +14,17 @@ export default function EmptyState({ texto = 'Nenhum resultado encontrado.' }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 80,
+    marginTop: 100,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   texto: {
-    fontSize: 14,
-    color: '#777',
-    marginTop: 16,
+    fontSize: 16,
+    color: '#6c757d',
+    marginTop: 20,
+    textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: 22,
   },
 });

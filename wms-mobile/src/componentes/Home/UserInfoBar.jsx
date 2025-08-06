@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function UserInfoBar({ usuario }) {
   // Garante que sempre temos dados válidos
   const dadosUsuario = {
-    responsavel: usuario?.responsavel || "Usuário",
+    responsavel: usuario?.usuario || "Usuário",
     perfil: usuario?.perfil || "Sem perfil",
   };
 
@@ -25,10 +25,8 @@ export default function UserInfoBar({ usuario }) {
         <View style={styles.separator} />
         
         <View style={styles.perfilSection}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="shield-checkmark" size={20} color="#2196F3" />
-          </View>
-          <View style={styles.perfilTextContainer}>
+         
+          <View style={[styles.perfilTextContainer, {alignItems: 'center'}]}>
             <Text style={styles.labelText}>Perfil</Text>
             <Text style={styles.perfilText}>{dadosUsuario.perfil}</Text>
           </View>

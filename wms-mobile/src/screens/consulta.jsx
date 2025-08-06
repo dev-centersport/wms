@@ -10,6 +10,7 @@ import SearchBarConsulta from '../componentes/Consulta/SearchBarConsulta';
 import { TableHeader, TableBody } from '../componentes/Consulta/TableConsulta';
 import PaginacaoConsulta from '../componentes/Consulta/PaginacaoConsulta';
 import EmptyState from '../componentes/Consulta/EmptyState';
+import Loading from '../components/Loading';
 
 export default function ConsultaScreen({ navigation }) {
   const [busca, setBusca] = useState('');
@@ -18,9 +19,10 @@ export default function ConsultaScreen({ navigation }) {
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [inputPagina, setInputPagina] = useState('');
   const [modalVisivel, setModalVisivel] = useState(false);
+  const [carregando, setCarregando] = useState(false);
 
   const searchInputRef = useRef(null);
-  const itensPorPagina = 50;
+  const itensPorPagina = 30; // Ajustado para 30 itens por página para melhor performance no mobile
 
   // Foco automático no input quando a tela é montada
   useEffect(() => {
@@ -35,14 +37,20 @@ export default function ConsultaScreen({ navigation }) {
 
   const realizarBusca = async () => {
     if (busca.trim().length < 2) return;
-
+    
+    setCarregando(true);
     try {
+      console.log(`🔍 Iniciando busca por: "${busca}"`);
       const resultado = await buscarConsultaEstoque(busca);
+      console.log(`✅ Busca concluída: ${resultado.length} resultados encontrados`);
+      
       setDados(resultado);
       setPaginaAtual(1);
       setTotalPaginas(Math.ceil(resultado.length / itensPorPagina));
     } catch (err) {
       console.error('Erro ao buscar dados:', err);
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -82,7 +90,9 @@ export default function ConsultaScreen({ navigation }) {
         onClear={limparBusca}
       />
       <View style={{ flex: 1, marginTop: dados.length > 0 ? 8 : 60 }}>
-        {dados.length === 0 ? (
+        {carregando ? (
+          <Loading />
+        ) : dados.length === 0 ? (
           <EmptyState texto="Digite ou bipe para pesquisar um produto." />
         ) : (
           <>
@@ -92,7 +102,7 @@ export default function ConsultaScreen({ navigation }) {
         )}
       </View>
 
-      {dados.length > 0 && (
+      {dados.length > 0 && !carregando && (
         <PaginacaoConsulta
           paginaAtual={paginaAtual}
           totalPaginas={totalPaginas}
@@ -102,6 +112,8 @@ export default function ConsultaScreen({ navigation }) {
           inputPagina={inputPagina}
           setInputPagina={setInputPagina}
           irParaPagina={irParaPagina}
+          totalItens={dados.length}
+          itensPorPagina={itensPorPagina}
         />
       )}
     </SafeAreaView>
@@ -111,7 +123,7 @@ export default function ConsultaScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     paddingTop: 40,
     paddingBottom: 30,
   },

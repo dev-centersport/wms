@@ -49,6 +49,7 @@ import {
 } from '../services/API';
 import CamposTransferencia from '../components/CamposTransferencia';
 import Sidebar from '../components/Sidebar';
+import { useAuth } from '../contexts/AuthContext';
 
 
 interface Item {

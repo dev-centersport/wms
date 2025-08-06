@@ -3,25 +3,49 @@ import { api, tratarErro } from "./config";
 // ---------- CONSULTA DE ESTOQUE ----------
 export async function buscarConsultaEstoque(termoBusca) {
 	try {
-
 		console.log("🔍 Iniciando busca com termo:", termoBusca);
 		
+		let todosResultados = [];
+		let offset = 0;
+		const limite = 30; // Limite do backend
+		let temMaisResultados = true;
 
-		// Usar endpoint que não requer autenticação
-		if (termoBusca) {
-			response = await api.get(
-				`/produto-estoque/pesquisar?show=false&search=${termoBusca}`
-			);
-		} else {
-			response = await api.get(`/produto-estoque/pesquisar?show=false`);
+		// Buscar todos os resultados fazendo múltiplas requisições
+		while (temMaisResultados) {
+			console.log(`📥 Buscando página ${Math.floor(offset / limite) + 1} (offset: ${offset})`);
+			
+			let response;
+			if (termoBusca) {
+				response = await api.get(
+					`/produto-estoque/pesquisar?show=false&search=${termoBusca}&offset=${offset}`
+				);
+			} else {
+				response = await api.get(`/produto-estoque/pesquisar?show=false&offset=${offset}`);
+			}
+
+			const resultadosPagina = response.data.results || response.data || [];
+			console.log(`📦 Resultados da página ${Math.floor(offset / limite) + 1}:`, resultadosPagina.length);
+
+			if (resultadosPagina.length === 0) {
+				// Não há mais resultados
+				temMaisResultados = false;
+			} else {
+				todosResultados = [...todosResultados, ...resultadosPagina];
+				
+				// Se retornou menos que o limite, chegamos ao fim
+				if (resultadosPagina.length < limite) {
+					temMaisResultados = false;
+				} else {
+					offset += limite;
+				}
+			}
 		}
 
-		const resultados = response.data.results || response.data || [];
-		console.log("📦 Total de resultados brutos:", resultados.length);
+		console.log("📦 Total de resultados carregados:", todosResultados.length);
 
 		// Filtrar localmente se houver termo de busca
 		const dadosFiltrados = termoBusca
-			? resultados.filter((item) => {
+			? todosResultados.filter((item) => {
 					const searchTerm = termoBusca.toLowerCase();
 					
 					// Buscar por: produto (descrição, SKU, EAN) OU localização (nome, EAN)
@@ -37,7 +61,7 @@ export async function buscarConsultaEstoque(termoBusca) {
 					
 					return matchProduto || matchLocalizacao;
 			  })
-			: resultados;
+			: todosResultados;
 
 		console.log("✅ Resultados filtrados:", dadosFiltrados.length);
 

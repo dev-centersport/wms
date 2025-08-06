@@ -15,9 +15,48 @@ export default function BotoesAcoes({ onSalvar, onCancelar }) {
 }
 
 const styles = StyleSheet.create({
-  botoesFixos: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 50 },
-  btnSalvar: { backgroundColor: '#4CAF50', paddingVertical: 16, flex: 1, marginRight: 8, borderRadius: 6, alignItems: 'center' },
-  btnCancelar: { borderColor: '#4CAF50', borderWidth: 2, paddingVertical: 16, flex: 1, marginLeft: 8, borderRadius: 6, alignItems: 'center' },
-  salvarText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  cancelarText: { color: '#4CAF50', fontWeight: 'bold', fontSize: 16 },
+  botoesFixos: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginTop: 40,
+    paddingHorizontal: 4,
+  },
+  btnSalvar: { 
+    backgroundColor: '#28a745', 
+    paddingVertical: 16, 
+    flex: 1, 
+    marginRight: 8, 
+    borderRadius: 10, 
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  btnCancelar: { 
+    borderColor: '#dc3545', 
+    backgroundColor: '#ffffff',
+    borderWidth: 2, 
+    paddingVertical: 16, 
+    flex: 1, 
+    marginLeft: 8, 
+    borderRadius: 10, 
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  salvarText: { 
+    color: '#fff', 
+    fontWeight: '600', 
+    fontSize: 16 
+  },
+  cancelarText: { 
+    color: '#dc3545', 
+    fontWeight: '600', 
+    fontSize: 16 
+  },
 });

@@ -84,7 +84,7 @@ export default function Movimentacao() {
       }
 
       setlocalizacao_id(loc.localizacao_id);
-      setNomeLocalizacao(`${loc.nome} - ${loc.armazem}`);
+      setNomeLocalizacao(`${loc.armazem} - ${loc.nome}`);
       setTipoBloqueado(true);
       setEanLocalizacao('');
       const produtosExistentes = await buscarProdutosPorLocalizacaoDireto(loc.localizacao_id);
@@ -453,26 +453,40 @@ const screenHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
   content: {
     flex: 1,
     padding: 16,
   },
   resumoSKUs: {
-    marginTop: 10,
+    marginTop: 8,
     marginBottom: 6,
     alignItems: 'flex-end',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
   totalTexto: {
-    fontWeight: 'bold',
-    fontSize: 14,
-    color: '#333',
+    fontWeight: '600',
+    fontSize: 15,
+    color: '#495057',
   },
   listaContainer: {
-    flex: 0.85,
+    flex: 0.9,
     borderTopWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 10,
+    borderColor: '#dee2e6',
+    marginBottom: 12,
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    marginTop: 4,
   },
 });

@@ -11,9 +11,8 @@ import {
   Keyboard,
   LayoutAnimation,
   UIManager,
-
   ActivityIndicator,
-
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';

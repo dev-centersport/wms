@@ -23,6 +23,8 @@ export default function PaginacaoConsulta({
   inputPagina,
   setInputPagina,
   irParaPagina,
+  totalItens,
+  itensPorPagina,
 }) {
   const [scaleValue] = useState(new Animated.Value(1));
 
@@ -202,6 +204,11 @@ export default function PaginacaoConsulta({
           <Text style={styles.infoText}>
             Página {paginaAtual} de {totalPaginas}
           </Text>
+          {totalItens && (
+            <Text style={styles.infoSubText}>
+              {totalItens} itens no total
+            </Text>
+          )}
         </View>
 
         {/* Controles de navegação */}
@@ -308,11 +315,16 @@ export default function PaginacaoConsulta({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    borderTopColor: '#dee2e6',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 4,
   },
   infoContainer: {
     alignItems: 'center',
@@ -322,6 +334,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6c757d',
     fontWeight: '500',
+  },
+  infoSubText: {
+    fontSize: 11,
+    color: '#adb5bd',
+    fontWeight: '400',
+    marginTop: 2,
   },
   paginationContainer: {
     flexDirection: 'row',
