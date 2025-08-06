@@ -114,7 +114,7 @@ const Localizacao: React.FC = () => {
     while (todasLocalizacoes.length < total) {
       const res = await buscarLocalizacoes(limite, offset);
       todasLocalizacoes.push(...res.results);
-      total = res.total.total_itens;
+      total = res.total;
       offset += limite;
     }
 
