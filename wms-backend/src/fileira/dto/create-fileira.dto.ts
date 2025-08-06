@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateFileiraDto {
   @IsString()
@@ -6,7 +6,9 @@ export class CreateFileiraDto {
   @MaxLength(100)
   nome: string;
 
-  @IsString()
-  @IsNotEmpty()
-  geom: string;
+  @IsOptional()
+  geom?: {
+    type: 'Polygon';
+    coordinates: number[][][];
+  };
 }
