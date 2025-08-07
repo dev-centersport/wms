@@ -147,7 +147,7 @@ export default function Movimentacao() {
     if (tipo === 'saida') {
       const payload = {
         tipo,
-        usuario_id: user?.usuario_id || 1, // 🔒 Usando o ID do usuário autenticado
+        usuario_id: user?.usuario_id,
         localizacao_origem_id: localizacao_id,
         localizacao_destino_id: 0,
         itens_movimentacao: agruparProdutos(produtos),
@@ -237,9 +237,16 @@ export default function Movimentacao() {
       console.log(`➡️ localizacao_destino_id (${typeof localizacao_destino_id}):`, localizacao_destino_id);
 
       // 🧾 Payload final
+      // 🔒 Busca o ID do usuário do contexto de autenticação
+      const usuario_id = user?.usuario_id;
+      if (!usuario_id) {
+        Alert.alert('Erro', 'Usuário não autenticado. Faça login novamente.');
+        return;
+      }
+
       const payload = {
         tipo,
-        usuario_id: user?.usuario_id || 1, // 🔒 Usando o ID do usuário autenticado
+        usuario_id,
         localizacao_origem_id,
         localizacao_destino_id,
         itens_movimentacao: itensAgrupados,
