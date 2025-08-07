@@ -1,13 +1,14 @@
 // componentes/Consulta/SearchBarConsulta.js
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View, TextInput, StyleSheet, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function SearchBarConsulta({ value, onChange, onSubmit }) {
+const SearchBarConsulta = forwardRef(({ value, onChange, onSubmit }, ref) => {
   return (
     <View style={styles.searchContainer}>
       <Ionicons name="search" size={18} color="#444" style={styles.icon} />
       <TextInput
+        ref={ref}
         placeholder="Buscar por Nome, SKU ou EAN"
         style={styles.searchInput}
         value={value}
@@ -21,7 +22,11 @@ export default function SearchBarConsulta({ value, onChange, onSubmit }) {
       />
     </View>
   );
-}
+});
+
+SearchBarConsulta.displayName = 'SearchBarConsulta';
+
+export default SearchBarConsulta;
 
 const styles = StyleSheet.create({
   searchContainer: {

@@ -1,5 +1,5 @@
 // screens/ConsultaScreen.js
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { buscarConsultaEstoque } from '../api/consultaAPI';
@@ -18,8 +18,19 @@ export default function ConsultaScreen({ navigation }) {
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [inputPagina, setInputPagina] = useState('');
   const [modalVisivel, setModalVisivel] = useState(false);
+  
+  const searchInputRef = useRef(null);
 
   const itensPorPagina = 50;
+
+  // Focus automático no input de pesquisa quando a tela carrega
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const realizarBusca = async () => {
     if (busca.trim().length < 2) return;
@@ -51,7 +62,7 @@ export default function ConsultaScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <HeaderConsulta onClose={() => navigation.goBack()} />
-      <SearchBarConsulta value={busca} onChange={setBusca} onSubmit={realizarBusca} />
+      <SearchBarConsulta ref={searchInputRef} value={busca} onChange={setBusca} onSubmit={realizarBusca} />
       <View style={{ flex: 1, marginTop: dados.length > 0 ? 8 : 60 }}>
         {dados.length === 0 ? (
           <EmptyState texto="Digite e pressione Enter para pesquisar um produto." />
