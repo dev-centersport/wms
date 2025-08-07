@@ -10,6 +10,7 @@ import SearchBarConsulta from '../componentes/Consulta/SearchBarConsulta';
 import { TableHeader, TableBody } from '../componentes/Consulta/TableConsulta';
 import PaginacaoConsulta from '../componentes/Consulta/PaginacaoConsulta';
 import EmptyState from '../componentes/Consulta/EmptyState';
+import Loading from '../components/Loading';
 
 export default function ConsultaScreen({ navigation }) {
   const [busca, setBusca] = useState('');
@@ -18,10 +19,11 @@ export default function ConsultaScreen({ navigation }) {
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [inputPagina, setInputPagina] = useState('');
   const [modalVisivel, setModalVisivel] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   
   const searchInputRef = useRef(null);
 
-  const itensPorPagina = 50;
+  const itensPorPagina = 30; // Ajustado para 30 itens por página para melhor performance no mobile
 
   // Focus automático no input de pesquisa quando a tela carrega
   useEffect(() => {
@@ -34,14 +36,31 @@ export default function ConsultaScreen({ navigation }) {
 
   const realizarBusca = async () => {
     if (busca.trim().length < 2) return;
-
+    
+    setCarregando(true);
     try {
+      console.log(`🔍 Iniciando busca por: "${busca}"`);
       const resultado = await buscarConsultaEstoque(busca);
+      console.log(`✅ Busca concluída: ${resultado.length} resultados encontrados`);
+      
       setDados(resultado);
       setPaginaAtual(1);
       setTotalPaginas(Math.ceil(resultado.length / itensPorPagina));
     } catch (err) {
       console.error('Erro ao buscar dados:', err);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const limparBusca = () => {
+    setBusca('');
+    setDados([]);
+    setPaginaAtual(1);
+    setTotalPaginas(1);
+    // Foca novamente no input após limpar
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
     }
   };
 
@@ -62,10 +81,18 @@ export default function ConsultaScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <HeaderConsulta onClose={() => navigation.goBack()} />
-      <SearchBarConsulta ref={searchInputRef} value={busca} onChange={setBusca} onSubmit={realizarBusca} />
+      <SearchBarConsulta 
+        ref={searchInputRef}
+        value={busca} 
+        onChange={setBusca} 
+        onSubmit={realizarBusca}
+        onClear={limparBusca}
+      />
       <View style={{ flex: 1, marginTop: dados.length > 0 ? 8 : 60 }}>
-        {dados.length === 0 ? (
-          <EmptyState texto="Digite e pressione Enter para pesquisar um produto." />
+        {carregando ? (
+          <Loading />
+        ) : dados.length === 0 ? (
+          <EmptyState texto="Digite ou bipe para pesquisar um produto." />
         ) : (
           <>
             <TableHeader />
@@ -74,7 +101,7 @@ export default function ConsultaScreen({ navigation }) {
         )}
       </View>
 
-      {dados.length > 0 && (
+      {dados.length > 0 && !carregando && (
         <PaginacaoConsulta
           paginaAtual={paginaAtual}
           totalPaginas={totalPaginas}
@@ -84,6 +111,8 @@ export default function ConsultaScreen({ navigation }) {
           inputPagina={inputPagina}
           setInputPagina={setInputPagina}
           irParaPagina={irParaPagina}
+          totalItens={dados.length}
+          itensPorPagina={itensPorPagina}
         />
       )}
     </SafeAreaView>
@@ -93,7 +122,7 @@ export default function ConsultaScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     paddingTop: 40,
     paddingBottom: 30,
   },
