@@ -30,10 +30,10 @@ import {
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
-import { buscarPerfis, excluirPerfil, Perfil } from '../services/API';
+import { buscarPerfis, excluirPerfil, Perfil, PerfilBackend } from '../services/API';
 
 export default function PerfilUsuario() {
-  const [perfis, setPerfis] = useState<Perfil[]>([]);
+  const [perfis, setPerfis] = useState<PerfilBackend[]>([]);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -53,46 +53,30 @@ export default function PerfilUsuario() {
       setPerfis(data);
     } catch (error) {
       // Dados de exemplo para demonstração
-      const perfisExemplo = [
+      const perfisExemplo: PerfilBackend[] = [
         {
           perfil_id: 1,
           nome: 'Administrador',
           descricao: 'Acesso completo ao sistema com todas as permissões',
-          pode_ver: true,
-          pode_add: true,
-          pode_edit: true,
-          pode_delete: true,
-          usuarios_count: 3,
+          permissoes: [],
         },
         {
           perfil_id: 2,
           nome: 'Separador',
           descricao: 'Perfil para separação e expedição de produtos',
-          pode_ver: true,
-          pode_add: true,
-          pode_edit: true,
-          pode_delete: false,
-          usuarios_count: 8,
+          permissoes: [],
         },
         {
           perfil_id: 3,
           nome: 'Auditor',
           descricao: 'Apenas visualização e auditoria de dados',
-          pode_ver: true,
-          pode_add: false,
-          pode_edit: false,
-          pode_delete: false,
-          usuarios_count: 2,
+          permissoes: [],
         },
         {
           perfil_id: 4,
           nome: 'Operador',
           descricao: 'Operações básicas de movimentação',
-          pode_ver: true,
-          pode_add: false,
-          pode_edit: true,
-          pode_delete: false,
-          usuarios_count: 5,
+          permissoes: [],
         },
       ];
       setPerfis(perfisExemplo);
@@ -114,7 +98,7 @@ export default function PerfilUsuario() {
     }
   };
 
-  const handleEdit = (perfil: Perfil) => {
+  const handleEdit = (perfil: PerfilBackend) => {
     navigate('/perfil-usuario/editar', { state: { perfil } });
   };
 
@@ -122,17 +106,25 @@ export default function PerfilUsuario() {
     navigate('/perfil-usuario/criar');
   };
 
-  const getStatusColor = (perfil: Perfil) => {
-    if (perfil.pode_add && perfil.pode_edit && perfil.pode_delete) return 'success';
-    if (perfil.pode_add && perfil.pode_edit) return 'warning';
-    if (perfil.pode_ver) return 'info';
+  const getStatusColor = (perfil: PerfilBackend) => {
+    const temPermissaoCompleta = perfil.permissoes.some(p => p.pode_incluir && p.pode_editar && p.pode_excluir);
+    const temPermissaoEdicao = perfil.permissoes.some(p => p.pode_editar);
+    const temPermissaoVisualizacao = perfil.permissoes.length > 0;
+    
+    if (temPermissaoCompleta) return 'success';
+    if (temPermissaoEdicao) return 'warning';
+    if (temPermissaoVisualizacao) return 'info';
     return 'default';
   };
 
-  const getStatusText = (perfil: Perfil) => {
-    if (perfil.pode_add && perfil.pode_edit && perfil.pode_delete) return 'Completo';
-    if (perfil.pode_add && perfil.pode_edit) return 'Edição';
-    if (perfil.pode_ver) return 'Visualização';
+  const getStatusText = (perfil: PerfilBackend) => {
+    const temPermissaoCompleta = perfil.permissoes.some(p => p.pode_incluir && p.pode_editar && p.pode_excluir);
+    const temPermissaoEdicao = perfil.permissoes.some(p => p.pode_editar);
+    const temPermissaoVisualizacao = perfil.permissoes.length > 0;
+    
+    if (temPermissaoCompleta) return 'Completo';
+    if (temPermissaoEdicao) return 'Edição';
+    if (temPermissaoVisualizacao) return 'Visualização';
     return 'Restrito';
   };
 
@@ -249,7 +241,7 @@ export default function PerfilUsuario() {
                       </TableCell>
                       <TableCell align="center">
                         <Typography variant="body2" fontWeight={600} color="#2c3e50">
-                          {perfil.usuarios_count ?? 0}
+                          {perfil.permissoes.length}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -285,7 +277,7 @@ export default function PerfilUsuario() {
                           <Tooltip title="Excluir perfil">
                             <IconButton
                               onClick={() => handleDelete(perfil.perfil_id, perfil.nome)}
-                              disabled={(perfil.usuarios_count ?? 0) > 0}
+                              disabled={perfil.permissoes.length > 0}
                               sx={{
                                 color: '#f44336',
                                 backgroundColor: 'rgba(244, 67, 54, 0.1)',

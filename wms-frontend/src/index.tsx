@@ -33,9 +33,11 @@ import Usuarios from "./pages/Usuarios";
 import CriarUsuario from "./pages/CriarUsuario"
 import PerfilUsuario from "./pages/PerfilUsuario";
 import CriarPerfilUsuario from "./pages/CriarPerfilUsuario";
+import VisualizarPerfilUsuario from "./pages/VisualizarPerfilUsuario";
 import Dashboard from "./pages/Dashboard";
 
 import theme from './components/Theme';
+import { inicializarPermissoesPadrao } from './utils/permissoes-inicializacao';
 
 // Componente para rotas protegidas
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -73,6 +75,11 @@ const container = document.getElementById("root");
 if (!container) throw new Error("Elemento root não encontrado no HTML.");
 
 const root = createRoot(container);
+
+// Inicializar permissões padrão quando o app carregar
+inicializarPermissoesPadrao().catch(error => {
+  console.warn('Não foi possível inicializar permissões padrão:', error);
+});
 
 root.render(
   <React.StrictMode>
@@ -225,6 +232,11 @@ root.render(
           <Route path="/perfil-usuario/editar" element={
             <ProtectedRoute>
               <CriarPerfilUsuario />
+            </ProtectedRoute>
+          } />
+          <Route path="/perfil-usuario/visualizar" element={
+            <ProtectedRoute>
+              <VisualizarPerfilUsuario />
             </ProtectedRoute>
           } />
 

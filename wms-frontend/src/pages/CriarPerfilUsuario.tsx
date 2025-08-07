@@ -29,7 +29,14 @@ import {
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { criarPerfil, atualizarPerfil, Perfil } from '../services/API';
+import { 
+  criarPerfil, 
+  atualizarPerfil, 
+  buscarPermissoes, 
+  definirPermissoesDoPerfil,
+  PermissaoBackend,
+  PerfilBackend 
+} from '../services/API';
 
 interface ModuloPermissao {
   nome: string;
@@ -49,6 +56,8 @@ export default function CriarPerfilUsuario() {
     descricao: isEditing?.descricao || '',
   });
   const [permissoes, setPermissoes] = useState<ModuloPermissao[]>([]);
+  const [permissoesBackend, setPermissoesBackend] = useState<PermissaoBackend[]>([]);
+  const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -59,28 +68,43 @@ export default function CriarPerfilUsuario() {
     inicializarPermissoes();
   }, []);
 
-  const inicializarPermissoes = () => {
-    const modulos = [
-      { nome: 'modulo', label: 'Módulo' },
-      { nome: 'armazem', label: 'Armazém' },
-      { nome: 'tipo_localizacao', label: 'Tipo Localização' },
-      { nome: 'localizacao', label: 'Localização' },
-      { nome: 'movimentacao', label: 'Movimentação' },
-      { nome: 'transferencia', label: 'Transferência' },
-      { nome: 'ocorrencia', label: 'Ocorrência' },
-      { nome: 'auditoria', label: 'Auditoria' },
-      { nome: 'relatorios', label: 'Relatórios' },
-      { nome: 'usuarios', label: 'Usuários' },
-    ];
+  const inicializarPermissoes = async () => {
+    try {
+      setLoading(true);
+      
+      // Buscar permissões do backend
+      const permissoesBackend = await buscarPermissoes();
+      setPermissoesBackend(permissoesBackend);
+      
+      const modulos = [
+        { nome: 'armazem', label: 'Armazém' },
+        { nome: 'tipo_localizacao', label: 'Tipo Localização' },
+        { nome: 'localizacao', label: 'Localização' },
+        { nome: 'movimentacao', label: 'Movimentação' },
+        { nome: 'transferencia', label: 'Transferência' },
+        { nome: 'ocorrencia', label: 'Ocorrência' },
+        { nome: 'auditoria', label: 'Auditoria' },
+        { nome: 'relatorio', label: 'Relatório' },
+        { nome: 'usuario', label: 'Usuário' },
+      ];
 
-    const permissoesIniciais = modulos.map(modulo => ({
-      nome: modulo.nome,
-      label: modulo.label,
-      pode_add: isEditing ? isEditing.pode_add : true,
-      pode_edit: isEditing ? isEditing.pode_edit : true,
-      pode_delete: isEditing ? isEditing.pode_delete : (modulo.nome === 'armazem' || modulo.nome === 'tipo_localizacao' ? false : true),
-    }));
-    setPermissoes(permissoesIniciais);
+      const permissoesIniciais = modulos.map(modulo => {
+        const permissaoBackend = permissoesBackend.find(p => p.modulo === modulo.nome);
+        return {
+          nome: modulo.nome,
+          label: modulo.label,
+          pode_add: isEditing ? (permissaoBackend?.pode_incluir || false) : true,
+          pode_edit: isEditing ? (permissaoBackend?.pode_editar || false) : true,
+          pode_delete: isEditing ? (permissaoBackend?.pode_excluir || false) : (modulo.nome === 'armazem' || modulo.nome === 'tipo_localizacao' ? false : true),
+        };
+      });
+      setPermissoes(permissoesIniciais);
+    } catch (error) {
+      console.error('Erro ao inicializar permissões:', error);
+      mostrarSnackbar('Erro ao carregar permissões', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -90,25 +114,45 @@ export default function CriarPerfilUsuario() {
     }
 
     try {
+      setLoading(true);
+      
+      let perfilCriado: PerfilBackend;
+      
       if (isEditing) {
+        // Atualizar perfil existente
         await atualizarPerfil(isEditing.perfil_id, {
           nome: formData.nome,
           descricao: formData.descricao,
-          pode_ver: true,
-          pode_add: permissoes.some(p => p.pode_add),
-          pode_edit: permissoes.some(p => p.pode_edit),
-          pode_delete: permissoes.some(p => p.pode_delete),
         });
+        
+        // Definir permissões do perfil
+        const permissaoIds = permissoes
+          .filter(p => p.pode_add || p.pode_edit || p.pode_delete)
+          .map(p => {
+            const permissaoBackend = permissoesBackend.find(pb => pb.modulo === p.nome);
+            return permissaoBackend?.permissao_id;
+          })
+          .filter(id => id !== undefined) as number[];
+        
+        await definirPermissoesDoPerfil(isEditing.perfil_id, permissaoIds);
         mostrarSnackbar('Perfil atualizado com sucesso!', 'success');
       } else {
-        await criarPerfil({
+        // Criar novo perfil
+        perfilCriado = await criarPerfil({
           nome: formData.nome,
           descricao: formData.descricao,
-          pode_ver: true,
-          pode_add: permissoes.some(p => p.pode_add),
-          pode_edit: permissoes.some(p => p.pode_edit),
-          pode_delete: permissoes.some(p => p.pode_delete),
         });
+        
+        // Definir permissões do perfil
+        const permissaoIds = permissoes
+          .filter(p => p.pode_add || p.pode_edit || p.pode_delete)
+          .map(p => {
+            const permissaoBackend = permissoesBackend.find(pb => pb.modulo === p.nome);
+            return permissaoBackend?.permissao_id;
+          })
+          .filter(id => id !== undefined) as number[];
+        
+        await definirPermissoesDoPerfil(perfilCriado.perfil_id, permissaoIds);
         mostrarSnackbar('Perfil criado com sucesso!', 'success');
       }
       
@@ -117,7 +161,10 @@ export default function CriarPerfilUsuario() {
         navigate('/perfil-usuario');
       }, 1500);
     } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
       mostrarSnackbar(`Erro ao ${isEditing ? 'atualizar' : 'criar'} perfil`, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -394,11 +441,15 @@ export default function CriarPerfilUsuario() {
           <Button
             variant="contained"
             onClick={handleSave}
+            disabled={loading}
             startIcon={<SaveIcon />}
             sx={{
               backgroundColor: '#4caf50',
               '&:hover': {
                 backgroundColor: '#45a049',
+              },
+              '&:disabled': {
+                backgroundColor: '#ccc',
               },
               px: 4,
               py: 1.5,
@@ -408,7 +459,7 @@ export default function CriarPerfilUsuario() {
               fontSize: '1rem',
             }}
           >
-            {isEditing ? 'Atualizar' : 'Salvar'}
+            {loading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Salvar')}
           </Button>
           <Button
             variant="outlined"

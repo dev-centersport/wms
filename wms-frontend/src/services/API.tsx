@@ -1046,7 +1046,7 @@ export interface Perfil {
   usuarios_count?: number;
 }
 
-export async function buscarPerfis(): Promise<Perfil[]> {
+export async function buscarPerfis(): Promise<PerfilBackend[]> {
   try {
     const response = await api.get('/perfil');
     return response.data;
@@ -1059,11 +1059,7 @@ export async function buscarPerfis(): Promise<Perfil[]> {
 export async function criarPerfil(dados: {
   nome: string;
   descricao?: string;
-  pode_ver?: boolean;
-  pode_add?: boolean;
-  pode_edit?: boolean;
-  pode_delete?: boolean;
-}): Promise<Perfil> {
+}): Promise<PerfilBackend> {
   try {
     const response = await api.post('/perfil', dados);
     return response.data;
@@ -1076,11 +1072,7 @@ export async function criarPerfil(dados: {
 export async function atualizarPerfil(id: number, dados: {
   nome: string;
   descricao?: string;
-  pode_ver?: boolean;
-  pode_add?: boolean;
-  pode_edit?: boolean;
-  pode_delete?: boolean;
-}): Promise<Perfil> {
+}): Promise<PerfilBackend> {
   try {
     const response = await api.patch(`/perfil/${id}`, dados);
     return response.data;
@@ -1132,5 +1124,107 @@ export async function cancelarAuditoria(auditoriaId: number) {
   } catch (error: any) {
     console.error('Erro ao cancelar auditoria:', error.message);
     throw new Error(error?.response?.data?.message || 'Falha ao cancelar a auditoria.');
+  }
+}
+
+// ========== PERMISSÕES ==========
+
+// Interface para permissão do backend
+export interface PermissaoBackend {
+  permissao_id: number;
+  modulo: 'armazem' | 'tipo_localizacao' | 'localizacao' | 'movimentacao' | 'transferencia' | 'ocorrencia' | 'auditoria' | 'relatorio' | 'usuario';
+  pode_incluir: boolean;
+  pode_editar: boolean;
+  pode_excluir: boolean;
+}
+
+// Interface para perfil do backend
+export interface PerfilBackend {
+  perfil_id: number;
+  nome: string;
+  descricao?: string;
+  permissoes: PermissaoBackend[];
+}
+
+// Buscar todas as permissões disponíveis
+export async function buscarPermissoes(): Promise<PermissaoBackend[]> {
+  try {
+    const response = await api.get('/permissao');
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar permissões:', error.message);
+    throw new Error('Falha ao carregar as permissões.');
+  }
+}
+
+// Buscar permissões por módulo
+export async function buscarPermissoesPorModulo(modulo: string): Promise<PermissaoBackend[]> {
+  try {
+    const response = await api.get(`/permissao/modulo/${modulo}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar permissões por módulo:', error.message);
+    throw new Error('Falha ao carregar as permissões do módulo.');
+  }
+}
+
+// Criar permissões padrão
+export async function criarPermissoesPadrao(): Promise<PermissaoBackend[]> {
+  try {
+    const response = await api.post('/permissao/criar-padrao');
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao criar permissões padrão:', error.message);
+    throw new Error('Falha ao criar permissões padrão.');
+  }
+}
+
+// Buscar perfil por ID com permissões
+export async function buscarPerfilPorId(id: number): Promise<PerfilBackend> {
+  try {
+    const response = await api.get(`/perfil/${id}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar perfil:', error.message);
+    throw new Error('Falha ao carregar o perfil.');
+  }
+}
+
+// Adicionar permissões ao perfil
+export async function adicionarPermissoesAoPerfil(perfilId: number, permissaoIds: number[]): Promise<PerfilBackend> {
+  try {
+    const response = await api.post(`/perfil/${perfilId}/permissoes`, {
+      permissao_ids: permissaoIds
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao adicionar permissões ao perfil:', error.message);
+    throw new Error('Falha ao adicionar permissões ao perfil.');
+  }
+}
+
+// Remover permissões do perfil
+export async function removerPermissoesDoPerfil(perfilId: number, permissaoIds: number[]): Promise<PerfilBackend> {
+  try {
+    const response = await api.delete(`/perfil/${perfilId}/permissoes`, {
+      data: { permissao_ids: permissaoIds }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao remover permissões do perfil:', error.message);
+    throw new Error('Falha ao remover permissões do perfil.');
+  }
+}
+
+// Definir permissões do perfil (substitui todas)
+export async function definirPermissoesDoPerfil(perfilId: number, permissaoIds: number[]): Promise<PerfilBackend> {
+  try {
+    const response = await api.patch(`/perfil/${perfilId}/permissoes`, {
+      permissao_ids: permissaoIds
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao definir permissões do perfil:', error.message);
+    throw new Error('Falha ao definir permissões do perfil.');
   }
 }

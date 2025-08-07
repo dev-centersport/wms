@@ -40,20 +40,15 @@ interface PermissaoGranularProps {
 }
 
 const modulos = [
-  { nome: 'dashboard', label: 'Dashboard', icon: '📊' },
   { nome: 'armazem', label: 'Armazém', icon: '🏢' },
   { nome: 'tipo_localizacao', label: 'Tipo Localização', icon: '📍' },
   { nome: 'localizacao', label: 'Localização', icon: '🗺️' },
-  { nome: 'produto', label: 'Produto', icon: '📦' },
-  { nome: 'consulta', label: 'Consulta', icon: '🔍' },
   { nome: 'movimentacao', label: 'Movimentação', icon: '🔄' },
   { nome: 'transferencia', label: 'Transferência', icon: '📤' },
-  { nome: 'separacao', label: 'Separação', icon: '📋' },
   { nome: 'ocorrencia', label: 'Ocorrência', icon: '⚠️' },
   { nome: 'auditoria', label: 'Auditoria', icon: '✅' },
-  { nome: 'relatorios', label: 'Relatórios', icon: '📈' },
-  { nome: 'usuarios', label: 'Usuários', icon: '👥' },
-  { nome: 'perfis', label: 'Perfis', icon: '🔐' },
+  { nome: 'relatorio', label: 'Relatório', icon: '📈' },
+  { nome: 'usuario', label: 'Usuário', icon: '👥' },
 ];
 
 export default function PermissaoGranular({ permissoes, onPermissaoChange, onSelectAll }: PermissaoGranularProps) {
