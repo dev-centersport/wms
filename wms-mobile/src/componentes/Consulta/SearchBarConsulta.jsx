@@ -23,10 +23,13 @@ const SearchBarConsulta = forwardRef(({ value, onChange, onSubmit }, ref) => {
       {value.length > 0 && (
         <TouchableOpacity
           style={styles.clearButton}
-          onPress={() => onChange('')}
+          onPress={() => {
+            onChange('');
+            ref.current?.focus();
+          }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="close-circle" size={18} color="#888" />
+          <Ionicons name="close-circle" size={22} color="#888" />
         </TouchableOpacity>
       )}
     </View>
@@ -63,6 +66,6 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     marginLeft: 8,
-    padding: 2,
+    padding: 4,
   },
 });
