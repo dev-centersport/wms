@@ -16,12 +16,14 @@ export default function ConsultaScreen({ navigation }) {
   const [dados, setDados] = useState([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
   const [inputPagina, setInputPagina] = useState('');
   const [modalVisivel, setModalVisivel] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   
   const searchInputRef = useRef(null);
 
-  const itensPorPagina = 50;
+  const itensPorPagina = 30; // Mesmo valor do backend
 
   // Focus automático no input de pesquisa quando a tela carrega
   useEffect(() => {
@@ -32,44 +34,60 @@ export default function ConsultaScreen({ navigation }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const realizarBusca = async () => {
+  const realizarBusca = async (pagina = 1) => {
     if (busca.trim().length < 2) return;
 
+    setCarregando(true);
     try {
-      const resultado = await buscarConsultaEstoque(busca);
-      setDados(resultado);
-      setPaginaAtual(1);
-      setTotalPaginas(Math.ceil(resultado.length / itensPorPagina));
+      const offset = (pagina - 1) * itensPorPagina;
+      const resultado = await buscarConsultaEstoque(busca, offset, itensPorPagina);
+      
+      setDados(resultado.results);
+      setTotalRegistros(resultado.total);
+      setPaginaAtual(pagina);
+      setTotalPaginas(Math.ceil(resultado.total / itensPorPagina));
     } catch (err) {
       console.error('Erro ao buscar dados:', err);
+      setDados([]);
+      setTotalRegistros(0);
+      setTotalPaginas(1);
+    } finally {
+      setCarregando(false);
     }
   };
 
-  const dadosPaginados = () => {
-    const inicio = (paginaAtual - 1) * itensPorPagina;
-    return dados.slice(inicio, inicio + itensPorPagina);
-  };
-
-  const irParaPagina = (numero) => {
+  const irParaPagina = async (numero) => {
     const n = parseInt(numero);
-    if (!isNaN(n) && n >= 1 && n <= totalPaginas) {
-      setPaginaAtual(n);
+    if (!isNaN(n) && n >= 1 && n <= totalPaginas && n !== paginaAtual) {
+      await realizarBusca(n);
     }
     setModalVisivel(false);
     setInputPagina('');
   };
 
+  const proximaPagina = async () => {
+    if (paginaAtual < totalPaginas) {
+      await realizarBusca(paginaAtual + 1);
+    }
+  };
+
+  const paginaAnterior = async () => {
+    if (paginaAtual > 1) {
+      await realizarBusca(paginaAtual - 1);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <HeaderConsulta onClose={() => navigation.goBack()} />
-      <SearchBarConsulta ref={searchInputRef} value={busca} onChange={setBusca} onSubmit={realizarBusca} />
+      <SearchBarConsulta ref={searchInputRef} value={busca} onChange={setBusca} onSubmit={() => realizarBusca(1)} />
       <View style={{ flex: 1, marginTop: dados.length > 0 ? 8 : 60 }}>
         {dados.length === 0 ? (
-          <EmptyState texto="Digite e pressione Enter para pesquisar um produto." />
+          <EmptyState texto={carregando ? "Carregando..." : "Digite e pressione Enter para pesquisar um produto."} />
         ) : (
           <>
             <TableHeader />
-            <TableBody data={dadosPaginados()} />
+            <TableBody data={dados} />
           </>
         )}
       </View>
@@ -84,6 +102,10 @@ export default function ConsultaScreen({ navigation }) {
           inputPagina={inputPagina}
           setInputPagina={setInputPagina}
           irParaPagina={irParaPagina}
+          proximaPagina={proximaPagina}
+          paginaAnterior={paginaAnterior}
+          totalRegistros={totalRegistros}
+          carregando={carregando}
         />
       )}
     </SafeAreaView>

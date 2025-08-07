@@ -11,32 +11,50 @@ export default function PaginacaoConsulta({
   inputPagina,
   setInputPagina,
   irParaPagina,
+  proximaPagina,
+  paginaAnterior,
+  totalRegistros,
+  carregando,
 }) {
   return (
     <>
       <View style={styles.pagination}>
         <TouchableOpacity
-          style={styles.pageBtn}
-          onPress={() => setPaginaAtual(Math.max(1, paginaAtual - 1))}>
-          <Text style={styles.pageText}>◀</Text>
+          style={[styles.pageBtn, carregando && styles.disabledBtn]}
+          onPress={paginaAnterior}
+          disabled={carregando || paginaAtual <= 1}>
+          <Text style={[styles.pageText, carregando && styles.disabledText]}>◀</Text>
         </TouchableOpacity>
 
-        <Text style={styles.pageText}>{paginaAtual}</Text>
+        <View style={styles.pageInfo}>
+          <Text style={styles.pageText}>
+            Página {paginaAtual} de {totalPaginas}
+          </Text>
+          <Text style={styles.totalText}>
+            Total: {totalRegistros} registros
+          </Text>
+        </View>
 
         {paginaAtual < totalPaginas - 2 && (
           <>
             <Text style={styles.pageText}>...</Text>
             <Text style={styles.pageText}>{totalPaginas}</Text>
-            <TouchableOpacity onPress={() => setModalVisivel(true)}>
-              <Ionicons name="ellipsis-horizontal" size={20} color="green" style={{ marginLeft: 5 }} />
+            <TouchableOpacity onPress={() => setModalVisivel(true)} disabled={carregando}>
+              <Ionicons 
+                name="ellipsis-horizontal" 
+                size={20} 
+                color={carregando ? "#ccc" : "green"} 
+                style={{ marginLeft: 5 }} 
+              />
             </TouchableOpacity>
           </>
         )}
 
         <TouchableOpacity
-          style={styles.pageBtn}
-          onPress={() => setPaginaAtual(Math.min(totalPaginas, paginaAtual + 1))}>
-          <Text style={styles.pageText}>▶</Text>
+          style={[styles.pageBtn, carregando && styles.disabledBtn]}
+          onPress={proximaPagina}
+          disabled={carregando || paginaAtual >= totalPaginas}>
+          <Text style={[styles.pageText, carregando && styles.disabledText]}>▶</Text>
         </TouchableOpacity>
       </View>
 
@@ -51,8 +69,14 @@ export default function PaginacaoConsulta({
               placeholder="Ex: 3"
               style={styles.modalInput}
             />
-            <TouchableOpacity style={styles.modalButton} onPress={() => irParaPagina(inputPagina)}>
-              <Text style={styles.modalButtonText}>Ir</Text>
+            <TouchableOpacity 
+              style={styles.modalButton} 
+              onPress={() => irParaPagina(inputPagina)}
+              disabled={carregando}
+            >
+              <Text style={styles.modalButtonText}>
+                {carregando ? "Carregando..." : "Ir"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -73,10 +97,25 @@ const styles = StyleSheet.create({
   pageBtn: {
     paddingHorizontal: 8,
   },
+  disabledBtn: {
+    opacity: 0.5,
+  },
+  pageInfo: {
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
   pageText: {
     fontSize: 14,
     marginHorizontal: 4,
     color: '#333',
+  },
+  disabledText: {
+    color: '#ccc',
+  },
+  totalText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
