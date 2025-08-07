@@ -237,13 +237,7 @@ const Consulta: React.FC = () => {
               </TableCell>
 
               <TableCell align="center" sortDirection={orderBy === 'sku' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'sku'}
-                  direction={orderBy === 'sku' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('sku')}
-                >
-                  <strong>SKU</strong>
-                </TableSortLabel>
+                <strong>SKU</strong>
               </TableCell>
 
               <TableCell align="center">
