@@ -24,21 +24,35 @@ export class TimezoneInterceptor implements NestInterceptor {
       return this.toSaoPauloTimezone(data);
     }
 
+    if (Array.isArray(data)) {
+      return data.map((item) => this.convertDates(item));
+    }
+
     if (typeof data === 'object') {
-      Object.keys(data).forEach((key) => {
-        if (data[key] instanceof Date) {
-          data[key] = this.toSaoPauloTimezone(data[key]);
-        } else if (typeof data[key] === 'object') {
-          this.convertDates(data[key]);
+      const converted = { ...data };
+      Object.keys(converted).forEach((key) => {
+        if (converted[key] instanceof Date) {
+          converted[key] = this.toSaoPauloTimezone(converted[key]);
+        } else if (
+          typeof converted[key] === 'object' &&
+          converted[key] !== null
+        ) {
+          converted[key] = this.convertDates(converted[key]);
         }
       });
+      return converted;
     }
 
     return data;
   }
 
   private toSaoPauloTimezone(date: Date): string {
-    return new Date(date.getTime() - 3 * 60 * 60 * 1000).toISOString();
-    // Ou use bibliotecas como date-fns-tz para mais precisão
+    // Converte para timezone de São Paulo (UTC-3)
+    const saoPauloOffset = -3 * 60; // -3 horas em minutos
+    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+    const saoPauloTime = new Date(utc + saoPauloOffset * 60000);
+
+    // Retorna no formato ISO com timezone
+    return saoPauloTime.toISOString();
   }
 }
