@@ -136,7 +136,12 @@ const Consulta: React.FC = () => {
   };
 
   return (
-    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage}>
+    <Layout 
+      title="Consulta"
+      totalPages={totalPages} 
+      currentPage={currentPage} 
+      onPageChange={setCurrentPage}
+    >
       <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
         Consulta
       </Typography>

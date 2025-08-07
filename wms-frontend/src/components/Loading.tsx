@@ -3,22 +3,42 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 
 interface LoadingProps {
   message?: string;
+  size?: number;
 }
 
-const Loading: React.FC<LoadingProps> = ({ message = 'Carregando...' }) => {
+const Loading: React.FC<LoadingProps> = ({ 
+  message = 'Carregando...', 
+  size = 40 
+}) => {
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh',
-        backgroundColor: '#f5f5f5',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#f8f9fa',
+        gap: 2,
       }}
     >
-      <CircularProgress size={60} sx={{ color: '#61de27', mb: 2 }} />
-      <Typography variant="h6" color="text.secondary">
+      <CircularProgress 
+        size={size} 
+        sx={{ 
+          color: '#61DE25',
+          '& .MuiCircularProgress-circle': {
+            strokeLinecap: 'round',
+          },
+        }} 
+      />
+      <Typography
+        variant="body1"
+        sx={{
+          color: '#666',
+          fontWeight: 500,
+          textAlign: 'center',
+        }}
+      >
         {message}
       </Typography>
     </Box>

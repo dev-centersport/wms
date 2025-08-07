@@ -39,6 +39,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Layout from '../components/Layout';
+import Header from '../components/Header';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import axios from 'axios';
@@ -535,6 +536,21 @@ const Movimentacao: React.FC = () => {
   // ---------- UI ----------
   return (
     <Sidebar gavetaAberta={!!eanLocalizacaoAberta}>
+      <Box sx={{ 
+        display: 'flex', 
+        minHeight: '100vh', 
+        flexDirection: 'column',
+        position: 'relative'
+      }}>
+        {/* Header com informações do usuário e logout */}
+        <Header title={tipo === 'transferencia' ? 'Transferência de Estoque' : 'Movimentação de Estoque'} />
+        
+        <Box sx={{ 
+          flex: 1, 
+          p: 3,
+          overflow: 'auto',
+          backgroundColor: '#f8f9fa',
+        }}>
       <Box sx={{ width: '100%', maxWidth: '1400px', mx: 'auto', p: 2 }}>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -985,6 +1001,7 @@ const Movimentacao: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
+        </Box>
       </Box>
     </Sidebar>
   );

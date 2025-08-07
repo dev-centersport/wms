@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import CustomPagination from './CustomPagination';
-
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +12,7 @@ interface LayoutProps {
   onPageChange?: (page: number) => void;
   itemsPerPage?: number;
   onItemsPerPageChange?: (size: number) => void;
+  title?: string;
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -22,6 +23,7 @@ const Layout: React.FC<LayoutProps> = ({
   onPageChange = () => {},
   itemsPerPage = 50,
   onItemsPerPageChange,
+  title,
 }) => {
   return (
     <Sidebar>
@@ -31,10 +33,14 @@ const Layout: React.FC<LayoutProps> = ({
         flexDirection: 'column',
         position: 'relative'
       }}>
+        {/* Header com informações do usuário e logout */}
+        <Header title={title} />
+        
         <Box sx={{ 
           flex: 1, 
           p: 3,
-          overflow: 'auto'
+          overflow: 'auto',
+          backgroundColor: '#f8f9fa',
         }}>
           {children}
         </Box>
