@@ -66,6 +66,18 @@ export class MovimentacaoService {
       );
     }
 
+    if (!localOrigem && CreateMovimentacaoDto.localizacao_origem_id !== 0) {
+      throw new NotFoundException(
+        `Localizacao origem com o ID ${CreateMovimentacaoDto.localizacao_origem_id} não encontrado`,
+      );
+    }
+
+    if (!localDestino && CreateMovimentacaoDto.localizacao_destino_id !== 0) {
+      throw new NotFoundException(
+        `Localizacao destino com o ID ${CreateMovimentacaoDto.localizacao_destino_id} não encontrado`,
+      );
+    }
+
     // Cache para produtos do estoque da origem (evita queries duplicadas)
     let produtosEstoqueOrigemCache: ProdutoEstoque[] | null = null;
 
