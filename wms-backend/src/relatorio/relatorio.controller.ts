@@ -19,4 +19,9 @@ export class RelatorioController {
   gerarRelatorioAuditoria() {
     return this.relatorioService.gerarRelatorioAuditoria();
   }
+
+  @Get('gerar-reposicao')
+  gerarReposicao() {
+    return this.relatorioService.gerarReposicao();
+  }
 }
