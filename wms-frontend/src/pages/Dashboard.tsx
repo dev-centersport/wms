@@ -173,7 +173,7 @@ export default function Dashboard() {
       };
 
   return (
-    <Layout title="Dashboard">
+    <Layout>
       <Box sx={{ p: 3 }}>
         {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>

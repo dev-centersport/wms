@@ -1222,14 +1222,7 @@ const Localizacao: React.FC = () => {
 
 
   return (
-    <Layout 
-      title="Localização"
-      totalPages={totalPages} 
-      currentPage={currentPage} 
-      onPageChange={setCurrentPage} 
-      itemsPerPage={itemsPerPage} 
-      onItemsPerPageChange={setItemsPerPage}
-    >
+    <Layout totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage}>
 
       <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
         Localização

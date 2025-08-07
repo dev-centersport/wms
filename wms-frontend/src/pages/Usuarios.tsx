@@ -92,12 +92,7 @@ export default function Usuarios() {
     const exibidos = filtrado.slice((paginaAtual - 1) * ITEMS_PER_PAGE, paginaAtual * ITEMS_PER_PAGE);
 
     return (
-        <Layout 
-            title="Usuários"
-            totalPages={totalPaginas} 
-            currentPage={paginaAtual} 
-            onPageChange={setPaginaAtual}
-        >
+        <Layout totalPages={totalPaginas} currentPage={paginaAtual} onPageChange={setPaginaAtual}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" fontWeight={600}>Usuários</Typography>
             </Box>

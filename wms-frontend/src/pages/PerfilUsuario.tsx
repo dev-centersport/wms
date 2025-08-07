@@ -133,7 +133,7 @@ export default function PerfilUsuario() {
   };
 
   return (
-    <Layout title="Perfis de Usuário">
+    <Layout>
       <Box sx={{ 
         p: 3, 
         backgroundColor: '#f8f9fa',

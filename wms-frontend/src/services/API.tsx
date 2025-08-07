@@ -29,28 +29,19 @@ api.interceptors.response.use(
     const newToken = response.headers['x-new-token'];
     if (newToken) {
       Cookies.set('token', newToken, { expires: 1 });
-      console.log('✅ Token renovado automaticamente');
+      console.log('Token renovado automaticamente');
     }
-    console.log(`✅ ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
       // Token expirado ou inválido
-      console.log('🔒 Token expirado detectado no interceptor');
+      console.log('Token expirado detectado no interceptor');
       Cookies.remove('token');
       
-      // Redireciona para login se não estiver já na página de login
-      if (window.location.pathname !== '/login') {
-        console.log('🔄 Redirecionando para tela de login...');
-        window.location.href = '/login';
-      }
+      // Evita redirecionamento múltiplo e deixa o componente tratar o erro
+      // O redirecionamento será feito pelo ProtectedRoute ou pelos componentes
     }
-    console.error('❌ Erro na resposta:', {
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message,
-      url: error.config?.url,
-    });
     return Promise.reject(error);
   }
 );

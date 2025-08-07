@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { buscarPerfilUsuario, logoutBackend, removerToken } from '../services/authService';
+import Cookies from 'js-cookie';
+import api from '../services/API';
 
 interface User {
   usuario_id: number;
@@ -37,26 +38,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Verifica se há um token válido ao inicializar
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        // Tenta buscar o perfil do usuário para verificar se o token é válido
-        const userData = await buscarPerfilUsuario();
-        setUser({
-          usuario_id: userData.usuario_id,
-          usuario: userData.usuario,
-          nivel: userData.nivel || 1,
-          perfil: userData.perfil,
-        });
-      } catch (error: any) {
-        // Se der erro 401, limpa o token e redireciona
-        if (error.response?.status === 401) {
-          console.log('🔄 Token inválido, fazendo logout automático');
-          await removerToken();
+      const token = Cookies.get('token');
+      
+      if (token) {
+        try {
+          // Tenta buscar o perfil do usuário para verificar se o token é válido
+          const response = await api.get('/auth/profile');
+          setUser({
+            usuario_id: response.data.usuario_id,
+            usuario: response.data.usuario,
+            nivel: response.data.nivel || 1,
+            perfil: response.data.perfil,
+          });
+        } catch (error) {
+          // Se der erro 401, limpa o token e redireciona
+          console.log('Token inválido, fazendo logout automático');
+          Cookies.remove('token');
           setUser(null);
-          window.location.href = '/login';
         }
-      } finally {
-        setLoading(false);
       }
+      
+      setLoading(false);
     };
 
     checkAuth();
@@ -64,34 +66,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (usuario: string, senha: string) => {
     try {
-      // Limpar token anterior antes de fazer novo login
-      await removerToken();
+      const response = await api.post('/auth/login', { usuario, senha });
       
-      const response = await fetch('http://151.243.0.78:3001/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ usuario, senha }),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok && data.access_token) {
-        // Salvar token usando o serviço
-        const { salvarToken } = await import('../services/authService');
-        await salvarToken(data.access_token);
+      if (response.data.access_token) {
+        Cookies.set('token', response.data.access_token, { expires: 1 });
         
         setUser({
-          usuario_id: data.usuario_id,
-          usuario: data.usuario,
-          nivel: data.nivel,
-          perfil: data.perfil,
+          usuario_id: response.data.usuario_id,
+          usuario: response.data.usuario,
+          nivel: response.data.nivel,
+          perfil: response.data.perfil,
         });
         
         return { status: 200, message: 'Login realizado com sucesso!' };
       } else {
-        return { status: 401, message: data.message || 'Usuário ou senha inválidos' };
+        return { status: 401, message: 'Usuário ou senha inválidos' };
       }
     } catch (error: any) {
       if (error.response?.data?.message) {
@@ -104,12 +93,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       // Chama o endpoint de logout no backend para limpar o token no banco
-      await logoutBackend();
+      await api.post('/auth/logout');
     } catch (error) {
-      console.log('❌ Erro ao fazer logout no backend:', error);
+      console.log('Erro ao fazer logout no backend:', error);
     } finally {
       // Sempre limpa o token local e o estado do usuário
-      await removerToken();
+      Cookies.remove('token');
       setUser(null);
       window.location.href = '/login';
     }
