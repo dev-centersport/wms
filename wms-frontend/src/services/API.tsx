@@ -2,10 +2,10 @@ import axios from 'axios'
 import Ocorrencia from '../pages/NovaOcorrencia';
 import Cookies from 'js-cookie';
 
-const BASE_URL = 'http://151.243.0.78:3001';
+const BASE_URL = 'http://192.168.2.41:3005';
 
 const api = axios.create({
-  baseURL: 'http://151.243.0.78:3001', // ou a URL da sua API
+  baseURL: 'http://192.168.2.41:3005', // ou a URL da sua API
 });
 
 // Interceptor para adicionar token de autenticação automaticamente
@@ -280,7 +280,9 @@ export interface Localizacao {
   localizacao_id: number;
   nome: string;
   tipo: string;
+  tipo_localizacao_id: number;
   armazem: string;
+  armazem_id: number;
   ean: string;
   total_produtos: number;
 }
@@ -291,8 +293,10 @@ export const buscarLocalizacoes = async (
   busca: string = '',
   armazemId?: number,
   tipoId?: number,
-): Promise<{ results: Localizacao[]; total: number }> => {
+): Promise<{ results: Localizacao[]; total: any }> => {
   try {
+    console.log('Buscando localizações com parâmetros:', { limit, offset, busca, armazemId, tipoId });
+    
     const params = new URLSearchParams();
 
     params.set('limit', String(limit));
@@ -308,24 +312,30 @@ export const buscarLocalizacoes = async (
       params.set('tipoId', tipoId.toString());
     }
 
-    const res = await api.get<{ results: any[]; total: number }>(
+    console.log('URL params:', params.toString());
+
+    const res = await api.get<{ results: any[]; total: any }>(
       `/localizacao?${params.toString()}`
     );
+
+    console.log('Resposta da API:', res.data);
 
     const dados: Localizacao[] = res.data.results.map((item) => ({
       localizacao_id: item.localizacao_id,
       nome: item.nome,
-      tipo_localizacao_id: item.tipo?.tipo_localizacao_id ?? '',
+      tipo_localizacao_id: Number(item.tipo?.tipo_localizacao_id) || 0,
       tipo: item.tipo?.tipo ?? '',
-      armazem_id: item.armazem?.armazem_id ?? '',
+      armazem_id: Number(item.armazem?.armazem_id) || 0,
       armazem: item.armazem?.nome ?? '',
       ean: item.ean ?? '',
       total_produtos: item.total_produtos ?? 0,
     }));
 
+    console.log('Dados processados:', dados);
+
     return {
       results: dados,
-      total: res.data.total
+      total: res.data.total.total_itens
     };
   } catch (err) {
     console.error('Erro ao buscar localizações →', err);
@@ -576,6 +586,34 @@ export const buscarTiposDeLocalizacao = async (): Promise<TipoLocalizacao[]> => 
   } catch (err) {
     console.error('Erro ao buscar tipos de localização →', err);
     throw new Error('Falha ao carregar os tipos de localização do servidor.');
+  }
+};
+
+// Função para buscar filtros disponíveis para localizações
+export const buscarFiltrosLocalizacao = async (): Promise<{
+  armazens: { armazem_id: number; nome: string }[];
+  tipos: { tipo_localizacao_id: number; tipo: string }[];
+}> => {
+  try {
+    console.log('Buscando filtros de localização...');
+    const [armazensRes, tiposRes] = await Promise.all([
+      api.get<Armazem[]>('/armazem'),
+      api.get<TipoLocalizacao[]>('/tipo-localizacao')
+    ]);
+
+    console.log('Resposta armazéns:', armazensRes.data);
+    console.log('Resposta tipos:', tiposRes.data);
+
+    const result = {
+      armazens: armazensRes.data.map(a => ({ armazem_id: a.armazem_id, nome: a.nome })),
+      tipos: tiposRes.data.map(t => ({ tipo_localizacao_id: t.tipo_localizacao_id, tipo: t.tipo }))
+    };
+
+    console.log('Filtros processados:', result);
+    return result;
+  } catch (err) {
+    console.error('Erro ao buscar filtros de localização →', err);
+    throw new Error('Falha ao buscar filtros de localização.');
   }
 };
 

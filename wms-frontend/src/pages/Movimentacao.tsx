@@ -23,7 +23,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  TableContainer
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
@@ -83,7 +84,7 @@ const Movimentacao: React.FC = () => {
   const carregarTodasLocalizacoes = async () => {
     try {
       setLoadingOpt(true);
-      const response = await api.get('/localizacao?limit=3000');
+      const response = await api.get('/localizacao');
 
       const data = response.data;
       console.log('🔍 Resposta da API /localizacao:', data);
@@ -360,13 +361,19 @@ const Movimentacao: React.FC = () => {
   // ---------- UI ----------
   return (
     <Layout>
-      <Box sx={{ width: '100%', maxWidth: '1280px' }}>
-        <Typography variant="h4" fontWeight={600} mb={4}>
+      <Box sx={{ 
+        width: '100%', 
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h4" fontWeight={600} mb={4} textAlign="left" width="100%">
           {tipo === 'transferencia' ? 'Transferência de Estoque' : 'Movimentação de Estoque'}
         </Typography>
 
         {/* Seção de campos */}
-        <Box display="flex" flexDirection="column" gap={3} mb={5}>
+        <Box display="flex" flexDirection="column" gap={3} mb={5} sx={{ width: '100%' }}>
           {/* Tipo */}
           <FormControl fullWidth size="small">
             <InputLabel id="tipo-label">Tipo</InputLabel>
@@ -460,17 +467,19 @@ const Movimentacao: React.FC = () => {
           {tipo === 'transferencia' ? 'Produtos a serem movimentados' : 'Lista de Movimentação'}
         </Typography>
 
-        <Paper elevation={1} sx={{ mb: 5, borderRadius: 2 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 'auto', overflow: 'auto', mb: 5 }}>
+          <Table stickyHeader>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectAll}
-                    indeterminate={selectedItems.length > 0 && selectedItems.length < lista.length}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                </TableCell>
+              <TableRow>
+                {tipo !== 'transferencia' && (
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectAll}
+                      indeterminate={selectedItems.length > 0 && selectedItems.length < lista.length}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                    />
+                  </TableCell>
+                )}
 
                 {tipo === 'transferencia' ? (
                   <>
@@ -484,8 +493,10 @@ const Movimentacao: React.FC = () => {
                   </>
                 )}
                 <TableCell><strong>SKU</strong></TableCell>
-                <TableCell><strong>EAN</strong></TableCell>
-                <TableCell align="center"><strong>Ações</strong></TableCell>
+                <TableCell align='center'><strong>EAN</strong></TableCell>
+                {tipo !== 'transferencia' && (
+                  <TableCell align="center"><strong>Ações</strong></TableCell>
+                )}
               </TableRow>
             </TableHead>
 
@@ -493,17 +504,19 @@ const Movimentacao: React.FC = () => {
               {lista.map((item, index) => {
                 const isSelected = selectedItems.includes(index);
                 return (
-                  <TableRow key={`${item.ean}-${index}`} hover selected={isSelected}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={(e) => handleSelectItem(index, e.target.checked)}
-                      />
-                    </TableCell>
+                  <TableRow key={`${item.ean}-${index}`} hover>
+                    {tipo !== 'transferencia' && (
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={(e) => handleSelectItem(index, e.target.checked)}
+                        />
+                      </TableCell>
+                    )}
 
                     {tipo === 'transferencia' ? (
                       <>
-                        <TableCell>{item.quantidade ?? 1}</TableCell>
+                        <TableCell align='center'>{item.quantidade ?? 1}</TableCell>
                         <TableCell>{item.produto ?? item.ean}</TableCell>
                       </>
                     ) : (
@@ -516,27 +529,29 @@ const Movimentacao: React.FC = () => {
                     <TableCell>{item.sku}</TableCell>
                     <TableCell>{item.ean}</TableCell>
 
-                    <TableCell align="center">
-                      <Tooltip title="Editar">
-                        <IconButton onClick={() => handleEditar(item)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Excluir">
-                        <IconButton onClick={() => handleExcluir(index)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+                    {tipo !== 'transferencia' && (
+                      <TableCell align="center">
+                        <Tooltip title="Editar">
+                          <IconButton onClick={() => handleEditar(item)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir">
+                          <IconButton onClick={() => handleExcluir(index)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
-        </Paper>
+        </TableContainer>
 
         {/* Botões */}
-        <Box display="flex" justifyContent="flex-start" gap={4} mt={6} mb={4}>
+        <Box display="flex" justifyContent="center" gap={4} mt={6} mb={4}>
           <Button
             variant="contained"
             sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold', px: 4 }}
