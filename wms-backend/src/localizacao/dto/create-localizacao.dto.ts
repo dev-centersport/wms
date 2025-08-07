@@ -5,7 +5,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { StatusPrateleira } from '../entities/localizacao.entity';
+import { Posicao, StatusPrateleira } from '../entities/localizacao.entity';
 import { MedidaInsercao } from 'src/utils/decorator.medidas';
 import { idRelations } from 'src/utils/decorator.id.relations';
 
@@ -27,6 +27,16 @@ export class CreateLocalizacaoDto {
 
   @MedidaInsercao()
   comprimento?: number = 0;
+
+  @IsNotEmpty()
+  @IsEnum(Posicao)
+  posicao: Posicao;
+
+  @IsOptional()
+  geom?: {
+    type: 'Polygon';
+    coordinates: number[][][];
+  };
 
   // @IsOptional()
   // @Length(13, 13, { message: 'O EAN deve ter exatamente 13 caracteres' })

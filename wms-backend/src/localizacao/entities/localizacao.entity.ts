@@ -12,12 +12,18 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  Polygon,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 export enum StatusPrateleira {
   ABERTA = 'aberta',
   FECHADA = 'fechada',
+}
+
+export enum Posicao {
+  F = 'frente',
+  T = 'trás',
 }
 
 @Entity()
@@ -49,11 +55,21 @@ export class Localizacao {
   @Column({ type: 'varchar', length: 13, unique: true })
   ean: string;
 
+  @Column({ type: 'enum', enum: Posicao, nullable: true })
+  posicao: Posicao;
+
+  @Column({
+    type: 'geometry',
+    spatialFeatureType: 'LineString',
+    srid: 4326,
+    nullable: true,
+  })
+  geom: Polygon;
+
   // @BeforeInsert() hooks cannot be async, so ensure EAN is generated before saving the entity.
   // Remove this method and generate EAN in the service before saving the entity.
 
   // Relações
-
   @ManyToOne(() => TipoLocalizacao, (tipo) => tipo.localizacoes)
   @JoinColumn()
   tipo: TipoLocalizacao;
