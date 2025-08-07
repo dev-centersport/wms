@@ -1,6 +1,6 @@
 // componentes/Consulta/SearchBarConsulta.js
 import React, { forwardRef } from 'react';
-import { View, TextInput, StyleSheet, Keyboard } from 'react-native';
+import { View, TextInput, StyleSheet, Keyboard, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const SearchBarConsulta = forwardRef(({ value, onChange, onSubmit }, ref) => {
@@ -20,6 +20,15 @@ const SearchBarConsulta = forwardRef(({ value, onChange, onSubmit }, ref) => {
         returnKeyType="search"
         placeholderTextColor="#888"
       />
+      {value.length > 0 && (
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={() => onChange('')}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="close-circle" size={18} color="#888" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 });
@@ -51,5 +60,9 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 8,
+  },
+  clearButton: {
+    marginLeft: 8,
+    padding: 2,
   },
 });
