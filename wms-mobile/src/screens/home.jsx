@@ -6,25 +6,25 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
 
-  // const handleLogout = async () => {
-  //   Alert.alert(
-  //     'Sair',
-  //     'Deseja realmente sair do sistema?',
-  //     [
-  //       {
-  //         text: 'Cancelar',
-  //         style: 'cancel',
-  //       },
-  //       {
-  //         text: 'Sair',
-  //         style: 'destructive',
-  //         onPress: async () => {
-  //           await logout();
-  //         },
-  //       },
-  //     ]
-  //   );
-  // };
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sair',
+      'Deseja realmente sair do sistema?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -45,9 +45,9 @@ export default function HomeScreen({ navigation }) {
         )}
         
         {/* Botão de logout */}
-        {/* <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Icon name="sign-out" size={20} color="#000" />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
 
       {/* Botões principais */}
