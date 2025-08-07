@@ -1563,7 +1563,11 @@ const Localizacao: React.FC = () => {
                     </TableCell>
                     <TableCell
                       align='center'
-                      sx={{ fontWeight: 500, cursor: 'pointer', pr: orderBy === 'nome' ? 'auto' : '35px' }}
+                      sx={{ 
+                        fontWeight: 500, 
+                        cursor: 'pointer',
+                        pr: orderBy === 'nome' ? 'auto' : '35px'
+                      }}
                       onClick={() => navigate(`/localizacao/${item.localizacao_id}/editar`)}
                     >
                       {item.nome}

@@ -226,36 +226,83 @@ const Consulta: React.FC = () => {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {(['descricao', 'sku', 'ean', 'armazem', 'quantidade', 'localizacao', 'ean'] as (keyof ConsultaEstoque)[]).map(
-                (col) => (
-                  <TableCell
-                    key={col}
-                    align={col === 'ean' ||col === 'quantidade' || col === 'localizacao' ? 'center' : 'left'}
-                    sortDirection={orderBy === col ? orderDirection : false}
-                  >
-                    <TableSortLabel
-                      active={orderBy === col}
-                      direction={orderBy === col ? orderDirection : 'asc'}
-                      onClick={() => handleSort(col)}
-                    >
-                      {col.charAt(0).toUpperCase() + col.slice(1)}
-                    </TableSortLabel>
-                  </TableCell>
-                )
-              )}
+              <TableCell sortDirection={orderBy === 'descricao' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'descricao'}
+                  direction={orderBy === 'descricao' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('descricao')}
+                >
+                  <strong>Descrição</strong>
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell align="center" sortDirection={orderBy === 'sku' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'sku'}
+                  direction={orderBy === 'sku' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('sku')}
+                >
+                  <strong>SKU</strong>
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell align="center">
+                <strong>EAN</strong>
+              </TableCell>
+
+              <TableCell align="center" sortDirection={orderBy === 'armazem' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'armazem'}
+                  direction={orderBy === 'armazem' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('armazem')}
+                >
+                  <strong>Armazém</strong>
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell align="center" sortDirection={orderBy === 'quantidade' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'quantidade'}
+                  direction={orderBy === 'quantidade' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('quantidade')}
+                >
+                  <strong>Quantidade</strong>
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell align="center" sortDirection={orderBy === 'localizacao' ? orderDirection : false}>
+                <TableSortLabel
+                  active={orderBy === 'localizacao'}
+                  direction={orderBy === 'localizacao' ? orderDirection : 'asc'}
+                  onClick={() => handleSort('localizacao')}
+                >
+                  <strong>Localização</strong>
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell align="center">
+                <strong>EAN Localização</strong>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {currentItems.length ? (
               currentItems.map((item) => (
                 <TableRow key={`${item.produto_id}-${item.localizacao}-${item.ean}`} hover>
-                  <TableCell>{item.descricao}</TableCell>
-                  <TableCell>{item.sku}</TableCell>
-                  <TableCell align='center'>{item.ean}</TableCell>
-                  <TableCell>{item.armazem}</TableCell>
-                  <TableCell align='center'>{item.quantidade}</TableCell>
-                  <TableCell align='center'>{item.localizacao}</TableCell>
-                  <TableCell align='center'>{item.localizacao_ean}</TableCell>
+                  <TableCell sx={{ pr: orderBy === 'descricao' ? 'auto' : '35px' }}>{item.descricao}</TableCell>
+
+                  <TableCell align='center' sx={{ pr: orderBy === 'sku' ? 'auto' : '35px' }}>{item.sku}</TableCell>
+
+                  <TableCell align="center">{item.ean}</TableCell>
+
+                  <TableCell align='center' sx={{ pr: orderBy === 'armazem' ? 'auto' : '35px' }}>{item.armazem}</TableCell>
+
+                  <TableCell sx={{ pr: orderBy === 'quantidade' ? 'auto' : '35px' }} align="center">{item.quantidade}</TableCell>
+
+                  <TableCell sx={{ pr: orderBy === 'localizacao' ? 'auto' : '35px' }} align="center">{item.localizacao}</TableCell>
+
+                  <TableCell align="center">{item.localizacao_ean}</TableCell>
+
                 </TableRow>
               ))
             ) : (

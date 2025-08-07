@@ -164,7 +164,9 @@ const Produto: React.FC = () => {
                 />
               </TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Foto</TableCell>
+              <TableCell>
+                <strong>Foto</strong>
+              </TableCell>
 
               <TableCell sortDirection={orderBy === 'descricao' ? orderDirection : false}>
                 <TableSortLabel
@@ -172,28 +174,16 @@ const Produto: React.FC = () => {
                   direction={orderBy === 'descricao' ? orderDirection : 'asc'}
                   onClick={() => handleSort('descricao')}
                 >
-                  Descrição
+                  <strong>Descrição</strong>
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'sku' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'sku'}
-                  direction={orderBy === 'sku' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('sku')}
-                >
-                  SKU
-                </TableSortLabel>
+              <TableCell align="center" sortDirection={orderBy === 'sku' ? orderDirection : false}>
+                <strong>SKU</strong>
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'ean' ? orderDirection : false}>
-                <TableSortLabel
-                  active={orderBy === 'ean'}
-                  direction={orderBy === 'ean' ? orderDirection : 'asc'}
-                  onClick={() => handleSort('ean')}
-                >
-                  EAN
-                </TableSortLabel>
+              <TableCell align="center">
+                <strong>EAN</strong>
               </TableCell>
             </TableRow>
           </TableHead>
@@ -216,10 +206,9 @@ const Produto: React.FC = () => {
                         '-'
                       )}
                     </TableCell>
-                    <TableCell>{produto.descricao}</TableCell>
-                    <TableCell>{produto.sku}</TableCell>
-                    <TableCell>{produto.ean}</TableCell>
-                    {/* <TableCell>{produto.quantidade}</TableCell> */}
+                    <TableCell sx={{ pr: orderBy === 'descricao' ? 'auto' : '35px' }}>{produto.descricao}</TableCell>
+                    <TableCell align='center'>{produto.sku}</TableCell>
+                    <TableCell align="center">{produto.ean}</TableCell>
                   </TableRow>
 
                 );
