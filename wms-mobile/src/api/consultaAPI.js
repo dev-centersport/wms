@@ -15,19 +15,13 @@ export async function buscarConsultaEstoque(termoBusca) {
 		}
 
 		const resultados = response.data.results || response.data || [];
+		console.log(resultados);
 
-		// Filtrar localmente se houver termo de busca
-		const dadosFiltrados = termoBusca
-			? resultados.filter((item) => {
-					const searchTerm = termoBusca.toLowerCase();
-					return (
-						item.produto?.descricao?.toLowerCase().includes(searchTerm) ||
-						item.produto?.sku?.toLowerCase().includes(searchTerm) ||
-						item.produto?.ean?.toLowerCase().includes(searchTerm)
-					);
-			  })
-			: resultados;
+		// Não aplicar filtragem local quando já há termo de busca na API
+		// A API já deveria retornar os resultados filtrados
+		const dadosFiltrados = resultados;
 
+		console.log(dadosFiltrados);
 		return dadosFiltrados.map((item) => ({
 			produto_id: item.produto?.produto_id,
 			localizacao_id: item.localizacao?.localizacao_id ?? null,
