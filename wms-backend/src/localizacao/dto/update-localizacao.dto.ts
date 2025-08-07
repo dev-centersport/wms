@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateLocalizacaoDto } from './create-localizacao.dto';
-import { IsEAN, IsOptional, IsString, Length } from 'class-validator';
+import { IsEAN, IsNumber, IsOptional, IsString, Length } from 'class-validator';
 
 // function MedidaDecimal() {
 //   return applyDecorators(
@@ -19,5 +19,7 @@ export class UpdateLocalizacaoDto extends PartialType(CreateLocalizacaoDto) {
   ean?: string;
 
   // Agrupamento pode ser removido passando null
-  agrupamento_id?: number | null;
+  @IsOptional()
+  @IsNumber()
+  agrupamento_id?: number;
 }

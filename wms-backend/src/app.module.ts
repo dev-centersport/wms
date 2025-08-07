@@ -25,6 +25,7 @@ import { PermissaoModule } from './permissao/permissao.module';
 import { PermissoesModule } from './auth/permissoes.module';
 import { AgrupamentoModule } from './agrupamento/agrupamento.module';
 import { FileiraModule } from './fileira/fileira.module';
+import { LadoModule } from './lado/lado.module';
 
 // const typeOrmConfig: TypeOrmModuleOptions = {
 //   type: 'postgres',
@@ -102,6 +103,7 @@ import { FileiraModule } from './fileira/fileira.module';
     PermissoesModule,
     AgrupamentoModule,
     FileiraModule,
+    LadoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

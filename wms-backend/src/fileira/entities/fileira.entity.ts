@@ -1,5 +1,12 @@
 import { Agrupamento } from 'src/agrupamento/entities/agrupamento.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Lado } from 'src/lado/entities/lado.entity';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  Polygon,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Fileira {
@@ -10,8 +17,8 @@ export class Fileira {
   nome: string;
 
   @Column({ type: 'geometry', spatialFeatureType: 'LineString', srid: 4326 })
-  geom: string;
+  geom: Polygon;
 
-  @OneToMany(() => Agrupamento, (agrup) => agrup.fileira)
-  agrupamentos: Agrupamento[];
+  @OneToMany(() => Lado, (l) => l.fileira)
+  lados: Lado[];
 }

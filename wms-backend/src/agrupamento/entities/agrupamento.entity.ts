@@ -1,4 +1,4 @@
-import { Fileira } from 'src/fileira/entities/fileira.entity';
+import { Lado } from 'src/lado/entities/lado.entity';
 import { Localizacao } from 'src/localizacao/entities/localizacao.entity';
 import {
   Column,
@@ -21,9 +21,9 @@ export class Agrupamento {
   @Column({ type: 'geometry', spatialFeatureType: 'Polygon', srid: 4326 })
   geom: Polygon;
 
-  @ManyToOne(() => Fileira, (fileira) => fileira.agrupamentos)
+  @ManyToOne(() => Lado, (lado) => lado.agrupamentos)
   @JoinColumn()
-  fileira: Fileira;
+  lado: Lado;
 
   @OneToMany(() => Localizacao, (loc) => loc.agrupamento)
   localizacoes: Localizacao[];
