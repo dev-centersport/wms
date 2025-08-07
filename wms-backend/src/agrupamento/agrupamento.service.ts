@@ -4,15 +4,15 @@ import { Repository } from 'typeorm';
 import { CreateAgrupamentoDto } from './dto/create-agrupamento.dto';
 import { UpdateAgrupamentoDto } from './dto/update-agrupamento.dto';
 import { Agrupamento } from './entities/agrupamento.entity';
-import { Fileira } from 'src/fileira/entities/fileira.entity';
+import { Lado } from 'src/lado/entities/lado.entity';
 
 @Injectable()
 export class AgrupamentoService {
   constructor(
     @InjectRepository(Agrupamento)
     private readonly agrupamentoRepository: Repository<Agrupamento>,
-    @InjectRepository(Fileira)
-    private readonly fileiraRepository: Repository<Fileira>,
+    @InjectRepository(Lado)
+    private readonly ladoRepository: Repository<Lado>,
   ) {}
 
   async create(
@@ -23,19 +23,19 @@ export class AgrupamentoService {
       geom: createAgrupamentoDto.geom,
     });
 
-    // Se foi informado fileira_id, busca e associa a fileira
-    if (createAgrupamentoDto.fileira_id) {
-      const fileira = await this.fileiraRepository.findOneBy({
-        fileira_id: createAgrupamentoDto.fileira_id,
+    // Se foi informado lado_id, busca e associa o lado
+    if (createAgrupamentoDto.lado_id) {
+      const lado = await this.ladoRepository.findOneBy({
+        lado_id: createAgrupamentoDto.lado_id,
       });
 
-      if (!fileira) {
+      if (!lado) {
         throw new NotFoundException(
-          `Fileira com ID ${createAgrupamentoDto.fileira_id} não encontrada`,
+          `Lado com ID ${createAgrupamentoDto.lado_id} não encontrado`,
         );
       }
 
-      agrupamento.fileira = fileira;
+      agrupamento.lado = lado;
     }
 
     return await this.agrupamentoRepository.save(agrupamento);
@@ -43,14 +43,14 @@ export class AgrupamentoService {
 
   async findAll(): Promise<Agrupamento[]> {
     return await this.agrupamentoRepository.find({
-      relations: ['fileira', 'localizacoes'],
+      relations: ['lado', 'localizacoes'],
     });
   }
 
   async findOne(agrupamento_id: number): Promise<Agrupamento> {
     const agrupamento = await this.agrupamentoRepository.findOne({
       where: { agrupamento_id },
-      relations: ['fileira', 'localizacoes'],
+      relations: ['lado', 'localizacoes'],
     });
 
     if (!agrupamento) {
@@ -68,19 +68,19 @@ export class AgrupamentoService {
   ): Promise<Agrupamento> {
     const agrupamento = await this.findOne(agrupamento_id);
 
-    // Se foi informado fileira_id, busca e associa a nova fileira
-    if (updateAgrupamentoDto.fileira_id) {
-      const fileira = await this.fileiraRepository.findOneBy({
-        fileira_id: updateAgrupamentoDto.fileira_id,
+    // Se foi informado lado_id, busca e associa o novo lado
+    if (updateAgrupamentoDto.lado_id) {
+      const lado = await this.ladoRepository.findOneBy({
+        lado_id: updateAgrupamentoDto.lado_id,
       });
 
-      if (!fileira) {
+      if (!lado) {
         throw new NotFoundException(
-          `Fileira com ID ${updateAgrupamentoDto.fileira_id} não encontrada`,
+          `Lado com ID ${updateAgrupamentoDto.lado_id} não encontrado`,
         );
       }
 
-      agrupamento.fileira = fileira;
+      agrupamento.lado = lado;
     }
 
     this.agrupamentoRepository.merge(agrupamento, updateAgrupamentoDto);

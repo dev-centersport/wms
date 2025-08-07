@@ -3,10 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AgrupamentoService } from './agrupamento.service';
 import { AgrupamentoController } from './agrupamento.controller';
 import { Agrupamento } from './entities/agrupamento.entity';
-import { Fileira } from 'src/fileira/entities/fileira.entity';
+import { Lado } from 'src/lado/entities/lado.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Agrupamento, Fileira])],
+  imports: [TypeOrmModule.forFeature([Agrupamento, Lado])],
   controllers: [AgrupamentoController],
   providers: [AgrupamentoService],
   exports: [AgrupamentoService],

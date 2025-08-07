@@ -1,0 +1,27 @@
+### Criar um novo lado
+POST http://localhost:3000/lado
+Content-Type: application/json
+
+{
+  "nome": "Lado A",
+  "lado": "A",
+  "fileira_id": 1
+}
+
+### Buscar todos os lados
+GET http://localhost:3000/lado
+
+### Buscar um lado específico
+GET http://localhost:3000/lado/1
+
+### Atualizar um lado
+PATCH http://localhost:3000/lado/1
+Content-Type: application/json
+
+{
+  "nome": "Lado A Atualizado",
+  "lado": "A"
+}
+
+### Deletar um lado
+DELETE http://localhost:3000/lado/1

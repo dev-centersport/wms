@@ -1,4 +1,3 @@
-import { Agrupamento } from 'src/agrupamento/entities/agrupamento.entity';
 import { Lado } from 'src/lado/entities/lado.entity';
 import {
   Column,

@@ -13,5 +13,5 @@ export class CreateAgrupamentoDto {
 
   @IsOptional()
   @IsNumber()
-  fileira_id?: number;
+  lado_id?: number;
 }
