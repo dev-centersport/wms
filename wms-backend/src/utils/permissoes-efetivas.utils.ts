@@ -35,6 +35,7 @@ export function getPermissoesEfetivas(usuario: Usuario): Permissao[] {
     result.push({
       permissao_id: 0, // não importa aqui
       modulo,
+      pode_ver: perfilPerm?.pode_ver || false || extraPerm?.pode_ver || false,
       pode_incluir:
         perfilPerm?.pode_incluir || false || extraPerm?.pode_incluir || false,
       pode_editar:

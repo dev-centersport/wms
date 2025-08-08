@@ -69,6 +69,7 @@ export class PermissaoService {
       if (!permissaoExistente) {
         const novaPermissao = this.permissaoRepository.create({
           modulo,
+          pode_ver: false,
           pode_incluir: false,
           pode_editar: false,
           pode_excluir: false,

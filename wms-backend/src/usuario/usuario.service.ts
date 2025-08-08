@@ -224,7 +224,7 @@ export class UsuarioService {
   async temPermissao(
     usuario_id: number,
     modulo: string,
-    acao: 'incluir' | 'editar' | 'excluir',
+    acao: 'ver' | 'incluir' | 'editar' | 'excluir',
   ): Promise<boolean> {
     const permissoes = await this.getPermissoesEfetivas(usuario_id);
     const permissao = permissoes.find((p) => p.modulo === modulo);
@@ -232,6 +232,8 @@ export class UsuarioService {
     if (!permissao) return false;
 
     switch (acao) {
+      case 'ver':
+        return permissao.pode_ver;
       case 'incluir':
         return permissao.pode_incluir;
       case 'editar':
