@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
   Query,
 } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
@@ -14,7 +13,7 @@ import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { AdicionarPermissoesDto } from './dto/adicionar-permissoes.dto';
 import { RemoverPermissoesDto } from './dto/remover-permissoes.dto';
-import { Autenticacao } from '../auth/auth.guard';
+import { Modulo } from 'src/permissao/entities/permissao.entity';
 
 @Controller('usuario')
 export class UsuarioController {
@@ -87,9 +86,9 @@ export class UsuarioController {
   async temPermissao(
     @Param('id') id: string,
     @Query('modulo') modulo: string,
-    @Query('acao') acao: 'incluir' | 'editar' | 'excluir',
+    @Query('acao') acao: 'ver' | 'incluir' | 'editar' | 'excluir',
   ) {
-    return await this.usuarioService.temPermissao(+id, modulo, acao);
+    return await this.usuarioService.temPermissao(+id, modulo as Modulo, acao);
   }
 
   @Get(':id/com-permissoes')

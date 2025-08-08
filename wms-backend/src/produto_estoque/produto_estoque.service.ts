@@ -140,8 +140,8 @@ export class ProdutoEstoqueService {
             .orWhere('localizacao.nome ILIKE :search', {
               search: `%${search}%`,
             })
-            .orWhere('localizacao.ean ILIKE :search', {
-              search: `%${search}%`,
+            .orWhere("localizacao.ean = ':search'", {
+              search: `${search}`,
             })
             .orWhere('tipo.tipo ILIKE :search', {
               search: `%${search}%`,

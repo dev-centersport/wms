@@ -55,7 +55,11 @@ export default function LoginScreen() {
   }, []);
 
   const handleLogin = async () => {
-    if (!usuario || !senha) {
+    // Remover espaços do usuário e senha
+    const usuarioLimpo = usuario.trim();
+    const senhaLimpa = senha.trim();
+    
+    if (!usuarioLimpo || !senhaLimpa) {
       alert('Usuário e senha são obrigatórios');
       return;
     }
@@ -65,7 +69,7 @@ export default function LoginScreen() {
       // Limpar token anterior antes de fazer novo login
       await removerToken();
       
-      const resultado = await login(usuario, senha);
+      const resultado = await login(usuarioLimpo, senhaLimpa);
       if (resultado.success) {
         // O redirecionamento será feito automaticamente pelo AuthContext
         console.log('Login realizado com sucesso!');

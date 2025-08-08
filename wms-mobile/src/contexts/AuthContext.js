@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { api } from "../api/config";
+import { api, setLogoutCallback, clearLogoutCallback } from "../api/config";
 
 const AuthContext = createContext();
 
@@ -19,6 +19,17 @@ export const AuthProvider = ({ children }) => {
 	// Verifica se há um token válido ao inicializar
 	useEffect(() => {
 		checkAuth();
+
+		// Configura o callback de logout para redirecionar automaticamente
+		setLogoutCallback(() => {
+			console.log("🔄 Logout automático devido a erro 401");
+			setUser(null);
+		});
+
+		// Limpa o callback quando o componente for desmontado
+		return () => {
+			clearLogoutCallback();
+		};
 	}, []);
 
 	const checkAuth = async () => {

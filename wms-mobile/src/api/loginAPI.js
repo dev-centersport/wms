@@ -3,12 +3,16 @@ import { api, tratarErro, salvarToken } from "./config";
 // ---------- AUTENTICAÇÃO ----------
 export async function login(usuario, senha) {
 	try {
-		console.log("🔐 Tentando login para usuário:", usuario);
+		// Remover espaços dos parâmetros
+		const usuarioLimpo = usuario.trim();
+		const senhaLimpa = senha.trim();
+
+		console.log("🔐 Tentando login para usuário:", usuarioLimpo);
 
 		// Usar o mesmo endpoint do frontend
 		const response = await api.post("/auth/login", {
-			usuario,
-			senha,
+			usuario: usuarioLimpo,
+			senha: senhaLimpa,
 		});
 
 		console.log("📡 Resposta do login:", {
