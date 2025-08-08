@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 0.5,
         borderColor: '#e0e0e0',
         alignItems: 'center',
-        fontSize: bold,
+        fontSize: 'bold',
     },
     tableCell: {
         fontSize: 12,
