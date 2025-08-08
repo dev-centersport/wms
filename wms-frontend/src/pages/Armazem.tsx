@@ -27,6 +27,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import Layout from '../components/Layout';
 import { buscarArmazem, Armazem as ArmazemAPI, excluirArmazem } from '../services/API';
 import { useNavigate } from 'react-router-dom';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
 
 interface Armazem extends ArmazemAPI {
   capacidade?: number;
@@ -227,9 +228,12 @@ const ArmazemPage: React.FC = () => {
           </Button>
         )} */}
 
-        <Button
-          variant="contained"
+        <BotaoComPermissao
+          modulo="armazem"
+          acao="incluir"
           onClick={() => navigate("/criar-armazem")}
+          mensagemSemPermissao="Você não tem permissão para criar armazéns"
+          variant="contained"
           sx={{
             backgroundColor: "#59e60d",
             color: "#000",
@@ -240,7 +244,7 @@ const ArmazemPage: React.FC = () => {
           startIcon={<AddIcon />}
         >
           Novo Armazém
-        </Button>
+        </BotaoComPermissao>
       </Box>
 
       {/* Tabela principal */}

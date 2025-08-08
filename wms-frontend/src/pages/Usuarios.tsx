@@ -30,6 +30,7 @@ import { Search, Edit, Delete } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { buscarUsuarios, excluirUsuario, atualizarUsuario, buscarUsuarioPorId, buscarPerfis } from '../services/API';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
 
 interface Usuario {
     usuario_id: number;
@@ -284,13 +285,16 @@ export default function Usuarios() {
                     </Button>
                 )}
 
-                <Button
+                <BotaoComPermissao
+                    modulo="usuario"
+                    acao="incluir"
+                    onClick={() => navigate('/CriarUsuario')}
+                    mensagemSemPermissao="Você não tem permissão para criar usuários"
                     variant="contained"
                     sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
-                    onClick={() => navigate('/CriarUsuario')}
                 >
                     Novo Usuário
-                </Button>
+                </BotaoComPermissao>
 
             </Box>
 

@@ -35,6 +35,7 @@ import {
 import Layout from '../components/Layout';
 import { excluirLocalizacao, buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
 
 
 const normalizar = (s: string) =>
@@ -1364,10 +1365,13 @@ const Localizacao: React.FC = () => {
             </Button>
           </>
         ) : (
-          <Button
+          <BotaoComPermissao
+            modulo="localizacao"
+            acao="incluir"
+            onClick={() => navigate('/localizacao/criar')}
+            mensagemSemPermissao="Você não tem permissão para criar localizações"
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/localizacao/criar')}
             sx={{
               backgroundColor: '#61de27',
               color: '#000',
@@ -1377,7 +1381,7 @@ const Localizacao: React.FC = () => {
             }}
           >
             Nova Localização
-          </Button>
+          </BotaoComPermissao>
         )}
       </Box>
 

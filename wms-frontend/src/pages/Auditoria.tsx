@@ -74,6 +74,7 @@ import {
   Analytics
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
 
 import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria, buscarProdutosAuditoria, cancelarAuditoria } from '../services/API';
 
@@ -934,8 +935,11 @@ export default function Auditoria() {
           >
             Cancelar
           </Button>
-          <Button
+          <BotaoComPermissao
+            modulo="auditoria"
+            acao="incluir"
             onClick={() => modalIniciar && handleIniciarConferencia(modalIniciar.auditoria_id)}
+            mensagemSemPermissao="Você não tem permissão para iniciar auditorias"
             variant="contained"
             startIcon={<PlayArrow />}
             sx={{ 
@@ -946,7 +950,7 @@ export default function Auditoria() {
             }}
           >
             Confirmar
-          </Button>
+          </BotaoComPermissao>
         </DialogActions>
       </Dialog>
 
@@ -986,13 +990,16 @@ export default function Auditoria() {
           >
             Cancelar
           </Button>
-          <Button
+          <BotaoComPermissao
+            modulo="auditoria"
+            acao="incluir"
             onClick={() => {
               if (modalConferir) {
                 setModalConferir(null);
                 navigate(`/ConferenciaAudi/${modalConferir.auditoria_id}`);
               }
             }}
+            mensagemSemPermissao="Você não tem permissão para conferir auditorias"
             variant="contained"
             startIcon={<Visibility />}
             sx={{ 
@@ -1003,7 +1010,7 @@ export default function Auditoria() {
             }}
           >
             Conferir
-          </Button>
+          </BotaoComPermissao>
         </DialogActions>
       </Dialog>
 

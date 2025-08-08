@@ -23,6 +23,8 @@ import { buscarOcorrencias, criarAuditoria, getCurrentUser } from '../services/A
 import { useNavigate } from 'react-router-dom';
 import ProdutosOcorrenciaModal from '../components/ProdutosOcorrenciaModal';
 import ConfirmacaoAuditoria from '../components/ConfirmacaoAuditoria';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
+import { usePermissao } from '../contexts/PermissaoContext';
 
 interface ProdutoDaOcorrencia {
   produto_id: number;
@@ -51,6 +53,7 @@ interface OcorrenciaItem {
 const ITEMS_PER_PAGE = 50;
 
 export default function Ocorrencias() {
+  const { temPermissao } = usePermissao();
   const [busca, setBusca] = useState('');
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaItem[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -285,13 +288,16 @@ export default function Ocorrencias() {
           </Button>
         )}
 
-        <Button
+        <BotaoComPermissao
+          modulo="ocorrencia"
+          acao="incluir"
+          onClick={() => navigate('/NovaOcorrencia')}
+          mensagemSemPermissao="Você não tem permissão para criar ocorrências"
           variant="contained"
           sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
-          onClick={() => navigate('/NovaOcorrencia')}
         >
           Nova Ocorrência
-        </Button>
+        </BotaoComPermissao>
       </Box>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
@@ -382,18 +388,21 @@ export default function Ocorrencias() {
                     >
                       Produtos na Ocorrência
                     </Button>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
+                    <BotaoComPermissao
+                      modulo="auditoria"
+                      acao="incluir"
                       onClick={() => {
                         console.log('📌 Clicou em conferir. ID:', item.localizacao_id);
                         setLocalizacaoIdSelecionada(item.localizacao_id);
                         setConfirmarAberto(true);
                       }}
+                      mensagemSemPermissao="Você não tem permissão para criar auditorias"
+                      variant="contained"
+                      size="small"
+                      sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold' }}
                     >
                       Criar Auditoria
-                    </Button>
+                    </BotaoComPermissao>
                   </TableCell>
                 </TableRow>
               );
@@ -415,6 +424,11 @@ export default function Ocorrencias() {
         onClose={() => setConfirmarAberto(false)}
         mensagem="Deseja realmente criar esta auditoria?"
         onConfirm={async () => {
+          if (!temPermissao('auditoria', 'incluir')) {
+            alert('Você não tem permissão para criar auditorias');
+            return;
+          }
+          
           try {
             // Buscar o usuário logado
             const currentUser = await getCurrentUser();

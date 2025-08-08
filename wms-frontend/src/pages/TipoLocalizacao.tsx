@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { buscarTiposDeLocalizacao, excluirTipoLocalizacao } from '../services/API';
 import Layout from '../components/Layout';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
 
 interface TipoLocalizacao {
   tipo_localizacao_id: number;
@@ -75,14 +76,17 @@ const TipoLocalizacaoPage: React.FC = () => {
           size="small"
           sx={{ maxWidth: 480, width: 380 }}
         />
-        <Button
-          variant="contained"
+        <BotaoComPermissao
+          modulo="tipo_localizacao"
+          acao="incluir"
           onClick={() => navigate('/tipo-localizacao/criar')}
+          mensagemSemPermissao="Você não tem permissão para criar tipos de localização"
+          variant="contained"
           startIcon={<AddIcon />}
           sx={{ backgroundColor: '#59e60d', color: '#000', fontWeight: 'bold' }}
         >
           Novo Tipo Localização
-        </Button>
+        </BotaoComPermissao>
       </Box>
 
       <Paper>

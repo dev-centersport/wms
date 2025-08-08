@@ -50,6 +50,8 @@ import {
 import CamposTransferencia from '../components/CamposTransferencia';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissao } from '../contexts/PermissaoContext';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
 
 
 interface Item {
@@ -79,6 +81,7 @@ interface ProdutoBusca {
 
 const Movimentacao: React.FC = () => {
   const { user } = useAuth();
+  const { temPermissao } = usePermissao();
   const [tipo, setTipo] = useState<'entrada' | 'saida' | 'transferencia'>('entrada');
 
   // Localizações
@@ -436,6 +439,13 @@ const Movimentacao: React.FC = () => {
   const handleMudancaTipo = async (novoTipo: 'entrada' | 'saida' | 'transferencia') => {
     console.log('🔄 Mudando tipo de movimentação de', tipo, 'para', novoTipo);
 
+    // Verificar permissão para transferência
+    if (novoTipo === 'transferencia') {
+      if (!temPermissao('transferencia', 'incluir')) {
+        alert('Você não tem permissão para realizar transferências');
+        return;
+      }
+    }
 
     // Fechar localização aberta antes de mudar o tipo
     await fecharLocalizacaoAberta();
@@ -544,6 +554,18 @@ const Movimentacao: React.FC = () => {
           </Typography>
         </Box>
 
+        {/* Alerta de Permissão */}
+        {!temPermissao('movimentacao', 'incluir') && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body1" fontWeight={600}>
+              Você não tem permissão para realizar movimentações
+            </Typography>
+            <Typography variant="body2">
+              Todos os campos estão desabilitados. Entre em contato com o administrador para solicitar acesso.
+            </Typography>
+          </Alert>
+        )}
+
         {/* Tipo de Movimentação */}
         <Card sx={{ mb: 3, borderRadius: 2 }}>
           <CardContent>
@@ -558,6 +580,7 @@ const Movimentacao: React.FC = () => {
                 labelId="tipo-label"
                 value={tipo}
                 label="Tipo"
+                disabled={!temPermissao('movimentacao', 'incluir')}
                 onChange={(e) => {
                   const novoTipo = e.target.value as any;
                   handleMudancaTipo(novoTipo);
@@ -610,6 +633,7 @@ const Movimentacao: React.FC = () => {
                       fullWidth
                       label={`Bipe a Localização ${tipo === 'entrada' ? 'de Destino' : 'de Origem'}`}
                       size="small"
+                      disabled={!temPermissao('movimentacao', 'incluir')}
                       value={localizacaoBloqueada ? origem?.nome || '' : localizacao}
                       onChange={(e) => !localizacaoBloqueada && setLocalizacao(e.target.value)}
                       onKeyDown={(e) => !localizacaoBloqueada && e.key === 'Enter' && handleBuscarLocalizacao()}
@@ -619,7 +643,7 @@ const Movimentacao: React.FC = () => {
                             <SearchIcon sx={{ color: 'text.secondary' }} />
                           </InputAdornment>
                         ),
-                        readOnly: localizacaoBloqueada,
+                        readOnly: localizacaoBloqueada || !temPermissao('movimentacao', 'incluir'),
                       }}
                       sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
                     />
@@ -642,6 +666,7 @@ const Movimentacao: React.FC = () => {
                       fullWidth
                       label="Bipe o Produto"
                       size="small"
+                      disabled={!temPermissao('movimentacao', 'incluir')}
                       value={produto}
                       onChange={(e) => setProduto(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAdicionarProduto()}
@@ -651,6 +676,7 @@ const Movimentacao: React.FC = () => {
                             <SearchIcon sx={{ color: 'text.secondary' }} />
                           </InputAdornment>
                         ),
+                        readOnly: !temPermissao('movimentacao', 'incluir'),
                       }}
                       sx={{ backgroundColor: '#ffffff', borderRadius: 2 }}
                     />
@@ -683,6 +709,7 @@ const Movimentacao: React.FC = () => {
                       <Checkbox
                         checked={selectAll}
                         indeterminate={selectedItems.length > 0 && selectedItems.length < lista.length}
+                        disabled={!temPermissao('movimentacao', 'incluir')}
                         onChange={(e) => handleSelectAll(e.target.checked)}
                       />
                     </TableCell>
@@ -712,6 +739,7 @@ const Movimentacao: React.FC = () => {
                         <TableCell padding="checkbox">
                           <Checkbox
                             checked={isSelected}
+                            disabled={!temPermissao('movimentacao', 'incluir')}
                             onChange={(e) => handleSelectItem(index, e.target.checked)}
                           />
                         </TableCell>
@@ -742,12 +770,20 @@ const Movimentacao: React.FC = () => {
 
                         <TableCell align="center">
                           <Tooltip title="Editar Quantidade">
-                            <IconButton onClick={() => handleEditar(item)} color="primary">
+                            <IconButton
+                              onClick={() => handleEditar(item)}
+                              color="primary"
+                              disabled={!temPermissao('movimentacao', 'incluir')}
+                            >
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Excluir">
-                            <IconButton onClick={() => handleExcluir(index)} color="error">
+                            <IconButton
+                              onClick={() => handleExcluir(index)}
+                              color="error"
+                              disabled={!temPermissao('movimentacao', 'incluir')}
+                            >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -763,10 +799,13 @@ const Movimentacao: React.FC = () => {
 
         {/* Botões de Ação */}
         <Box display="flex" justifyContent="flex-start" gap={2} mt={3}>
-          <Button
+          <BotaoComPermissao
+            modulo="movimentacao"
+            acao="incluir"
+            onClick={handleSalvarClick}
+            mensagemSemPermissao="Você não tem permissão para realizar movimentações"
             variant="contained"
             startIcon={<SaveIcon />}
-            onClick={handleSalvarClick}
             disabled={lista.length === 0 || loading}
             sx={{
               backgroundColor: '#4caf50',
@@ -779,7 +818,7 @@ const Movimentacao: React.FC = () => {
             }}
           >
             {loading ? <CircularProgress size={20} color="inherit" /> : 'Salvar'}
-          </Button>
+          </BotaoComPermissao>
 
           <Button
             variant="outlined"

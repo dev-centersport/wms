@@ -13,6 +13,8 @@ import {
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Layout from '../components/Layout';
+import { BotaoComPermissao } from '../components/BotaoComPermissao';
+import { usePermissao } from '../contexts/PermissaoContext';
 import api from '../services/API';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -32,20 +34,33 @@ type EstoqueItem = {
 };
 
 export default function Relatorio() {
+  const { temPermissao } = usePermissao();
   const [mostrarFiltrosConsulta, setMostrarFiltrosConsulta] = useState(false);
   const [mostrarFiltrosReposicao, setMostrarFiltrosReposicao] = useState(false);
   const [tipoArquivoConsulta, setTipoArquivoConsulta] = useState<'excel' | 'pdf' | 'csv'>('excel');
   const [tipoArquivoReposicao, setTipoArquivoReposicao] = useState<'excel' | 'pdf' | 'csv'>('excel');
 
   const handleAbrirInventario = () => {
+    if (!temPermissao('relatorio', 'incluir')) {
+      alert('Você não tem permissão para gerar relatórios');
+      return;
+    }
     handleGerarRelatorio();
   };
 
   const handleAbrirConsulta = () => {
+    if (!temPermissao('relatorio', 'incluir')) {
+      alert('Você não tem permissão para gerar relatórios');
+      return;
+    }
     setMostrarFiltrosConsulta(prev => !prev);
   };
 
   const handleAbrirReposicao = () => {
+    if (!temPermissao('relatorio', 'incluir')) {
+      alert('Você não tem permissão para gerar relatórios');
+      return;
+    }
     setMostrarFiltrosReposicao(prev => !prev);
   };
 
@@ -54,6 +69,11 @@ export default function Relatorio() {
   };
 
   const handleGerarRelatorio = async () => {
+    if (!temPermissao('relatorio', 'incluir')) {
+      alert('Você não tem permissão para gerar relatórios');
+      return;
+    }
+    
     try {
 
       console.log('Iniciando geração do relatório...');
@@ -124,6 +144,11 @@ export default function Relatorio() {
 
 
 const handleGerarRelatorioConsulta = async () => {
+  if (!temPermissao('relatorio', 'incluir')) {
+    alert('Você não tem permissão para gerar relatórios');
+    return;
+  }
+  
   try {
     console.log('Iniciando geração do relatório de consulta...');
     
@@ -222,6 +247,11 @@ const handleGerarRelatorioConsulta = async () => {
 };
 
 const handleGerarRelatorioReposicao = async () => {
+  if (!temPermissao('relatorio', 'incluir')) {
+    alert('Você não tem permissão para gerar relatórios');
+    return;
+  }
+  
   try {
     console.log('Iniciando geração do relatório de reposição...');
     
@@ -337,9 +367,16 @@ const handleGerarRelatorioReposicao = async () => {
                 <MenuItem value="csv">CSV</MenuItem>
               </Select>
             </FormControl>
-            <Button variant="contained" onClick={handleGerarRelatorioConsulta} sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold', height: 40 }}>
-              Gerar
-            </Button>
+                         <BotaoComPermissao
+               modulo="relatorio"
+               acao="incluir"
+               onClick={handleGerarRelatorioConsulta}
+               mensagemSemPermissao="Você não tem permissão para gerar relatórios"
+               variant="contained"
+               sx={{ backgroundColor: '#61de27', color: '#000', fontWeight: 'bold', height: 40 }}
+             >
+               Gerar
+             </BotaoComPermissao>
           </Box>
         </Box>
       </Collapse>
@@ -356,9 +393,16 @@ const handleGerarRelatorioReposicao = async () => {
                 <MenuItem value="csv">CSV</MenuItem>
               </Select>
             </FormControl>
-            <Button variant="contained" onClick={handleGerarRelatorioReposicao} sx={{ backgroundColor: '#ff9800', color: '#fff', fontWeight: 'bold', height: 40 }}>
-              Gerar
-            </Button>
+                         <BotaoComPermissao
+               modulo="relatorio"
+               acao="incluir"
+               onClick={handleGerarRelatorioReposicao}
+               mensagemSemPermissao="Você não tem permissão para gerar relatórios"
+               variant="contained"
+               sx={{ backgroundColor: '#ff9800', color: '#fff', fontWeight: 'bold', height: 40 }}
+             >
+               Gerar
+             </BotaoComPermissao>
           </Box>
         </Box>
       </Collapse>

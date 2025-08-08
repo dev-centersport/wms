@@ -5,6 +5,7 @@ import { ThemeProvider, CssBaseline, TextareaAutosize } from '@mui/material';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { PermissaoProvider } from './contexts/PermissaoContext';
 import Loading from './components/Loading';
 
 import "./index.css";
@@ -86,8 +87,9 @@ root.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+        <PermissaoProvider>
+          <BrowserRouter>
+            <Routes>
           {/* Login sem menu lateral */}
           <Route path="/login" element={
             <PublicRoute>
@@ -245,6 +247,7 @@ root.render(
           <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </BrowserRouter>
+        </PermissaoProvider>
       </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>
