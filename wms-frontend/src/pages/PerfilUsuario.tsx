@@ -18,6 +18,16 @@ import {
   Chip,
   Avatar,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  Pagination,
+  FormControl,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from '@mui/material';
 
 import {
@@ -28,6 +38,10 @@ import {
   Visibility as VisibilityIcon,
   Person as PersonIcon,
   Refresh as RefreshIcon,
+  Group as GroupIcon,
+  Close as CloseIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
@@ -37,6 +51,10 @@ export default function PerfilUsuario() {
   const [perfis, setPerfis] = useState<PerfilBackend[]>([]);
   const [usuariosPorPerfil, setUsuariosPorPerfil] = useState<{[key: number]: any[]}>({});
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedPerfil, setSelectedPerfil] = useState<PerfilBackend | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(25);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -139,6 +157,45 @@ export default function PerfilUsuario() {
 
   const handleRefresh = () => {
     carregarPerfis();
+  };
+
+  const handleOpenModal = (perfil: PerfilBackend) => {
+    setSelectedPerfil(perfil);
+    setCurrentPage(1); // Reset to first page when opening modal
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedPerfil(null);
+    setCurrentPage(1); // Reset pagination
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+  };
+
+  const handleUsersPerPageChange = (event: SelectChangeEvent<number>) => {
+    setUsersPerPage(Number(event.target.value));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Calculate pagination
+  const getCurrentUsers = () => {
+    if (!selectedPerfil || !usuariosPorPerfil[selectedPerfil.perfil_id]) {
+      return [];
+    }
+    
+    const startIndex = (currentPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    return usuariosPorPerfil[selectedPerfil.perfil_id].slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    if (!selectedPerfil || !usuariosPorPerfil[selectedPerfil.perfil_id]) {
+      return 0;
+    }
+    return Math.ceil(usuariosPorPerfil[selectedPerfil.perfil_id].length / usersPerPage);
   };
 
   const getStatusColor = (perfil: PerfilBackend) => {
@@ -309,35 +366,30 @@ export default function PerfilUsuario() {
                               <Typography variant="body2" fontWeight={600} color="#2c3e50">
                                 {usuariosPorPerfil[perfil.perfil_id]?.length || 0} usuários
                               </Typography>
-                              {usuariosPorPerfil[perfil.perfil_id] && usuariosPorPerfil[perfil.perfil_id].length > 0 && (
-                                <Box display="flex" flexWrap="wrap" gap={0.5} justifyContent="center">
-                                  {usuariosPorPerfil[perfil.perfil_id].slice(0, 3).map((usuario: any, idx: number) => (
-                                    <Chip
-                                      key={usuario.usuario_id}
-                                      label={usuario.responsavel}
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{ 
-                                        fontSize: '0.7rem',
-                                        height: 20,
-                                        '& .MuiChip-label': { px: 1 }
-                                      }}
-                                    />
-                                  ))}
-                                  {usuariosPorPerfil[perfil.perfil_id].length > 3 && (
-                                    <Chip
-                                      label={`+${usuariosPorPerfil[perfil.perfil_id].length - 3}`}
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{ 
-                                        fontSize: '0.7rem',
-                                        height: 20,
-                                        '& .MuiChip-label': { px: 1 }
-                                      }}
-                                    />
-                                  )}
-                                </Box>
-                              )}
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<GroupIcon />}
+                                onClick={() => handleOpenModal(perfil)}
+                                disabled={!usuariosPorPerfil[perfil.perfil_id] || usuariosPorPerfil[perfil.perfil_id].length === 0}
+                                sx={{
+                                  borderColor: '#4caf50',
+                                  color: '#4caf50',
+                                  fontSize: '0.75rem',
+                                  py: 0.5,
+                                  px: 1.5,
+                                  minWidth: 'auto',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                  },
+                                  '&.Mui-disabled': {
+                                    borderColor: 'rgba(0, 0, 0, 0.12)',
+                                    color: 'rgba(0, 0, 0, 0.26)',
+                                  },
+                                }}
+                              >
+                                Ver Usuários
+                              </Button>
                             </>
                           )}
                         </Box>
@@ -416,6 +468,202 @@ export default function PerfilUsuario() {
             {snackbar.message}
           </Alert>
         </Snackbar>
+
+        {/* Modal para exibir usuários do perfil */}
+        <Dialog
+          open={modalOpen}
+          onClose={handleCloseModal}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            backgroundColor: '#4caf50', 
+            color: 'white',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            px: 3,
+            py: 2
+          }}>
+            <Box display="flex" alignItems="center" gap={2}>
+              <GroupIcon />
+              <Typography variant="h6" fontWeight={600}>
+                Usuários do Perfil: {selectedPerfil?.nome}
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={handleCloseModal}
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent sx={{ p: 0 }}>
+            {selectedPerfil && usuariosPorPerfil[selectedPerfil.perfil_id] && (
+              <>
+                <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                          <TableCell sx={{ fontWeight: 600, color: '#2c3e50', pl: 3 }}>Usuário</TableCell>
+                          <TableCell sx={{ fontWeight: 600, color: '#2c3e50' }}>CPF</TableCell>
+                          <TableCell sx={{ fontWeight: 600, color: '#2c3e50' }}>Nível</TableCell>
+                          <TableCell sx={{ fontWeight: 600, color: '#2c3e50' }}>Status</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {getCurrentUsers().map((usuario: any, index: number) => (
+                          <TableRow 
+                            key={usuario.usuario_id}
+                            sx={{ 
+                              '&:hover': { backgroundColor: '#f8f9fa' },
+                              backgroundColor: index % 2 === 0 ? 'white' : '#fafafa'
+                            }}
+                          >
+                            <TableCell sx={{ pl: 3 }}>
+                              <Box display="flex" alignItems="center" gap={2}>
+                                <Avatar sx={{ 
+                                  backgroundColor: '#4caf50',
+                                  width: 36,
+                                  height: 36
+                                }}>
+                                  <PersonIcon />
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="subtitle2" fontWeight={600} color="#2c3e50">
+                                    {usuario.responsavel}
+                                  </Typography>
+                                  <Typography variant="caption" color="#666">
+                                    {usuario.usuario}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" color="#2c3e50">
+                                {usuario.cpf || 'N/A'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={`Nível ${usuario.nivel || 1}`}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  fontSize: '0.7rem',
+                                  borderColor: '#4caf50',
+                                  color: '#4caf50',
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label="Ativo"
+                                size="small"
+                                color="success"
+                                sx={{ fontSize: '0.7rem' }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+                
+                {/* Pagination Controls */}
+                {getTotalPages() > 1 && (
+                  <Box sx={{ 
+                    p: 2, 
+                    borderTop: '1px solid #e0e0e0',
+                    backgroundColor: '#f8f9fa',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 2
+                  }}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <Typography variant="body2" color="#666">
+                        Mostrando {((currentPage - 1) * usersPerPage) + 1} a {Math.min(currentPage * usersPerPage, usuariosPorPerfil[selectedPerfil.perfil_id]?.length || 0)} de {usuariosPorPerfil[selectedPerfil.perfil_id]?.length || 0} usuários
+                      </Typography>
+                    </Box>
+                    
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <Select
+                          value={usersPerPage}
+                          onChange={handleUsersPerPageChange}
+                          sx={{
+                            '& .MuiSelect-select': {
+                              py: 1,
+                              px: 2,
+                            },
+                          }}
+                        >
+                          <MenuItem value={10}>10 por página</MenuItem>
+                          <MenuItem value={25}>25 por página</MenuItem>
+                          <MenuItem value={50}>50 por página</MenuItem>
+                          <MenuItem value={100}>100 por página</MenuItem>
+                        </Select>
+                      </FormControl>
+                      
+                      <Pagination
+                        count={getTotalPages()}
+                        page={currentPage}
+                        onChange={handlePageChange}
+                        size="small"
+                        showFirstButton
+                        showLastButton
+                        sx={{
+                          '& .MuiPaginationItem-root': {
+                            borderRadius: 1,
+                            mx: 0.5,
+                          },
+                          '& .Mui-selected': {
+                            backgroundColor: '#4caf50',
+                            color: 'white',
+                            '&:hover': {
+                              backgroundColor: '#45a049',
+                            },
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                )}
+              </>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 3, backgroundColor: '#f8f9fa' }}>
+            <Button
+              onClick={handleCloseModal}
+              variant="contained"
+              sx={{
+                backgroundColor: '#4caf50',
+                '&:hover': {
+                  backgroundColor: '#45a049',
+                },
+                px: 3,
+                py: 1,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Fechar
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Layout>
   );
