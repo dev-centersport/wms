@@ -62,6 +62,7 @@ export default function VisualizarPerfilUsuario() {
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
       mostrarSnackbar('Erro ao carregar detalhes do perfil', 'error');
+      navigate('/perfil-usuario');
     } finally {
       setLoading(false);
     }

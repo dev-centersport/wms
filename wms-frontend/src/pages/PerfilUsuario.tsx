@@ -45,7 +45,7 @@ import {
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
-import { buscarPerfis, excluirPerfil, buscarUsuariosPorPerfil, Perfil, PerfilBackend } from '../services/API';
+import { buscarPerfis, excluirPerfil, buscarUsuariosPorPerfil, PerfilBackend } from '../services/API';
 
 export default function PerfilUsuario() {
   const [perfis, setPerfis] = useState<PerfilBackend[]>([]);
@@ -75,35 +75,9 @@ export default function PerfilUsuario() {
       // Carregar usuários para cada perfil
       await carregarUsuariosPorPerfil(data);
     } catch (error) {
-      // Dados de exemplo para demonstração
-      const perfisExemplo: PerfilBackend[] = [
-        {
-          perfil_id: 1,
-          nome: 'Administrador',
-          descricao: 'Acesso completo ao sistema com todas as permissões',
-          permissoes: [],
-        },
-        {
-          perfil_id: 2,
-          nome: 'Separador',
-          descricao: 'Perfil para separação e expedição de produtos',
-          permissoes: [],
-        },
-        {
-          perfil_id: 3,
-          nome: 'Auditor',
-          descricao: 'Apenas visualização e auditoria de dados',
-          permissoes: [],
-        },
-        {
-          perfil_id: 4,
-          nome: 'Operador',
-          descricao: 'Operações básicas de movimentação',
-          permissoes: [],
-        },
-      ];
-      setPerfis(perfisExemplo);
-      mostrarSnackbar('Usando dados de exemplo', 'info');
+      console.error('Erro ao carregar perfis:', error);
+      mostrarSnackbar('Erro ao carregar perfis', 'error');
+      setPerfis([]);
     } finally {
       setLoading(false);
     }
@@ -199,6 +173,8 @@ export default function PerfilUsuario() {
   };
 
   const getStatusColor = (perfil: PerfilBackend) => {
+    if (!perfil.permissoes || perfil.permissoes.length === 0) return 'default';
+    
     const temPermissaoCompleta = perfil.permissoes.some(p => p.pode_incluir && p.pode_editar && p.pode_excluir);
     const temPermissaoEdicao = perfil.permissoes.some(p => p.pode_editar);
     const temPermissaoVisualizacao = perfil.permissoes.length > 0;
@@ -210,6 +186,8 @@ export default function PerfilUsuario() {
   };
 
   const getStatusText = (perfil: PerfilBackend) => {
+    if (!perfil.permissoes || perfil.permissoes.length === 0) return 'Sem Permissões';
+    
     const temPermissaoCompleta = perfil.permissoes.some(p => p.pode_incluir && p.pode_editar && p.pode_excluir);
     const temPermissaoEdicao = perfil.permissoes.some(p => p.pode_editar);
     const temPermissaoVisualizacao = perfil.permissoes.length > 0;
@@ -427,7 +405,7 @@ export default function PerfilUsuario() {
                           <Tooltip title="Excluir perfil">
                             <IconButton
                               onClick={() => handleDelete(perfil.perfil_id, perfil.nome)}
-                              disabled={perfil.permissoes.length > 0}
+                              disabled={usuariosPorPerfil[perfil.perfil_id]?.length > 0}
                               sx={{
                                 color: '#f44336',
                                 backgroundColor: 'rgba(244, 67, 54, 0.1)',

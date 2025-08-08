@@ -33,9 +33,10 @@ import {
   criarPerfil, 
   atualizarPerfil, 
   buscarPermissoes, 
-  definirPermissoesDoPerfilComValores,
+  definirPermissoesDoPerfil,
+  atualizarPermissao,
   PermissaoBackend,
-  PerfilBackend 
+  PerfilBackend
 } from '../services/API';
 
 interface ModuloPermissao {
@@ -89,29 +90,41 @@ export default function CriarPerfilUsuario() {
       ];
 
       const permissoesIniciais = modulos.map(modulo => {
-        const permissaoBackend = permissoesBackend.find(p => p.modulo === modulo.nome);
-        
-        if (isEditing && isEditing.permissoes) {
-          // Se estamos editando, buscar as permissões do perfil atual
+        if (isEditing && isEditing.permissoes && isEditing.permissoes.length > 0) {
+          // Se estamos editando, verificar se o perfil tem essa permissão
           const permissaoDoPerfil = isEditing.permissoes.find((p: PermissaoBackend) => p.modulo === modulo.nome);
-          return {
-            nome: modulo.nome,
-            label: modulo.label,
-            pode_add: permissaoDoPerfil?.pode_incluir || false,
-            pode_edit: permissaoDoPerfil?.pode_editar || false,
-            pode_delete: permissaoDoPerfil?.pode_excluir || false,
-          };
+          
+          // Se encontrou a permissão no perfil, usar os valores dela
+          if (permissaoDoPerfil) {
+            return {
+              nome: modulo.nome,
+              label: modulo.label,
+              pode_add: permissaoDoPerfil.pode_incluir,
+              pode_edit: permissaoDoPerfil.pode_editar,
+              pode_delete: permissaoDoPerfil.pode_excluir,
+            };
+          } else {
+            // Se não encontrou, significa que o perfil não tem essa permissão
+            return {
+              nome: modulo.nome,
+              label: modulo.label,
+              pode_add: false,
+              pode_edit: false,
+              pode_delete: false,
+            };
+          }
         } else {
-          // Se estamos criando, usar valores padrão
+          // Se estamos criando, usar valores padrão (todos false)
           return {
             nome: modulo.nome,
             label: modulo.label,
-            pode_add: true,
-            pode_edit: true,
-            pode_delete: (modulo.nome === 'armazem' || modulo.nome === 'tipo_localizacao' ? false : true),
+            pode_add: false,
+            pode_edit: false,
+            pode_delete: false,
           };
         }
       });
+      
       setPermissoes(permissoesIniciais);
     } catch (error) {
       console.error('Erro ao inicializar permissões:', error);
@@ -123,7 +136,7 @@ export default function CriarPerfilUsuario() {
 
   const handleSave = async () => {
     if (!formData.nome.trim()) {
-      mostrarSnackbar('Nome do perfil é obrigatório', 'warning');
+      mostrarSnackbar('Nome do perfil é obrigatório', 'error');
       return;
     }
 
@@ -139,28 +152,9 @@ export default function CriarPerfilUsuario() {
           descricao: formData.descricao,
         });
         
-        // Definir permissões do perfil com valores booleanos
-        const permissoesParaSalvar = permissoes
-          .filter(p => p.pode_add || p.pode_edit || p.pode_delete)
-          .map(p => {
-            const permissaoBackend = permissoesBackend.find(pb => pb.modulo === p.nome);
-            if (!permissaoBackend) return null;
-            
-            return {
-              permissao_id: permissaoBackend.permissao_id,
-              pode_incluir: p.pode_add,
-              pode_editar: p.pode_edit,
-              pode_excluir: p.pode_delete,
-            };
-          })
-          .filter(p => p !== null) as Array<{
-            permissao_id: number;
-            pode_incluir: boolean;
-            pode_editar: boolean;
-            pode_excluir: boolean;
-          }>;
+        // Criar/atualizar permissões específicas do perfil
+        await criarOuAtualizarPermissoesDoPerfil(isEditing.perfil_id, permissoes);
         
-        await definirPermissoesDoPerfilComValores(isEditing.perfil_id, permissoesParaSalvar);
         mostrarSnackbar('Perfil atualizado com sucesso!', 'success');
       } else {
         // Criar novo perfil
@@ -169,28 +163,9 @@ export default function CriarPerfilUsuario() {
           descricao: formData.descricao,
         });
         
-        // Definir permissões do perfil com valores booleanos
-        const permissoesParaSalvar = permissoes
-          .filter(p => p.pode_add || p.pode_edit || p.pode_delete)
-          .map(p => {
-            const permissaoBackend = permissoesBackend.find(pb => pb.modulo === p.nome);
-            if (!permissaoBackend) return null;
-            
-            return {
-              permissao_id: permissaoBackend.permissao_id,
-              pode_incluir: p.pode_add,
-              pode_editar: p.pode_edit,
-              pode_excluir: p.pode_delete,
-            };
-          })
-          .filter(p => p !== null) as Array<{
-            permissao_id: number;
-            pode_incluir: boolean;
-            pode_editar: boolean;
-            pode_excluir: boolean;
-          }>;
+        // Criar/atualizar permissões específicas do perfil
+        await criarOuAtualizarPermissoesDoPerfil(perfilCriado.perfil_id, permissoes);
         
-        await definirPermissoesDoPerfilComValores(perfilCriado.perfil_id, permissoesParaSalvar);
         mostrarSnackbar('Perfil criado com sucesso!', 'success');
       }
       
@@ -206,6 +181,49 @@ export default function CriarPerfilUsuario() {
     }
   };
 
+  // Função para associar permissões ao perfil
+  const criarOuAtualizarPermissoesDoPerfil = async (perfilId: number, permissoesFrontend: ModuloPermissao[]) => {
+    try {
+      // Coletar IDs das permissões que devem ser associadas ao perfil
+      const permissoesParaAssociar: number[] = [];
+      
+      for (const permissao of permissoesFrontend) {
+        if (permissao.pode_add || permissao.pode_edit || permissao.pode_delete) {
+          // Buscar permissão existente do módulo
+          const permissaoExistente = permissoesBackend.find(pb => pb.modulo === permissao.nome);
+          
+          if (permissaoExistente) {
+            // Se a permissão existente tem os valores corretos, usar ela
+            if (permissaoExistente.pode_incluir === permissao.pode_add &&
+                permissaoExistente.pode_editar === permissao.pode_edit &&
+                permissaoExistente.pode_excluir === permissao.pode_delete) {
+              permissoesParaAssociar.push(permissaoExistente.permissao_id);
+            } else {
+              // Se os valores são diferentes, atualizar a permissão existente
+              await atualizarPermissao(permissaoExistente.permissao_id, {
+                pode_incluir: permissao.pode_add,
+                pode_editar: permissao.pode_edit,
+                pode_excluir: permissao.pode_delete,
+              });
+              permissoesParaAssociar.push(permissaoExistente.permissao_id);
+            }
+          } else {
+            // Se não existe permissão para este módulo, pular (não criar novas permissões)
+            console.warn(`Permissão para módulo ${permissao.nome} não encontrada. Pulando...`);
+          }
+        }
+      }
+      
+      // Associar todas as permissões ao perfil de uma vez
+      if (permissoesParaAssociar.length > 0) {
+        await definirPermissoesDoPerfil(perfilId, permissoesParaAssociar);
+      }
+    } catch (error) {
+      console.error('Erro ao criar/atualizar permissões do perfil:', error);
+      throw error;
+    }
+  };
+
   const handlePermissaoChange = (moduloNome: string, campo: keyof ModuloPermissao, valor: boolean) => {
     setPermissoes(prev =>
       prev.map(p =>
@@ -213,6 +231,43 @@ export default function CriarPerfilUsuario() {
           ? { ...p, [campo]: valor }
           : p
       )
+    );
+  };
+
+  // Funções para selecionar colunas inteiras
+  const selecionarColunaAdd = () => {
+    setPermissoes(prev =>
+      prev.map(p => ({ ...p, pode_add: true }))
+    );
+  };
+
+  const selecionarColunaEdit = () => {
+    setPermissoes(prev =>
+      prev.map(p => ({ ...p, pode_edit: true }))
+    );
+  };
+
+  const selecionarColunaDelete = () => {
+    setPermissoes(prev =>
+      prev.map(p => ({ ...p, pode_delete: true }))
+    );
+  };
+
+  const limparColunaAdd = () => {
+    setPermissoes(prev =>
+      prev.map(p => ({ ...p, pode_add: false }))
+    );
+  };
+
+  const limparColunaEdit = () => {
+    setPermissoes(prev =>
+      prev.map(p => ({ ...p, pode_edit: false }))
+    );
+  };
+
+  const limparColunaDelete = () => {
+    setPermissoes(prev =>
+      prev.map(p => ({ ...p, pode_delete: false }))
     );
   };
 
@@ -413,6 +468,106 @@ export default function CriarPerfilUsuario() {
               </Table>
             </TableContainer>
 
+            {/* Botões para selecionar/limpar colunas inteiras */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              gap: 2, 
+              mt: 3,
+              mb: 3
+            }}>
+              <Button
+                variant="outlined"
+                onClick={selecionarColunaAdd}
+                startIcon={<Checkbox checked={permissoes.every(p => p.pode_add)} />}
+                sx={{
+                  borderColor: '#4caf50',
+                  color: '#4caf50',
+                  '&:hover': {
+                    borderColor: '#45a049',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                  },
+                }}
+              >
+                Selecionar Todos (Incluir)
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={limparColunaAdd}
+                startIcon={<Checkbox checked={permissoes.every(p => !p.pode_add)} />}
+                sx={{
+                  borderColor: '#4caf50',
+                  color: '#4caf50',
+                  '&:hover': {
+                    borderColor: '#45a049',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                  },
+                }}
+              >
+                Limpar Todos (Incluir)
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={selecionarColunaEdit}
+                startIcon={<Checkbox checked={permissoes.every(p => p.pode_edit)} />}
+                sx={{
+                  borderColor: '#ff9800',
+                  color: '#ff9800',
+                  '&:hover': {
+                    borderColor: '#f57c00',
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                  },
+                }}
+              >
+                Selecionar Todos (Editar)
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={limparColunaEdit}
+                startIcon={<Checkbox checked={permissoes.every(p => !p.pode_edit)} />}
+                sx={{
+                  borderColor: '#ff9800',
+                  color: '#ff9800',
+                  '&:hover': {
+                    borderColor: '#f57c00',
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                  },
+                }}
+              >
+                Limpar Todos (Editar)
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={selecionarColunaDelete}
+                startIcon={<Checkbox checked={permissoes.every(p => p.pode_delete)} />}
+                sx={{
+                  borderColor: '#f44336',
+                  color: '#f44336',
+                  '&:hover': {
+                    borderColor: '#e53935',
+                    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                  },
+                }}
+              >
+                Selecionar Todos (Excluir)
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={limparColunaDelete}
+                startIcon={<Checkbox checked={permissoes.every(p => !p.pode_delete)} />}
+                sx={{
+                  borderColor: '#f44336',
+                  color: '#f44336',
+                  '&:hover': {
+                    borderColor: '#e53935',
+                    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                  },
+                }}
+              >
+                Limpar Todos (Excluir)
+              </Button>
+            </Box>
+
             {/* Movimentação Padrão */}
             <Box sx={{ 
               display: 'flex', 
@@ -538,6 +693,6 @@ export default function CriarPerfilUsuario() {
           </Alert>
         </Snackbar>
       </Box>
-    </Layout>
-  );
-} 
+          </Layout>
+    );
+  } 
