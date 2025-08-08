@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Autocomplete, CircularProgress, TextField, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import api from '../services/API';
@@ -67,44 +67,60 @@ const InputLocalizacaoAutocomplete: React.FC<Props> = ({
     }
   };
 
-      try {
-        setLoading(true);
-        const response = await api.get('/localizacao?limit=3000');
-        const todas = Array.isArray(response.data.results) ? response.data.results : [];
+  // Função para buscar todas as localizações quando o EAN é digitado
+  const fetchLocalizacoes = async () => {
+    if (!eanDigitado || eanDigitado.trim().length === 0) {
+      setOptions([]);
+      return;
+    }
 
-        const formatadas = todas.map((l: any) => ({
-          id: l.localizacao_id,
-          nome: l.nome,
-          ean: l.ean,
-          armazem: l.armazem,
-        }));
+    try {
+      setLoading(true);
+      const response = await api.get('/localizacao?limit=3000');
+      const todas = Array.isArray(response.data.results) ? response.data.results : [];
 
-        setOptions(formatadas);
+      const formatadas = todas.map((l: any) => ({
+        id: l.localizacao_id,
+        nome: l.nome,
+        ean: l.ean,
+        armazem: l.armazem,
+      }));
 
-        const encontrada = formatadas.find((l: LocalizacaoOption) => l.ean === eanDigitado.trim());
-        if (encontrada) {
-          onSelecionar(encontrada);
-          
-          // Tenta abrir a localização se a função estiver disponível
-          if (onLocalizacaoAberta && encontrada.ean) {
-            try {
-              await api.get(`/movimentacao/abrir-localizacao/${encontrada.ean}`);
-              onLocalizacaoAberta(encontrada.ean);
-            } catch (erro: any) {
-              console.warn('Erro ao abrir localização:', erro);
-            }
+      setOptions(formatadas);
+
+      const encontrada = formatadas.find((l: LocalizacaoOption) => l.ean === eanDigitado.trim());
+      if (encontrada) {
+        onSelecionar(encontrada);
+        
+        // Tenta abrir a localização se a função estiver disponível
+        if (onLocalizacaoAberta && encontrada.ean) {
+          try {
+            await api.get(`/movimentacao/abrir-localizacao/${encontrada.ean}`);
+            onLocalizacaoAberta(encontrada.ean);
+          } catch (erro: any) {
+            console.warn('Erro ao abrir localização:', erro);
           }
         }
-      } catch (err) {
-        console.error('Erro ao buscar localizações:', err);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Erro ao buscar localizações:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Função para lidar com tecla pressionada
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      buscarLocalizacoes(inputValue);
+    }
+  };
+
+  // Effect para buscar localizações quando o EAN é digitado
+  useEffect(() => {
     fetchLocalizacoes();
-  }, [eanDigitado]);
-
+  }, [eanDigitado, onSelecionar, onLocalizacaoAberta]);
 
   return (
     <Autocomplete
