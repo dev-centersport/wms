@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  Polygon,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -19,6 +20,14 @@ export class Lado {
 
   @Column({ type: 'char', length: 1 })
   lado: string;
+
+  @Column({
+    type: 'geometry',
+    spatialFeatureType: 'Polygon',
+    srid: 4326,
+    nullable: true,
+  })
+  geom: Polygon;
 
   @ManyToOne(() => Fileira, (fileira) => fileira.lados)
   @JoinColumn()

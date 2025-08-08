@@ -60,7 +60,7 @@ export class Localizacao {
 
   @Column({
     type: 'geometry',
-    spatialFeatureType: 'LineString',
+    spatialFeatureType: 'Point',
     srid: 4326,
     nullable: true,
   })
