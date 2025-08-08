@@ -129,6 +129,66 @@ const mockData = {
     usuariosAtivos: 12,
     ocupacaoArmazem: 85,
   },
+  // Novos dados para gráficos adicionais
+  vendasPorMes: [
+    { mes: 'Jan', vendas: 4200, meta: 5000 },
+    { mes: 'Fev', vendas: 3800, meta: 5000 },
+    { mes: 'Mar', vendas: 5200, meta: 5000 },
+    { mes: 'Abr', vendas: 4800, meta: 5000 },
+    { mes: 'Mai', vendas: 6100, meta: 5000 },
+    { mes: 'Jun', vendas: 5500, meta: 5000 },
+    { mes: 'Jul', vendas: 7200, meta: 5000 },
+    { mes: 'Ago', vendas: 6800, meta: 5000 },
+    { mes: 'Set', vendas: 5900, meta: 5000 },
+    { mes: 'Out', vendas: 6300, meta: 5000 },
+    { mes: 'Nov', vendas: 7100, meta: 5000 },
+    { mes: 'Dez', vendas: 7800, meta: 5000 },
+  ],
+  categoriasProdutos: [
+    { categoria: 'Tênis', quantidade: 3200, cor: '#FF6B6B' },
+    { categoria: 'Camisetas', quantidade: 2800, cor: '#4ECDC4' },
+    { categoria: 'Bolas', quantidade: 1500, cor: '#45B7D1' },
+    { categoria: 'Acessórios', quantidade: 2200, cor: '#96CEB4' },
+    { categoria: 'Equipamentos', quantidade: 1800, cor: '#FFEAA7' },
+    { categoria: 'Roupas', quantidade: 2400, cor: '#DDA0DD' },
+  ],
+  eficienciaPorHora: [
+    { hora: '08:00', separacoes: 45, movimentacoes: 32, auditorias: 8 },
+    { hora: '09:00', separacoes: 52, movimentacoes: 38, auditorias: 12 },
+    { hora: '10:00', separacoes: 61, movimentacoes: 45, auditorias: 15 },
+    { hora: '11:00', separacoes: 58, movimentacoes: 42, auditorias: 10 },
+    { hora: '12:00', separacoes: 35, movimentacoes: 28, auditorias: 5 },
+    { hora: '13:00', separacoes: 48, movimentacoes: 35, auditorias: 8 },
+    { hora: '14:00', separacoes: 67, movimentacoes: 52, auditorias: 18 },
+    { hora: '15:00', separacoes: 72, movimentacoes: 58, auditorias: 22 },
+    { hora: '16:00', separacoes: 55, movimentacoes: 41, auditorias: 12 },
+    { hora: '17:00', separacoes: 38, movimentacoes: 25, auditorias: 8 },
+  ],
+  ocupacaoLocalizacoes: [
+    { localizacao: 'DIB-A1', ocupacao: 85, capacidade: 100 },
+    { localizacao: 'DIB-A2', ocupacao: 92, capacidade: 100 },
+    { localizacao: 'Sacotem-B1', ocupacao: 78, capacidade: 100 },
+    { localizacao: 'Sacotem-B2', ocupacao: 65, capacidade: 100 },
+    { localizacao: 'Etic-C1', ocupacao: 88, capacidade: 100 },
+    { localizacao: 'Etic-C2', ocupacao: 95, capacidade: 100 },
+    { localizacao: 'CenterSport-D1', ocupacao: 72, capacidade: 100 },
+    { localizacao: 'CenterSport-D2', ocupacao: 81, capacidade: 100 },
+  ],
+  metricasQualidade: [
+    { metrica: 'Precisão', valor: 98.5, meta: 95 },
+    { metrica: 'Velocidade', valor: 92.3, meta: 90 },
+    { metrica: 'Eficiência', valor: 89.7, meta: 85 },
+    { metrica: 'Satisfação', valor: 96.8, meta: 90 },
+    { metrica: 'Confiabilidade', valor: 94.2, meta: 92 },
+  ],
+  temperaturaUmidade: [
+    { hora: '00:00', temperatura: 22, umidade: 65 },
+    { hora: '04:00', temperatura: 21, umidade: 68 },
+    { hora: '08:00', temperatura: 23, umidade: 62 },
+    { hora: '12:00', temperatura: 26, umidade: 58 },
+    { hora: '16:00', temperatura: 25, umidade: 60 },
+    { hora: '20:00', temperatura: 24, umidade: 63 },
+  ],
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
@@ -289,7 +349,7 @@ export default function Dashboard() {
           </Card>
         </Box>
 
-        {/* Gráficos */}
+        {/* Gráficos Principais */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 4 }}>
           {/* Gráfico de Movimentações por Dia */}
           <Card>
@@ -331,7 +391,293 @@ export default function Dashboard() {
           </Card>
         </Box>
 
-        {/* Gráficos de Status */}
+        {/* Novos Gráficos - Vendas e Categorias */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mb: 4 }}>
+          {/* Gráfico de Vendas por Mês */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Vendas vs Meta Anual
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data.vendasPorMes}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="vendas" stroke="#8884d8" strokeWidth={3} />
+                  <Line type="monotone" dataKey="meta" stroke="#ff7300" strokeWidth={2} strokeDasharray="5 5" />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Categorias de Produtos */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Produtos por Categoria
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.categoriasProdutos} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="categoria" type="category" width={80} />
+                  <RechartsTooltip />
+                  <Bar dataKey="quantidade" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {/* Gráficos de Eficiência e Ocupação */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mb: 4 }}>
+          {/* Gráfico de Eficiência por Hora */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Eficiência Operacional por Hora
+              </Typography>
+              <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
+                  {/* Linha de Separações */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: '60%', 
+                    background: 'linear-gradient(180deg, rgba(136, 132, 216, 0.1) 0%, rgba(136, 132, 216, 0.3) 100%)',
+                    borderTop: '2px solid #8884d8'
+                  }} />
+                  
+                  {/* Linha de Movimentações */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: '45%', 
+                    background: 'linear-gradient(180deg, rgba(130, 202, 157, 0.1) 0%, rgba(130, 202, 157, 0.3) 100%)',
+                    borderTop: '2px solid #82ca9d'
+                  }} />
+                  
+                  {/* Linha de Auditorias */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: '25%', 
+                    background: 'linear-gradient(180deg, rgba(255, 198, 88, 0.1) 0%, rgba(255, 198, 88, 0.3) 100%)',
+                    borderTop: '2px solid #ffc658'
+                  }} />
+                  
+                  {/* Pontos de dados */}
+                  {data.eficienciaPorHora.map((item, index) => (
+                    <Box key={index} sx={{ 
+                      position: 'absolute', 
+                      left: `${(index / (data.eficienciaPorHora.length - 1)) * 100}%`,
+                      bottom: `${(item.separacoes / 80) * 100}%`,
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#8884d8',
+                      transform: 'translateX(-50%)'
+                    }} />
+                  ))}
+                  
+                  {/* Legendas */}
+                  <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#8884d8', borderRadius: '50%' }} />
+                      <Typography variant="caption">Separações</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#82ca9d', borderRadius: '50%' }} />
+                      <Typography variant="caption">Movimentações</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#ffc658', borderRadius: '50%' }} />
+                      <Typography variant="caption">Auditorias</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Ocupação de Localizações */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Ocupação de Localizações (%)
+              </Typography>
+              <Box sx={{ height: 300, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', p: 2 }}>
+                {data.ocupacaoLocalizacoes.map((item, index) => (
+                  <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="body2" sx={{ minWidth: 80, fontSize: '0.75rem' }}>
+                      {item.localizacao}
+                    </Typography>
+                    <Box sx={{ 
+                      flex: 1, 
+                      height: 20, 
+                      backgroundColor: '#f0f0f0', 
+                      borderRadius: 10,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <Box sx={{ 
+                        width: `${item.ocupacao}%`, 
+                        height: '100%', 
+                        backgroundColor: item.ocupacao > 90 ? '#f44336' : item.ocupacao > 75 ? '#ff9800' : '#4caf50',
+                        borderRadius: 10,
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </Box>
+                    <Typography variant="body2" sx={{ minWidth: 40, fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      {item.ocupacao}%
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {/* Gráficos de Qualidade e Ambiente */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mb: 4 }}>
+          {/* Gráfico de Métricas de Qualidade */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Métricas de Qualidade vs Meta
+              </Typography>
+              <Box sx={{ height: 300, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', p: 2 }}>
+                {data.metricasQualidade.map((item, index) => (
+                  <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="body2" sx={{ minWidth: 100, fontSize: '0.8rem' }}>
+                      {item.metrica}
+                    </Typography>
+                    <Box sx={{ 
+                      flex: 1, 
+                      height: 25, 
+                      backgroundColor: '#f0f0f0', 
+                      borderRadius: 12,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      {/* Barra de valor atual */}
+                      <Box sx={{ 
+                        width: `${(item.valor / 100) * 100}%`, 
+                        height: '100%', 
+                        backgroundColor: item.valor >= item.meta ? '#4caf50' : '#ff9800',
+                        borderRadius: 12,
+                        transition: 'width 0.3s ease'
+                      }} />
+                      {/* Linha da meta */}
+                      <Box sx={{ 
+                        position: 'absolute',
+                        left: `${(item.meta / 100) * 100}%`,
+                        top: 0,
+                        bottom: 0,
+                        width: 2,
+                        backgroundColor: '#f44336',
+                        zIndex: 2
+                      }} />
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 80 }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
+                        {item.valor}%
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
+                        Meta: {item.meta}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Temperatura e Umidade */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Monitoramento Ambiental
+              </Typography>
+              <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
+                  {/* Linha de Temperatura */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: '70%', 
+                    background: 'linear-gradient(180deg, rgba(255, 115, 0, 0.1) 0%, rgba(255, 115, 0, 0.3) 100%)',
+                    borderTop: '2px solid #ff7300'
+                  }} />
+                  
+                  {/* Linha de Umidade */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: '65%', 
+                    background: 'linear-gradient(180deg, rgba(130, 202, 157, 0.1) 0%, rgba(130, 202, 157, 0.3) 100%)',
+                    borderTop: '2px solid #82ca9d'
+                  }} />
+                  
+                  {/* Pontos de temperatura */}
+                  {data.temperaturaUmidade.map((item, index) => (
+                    <Box key={`temp-${index}`} sx={{ 
+                      position: 'absolute', 
+                      left: `${(index / (data.temperaturaUmidade.length - 1)) * 100}%`,
+                      bottom: `${(item.temperatura / 30) * 100}%`,
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#ff7300',
+                      transform: 'translateX(-50%)'
+                    }} />
+                  ))}
+                  
+                  {/* Pontos de umidade */}
+                  {data.temperaturaUmidade.map((item, index) => (
+                    <Box key={`umid-${index}`} sx={{ 
+                      position: 'absolute', 
+                      left: `${(index / (data.temperaturaUmidade.length - 1)) * 100}%`,
+                      bottom: `${(item.umidade / 100) * 100}%`,
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#82ca9d',
+                      transform: 'translateX(-50%)'
+                    }} />
+                  ))}
+                  
+                  {/* Legendas */}
+                  <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#ff7300', borderRadius: '50%' }} />
+                      <Typography variant="caption">Temperatura (°C)</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#82ca9d', borderRadius: '50%' }} />
+                      <Typography variant="caption">Umidade (%)</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {/* Gráficos de Status e Tendências */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 4 }}>
           {/* Gráfico de Status das Auditorias */}
           <Card>
@@ -381,6 +727,122 @@ export default function Dashboard() {
                     </Typography>
                   </Box>
                 ))}
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {/* Gráficos Especiais - Performance e Produtividade */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mb: 4 }}>
+          {/* Gráfico de Performance por Categoria */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Performance por Categoria
+              </Typography>
+              <Box sx={{ height: 300, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', p: 2 }}>
+                {data.categoriasProdutos.map((item, index) => (
+                  <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="body2" sx={{ minWidth: 100, fontSize: '0.8rem' }}>
+                      {item.categoria}
+                    </Typography>
+                    <Box sx={{ 
+                      flex: 1, 
+                      height: 20, 
+                      backgroundColor: '#f0f0f0', 
+                      borderRadius: 10,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <Box sx={{ 
+                        width: `${(item.quantidade / 3500) * 100}%`, 
+                        height: '100%', 
+                        backgroundColor: item.cor,
+                        borderRadius: 10,
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </Box>
+                    <Typography variant="body2" sx={{ minWidth: 60, fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      {item.quantidade.toLocaleString()}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Produtividade Diária */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} mb={3}>
+                Produtividade Diária
+              </Typography>
+              <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
+                  {/* Área de entrada com gradiente */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: '60%', 
+                    background: 'linear-gradient(180deg, rgba(136, 132, 216, 0.2) 0%, rgba(136, 132, 216, 0.6) 100%)',
+                    borderTop: '2px solid #8884d8'
+                  }} />
+                  
+                  {/* Área de saída com gradiente */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    height: '40%', 
+                    background: 'linear-gradient(180deg, rgba(130, 202, 157, 0.2) 0%, rgba(130, 202, 157, 0.6) 100%)',
+                    borderTop: '2px solid #82ca9d'
+                  }} />
+                  
+                  {/* Pontos de entrada */}
+                  {data.movimentacoesPorDia.map((item, index) => (
+                    <Box key={`entrada-${index}`} sx={{ 
+                      position: 'absolute', 
+                      left: `${(index / (data.movimentacoesPorDia.length - 1)) * 100}%`,
+                      bottom: `${(item.entrada / 70) * 100}%`,
+                      width: 10, 
+                      height: 10, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#8884d8',
+                      transform: 'translateX(-50%)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }} />
+                  ))}
+                  
+                  {/* Pontos de saída */}
+                  {data.movimentacoesPorDia.map((item, index) => (
+                    <Box key={`saida-${index}`} sx={{ 
+                      position: 'absolute', 
+                      left: `${(index / (data.movimentacoesPorDia.length - 1)) * 100}%`,
+                      bottom: `${(item.saida / 70) * 100}%`,
+                      width: 10, 
+                      height: 10, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#82ca9d',
+                      transform: 'translateX(-50%)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }} />
+                  ))}
+                  
+                  {/* Legendas */}
+                  <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#8884d8', borderRadius: '50%' }} />
+                      <Typography variant="caption">Entrada</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#82ca9d', borderRadius: '50%' }} />
+                      <Typography variant="caption">Saída</Typography>
+                    </Box>
+                  </Box>
+                </Box>
               </Box>
             </CardContent>
           </Card>

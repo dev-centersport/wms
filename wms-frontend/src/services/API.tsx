@@ -1034,6 +1034,43 @@ export async function buscarUsuarios() {
   return response.data;
 }
 
+export async function excluirUsuario(id: number): Promise<void> {
+  try {
+    await api.delete(`/usuario/${id}`);
+  } catch (error) {
+    console.error('Erro ao excluir usuário:', error);
+    throw error;
+  }
+}
+
+export async function atualizarUsuario(id: number, dados: {
+  responsavel?: string;
+  usuario?: string;
+  senha?: string;
+  nivel?: number;
+  cpf?: string;
+  ativo?: boolean;
+  perfil_id?: number;
+}): Promise<any> {
+  try {
+    const response = await api.patch(`/usuario/${id}`, dados);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    throw error;
+  }
+}
+
+export async function buscarUsuarioPorId(id: number): Promise<any> {
+  try {
+    const response = await api.get(`/usuario/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    throw error;
+  }
+}
+
 // ---------- PERFIL FUNCTIONS ----------
 export interface Perfil {
   perfil_id: number;
