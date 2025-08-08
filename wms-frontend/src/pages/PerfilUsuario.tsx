@@ -27,13 +27,15 @@ import {
   Security as SecurityIcon,
   Visibility as VisibilityIcon,
   Person as PersonIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
-import { buscarPerfis, excluirPerfil, Perfil, PerfilBackend } from '../services/API';
+import { buscarPerfis, excluirPerfil, buscarUsuariosPorPerfil, Perfil, PerfilBackend } from '../services/API';
 
 export default function PerfilUsuario() {
   const [perfis, setPerfis] = useState<PerfilBackend[]>([]);
+  const [usuariosPorPerfil, setUsuariosPorPerfil] = useState<{[key: number]: any[]}>({});
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -51,6 +53,9 @@ export default function PerfilUsuario() {
     try {
       const data = await buscarPerfis();
       setPerfis(data);
+      
+      // Carregar usuários para cada perfil
+      await carregarUsuariosPorPerfil(data);
     } catch (error) {
       // Dados de exemplo para demonstração
       const perfisExemplo: PerfilBackend[] = [
@@ -86,11 +91,37 @@ export default function PerfilUsuario() {
     }
   };
 
+  const carregarUsuariosPorPerfil = async (perfisData: PerfilBackend[]) => {
+    try {
+      const usuariosMap: {[key: number]: any[]} = {};
+      
+      for (const perfil of perfisData) {
+        try {
+          const usuarios = await buscarUsuariosPorPerfil(perfil.perfil_id);
+          usuariosMap[perfil.perfil_id] = usuarios;
+        } catch (error) {
+          console.error(`Erro ao carregar usuários do perfil ${perfil.perfil_id}:`, error);
+          usuariosMap[perfil.perfil_id] = [];
+        }
+      }
+      
+      setUsuariosPorPerfil(usuariosMap);
+    } catch (error) {
+      console.error('Erro ao carregar usuários por perfil:', error);
+    }
+  };
+
   const handleDelete = async (perfilId: number, nomePerfil: string) => {
     if (window.confirm(`Tem certeza que deseja excluir o perfil "${nomePerfil}"?`)) {
       try {
         await excluirPerfil(perfilId);
         setPerfis(prev => prev.filter(p => p.perfil_id !== perfilId));
+        // Remover usuários do perfil excluído do estado
+        setUsuariosPorPerfil(prev => {
+          const newState = { ...prev };
+          delete newState[perfilId];
+          return newState;
+        });
         mostrarSnackbar('Perfil excluído com sucesso!', 'success');
       } catch (error) {
         mostrarSnackbar('Erro ao excluir perfil', 'error');
@@ -104,6 +135,10 @@ export default function PerfilUsuario() {
 
   const handleCreate = () => {
     navigate('/perfil-usuario/criar');
+  };
+
+  const handleRefresh = () => {
+    carregarPerfis();
   };
 
   const getStatusColor = (perfil: PerfilBackend) => {
@@ -163,25 +198,49 @@ export default function PerfilUsuario() {
               </Typography>
             </Box>
           </Box>
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            startIcon={<AddIcon />}
-            sx={{
-              backgroundColor: '#4caf50',
-              '&:hover': {
-                backgroundColor: '#45a049',
-              },
-              px: 3,
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '1rem',
-            }}
-          >
-            Criar Perfil
-          </Button>
+          <Box display="flex" gap={2}>
+            <Button
+              variant="outlined"
+              onClick={handleRefresh}
+              startIcon={<RefreshIcon />}
+              disabled={loading}
+              sx={{
+                borderColor: '#4caf50',
+                color: '#4caf50',
+                '&:hover': {
+                  borderColor: '#45a049',
+                  backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                },
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1rem',
+              }}
+            >
+              {loading ? 'Carregando...' : 'Atualizar'}
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleCreate}
+              startIcon={<AddIcon />}
+              sx={{
+                backgroundColor: '#4caf50',
+                '&:hover': {
+                  backgroundColor: '#45a049',
+                },
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1rem',
+              }}
+            >
+              Criar Perfil
+            </Button>
+          </Box>
         </Box>
 
         {/* Lista de Perfis */}
@@ -240,9 +299,48 @@ export default function PerfilUsuario() {
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <Typography variant="body2" fontWeight={600} color="#2c3e50">
-                          {perfil.permissoes.length}
-                        </Typography>
+                        <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+                          {loading ? (
+                            <Typography variant="body2" color="#666">
+                              Carregando...
+                            </Typography>
+                          ) : (
+                            <>
+                              <Typography variant="body2" fontWeight={600} color="#2c3e50">
+                                {usuariosPorPerfil[perfil.perfil_id]?.length || 0} usuários
+                              </Typography>
+                              {usuariosPorPerfil[perfil.perfil_id] && usuariosPorPerfil[perfil.perfil_id].length > 0 && (
+                                <Box display="flex" flexWrap="wrap" gap={0.5} justifyContent="center">
+                                  {usuariosPorPerfil[perfil.perfil_id].slice(0, 3).map((usuario: any, idx: number) => (
+                                    <Chip
+                                      key={usuario.usuario_id}
+                                      label={usuario.responsavel}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{ 
+                                        fontSize: '0.7rem',
+                                        height: 20,
+                                        '& .MuiChip-label': { px: 1 }
+                                      }}
+                                    />
+                                  ))}
+                                  {usuariosPorPerfil[perfil.perfil_id].length > 3 && (
+                                    <Chip
+                                      label={`+${usuariosPorPerfil[perfil.perfil_id].length - 3}`}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{ 
+                                        fontSize: '0.7rem',
+                                        height: 20,
+                                        '& .MuiChip-label': { px: 1 }
+                                      }}
+                                    />
+                                  )}
+                                </Box>
+                              )}
+                            </>
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell align="center">
                         <Box display="flex" gap={1} justifyContent="center">

@@ -33,7 +33,7 @@ import {
   criarPerfil, 
   atualizarPerfil, 
   buscarPermissoes, 
-  definirPermissoesDoPerfil,
+  definirPermissoesDoPerfilComValores,
   PermissaoBackend,
   PerfilBackend 
 } from '../services/API';
@@ -90,13 +90,27 @@ export default function CriarPerfilUsuario() {
 
       const permissoesIniciais = modulos.map(modulo => {
         const permissaoBackend = permissoesBackend.find(p => p.modulo === modulo.nome);
-        return {
-          nome: modulo.nome,
-          label: modulo.label,
-          pode_add: isEditing ? (permissaoBackend?.pode_incluir || false) : true,
-          pode_edit: isEditing ? (permissaoBackend?.pode_editar || false) : true,
-          pode_delete: isEditing ? (permissaoBackend?.pode_excluir || false) : (modulo.nome === 'armazem' || modulo.nome === 'tipo_localizacao' ? false : true),
-        };
+        
+        if (isEditing && isEditing.permissoes) {
+          // Se estamos editando, buscar as permissões do perfil atual
+          const permissaoDoPerfil = isEditing.permissoes.find((p: PermissaoBackend) => p.modulo === modulo.nome);
+          return {
+            nome: modulo.nome,
+            label: modulo.label,
+            pode_add: permissaoDoPerfil?.pode_incluir || false,
+            pode_edit: permissaoDoPerfil?.pode_editar || false,
+            pode_delete: permissaoDoPerfil?.pode_excluir || false,
+          };
+        } else {
+          // Se estamos criando, usar valores padrão
+          return {
+            nome: modulo.nome,
+            label: modulo.label,
+            pode_add: true,
+            pode_edit: true,
+            pode_delete: (modulo.nome === 'armazem' || modulo.nome === 'tipo_localizacao' ? false : true),
+          };
+        }
       });
       setPermissoes(permissoesIniciais);
     } catch (error) {
@@ -125,16 +139,28 @@ export default function CriarPerfilUsuario() {
           descricao: formData.descricao,
         });
         
-        // Definir permissões do perfil
-        const permissaoIds = permissoes
+        // Definir permissões do perfil com valores booleanos
+        const permissoesParaSalvar = permissoes
           .filter(p => p.pode_add || p.pode_edit || p.pode_delete)
           .map(p => {
             const permissaoBackend = permissoesBackend.find(pb => pb.modulo === p.nome);
-            return permissaoBackend?.permissao_id;
+            if (!permissaoBackend) return null;
+            
+            return {
+              permissao_id: permissaoBackend.permissao_id,
+              pode_incluir: p.pode_add,
+              pode_editar: p.pode_edit,
+              pode_excluir: p.pode_delete,
+            };
           })
-          .filter(id => id !== undefined) as number[];
+          .filter(p => p !== null) as Array<{
+            permissao_id: number;
+            pode_incluir: boolean;
+            pode_editar: boolean;
+            pode_excluir: boolean;
+          }>;
         
-        await definirPermissoesDoPerfil(isEditing.perfil_id, permissaoIds);
+        await definirPermissoesDoPerfilComValores(isEditing.perfil_id, permissoesParaSalvar);
         mostrarSnackbar('Perfil atualizado com sucesso!', 'success');
       } else {
         // Criar novo perfil
@@ -143,16 +169,28 @@ export default function CriarPerfilUsuario() {
           descricao: formData.descricao,
         });
         
-        // Definir permissões do perfil
-        const permissaoIds = permissoes
+        // Definir permissões do perfil com valores booleanos
+        const permissoesParaSalvar = permissoes
           .filter(p => p.pode_add || p.pode_edit || p.pode_delete)
           .map(p => {
             const permissaoBackend = permissoesBackend.find(pb => pb.modulo === p.nome);
-            return permissaoBackend?.permissao_id;
+            if (!permissaoBackend) return null;
+            
+            return {
+              permissao_id: permissaoBackend.permissao_id,
+              pode_incluir: p.pode_add,
+              pode_editar: p.pode_edit,
+              pode_excluir: p.pode_delete,
+            };
           })
-          .filter(id => id !== undefined) as number[];
+          .filter(p => p !== null) as Array<{
+            permissao_id: number;
+            pode_incluir: boolean;
+            pode_editar: boolean;
+            pode_excluir: boolean;
+          }>;
         
-        await definirPermissoesDoPerfil(perfilCriado.perfil_id, permissaoIds);
+        await definirPermissoesDoPerfilComValores(perfilCriado.perfil_id, permissoesParaSalvar);
         mostrarSnackbar('Perfil criado com sucesso!', 'success');
       }
       

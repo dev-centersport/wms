@@ -440,7 +440,7 @@ export const buscarProdutos = async (): Promise<Produto[]> => {
 export async function buscarConsultaEstoque() {
   try {
     const todos: any[] = [];
-    const limite = 1000;
+    const limite = 10000;
     let offset = 0;
     let total = Infinity;
 
@@ -1216,6 +1216,21 @@ export async function removerPermissoesDoPerfil(perfilId: number, permissaoIds: 
   }
 }
 
+// Atualizar permissão individual
+export async function atualizarPermissao(id: number, dados: {
+  pode_incluir?: boolean;
+  pode_editar?: boolean;
+  pode_excluir?: boolean;
+}): Promise<PermissaoBackend> {
+  try {
+    const response = await api.patch(`/permissao/${id}`, dados);
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao atualizar permissão:', error.message);
+    throw new Error('Falha ao atualizar permissão.');
+  }
+}
+
 // Definir permissões do perfil (substitui todas)
 export async function definirPermissoesDoPerfil(perfilId: number, permissaoIds: number[]): Promise<PerfilBackend> {
   try {
@@ -1225,6 +1240,51 @@ export async function definirPermissoesDoPerfil(perfilId: number, permissaoIds: 
     return response.data;
   } catch (error: any) {
     console.error('Erro ao definir permissões do perfil:', error.message);
+    throw new Error('Falha ao definir permissões do perfil.');
+  }
+}
+
+// Buscar usuários por perfil
+export async function buscarUsuariosPorPerfil(perfilId: number): Promise<any[]> {
+  try {
+    const response = await api.get('/usuario');
+    const todosUsuarios = response.data;
+    // Filtrar usuários que têm o perfil especificado
+    return todosUsuarios.filter((usuario: any) => usuario.perfil?.perfil_id === perfilId);
+  } catch (error: any) {
+    console.error('Erro ao buscar usuários por perfil:', error.message);
+    throw new Error('Falha ao carregar usuários do perfil.');
+  }
+}
+
+// Definir permissões do perfil com valores booleanos
+export async function definirPermissoesDoPerfilComValores(
+  perfilId: number, 
+  permissoes: Array<{
+    permissao_id: number;
+    pode_incluir: boolean;
+    pode_editar: boolean;
+    pode_excluir: boolean;
+  }>
+): Promise<PerfilBackend> {
+  try {
+    // Primeiro, atualizar os valores booleanos de cada permissão
+    for (const permissao of permissoes) {
+      await atualizarPermissao(permissao.permissao_id, {
+        pode_incluir: permissao.pode_incluir,
+        pode_editar: permissao.pode_editar,
+        pode_excluir: permissao.pode_excluir,
+      });
+    }
+
+    // Depois, associar as permissões ao perfil
+    const permissaoIds = permissoes.map(p => p.permissao_id);
+    const response = await api.patch(`/perfil/${perfilId}/permissoes`, {
+      permissao_ids: permissaoIds
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao definir permissões do perfil com valores:', error.message);
     throw new Error('Falha ao definir permissões do perfil.');
   }
 }

@@ -107,7 +107,7 @@ const Localizacao: React.FC = () => {
 
   const carregarTodasLocalizacoes = async (): Promise<any[]> => {
     const todasLocalizacoes: any[] = [];
-    const limite = 500;
+    const limite = 10000;
     let offset = 0;
     let total = Infinity;
 
