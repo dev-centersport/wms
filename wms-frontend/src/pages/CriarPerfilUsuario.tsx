@@ -34,9 +34,9 @@ import {
   atualizarPerfil, 
   buscarPermissoes, 
   definirPermissoesDoPerfil,
-  atualizarPermissao,
   PermissaoBackend,
-  PerfilBackend
+  PerfilBackend,
+  criarPermissao
 } from '../services/API';
 
 interface ModuloPermissao {
@@ -199,13 +199,21 @@ export default function CriarPerfilUsuario() {
                 permissaoExistente.pode_excluir === permissao.pode_delete) {
               permissoesParaAssociar.push(permissaoExistente.permissao_id);
             } else {
-              // Se os valores são diferentes, atualizar a permissão existente
-              await atualizarPermissao(permissaoExistente.permissao_id, {
-                pode_incluir: permissao.pode_add,
-                pode_editar: permissao.pode_edit,
-                pode_excluir: permissao.pode_delete,
-              });
-              permissoesParaAssociar.push(permissaoExistente.permissao_id);
+              // ✅ SOLUÇÃO: Criar uma permissão específica para este perfil
+              // Isso evita modificar permissões globais
+              try {
+                const novaPermissao = await criarPermissao({
+                  modulo: permissao.nome as any,
+                  pode_incluir: permissao.pode_add,
+                  pode_editar: permissao.pode_edit,
+                  pode_excluir: permissao.pode_delete,
+                });
+                permissoesParaAssociar.push(novaPermissao.permissao_id);
+              } catch (error) {
+                console.error(`Erro ao criar permissão específica para ${permissao.nome}:`, error);
+                // Se não conseguir criar, usar a permissão existente
+                permissoesParaAssociar.push(permissaoExistente.permissao_id);
+              }
             }
           } else {
             // Se não existe permissão para este módulo, pular (não criar novas permissões)
