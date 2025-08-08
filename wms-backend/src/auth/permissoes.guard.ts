@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { UsuarioService } from '../usuario/usuario.service';
 import { PERMISSOES_KEY } from './decorators/permissoes.decorator';
+import { Modulo } from '../permissao/entities/permissao.entity';
 
 @Injectable()
 export class PermissoesGuard implements CanActivate {
@@ -38,8 +39,8 @@ export class PermissoesGuard implements CanActivate {
 
     return await this.usuarioService.temPermissao(
       usuario_id,
-      modulo,
-      acao as 'incluir' | 'editar' | 'excluir',
+      modulo as Modulo,
+      acao as 'ver' | 'incluir' | 'editar' | 'excluir',
     );
   }
 }

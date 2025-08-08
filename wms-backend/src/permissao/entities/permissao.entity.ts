@@ -21,6 +21,9 @@ export class Permissao {
   modulo: Modulo;
 
   @Column({ type: 'boolean', default: false })
+  pode_ver: boolean;
+
+  @Column({ type: 'boolean', default: false })
   pode_incluir: boolean;
 
   @Column({ type: 'boolean', default: false })

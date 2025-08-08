@@ -6,6 +6,9 @@ export class CreatePermissaoDto {
   modulo: Modulo;
 
   @IsBoolean()
+  pode_ver: boolean;
+
+  @IsBoolean()
   pode_incluir: boolean;
 
   @IsBoolean()

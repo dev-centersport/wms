@@ -10,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { Perfil } from 'src/perfil/entities/perfil.entity';
-import { Permissao } from 'src/permissao/entities/permissao.entity';
+import { Permissao, Modulo } from 'src/permissao/entities/permissao.entity';
 import { PasswordUtils } from 'src/utils/password.utils';
 import { getPermissoesEfetivas } from 'src/utils/permissoes-efetivas.utils';
 
@@ -150,6 +150,7 @@ export class UsuarioService {
         perfil_id: updateUsuarioDto.perfil_id,
       });
       if (!perfil) throw new NotFoundException('Perfil não encontrado');
+      usuario.perfil = perfil;
     }
 
     const { perfil_id, ...camposSimples } = updateUsuarioDto;
@@ -223,8 +224,8 @@ export class UsuarioService {
   // Método para verificar se usuário tem permissão específica
   async temPermissao(
     usuario_id: number,
-    modulo: string,
-    acao: 'incluir' | 'editar' | 'excluir',
+    modulo: Modulo,
+    acao: 'ver' | 'incluir' | 'editar' | 'excluir',
   ): Promise<boolean> {
     const permissoes = await this.getPermissoesEfetivas(usuario_id);
     const permissao = permissoes.find((p) => p.modulo === modulo);
@@ -232,6 +233,8 @@ export class UsuarioService {
     if (!permissao) return false;
 
     switch (acao) {
+      case 'ver':
+        return permissao.pode_ver;
       case 'incluir':
         return permissao.pode_incluir;
       case 'editar':

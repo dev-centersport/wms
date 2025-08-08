@@ -48,34 +48,6 @@ export class LocalizacaoService {
     });
   }
 
-  // async findAll(): Promise<any[]> {
-  //   const localizacoes = await this.LocalizacaoRepository.createQueryBuilder(
-  //     'localizacao',
-  //   )
-  //     .leftJoin('localizacao.produtos_estoque', 'estoque')
-  //     .leftJoinAndSelect('localizacao.tipo', 'tipo')
-  //     .leftJoinAndSelect('localizacao.armazem', 'armazem')
-  //     .select([
-  //       'localizacao',
-  //       'tipo',
-  //       'armazem',
-  //       'SUM(estoque.quantidade) as total_produtos',
-  //     ])
-  //     .groupBy('localizacao.localizacao_id')
-  //     .addGroupBy('tipo.tipo_localizacao_id') // ajuste conforme o nome da PK do tipo
-  //     .addGroupBy('armazem.armazem_id') // ajuste conforme o nome da PK do armazem
-  //     .orderBy('total_produtos', 'DESC')
-  //     .orderBy('localizacao.nome', 'ASC')
-  //     .getRawAndEntities();
-
-  //   // Combina os dados das entidades com os dados raw (incluindo a soma)
-  //   return localizacoes.entities.map((localizacao, index) => ({
-  //     ...localizacao,
-  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-  //     total_produtos: parseFloat(localizacoes.raw[index].total_produtos) || 0,
-  //   }));
-  // }
-
   async search(
     search?: string,
     offset = 0,
@@ -83,7 +55,7 @@ export class LocalizacaoService {
     status?: StatusPrateleira,
     armazemId?: number,
     tipoId?: number,
-  ): Promise<{ results: any[]; total: number }> {
+  ): Promise<{ results: any[]; total: any }> {
     const query = this.LocalizacaoRepository.createQueryBuilder('localizacao')
       .leftJoin('localizacao.produtos_estoque', 'estoque')
       .leftJoinAndSelect('localizacao.tipo', 'tipo')
@@ -120,8 +92,14 @@ export class LocalizacaoService {
       query.andWhere('tipo.tipo_localizacao_id = :tipoId', { tipoId });
     }
 
+    const total_itens = await query.getCount();
+
     // total para paginação
-    const total = await query.getCount();
+    const total = {
+      offset: offset,
+      limit: limit,
+      total_itens: total_itens,
+    };
 
     // Paginação e ordenação
     query
@@ -259,8 +237,11 @@ export class LocalizacaoService {
     }
 
     // this.LocalizacaoRepository.merge(localizacao, updateLocalizacaoDto);
-    const { armazem_id, tipo_localizacao_id, ...camposSimples } =
-      updateLocalizacaoDto;
+    const {
+      armazem_id, // eslint-disable-line @typescript-eslint/no-unused-vars
+      tipo_localizacao_id, // eslint-disable-line @typescript-eslint/no-unused-vars
+      ...camposSimples
+    } = updateLocalizacaoDto;
 
     Object.assign(localizacao, camposSimples);
 

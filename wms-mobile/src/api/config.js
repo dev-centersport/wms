@@ -4,6 +4,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // ===== CONFIGURAÇÃO BÁSICA =====
 export const BASE_URL = "http://151.243.0.78:3001";
 
+// ===== SISTEMA DE CALLBACK PARA LOGOUT =====
+let logoutCallback = null;
+
+export const setLogoutCallback = (callback) => {
+	logoutCallback = callback;
+};
+
+export const clearLogoutCallback = () => {
+	logoutCallback = null;
+};
+
 // ===== INSTÂNCIA DO AXIOS =====
 export const api = axios.create({
 	baseURL: BASE_URL,
@@ -60,9 +71,11 @@ api.interceptors.response.use(
 				await AsyncStorage.removeItem("token");
 				console.log("🔒 Token removido - usuário deslogado");
 
-				// Adicionar navegação para tela de login
-				// Você precisará implementar um sistema de navegação global
-				// ou usar um callback para redirecionar para login
+				// Chama o callback de logout se estiver configurado
+				if (logoutCallback) {
+					console.log("🔄 Redirecionando para tela de login...");
+					logoutCallback();
+				}
 			} catch (storageError) {
 				console.error("❌ Erro ao remover token:", storageError);
 			}
