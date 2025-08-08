@@ -73,9 +73,9 @@ import { PermissoesModule } from './auth/permissoes.module';
         autoLoadEntities: true,
         synchronize: config.get<boolean>('DB_SYNCHRONIZE', true),
         logging: config.get<boolean>('DB_LOGGING', true),
-        timezone: 'UTC+3',
+        timezone: 'UTC+6',
         extra: {
-          options: '-c timezone=UTC+3',
+          options: '-c timezone=UTC+6',
         },
       }),
     }),

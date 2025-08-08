@@ -31,7 +31,7 @@ export class Movimentacao {
   @Column({ type: 'int', nullable: true })
   quantidade?: number;
 
-  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   dataHora: Date;
 
   @ManyToOne(() => Usuario, (user) => user.movimentacoes)
