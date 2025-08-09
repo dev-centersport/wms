@@ -75,6 +75,7 @@ import {
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { BotaoComPermissao } from '../components/BotaoComPermissao';
+import { usePermissao } from '../contexts/PermissaoContext';
 
 import { buscarAuditoria, buscarArmazemPorEAN, iniciarAuditoria, buscarProdutosAuditoria, cancelarAuditoria } from '../services/API';
 
@@ -109,6 +110,7 @@ const ITEMS_PER_PAGE = 12;
 
 export default function Auditoria() {
   const navigate = useNavigate();
+  const { temPermissao } = usePermissao();
   const [busca, setBusca] = useState('');
   const [aba, setAba] = useState<'todos' | 'pendente' | 'concluida' | 'em andamento' | 'cancelada'>('todos');
   const [auditorias, setAuditorias] = useState<AuditoriaItem[]>([]);
@@ -345,6 +347,11 @@ export default function Auditoria() {
   };
 
   const handleCancelar = async (auditoriaId: number) => {
+    if (!temPermissao('auditoria', 'excluir')) {
+      alert('Você não tem permissão para cancelar auditorias');
+      return;
+    }
+    
     try {
       await cancelarAuditoria(auditoriaId);
       setModalCancelar({ open: false });
@@ -768,7 +775,14 @@ export default function Auditoria() {
                     )}
                     <IconButton
                       size="small"
-                      onClick={() => setModalCancelar({ open: true, auditoria: item })}
+                      onClick={() => {
+                        if (temPermissao('auditoria', 'excluir')) {
+                          setModalCancelar({ open: true, auditoria: item });
+                        } else {
+                          alert('Você não tem permissão para cancelar auditorias');
+                        }
+                      }}
+                      disabled={!temPermissao('auditoria', 'excluir')}
                       sx={{
                         color: '#f44336',
                         '&:hover': { backgroundColor: 'rgba(244, 67, 54, 0.1)' }
@@ -864,7 +878,14 @@ export default function Auditoria() {
                       <Tooltip title="Cancelar auditoria">
                         <IconButton
                           size="small"
-                          onClick={() => setModalCancelar({ open: true, auditoria: item })}
+                          onClick={() => {
+                            if (temPermissao('auditoria', 'excluir')) {
+                              setModalCancelar({ open: true, auditoria: item });
+                            } else {
+                              alert('Você não tem permissão para cancelar auditorias');
+                            }
+                          }}
+                          disabled={!temPermissao('auditoria', 'excluir')}
                           sx={{
                             color: '#f44336',
                             '&:hover': { backgroundColor: 'rgba(244, 67, 54, 0.1)' },

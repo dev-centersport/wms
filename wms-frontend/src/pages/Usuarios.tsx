@@ -31,6 +31,7 @@ import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { buscarUsuarios, excluirUsuario, atualizarUsuario, buscarUsuarioPorId, buscarPerfis } from '../services/API';
 import { BotaoComPermissao } from '../components/BotaoComPermissao';
+import { usePermissao } from '../contexts/PermissaoContext';
 
 interface Usuario {
     usuario_id: number;
@@ -44,6 +45,7 @@ interface Usuario {
 const ITEMS_PER_PAGE = 50;
 
 export default function Usuarios() {
+    const { temPermissao } = usePermissao();
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
     const [busca, setBusca] = useState('');
     const [paginaAtual, setPaginaAtual] = useState(1);
@@ -332,10 +334,28 @@ export default function Usuarios() {
                                 <TableCell>{usuario.usuario}</TableCell>
                                 <TableCell>{usuario.perfil?.nome}</TableCell>
                                 <TableCell align="center">
-                                    <IconButton onClick={() => handleEditar(usuario)} disabled={loading}>
+                                    <IconButton 
+                                        onClick={() => {
+                                            if (temPermissao('usuario', 'editar')) {
+                                                handleEditar(usuario);
+                                            } else {
+                                                alert('Você não tem permissão para editar usuários');
+                                            }
+                                        }} 
+                                        disabled={loading || !temPermissao('usuario', 'editar')}
+                                    >
                                         <Edit />
                                     </IconButton>
-                                    <IconButton onClick={() => handleExcluir(usuario)} disabled={loading}>
+                                    <IconButton 
+                                        onClick={() => {
+                                            if (temPermissao('usuario', 'excluir')) {
+                                                handleExcluir(usuario);
+                                            } else {
+                                                alert('Você não tem permissão para excluir usuários');
+                                            }
+                                        }} 
+                                        disabled={loading || !temPermissao('usuario', 'excluir')}
+                                    >
                                         <Delete />
                                     </IconButton>
                                 </TableCell>

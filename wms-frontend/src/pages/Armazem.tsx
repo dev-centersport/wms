@@ -28,6 +28,7 @@ import Layout from '../components/Layout';
 import { buscarArmazem, Armazem as ArmazemAPI, excluirArmazem } from '../services/API';
 import { useNavigate } from 'react-router-dom';
 import { BotaoComPermissao } from '../components/BotaoComPermissao';
+import { usePermissao } from '../contexts/PermissaoContext';
 
 interface Armazem extends ArmazemAPI {
   capacidade?: number;
@@ -38,6 +39,7 @@ const itemsPerPage = 50;
 const ArmazemPage: React.FC = () => {
   usePageLogger('Armazem');
   const navigate = useNavigate();
+  const { temPermissao } = usePermissao();
 
   const [armazens, setArmazens] = useState<Armazem[]>([]);
   const [busca, setBusca] = useState('');
@@ -287,8 +289,17 @@ const ArmazemPage: React.FC = () => {
 
                     <TableCell
                       align='center'
-                      sx={{ fontWeight: 500, cursor: "pointer" }}
-                      onClick={() => navigate(`/armazem/${item.armazem_id}/editar/`)}
+                      sx={{ 
+                        fontWeight: 500, 
+                        cursor: temPermissao('armazem', 'editar') ? "pointer" : "default"
+                      }}
+                      onClick={() => {
+                        if (temPermissao('armazem', 'editar')) {
+                          navigate(`/armazem/${item.armazem_id}/editar/`);
+                        } else {
+                          alert('Você não tem permissão para editar armazéns');
+                        }
+                      }}
                     >
                       {item.nome}
                     </TableCell>
@@ -304,7 +315,16 @@ const ArmazemPage: React.FC = () => {
                         </IconButton>
                       </Tooltip> */}
                       <Tooltip title="Excluir armazém">
-                        <IconButton onClick={() => handleExcluir(item.armazem_id)}>
+                        <IconButton 
+                          onClick={() => {
+                            if (temPermissao('armazem', 'excluir')) {
+                              handleExcluir(item.armazem_id);
+                            } else {
+                              alert('Você não tem permissão para excluir armazéns');
+                            }
+                          }}
+                          disabled={!temPermissao('armazem', 'excluir')}
+                        >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>

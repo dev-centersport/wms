@@ -36,6 +36,7 @@ import Layout from '../components/Layout';
 import { excluirLocalizacao, buscarLocalizacoes, buscarConsultaEstoque } from '../services/API';
 import ProdutosLocalizacaoModal from '../components/ProdutosLocalizacaoModal';
 import { BotaoComPermissao } from '../components/BotaoComPermissao';
+import { usePermissao } from '../contexts/PermissaoContext';
 
 
 const normalizar = (s: string) =>
@@ -54,6 +55,7 @@ type LocalizacaoComQtd = {
 };
 
 const Localizacao: React.FC = () => {
+  const { temPermissao } = usePermissao();
   const [listaLocalizacoes, setListaLocalizacoes] = useState<LocalizacaoComQtd[]>([]);
   const [busca, setBusca] = useState('');
   const [inputBusca, setInputBusca] = useState('');
@@ -1349,7 +1351,14 @@ const Localizacao: React.FC = () => {
             <Button
               variant="outlined"
               startIcon={<DeleteIcon />}
-              onClick={handleExcluirSelecionados}
+              onClick={() => {
+                if (temPermissao('localizacao', 'excluir')) {
+                  handleExcluirSelecionados();
+                } else {
+                  alert('Você não tem permissão para excluir localizações');
+                }
+              }}
+              disabled={!temPermissao('localizacao', 'excluir')}
               sx={{
                 borderColor: '#d32f2f',
                 color: '#d32f2f',
@@ -1465,8 +1474,18 @@ const Localizacao: React.FC = () => {
                     </TableCell>
                     <TableCell
                       align='center'
-                      sx={{ fontWeight: 500, cursor: 'pointer', pr: orderBy === 'nome' ? 'auto' : '35px' }}
-                      onClick={() => navigate(`/localizacao/${item.localizacao_id}/editar`)}
+                      sx={{ 
+                        fontWeight: 500, 
+                        cursor: temPermissao('localizacao', 'editar') ? 'pointer' : 'default', 
+                        pr: orderBy === 'nome' ? 'auto' : '35px'
+                      }}
+                      onClick={() => {
+                        if (temPermissao('localizacao', 'editar')) {
+                          navigate(`/localizacao/${item.localizacao_id}/editar`);
+                        } else {
+                          alert('Você não tem permissão para editar localizações');
+                        }
+                      }}
                       
                     >
                       {item.nome}
@@ -1491,11 +1510,17 @@ const Localizacao: React.FC = () => {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Excluir localização">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleExcluir(item.localizacao_id, item.nome, item.total_produtos ?? 0)}
-                            disabled={item.total_produtos > 0}
-                            sx={{
+                                                  <IconButton
+                          size="small"
+                          onClick={() => {
+                            if (temPermissao('localizacao', 'excluir')) {
+                              handleExcluir(item.localizacao_id, item.nome, item.total_produtos ?? 0);
+                            } else {
+                              alert('Você não tem permissão para excluir localizações');
+                            }
+                          }}
+                          disabled={item.total_produtos > 0 || !temPermissao('localizacao', 'excluir')}
+                          sx={{
                               color: item.total_produtos > 0 ? 'text.disabled' : 'error.main',
                               '&:hover': {
                                 backgroundColor: item.total_produtos > 0 ? 'transparent' : 'rgba(211, 47, 47, 0.1)',

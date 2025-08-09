@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { buscarTiposDeLocalizacao, excluirTipoLocalizacao } from '../services/API';
 import Layout from '../components/Layout';
 import { BotaoComPermissao } from '../components/BotaoComPermissao';
+import { usePermissao } from '../contexts/PermissaoContext';
 
 interface TipoLocalizacao {
   tipo_localizacao_id: number;
@@ -19,6 +20,7 @@ interface TipoLocalizacao {
 
 const TipoLocalizacaoPage: React.FC = () => {
   const navigate = useNavigate();
+  const { temPermissao } = usePermissao();
   const [busca, setBusca] = useState('');
   const [tipos, setTipos] = useState<TipoLocalizacao[]>([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -104,10 +106,28 @@ const TipoLocalizacaoPage: React.FC = () => {
                 <TableRow key={tipo.tipo_localizacao_id}>
                   <TableCell align='center'>{tipo.tipo}</TableCell>
                   <TableCell align="center">
-                    <IconButton onClick={() => navigate(`/tipo-localizacao/${tipo.tipo_localizacao_id}/editar`)}>
+                    <IconButton 
+                      onClick={() => {
+                        if (temPermissao('tipo_localizacao', 'editar')) {
+                          navigate(`/tipo-localizacao/${tipo.tipo_localizacao_id}/editar`);
+                        } else {
+                          alert('Você não tem permissão para editar tipos de localização');
+                        }
+                      }}
+                      disabled={!temPermissao('tipo_localizacao', 'editar')}
+                    >
                       <EditIcon />
                     </IconButton>
-                    <IconButton onClick={() => handleExcluir(tipo.tipo_localizacao_id)}>
+                    <IconButton 
+                      onClick={() => {
+                        if (temPermissao('tipo_localizacao', 'excluir')) {
+                          handleExcluir(tipo.tipo_localizacao_id);
+                        } else {
+                          alert('Você não tem permissão para excluir tipos de localização');
+                        }
+                      }}
+                      disabled={!temPermissao('tipo_localizacao', 'excluir')}
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
